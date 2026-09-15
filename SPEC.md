@@ -896,25 +896,26 @@ Therefore:
 
 ```text
 Operational Result ≠ Canonical Outcome
-```text
+```
+
 
 For example:
-
+```
 Application
     ↓
 Retriever
     ↓
 Result
-
+```
 does not require creation of:
-
+```
 Organization
 Team
 Goal
 Outcome
-
+```
 By contrast:
-
+```
 Goal
     ↓
 Team
@@ -924,7 +925,7 @@ Tasks / Executions
 Evidence
     ↓
 Outcome
-
+```
 uses canonical Outcome semantics because accountable achievement is explicitly being represented.
 
 ## 13. Open questions, risks, and next document
