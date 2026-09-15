@@ -2,25 +2,40 @@
 
 **Document:** `intent.md`
 **Project:** Lego AI Operating Layer
-**Status:** Foundational
-**Purpose:** Product Intent, Architectural Constitution, and Engineering North Star
+**Version:** 1.0
+**Status:** ACCEPTED — FOUNDATIONAL
+**Stability:** Architectural Constitution
+**Purpose:** Product Intent, Architectural Principles, Engineering North Star, and Boundary for All Future Specifications and Implementations
 
 ---
 
-## 1. Vision
+# 1. Vision
 
-Lego AI is a **technology-neutral, platform-agnostic, composable AI Operating Layer** for building intelligent applications, AI applications, agentic systems, multi-agent systems, autonomous workflows, copilots, enterprise AI systems, and future forms of intelligent software.
+Lego AI is a **technology-neutral, platform-agnostic, language-neutral, cloud-neutral, composable AI Operating Layer** for building intelligent applications, AI applications, agentic systems, multi-agent systems, AI teams, autonomous and semi-autonomous workflows, copilots, enterprise AI systems, and future forms of intelligent software.
 
-The fundamental objective is simple:
+The fundamental objective is:
 
-> **Build the common AI infrastructure once. Compose future intelligent applications from reusable capabilities.**
+> **Build common intelligent-application infrastructure once. Compose future applications, agents, and AI teams from reusable capabilities.**
 
-Lego AI MUST enable developers to create applications primarily by **selecting, configuring, and composing reusable modules**, rather than repeatedly implementing models, agents, workflows, memory, retrieval, tools, integrations, security, observability, evaluation, and infrastructure.
+Lego AI MUST enable developers to create applications primarily by:
 
-The desired long-term developer experience is:
+* selecting capabilities,
+* configuring behavior,
+* composing reusable modules,
+* adding domain-specific logic,
+* adding domain-specific skills,
+* connecting domain-specific tools,
+* defining policies and goals,
+
+rather than repeatedly rebuilding models, agents, workflows, memory, retrieval, integration infrastructure, security, evaluation, observability, governance, and execution machinery.
+
+The desired long-term experience is:
 
 ```text
 Idea
+ │
+ ▼
+Declare Intent
  │
  ▼
 Select Blueprint
@@ -30,6 +45,7 @@ Select Capabilities
  │
  ├── Models
  ├── Agents
+ ├── Teams
  ├── Workflows
  ├── Skills
  ├── Tools
@@ -37,6 +53,7 @@ Select Capabilities
  ├── Knowledge
  ├── Policies
  ├── Guardrails
+ ├── Human Interaction
  └── Integrations
  │
  ▼
@@ -46,12 +63,18 @@ Configure
 Compose
  │
  ▼
+Resolve Implementations
+ │
+ ▼
+Evaluate
+ │
+ ▼
 Run
 ```
 
-Lego AI is therefore not intended to be another AI application.
+Lego AI is not intended to be another AI application.
 
-It is intended to become the **operating layer upon which AI applications are assembled**.
+It is intended to become the **operating layer upon which intelligent applications and AI organizations can be assembled**.
 
 ---
 
@@ -67,48 +90,54 @@ The platform MUST maximize:
 * Replaceability
 * Extensibility
 * Testability
+* Evaluability
 * Security
 * Observability
 * Governability
+* Auditability
 * Developer productivity
 
 Future applications SHOULD contain primarily:
 
 ```text
+Domain Intent
++
 Domain Logic
 +
 Domain Configuration
 +
-Domain Agents
+Domain Agents / Teams
 +
 Domain Skills
 +
 Domain Tools
 +
+Domain Knowledge
++
 Domain Policies
 ```
 
-while reusing the majority of infrastructure from Lego AI.
+while reusing the majority of recurring infrastructure from Lego AI.
 
-The target is:
+The architectural aspiration is:
 
 ```text
-             FUTURE APPLICATION
+            FUTURE APPLICATION
 
-          ┌───────────────────────┐
-          │   Domain-specific     │
-          │      10–20%           │
-          ├───────────────────────┤
-          │                       │
-          │      Lego AI          │
-          │      80–90%           │
-          │                       │
-          └───────────────────────┘
+       ┌─────────────────────────┐
+       │     Domain-specific     │
+       │         10–20%          │
+       ├─────────────────────────┤
+       │                         │
+       │        Lego AI          │
+       │         80–90%          │
+       │                         │
+       └─────────────────────────┘
 ```
 
-These percentages are an architectural aspiration rather than a contractual metric.
+These percentages are an aspiration, not a contractual metric.
 
-The objective is to continually increase the reusable portion of future intelligent applications.
+The goal is to continually increase the reusable portion of future applications without hiding necessary domain complexity behind inappropriate abstractions.
 
 ---
 
@@ -118,51 +147,53 @@ The objective is to continually increase the reusable portion of future intellig
 
 ## Lego AI determines HOW those capabilities are provided.
 
-An application SHOULD request:
+Applications SHOULD express capability requirements such as:
 
 ```yaml
 requires:
+
   model:
-    capability:
+    capabilities:
       - reasoning
       - structured-output
 
   workflow:
-    capability:
+    capabilities:
       - durable-execution
       - checkpointing
 
   memory:
-    capability:
+    capabilities:
       - semantic-search
 
   tools:
-    capability:
+    capabilities:
       - external-data-access
 ```
 
-The application SHOULD NOT need to specify:
+Applications SHOULD NOT normally need to specify implementation technologies such as:
 
 ```yaml
 openai: ...
 langgraph: ...
-redis: ...
 postgres: ...
+redis: ...
 kafka: ...
 kubernetes: ...
 ```
 
-Those belong to implementation and deployment configuration.
+Those belong to implementation, adapter, environment, or deployment configuration.
 
-This separation between **capability intent** and **technology realization** is foundational to Lego AI.
+This distinction between **application intent** and **technology realization** is foundational.
 
 ---
 
 # 4. Architecture Principle #1 — Technology Neutrality
 
-Lego AI MUST NOT depend conceptually on any specific:
+Lego AI MUST NOT conceptually depend on any specific:
 
 * LLM vendor
+* Foundation model
 * AI model
 * Agent framework
 * Workflow engine
@@ -171,47 +202,47 @@ Lego AI MUST NOT depend conceptually on any specific:
 * Programming language
 * Cloud provider
 * Container platform
-* Messaging system
+* Messaging platform
 * Observability vendor
-* API technology
-* AI protocol
+* API framework
+* AI interoperability protocol
 * Deployment platform
 
-Technologies are implementations of Lego AI contracts.
+Named technologies are implementations of Lego AI contracts.
 
 They are not Lego AI itself.
 
-Therefore:
+For example:
 
 ```text
-OpenAI           = Adapter
-Anthropic        = Adapter
-Gemini           = Adapter
-Local Model      = Adapter
+OpenAI             = Model Adapter
+Anthropic          = Model Adapter
+Gemini             = Model Adapter
+Local Model        = Model Adapter
 
-LangGraph        = Adapter
-Semantic Kernel  = Adapter
-ADK              = Adapter
+LangGraph          = Runtime Adapter
+Semantic Kernel    = Runtime Adapter
+ADK                = Runtime Adapter
 
-PostgreSQL       = Adapter
-Redis            = Adapter
-Qdrant           = Adapter
+PostgreSQL         = Storage Adapter
+Redis              = Storage Adapter
+Qdrant             = Storage Adapter
 
-Kafka            = Adapter
-NATS             = Adapter
+Kafka              = Event Adapter
+NATS               = Event Adapter
 
-MCP              = Protocol Adapter
-A2A              = Protocol Adapter
+MCP                = Protocol Adapter
+A2A                = Protocol Adapter
 
-OpenTelemetry    = Observability Adapter
+OpenTelemetry      = Observability Adapter
 
-Kubernetes       = Deployment Option
-AWS              = Deployment Option
-Azure            = Deployment Option
-GCP              = Deployment Option
+Kubernetes         = Deployment Option
+AWS                = Deployment Option
+Azure              = Deployment Option
+GCP                = Deployment Option
 ```
 
-If replacing one of these technologies requires redesigning Lego AI's core domain model, the architecture is incorrectly coupled.
+If replacing one of these technologies requires redesigning Lego AI's canonical domain model, the design is incorrectly coupled.
 
 ---
 
@@ -219,106 +250,130 @@ If replacing one of these technologies requires redesigning Lego AI's core domai
 
 Lego AI MUST be designed **contract-first**.
 
-The canonical architecture is defined by technology-neutral concepts such as:
+Canonical architecture MUST be defined through implementation-independent concepts.
+
+Core concepts include:
 
 ```text
-Capability
 Application
-Agent
-Model
+Organization
+Team
+Role
+
+Goal
+Plan
 Task
-Message
-Context
+Delegation
+Execution
+Outcome
+
+Capability
+Requirement
+
+Agent
+Human
+Service
+
+Model
+Workflow
 Tool
 Skill
-Workflow
+
 Memory
 Knowledge
 Retriever
+Context
+
+Message
 Artifact
 Event
+Checkpoint
+
 Policy
 Guardrail
-Evaluator
-Checkpoint
-HumanApproval
+Approval
+
 Identity
+Tenant
 Secret
+TrustBoundary
+
+Budget
+Quota
+ResourcePolicy
+
+Evaluator
 Trace
+Provenance
+
 Plugin
 Adapter
+Port
 ```
 
-These concepts MUST have stable, implementation-independent contracts.
+These concepts MUST have stable, implementation-independent semantics.
 
-Technology-specific SDKs implement those contracts.
+Technology-specific SDKs and adapters implement these contracts.
 
-Conceptually:
-
-```text
-                  LEGO AI SPECIFICATION
-                           │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-          Python SDK    Java SDK     .NET SDK
-              │            │            │
-              ▼            ▼            ▼
-          Adapters      Adapters      Adapters
-```
-
-The specification MUST remain independent from any SDK implementation.
+The canonical specification MUST remain independent from any particular SDK implementation.
 
 ---
 
 # 6. Architecture Principle #3 — Ports and Adapters
 
-Every infrastructure dependency MUST sit behind an explicit port wherever practical.
+Infrastructure dependencies MUST sit behind explicit ports wherever practical.
 
-Examples include:
+Representative ports include:
 
 ```text
 ModelPort
 AgentRuntimePort
 WorkflowPort
+
 ToolPort
+SkillPort
+
 MemoryPort
 KnowledgePort
 RetrieverPort
+
 EventPort
+ArtifactPort
+
 PolicyPort
+GuardrailPort
+
 IdentityPort
 SecretPort
+TenantPort
+
 ObservabilityPort
 EvaluationPort
-ArtifactPort
+
 SandboxPort
 HumanApprovalPort
 ```
 
 Implementations connect through adapters.
 
-Example:
-
 ```text
-                    ModelPort
-                       │
-          ┌────────────┼────────────┐
-          │            │            │
-          ▼            ▼            ▼
-       OpenAI       Anthropic     Local Model
-       Adapter       Adapter        Adapter
+                 ModelPort
+                    │
+       ┌────────────┼────────────┐
+       ▼            ▼            ▼
+    Provider A   Provider B   Local Model
+     Adapter      Adapter       Adapter
 ```
 
-Core domain logic MUST depend on ports.
+Core domain logic MUST depend on stable abstractions.
 
-Ports MUST NOT depend on concrete adapters.
+Stable abstractions MUST NOT depend on concrete adapters.
 
 ---
 
-# 7. Architecture Principle #4 — Everything Is a Capability
+# 7. Architecture Principle #4 — Capability-Oriented Architecture
 
-Lego AI SHOULD model reusable functionality as capabilities.
+Reusable functionality SHOULD be represented as capabilities.
 
 Examples:
 
@@ -329,8 +384,11 @@ model.embedding
 model.structured-output
 
 agent.execution
-agent.delegation
 agent.planning
+agent.delegation
+
+team.coordination
+team.delegation
 
 workflow.graph
 workflow.durable
@@ -351,8 +409,8 @@ tool.discovery
 
 human.approval
 
-security.policy
 security.authorization
+security.policy
 
 evaluation.correctness
 evaluation.safety
@@ -362,31 +420,103 @@ observability.tracing
 
 Applications request capabilities.
 
-The platform resolves providers capable of satisfying those requirements.
+The platform resolves compatible providers.
 
 ---
 
-# 8. Architecture Principle #5 — Plugin-First Extensibility
+# 8. Architecture Principle #5 — Composite Capabilities
 
-Every major subsystem SHOULD support extension through a common Plugin SPI.
+Capabilities MAY depend on other capabilities.
 
-A plugin MUST describe:
+For example:
+
+```text
+software.development
+        │
+        ├── code.generate
+        ├── code.review
+        ├── repository.read
+        ├── repository.write
+        ├── test.execute
+        └── security.scan
+```
+
+The Capability Resolver SHOULD recursively resolve such dependencies.
+
+Composite capabilities MUST NOT introduce hidden technology coupling.
+
+---
+
+# 9. Architecture Principle #6 — Capability Versioning
+
+Capabilities MUST support explicit versioning.
+
+Conceptually:
+
+```text
+agent.execution@1
+agent.execution@2
+
+memory.semantic@1
+memory.semantic@2
+```
+
+Plugins SHOULD declare compatible capability ranges.
+
+Example:
+
+```yaml
+provides:
+  - capability: memory.semantic
+    version: "2.1"
+
+requires:
+  lego-spec: ">=1.0 <2.0"
+```
+
+Lego AI MUST establish policies for:
+
+```text
+Semantic Versioning
+Schema Evolution
+Backward Compatibility
+Deprecation
+Migration
+Capability Compatibility
+```
+
+Breaking changes MUST be deliberate.
+
+---
+
+# 10. Architecture Principle #7 — Plugin-First Extensibility
+
+Major subsystems SHOULD be extensible through a common Plugin SPI.
+
+A plugin MUST be capable of describing:
 
 ```text
 Identity
 Version
 Plugin Type
+
 Capabilities Provided
-Dependencies
+Capabilities Required
+
 Configuration Schema
 Compatibility
+
 Lifecycle
 Health
+
 Permissions
+Trust Requirements
+
+Dependencies
 Metadata
 ```
 
-Example conceptual manifest:
+Conceptual manifest:
 
 ```yaml
 plugin:
@@ -409,76 +539,75 @@ plugin:
     - stop
 ```
 
-The platform SHOULD discover and load compatible plugins without requiring modifications to the core.
+Compatible plugins SHOULD be discoverable without modifying Lego AI Core.
 
 ---
 
-# 9. Architecture Principle #6 — Modules Must Be Independently Reusable
+# 11. Architecture Principle #8 — Modules Must Be Independently Reusable
 
 Major capabilities MUST be logically decoupled.
 
-An application MUST NOT be required to use agents simply because it wants retrieval.
+An application MUST NOT require an Agent merely to use Retrieval.
 
-For example:
-
-```text
-Application ─────► Retrieval
-```
-
-MUST be valid.
-
-Likewise:
+These are all legitimate:
 
 ```text
-Application ─────► Model
-Application ─────► Workflow
-Application ─────► Memory
-Application ─────► Tool
-Application ─────► Policy
-Application ─────► Evaluation
-```
+Application ──► Model
 
-must be valid independently where semantically appropriate.
+Application ──► Retrieval
+
+Application ──► Workflow
+
+Application ──► Memory
+
+Application ──► Tool
+
+Application ──► Evaluation
+
+Application ──► Policy
+```
 
 The architecture MUST NOT assume:
 
 ```text
 Application
-    ↓
-Agent
-    ↓
-Everything Else
+    │
+    ▼
+  Agent
+    │
+    ▼
+Everything
 ```
 
 Agents are one capability among many.
 
 ---
 
-# 10. Architecture Principle #7 — AI Is Optional
+# 12. Architecture Principle #9 — AI Is Optional
 
 Lego AI MUST NOT require an LLM for every execution path.
 
-The platform MUST permit deterministic and probabilistic components to coexist.
+Deterministic and probabilistic execution MUST be able to coexist.
 
 ```text
-                     TASK
-                       │
-                       ▼
-                    ROUTER
-           ┌───────────┼───────────┐
-           ▼           ▼           ▼
-       Rule Engine     LLM      ML Model
-           │           │           │
-           └───────────┼───────────┘
-                       ▼
-                    Workflow
-                       │
-              ┌────────┼────────┐
-              ▼        ▼        ▼
-             Tool     Agent    Human
+                   TASK
+                    │
+                    ▼
+                  ROUTER
+           ┌────────┼────────┐
+           ▼        ▼        ▼
+        Rules      Model     ML
+           │        │        │
+           └────────┼────────┘
+                    ▼
+                 Workflow
+                    │
+             ┌──────┼──────┐
+             ▼      ▼      ▼
+            Tool   Agent   Human
 ```
 
-The preferred execution hierarchy is:
+The preferred complexity escalation is:
 
 ```text
 Deterministic Code
@@ -489,56 +618,273 @@ Model
         ↓
 Agent
         ↓
-Multi-Agent System
+Multi-Agent / Team
 ```
 
-Higher autonomy SHOULD only be introduced when lower-complexity approaches cannot adequately solve the problem.
+Higher autonomy SHOULD only be introduced where it adds meaningful value.
 
 ---
 
-# 11. Architecture Principle #8 — Agents Are Untrusted Decision Makers
+# 13. Architecture Principle #10 — Goals Are First-Class
 
-Agents MUST operate within trusted execution boundaries.
+Agentic execution frequently starts with a desired outcome rather than a predefined sequence.
 
-An agent MUST NOT automatically receive unrestricted:
+Lego AI MUST support:
 
-* Database access
-* Filesystem access
-* Network access
-* Production credentials
-* Administrative permissions
-* Arbitrary code execution
-* Infrastructure access
-* Financial transaction authority
-* Sensitive data access
+```text
+Goal
+ │
+ ▼
+Plan
+ │
+ ▼
+Tasks
+ │
+ ▼
+Delegation
+ │
+ ▼
+Execution
+ │
+ ▼
+Outcome
+```
 
-The execution model SHOULD resemble:
+Plans MAY be:
+
+```text
+Static
+Generated
+Adaptive
+Human-authored
+Agent-authored
+Hybrid
+```
+
+Execution MAY cause replanning when permitted by policy.
+
+Goals MUST remain distinguishable from Tasks and Workflows.
+
+---
+
+# 14. Architecture Principle #11 — Teams Are First-Class Compositions
+
+Lego AI MUST support reusable Teams.
+
+A Team represents coordinated actors working toward goals.
+
+A Team MAY contain:
+
+```text
+Agents
+Humans
+Services
+Other Teams
+```
+
+Conceptually:
+
+```text
+Organization
+     │
+     ├── Team
+     │     ├── Role ──► Agent
+     │     ├── Role ──► Human
+     │     └── Role ──► Service
+     │
+     └── Team
+```
+
+A Team MUST NOT be synonymous with one agent framework.
+
+Multi-agent orchestration is one possible implementation of Team coordination.
+
+---
+
+# 15. Architecture Principle #12 — Role Is Separate From Actor
+
+A Role represents responsibility.
+
+An Agent is one possible actor fulfilling a Role.
+
+```text
+Developer Role
+      │
+      ├── Agent
+      ├── Human
+      └── Service
+```
+
+Workflows and Teams SHOULD depend on Roles where appropriate rather than concrete agent implementations.
+
+This allows an automated role to later become human-operated—or vice versa—without redesigning the business process.
+
+---
+
+# 16. Architecture Principle #13 — Organizations Are Composable
+
+An Organization MAY coordinate multiple Teams.
+
+```text
+                     Organization
+                          │
+             ┌────────────┼────────────┐
+             ▼            ▼            ▼
+        Engineering    Marketing    Operations
+           Team          Team          Team
+```
+
+Organizations SHOULD be compositions of existing Lego AI primitives.
+
+Organizations MUST NOT introduce privileged runtime concepts inaccessible to normal application composition.
+
+---
+
+# 17. Architecture Principle #14 — Delegation Is Explicit
+
+Delegation MUST be represented explicitly where meaningful.
+
+A Task MAY be delegated to:
 
 ```text
 Agent
-  │
-  ▼
-Intent / Tool Request
-  │
-  ▼
-Policy Engine
-  │
-  ├── Identity
-  ├── Authorization
-  ├── Input Validation
-  ├── Data Classification
-  ├── Risk Classification
-  ├── Budget
-  ├── Rate Limit
-  └── Approval Requirement
-  │
-  ▼
-Optional Human Approval
-  │
-  ▼
+Human
+Service
+Team
+```
+
+Delegation SHOULD carry sufficient information to understand:
+
+```text
+Delegator
+Delegate
+Goal
+Task
+Context
+Allowed Capabilities
+Constraints
+Budget
+Deadline
+Expected Artifact / Outcome
+```
+
+Delegated autonomy MUST remain bounded.
+
+---
+
+# 18. Architecture Principle #15 — Artifacts Are First-Class
+
+Agents and Teams SHOULD collaborate through durable artifacts, not only conversational messages.
+
+Examples:
+
+```text
+Requirements
+Architecture
+Source Code
+Tests
+Reports
+Images
+Videos
+Datasets
+Plans
+Decisions
+Evaluation Results
+```
+
+Example:
+
+```text
+Requirements Agent
+       │
+       ▼
+requirements.md
+       │
+       ▼
+Architect
+       │
+       ▼
+architecture.md
+       │
+       ▼
+Developer
+       │
+       ▼
+source-code
+       │
+       ▼
+Test Agent
+       │
+       ▼
+test-results.json
+```
+
+Artifacts SHOULD support:
+
+```text
+Identity
+Type
+Version
+Producer
+Provenance
+Metadata
+Lifecycle
+Access Policy
+Relationships
+```
+
+---
+
+# 19. Architecture Principle #16 — Agents Are Untrusted Decision Makers
+
+Agents MUST operate inside trusted policy boundaries.
+
+Agents MUST NOT automatically receive unrestricted:
+
+```text
+Database access
+Filesystem access
+Network access
+Production credentials
+Administrative permissions
+Arbitrary code execution
+Infrastructure access
+Financial authority
+Sensitive-data access
+```
+
+Preferred model:
+
+```text
+Agent
+ │
+ ▼
+Requested Action
+ │
+ ▼
+Trust Boundary
+ │
+ ▼
+Identity
+ │
+ ▼
+Authorization
+ │
+ ▼
+Policy
+ │
+ ▼
+Validation
+ │
+ ▼
+Risk Classification
+ │
+ ├──── High Risk ──► Human Approval
+ │
+ ▼
 Controlled Execution
-  │
-  ▼
+ │
+ ▼
 Audit
 ```
 
@@ -546,11 +892,51 @@ Autonomy MUST be bounded by policy.
 
 ---
 
-# 12. Architecture Principle #9 — Interoperability by Design
+# 20. Architecture Principle #17 — Trust Boundaries Are Explicit
+
+Important boundary crossings SHOULD be explicit architecture concepts.
+
+Examples:
+
+```text
+User
+ │
+════════════════════
+Application
+ │
+════════════════════
+Agent Runtime
+ │
+════════════════════
+Tool Gateway
+ │
+════════════════════
+External System
+```
+
+Boundary enforcement MAY include:
+
+```text
+Authentication
+Authorization
+Policy
+Validation
+Data Classification
+Rate Limiting
+Budget Enforcement
+Audit
+Approval
+```
+
+Probabilistic systems MUST NOT be trusted merely because they operate inside the application process.
+
+---
+
+# 21. Architecture Principle #18 — Interoperability by Design
 
 Lego AI MUST communicate through open, explicit contracts.
 
-It SHOULD support appropriate interoperability mechanisms including:
+Appropriate mechanisms MAY include:
 
 ```text
 REST
@@ -563,55 +949,54 @@ MCP
 A2A
 ```
 
-No single interoperability protocol MUST become mandatory for all use cases.
-
-Protocol selection MUST follow the interaction semantics.
+No single protocol MUST be mandatory for every interaction.
 
 Conceptually:
 
 ```text
 Application ↔ Platform       API / SDK
+
 System      ↔ System         API / Events
+
 Agent       ↔ Tool/Data      Tool Port / MCP
+
 Agent       ↔ Agent          Agent Port / A2A
+
 Service     ↔ Service        REST / gRPC / Events
 ```
 
+Protocol selection SHOULD follow interaction semantics.
+
 ---
 
-# 13. Architecture Principle #10 — Configuration Over Coding
+# 22. Architecture Principle #19 — Configuration Over Coding
 
-Repeated architectural behavior SHOULD become configuration.
+Repeated architectural behavior SHOULD become declarative configuration.
 
-Future applications SHOULD increasingly be definable declaratively.
+Future applications SHOULD increasingly be expressible as manifests.
 
 Example:
 
 ```yaml
-application:
+apiVersion: lego.ai/v1
+kind: Application
+
+metadata:
   name: investment-research
 
-requires:
+spec:
 
-  agents:
-    - researcher
-    - analyst
-    - reviewer
+  capabilities:
+    - model.reasoning
+    - memory.semantic
+    - workflow.durable
 
-  skills:
-    - web-research
-    - financial-analysis
-    - report-writing
+  teams:
+    - investment-research-team
 
   tools:
     - market-data
     - filings
-
-  memory:
-    semantic: true
-
-  workflow:
-    durable: true
 
   security:
     profile: enterprise
@@ -623,13 +1008,15 @@ requires:
     enabled: true
 ```
 
-The platform converts this intent into an executable runtime topology.
+Applications declare intent.
+
+Lego AI constructs the executable topology.
 
 ---
 
-# 14. Architecture Principle #11 — Composable Blueprints
+# 23. Architecture Principle #20 — Composable Blueprints
 
-Lego AI SHOULD provide reusable application blueprints.
+Lego AI SHOULD provide reusable blueprints.
 
 Examples:
 
@@ -637,13 +1024,19 @@ Examples:
 chatbot
 rag-application
 copilot
+
 single-agent
 multi-agent
-research-agent
-coding-agent
+
+software-development-team
+research-team
+video-production-team
+social-media-team
+
 document-ai
 data-agent
 automation-agent
+
 decision-support
 event-driven-agent
 human-in-the-loop-workflow
@@ -651,66 +1044,54 @@ human-in-the-loop-workflow
 
 Blueprints MUST themselves be compositions of Lego capabilities.
 
-Blueprints MUST NOT introduce privileged architectural mechanisms unavailable to normal applications.
+They MUST NOT bypass canonical contracts.
 
 ---
 
-# 15. Architecture Principle #12 — Reuse at Multiple Boundaries
+# 24. Architecture Principle #21 — Reuse at Multiple Boundaries
 
-A Lego capability SHOULD be consumable through one or more appropriate mechanisms.
-
-### Embedded
+A Lego capability MAY be exposed as:
 
 ```text
-Application
-    │
-    ▼
-Lego SDK
-```
-
-### Plugin
-
-```text
-Application
-    │
-    ▼
-Lego Runtime
-    │
-    ▼
+Library / SDK
 Plugin
+Local Module
+Remote Service
+Protocol Endpoint
+Agent Capability
 ```
 
-### Service
+Examples:
 
 ```text
-Application
-    │
-    ▼
-REST / gRPC / Events
-    │
-    ▼
-Lego Service
+Application → SDK → Lego Capability
 ```
 
-### AI-native interoperability
+```text
+Application → Lego Runtime → Plugin
+```
 
 ```text
-Agent
-   │
-   ├── MCP ──► Capability
-   │
-   └── A2A ──► Agent
+Application → REST/gRPC → Lego Service
+```
+
+```text
+Agent → MCP → External Capability
+```
+
+```text
+Agent → A2A → External Agent
 ```
 
 Deployment topology MUST NOT unnecessarily leak into domain semantics.
 
 ---
 
-# 16. Architecture Principle #13 — Modular Monolith First
+# 25. Architecture Principle #22 — Modular Monolith First
 
-Logical modularity MUST NOT imply premature distributed architecture.
+Logical modularity MUST NOT imply premature distribution.
 
-The initial reference implementation SHOULD prefer:
+The initial reference runtime SHOULD favor:
 
 ```text
 Modular Monolith
@@ -724,17 +1105,7 @@ Dependency Injection
 Explicit Contracts
 ```
 
-Modules MAY later become independently deployed services when justified by:
-
-* Independent scaling
-* Security isolation
-* Team ownership
-* Availability requirements
-* Deployment independence
-* Regulatory requirements
-* Performance characteristics
-
-The evolutionary path SHOULD be:
+A module MAY evolve through:
 
 ```text
 Module
@@ -746,22 +1117,36 @@ Plugin
 Service
 ```
 
-Distribution is a deployment decision, not a prerequisite for modularity.
+Distribution SHOULD happen only when justified by:
+
+```text
+Scaling
+Security
+Availability
+Ownership
+Deployment Independence
+Regulation
+Performance
+Fault Isolation
+```
 
 ---
 
-# 17. Architecture Principle #14 — Explicit State
+# 26. Architecture Principle #23 — Explicit State
 
 Agentic and workflow systems MUST NOT rely exclusively on implicit conversational state.
 
-Execution state SHOULD be explicitly represented.
+Important state SHOULD be explicitly represented.
 
 Examples:
 
 ```text
 Task State
+Goal State
+Plan State
 Workflow State
 Agent State
+Team State
 Conversation State
 Checkpoint State
 Approval State
@@ -771,19 +1156,21 @@ Execution State
 
 State SHOULD be:
 
-* Serializable
-* Inspectable
-* Versionable
-* Recoverable where required
-* Auditable where required
+```text
+Serializable
+Inspectable
+Versionable
+Recoverable where required
+Auditable where required
+```
 
-Durable workflows SHOULD support interruption and resumption.
+Durable execution SHOULD support interruption and resumption.
 
 ---
 
-# 18. Architecture Principle #15 — Memory Is Not a Vector Database
+# 27. Architecture Principle #24 — Memory Is Not a Vector Database
 
-Lego AI MUST distinguish different forms of memory.
+Lego AI MUST distinguish forms of memory.
 
 ```text
 Working Memory
@@ -794,25 +1181,25 @@ Procedural Memory
 Organizational Knowledge
 ```
 
-Each memory type MUST be represented through appropriate contracts.
-
-No particular storage technology MUST define the semantic meaning of memory.
+No storage implementation defines the semantic meaning of Memory.
 
 Therefore:
 
 ```text
 Memory ≠ Vector Database
+
 Knowledge ≠ RAG
+
 RAG ≠ Agent
 ```
 
-These are separate concepts that MAY be composed.
+These concepts MAY be composed but MUST remain independently meaningful.
 
 ---
 
-# 19. Architecture Principle #16 — Skills Are First-Class Assets
+# 28. Architecture Principle #25 — Skills Are First-Class Assets
 
-Reusable domain intelligence SHOULD be packaged as Skills.
+Reusable expertise SHOULD be packaged as Skills.
 
 A Skill MAY contain:
 
@@ -824,32 +1211,147 @@ Schemas
 Tools
 Scripts
 Resources
-Evaluation Cases
 Policies
+Evaluation Cases
 Metadata
 ```
 
 Skills SHOULD be:
 
-* Discoverable
-* Versioned
-* Testable
-* Composable
-* Portable
-* Independently releasable where appropriate
+```text
+Discoverable
+Versioned
+Composable
+Portable
+Testable
+Evaluable
+Independently releasable where appropriate
+```
 
-Agents SHOULD acquire domain behavior through reusable skills rather than accumulating monolithic prompts.
+Agents SHOULD acquire domain expertise through reusable Skills rather than accumulating monolithic prompts.
 
 ---
 
-# 20. Architecture Principle #17 — Observability Is Built In
+# 29. Architecture Principle #26 — Multi-Tenancy Awareness
 
-Observability MUST NOT be an application-by-application afterthought.
+Lego AI SHOULD be tenant-aware from the architecture level.
+
+A Tenant MAY own or scope:
+
+```text
+Applications
+Organizations
+Teams
+Agents
+Memory
+Knowledge
+Tools
+Secrets
+Policies
+Budgets
+Artifacts
+Audit Data
+```
+
+Initial implementations MAY be single-tenant.
+
+However, canonical contracts MUST NOT make safe future tenant isolation impractical.
+
+Tenant identity SHOULD propagate through execution contexts where applicable.
+
+---
+
+# 30. Architecture Principle #27 — Resource Governance
+
+Autonomous systems consume finite resources.
+
+Lego AI MUST support resource-governance concepts such as:
+
+```text
+Budget
+Quota
+Limit
+ResourcePolicy
+```
+
+Governable resources MAY include:
+
+```text
+Money
+Tokens
+Model Calls
+Tool Calls
+API Calls
+Compute
+Execution Time
+Storage
+Network
+Human Approval Capacity
+```
+
+Example:
+
+```yaml
+budget:
+  max_cost: 5.00
+  max_duration: 15m
+  max_model_calls: 30
+  max_tool_calls: 50
+```
+
+Budget exhaustion MUST produce controlled behavior.
+
+---
+
+# 31. Architecture Principle #28 — Provenance and Explainability
+
+Lego AI SHOULD record enough provenance to answer:
+
+> **What produced this outcome and under what conditions?**
+
+Where appropriate, provenance SHOULD associate an Outcome or Artifact with:
+
+```text
+Input
+Goal
+Plan
+Task
+
+Agent / Team / Human
+
+Model + Version
+Prompt + Version
+Skill + Version
+Tool + Version
+
+Retrieved Sources
+
+Policy Decisions
+Guardrail Decisions
+Approvals
+
+Execution Trace
+Evaluation Results
+```
+
+Exact deterministic replay is not always possible.
+
+Traceable provenance SHOULD nevertheless be preserved where required.
+
+Private model chain-of-thought MUST NOT be required for provenance.
+
+---
+
+# 32. Architecture Principle #29 — Observability Is Built In
+
+Observability MUST NOT be left to individual applications.
 
 Lego AI SHOULD provide consistent tracing across:
 
 ```text
 Application
+   ↓
+Organization / Team
    ↓
 Workflow
    ↓
@@ -869,172 +1371,240 @@ Where appropriate, telemetry SHOULD capture:
 ```text
 trace_id
 request_id
+tenant_id
+
 application_id
+organization_id
+team_id
+
+goal_id
+plan_id
 workflow_id
 task_id
+
 agent_id
 tool_id
+
 model/provider metadata
+
 latency
 token usage
 cost
+
 state transitions
 tool invocations
+
 policy decisions
 approvals
+
 errors
 evaluation scores
 ```
 
-Sensitive information MUST be handled according to policy and MUST NOT be indiscriminately recorded.
+Sensitive data MUST NOT be indiscriminately logged.
 
-Private model reasoning MUST NOT be treated as required telemetry.
+Private model reasoning MUST NOT be considered required telemetry.
 
 ---
 
-# 21. Architecture Principle #18 — Evaluation Is a Runtime Primitive
+# 33. Architecture Principle #30 — Evaluation Is a Runtime Primitive
 
-Testing AI systems requires more than traditional unit tests.
+Testing intelligent systems requires more than ordinary unit tests.
 
 Lego AI MUST treat evaluation as a first-class capability.
 
-The evaluation architecture SHOULD support:
+Evaluation SHOULD support:
 
 ```text
 Unit Tests
 Contract Tests
+Conformance Tests
 Integration Tests
+
 Workflow Tests
 Agent Tests
+Team Tests
 Tool Tests
+
 Retrieval Tests
 Prompt Tests
-Regression Evals
-Model Evals
-Safety Evals
-Adversarial Tests
+
+Regression Evaluations
+Model Evaluations
+Safety Evaluations
+Adversarial Evaluations
+
 Performance Tests
 Cost Tests
-Production Evals
+Production Evaluations
 ```
 
-Model, prompt, skill, tool, workflow, policy, and agent changes SHOULD be independently evaluable.
+Model, prompt, skill, tool, policy, workflow, agent, team, and adapter changes SHOULD be independently evaluable.
 
 ---
 
-# 22. Architecture Principle #19 — Security Is Structural
+# 34. Architecture Principle #31 — Conformance Over Assumption
 
-Security MUST be implemented as a cross-cutting platform capability.
+Replaceability MUST be demonstrated rather than assumed.
+
+Each canonical port SHOULD eventually have a conformance suite.
+
+For example:
+
+```text
+Memory Adapter
+     │
+     ├── Interface compliance
+     ├── Lifecycle compliance
+     ├── Serialization
+     ├── Error semantics
+     ├── Health behavior
+     ├── Security hooks
+     └── Observability hooks
+```
+
+An adapter SHOULD NOT be considered conformant merely because it compiles against an interface.
+
+Reference implementations SHOULD include multiple adapters for important ports to prove architectural independence.
+
+---
+
+# 35. Architecture Principle #32 — Security Is Structural
+
+Security MUST be a cross-cutting platform concern.
 
 The architecture SHOULD support:
 
 ```text
 Authentication
 Authorization
+
 RBAC
 ABAC
+
 Policy Enforcement
 Secrets Management
-Data Classification
+
 Tenant Isolation
+Data Classification
+
 Sandboxing
 Tool Authorization
+
 Prompt-Injection Defense
-Input/Output Validation
+
+Input Validation
+Output Validation
+
 Audit
 Supply-Chain Security
+
 Human Approval
+
 Rate Limits
 Resource Budgets
 ```
 
-Security controls SHOULD be enforced outside the probabilistic decision boundary wherever possible.
+Security controls SHOULD be enforced outside probabilistic decision components wherever practical.
 
 ---
 
-# 23. Architecture Principle #20 — Human-in-the-Loop Is Native
+# 36. Architecture Principle #33 — Human-in-the-Loop Is Native
 
-Human participation MUST NOT be treated as an exceptional failure path.
+Humans MUST be valid first-class workflow participants.
 
-Humans MAY participate as first-class workflow actors.
+Human involvement MUST NOT be modeled only as failure recovery.
+
+Example:
 
 ```text
-Agent
-   │
-   ▼
+Agent / Team
+     │
+     ▼
 Decision
-   │
-   ▼
+     │
+     ▼
 Approval Required?
-   │
-   ├── NO ─────► Continue
-   │
-   └── YES
-          │
-          ▼
-        Human
-          │
-       ┌──┴──┐
-       ▼     ▼
-    Approve Reject
+     │
+     ├── NO ─────► Continue
+     │
+     └── YES
+           │
+           ▼
+         Human
+           │
+       ┌───┴───┐
+       ▼       ▼
+    Approve   Reject
 ```
 
-Policies SHOULD determine when human involvement is required.
+Policies SHOULD determine when human intervention is required.
 
 ---
 
-# 24. Architecture Principle #21 — Event Native
+# 37. Architecture Principle #34 — Event Native
 
-Lego AI SHOULD support both synchronous and asynchronous execution.
+Lego AI SHOULD support synchronous and asynchronous operation.
 
-The platform SHOULD be capable of reacting to:
+Applications MAY react to:
 
 ```text
 API Requests
 User Messages
+
 Events
 Schedules
 Webhooks
+
 Data Changes
+
 External Agent Requests
+
 Workflow Transitions
+
 Human Approvals
+
 System Signals
 ```
 
-Agents SHOULD NOT require a chat interface.
+Agents SHOULD NOT require conversational interfaces.
 
-An intelligent application may be entirely event-driven.
+An intelligent application MAY be completely event-driven.
 
 ---
 
-# 25. Architecture Principle #22 — Cloud and Deployment Neutrality
+# 38. Architecture Principle #35 — Cloud and Deployment Neutrality
 
-Lego AI MUST be capable of being implemented for environments including:
+Lego AI MUST be implementable across environments such as:
 
 ```text
 Developer Laptop
+Process
+
 Container
 Virtual Machine
+
 Kubernetes
+
 AWS
 Azure
 GCP
+
 Private Cloud
 On-Premises
 Hybrid
 Edge
 ```
 
-The canonical Lego AI specification MUST NOT assume Kubernetes or any particular cloud provider.
+The canonical Lego AI specification MUST NOT assume Kubernetes or any particular cloud.
 
-Deployment adapters and reference architectures MAY optimize for specific environments.
+Specific reference architectures MAY optimize for particular environments.
 
 ---
 
-# 26. Architecture Principle #23 — Language Neutrality
+# 39. Architecture Principle #36 — Language Neutrality
 
-The Lego AI specification MUST NOT be defined exclusively through Python, Java, TypeScript, .NET, Go, or any other programming language.
+The Lego AI specification MUST NOT be defined exclusively through any programming language.
 
 Canonical contracts SHOULD use language-neutral representations where appropriate:
 
@@ -1042,58 +1612,65 @@ Canonical contracts SHOULD use language-neutral representations where appropriat
 JSON Schema
 OpenAPI
 Protocol Buffers
-AsyncAPI / Event Schemas
-Portable manifests
-Protocol specifications
+Event Schemas
+Portable Manifests
+Protocol Specifications
 ```
 
-Language SDKs MAY provide idiomatic abstractions.
+Language SDKs MAY expose idiomatic APIs.
 
-For example:
+Conceptually:
 
 ```text
-lego-ai-spec
-     │
-     ├── Python SDK
-     ├── Java SDK
-     ├── TypeScript SDK
-     ├── .NET SDK
-     ├── Go SDK
-     └── Future SDKs
+             Lego AI Specification
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+      Python       Java      TypeScript
+        │            │            │
+        ▼            ▼            ▼
+       SDK          SDK          SDK
+
+             Future SDKs
 ```
 
 ---
 
-# 27. Architecture Principle #24 — Replaceability Test
+# 40. Architecture Principle #37 — Replaceability Test
 
-Every major architectural decision SHOULD be subjected to the following question:
+Every major implementation decision SHOULD be tested with:
 
 > **Can this implementation be replaced without changing application domain logic or Lego AI's canonical contracts?**
 
-For example:
+Examples:
 
 ```text
-OpenAI       → another provider
-LangGraph    → another runtime
-PostgreSQL   → another database
-Redis        → another cache
-Kafka        → another event system
-Kubernetes   → another runtime
-MCP          → another tool protocol
-A2A          → another agent protocol
+Model Provider    → Different Provider
+
+Agent Runtime     → Different Runtime
+
+Database          → Different Database
+
+Event System      → Different Event System
+
+Cloud             → Different Cloud
+
+Tool Protocol     → Different Protocol
+
+Agent Protocol    → Different Protocol
 ```
 
-If the answer is **no**, the architecture SHOULD be reviewed for accidental coupling.
+If replacement requires substantial domain redesign, accidental coupling SHOULD be investigated.
 
 ---
 
-# 28. Architecture Principle #25 — Escape Hatches
+# 41. Architecture Principle #38 — Escape Hatches
 
 Abstraction MUST NOT become imprisonment.
 
-Lego AI SHOULD provide sensible defaults and portable abstractions while permitting applications to access implementation-specific capabilities deliberately.
+Lego AI SHOULD provide portable abstractions while allowing intentional use of provider-specific capabilities.
 
-The preferred model is:
+Preferred model:
 
 ```text
 Portable Core
@@ -1103,162 +1680,215 @@ Portable Core
      └── Provider Extension
 ```
 
-Provider-specific extensions MUST be explicit.
+Provider-specific usage MUST be explicit.
 
-Applications using them accept reduced portability knowingly.
+Applications using provider extensions consciously accept reduced portability.
 
-The platform MUST NOT reduce every provider to the lowest common denominator merely to preserve abstraction purity.
+Lego AI MUST NOT reduce all providers to the lowest common denominator merely to preserve abstraction purity.
 
 ---
 
-# 29. Lego AI Layer Model
-
-The conceptual architecture is:
+# 42. Lego AI Logical Model
 
 ```text
-┌────────────────────────────────────────────────────────────┐
-│                    APPLICATIONS                            │
-│ Web │ Mobile │ Enterprise │ API │ Agent │ Automation      │
-└───────────────────────────┬────────────────────────────────┘
-                            │
-════════════════════════════▼════════════════════════════════
-                 LEGO AI PUBLIC CONTRACT
-════════════════════════════┬════════════════════════════════
-                            │
-                 ┌──────────▼──────────┐
-                 │    LEGO AI CORE     │
-                 │                     │
-                 │ Capability Model    │
-                 │ Contracts           │
-                 │ Context             │
-                 │ Lifecycle           │
-                 │ Registry            │
-                 │ Events              │
-                 │ Configuration       │
-                 └──────────┬──────────┘
-                            │
-════════════════════════════▼════════════════════════════════
-                       PORT LAYER
-════════════════════════════┬════════════════════════════════
-                            │
-       ┌──────────┬─────────┼─────────┬──────────┐
-       ▼          ▼         ▼         ▼          ▼
-     Model      Agent    Workflow   Memory      Tool
-      Port       Port      Port      Port        Port
+┌─────────────────────────────────────────────────────┐
+│                    APPLICATIONS                     │
+│                                                     │
+│ Web │ Mobile │ Enterprise │ APIs │ Automation      │
+└─────────────────────────┬───────────────────────────┘
+                          │
+══════════════════════════▼════════════════════════════
+                LEGO AI PUBLIC CONTRACT
+══════════════════════════┬════════════════════════════
+                          │
+                 ┌────────▼────────┐
+                 │ LEGO AI KERNEL │
+                 │                 │
+                 │ Capabilities    │
+                 │ Contracts       │
+                 │ Context         │
+                 │ Lifecycle       │
+                 │ Registry        │
+                 │ Resolver        │
+                 │ Events          │
+                 │ Configuration   │
+                 └────────┬────────┘
+                          │
+══════════════════════════▼════════════════════════════
+                      DOMAIN
+══════════════════════════┬════════════════════════════
 
-       ▼          ▼         ▼         ▼          ▼
-    Knowledge   Skill     Policy    Event    Observability
-      Port       Port      Port      Port        Port
+Application
+Organization
+Team
+Role
 
-════════════════════════════┬════════════════════════════════
-                      ADAPTER / PLUGIN LAYER
-════════════════════════════┬════════════════════════════════
-                            │
-            Concrete technologies live here.
-                            │
-════════════════════════════▼════════════════════════════════
-                   INFRASTRUCTURE / PROVIDERS
-═════════════════════════════════════════════════════════════
+Goal
+Plan
+Task
+Delegation
+
+Agent
+Human
+Service
+
+Artifact
+Outcome
+
+══════════════════════════▼════════════════════════════
+                       PORTS
+══════════════════════════┬════════════════════════════
+
+Model
+Agent Runtime
+Workflow
+
+Tool
+Skill
+
+Memory
+Knowledge
+Retrieval
+
+Policy
+Security
+
+Events
+Artifacts
+
+Observability
+Evaluation
+
+══════════════════════════▼════════════════════════════
+                  ADAPTER / PLUGIN LAYER
+══════════════════════════┬════════════════════════════
+
+        Concrete technologies live here.
+
+══════════════════════════▼════════════════════════════
+              INFRASTRUCTURE / PROVIDERS
+═══════════════════════════════════════════════════════
 ```
 
 Dependency direction MUST point toward stable abstractions.
 
 ---
 
-# 30. Lego AI Is NOT
+# 43. Lego AI Is NOT
 
-Lego AI is NOT:
+Lego AI is NOT inherently:
 
 ```text
-A LangGraph wrapper
 An OpenAI wrapper
+A LangGraph wrapper
+
 A chatbot framework
 A RAG framework
+
 A prompt library
+
 An MCP server
 An A2A implementation
+
 A vector database abstraction
+
 A Kubernetes platform
+
 A Python-only library
+
 A collection of microservices
+
 A low-code UI
 ```
 
-It MAY provide all of these capabilities through modules or adapters.
+It MAY expose all of these capabilities through modules, plugins, adapters, protocols, or applications.
 
-But none defines the identity of Lego AI.
+None defines the identity of Lego AI.
 
 ---
 
-# 31. Lego AI IS
+# 44. Lego AI IS
 
 Lego AI is:
 
-> **A technology-neutral capability composition and execution layer for intelligent applications.**
+> **A technology-neutral capability composition, coordination, governance, and execution layer for intelligent applications and AI teams.**
 
-It provides standardized abstractions for:
+It standardizes concepts around:
 
 ```text
-Intelligence
+Applications
+Organizations
+Teams
+Roles
+
+Goals
+Plans
+Tasks
+Delegation
+
 Agents
+Humans
+Services
+
 Models
 Workflows
+
 Tools
 Skills
+
 Memory
 Knowledge
 Context
+
 Events
-Policies
+Artifacts
+Outcomes
+
 Security
+Policies
+Guardrails
+
 Evaluation
 Observability
+Provenance
+
 Human Interaction
 Interoperability
 Execution
 ```
 
-and allows implementations to be selected independently.
+while allowing implementations to be independently selected and replaced.
 
 ---
 
-# 32. Developer Experience Goal
+# 45. Developer Experience Goal
 
-The long-term application authoring experience SHOULD approach:
+The long-term authoring experience SHOULD approach:
 
 ```yaml
 apiVersion: lego.ai/v1
 kind: Application
 
 metadata:
-  name: financial-research
+  name: software-engineering-assistant
 
 spec:
 
-  capabilities:
+  requires:
 
-    reasoning:
-      required: true
+    capabilities:
+      - model.reasoning
+      - workflow.durable
+      - memory.semantic
+      - team.coordination
 
-    semantic-memory:
-      required: true
-
-    durable-workflow:
-      required: true
-
-  agents:
-    - researcher
-    - analyst
-    - reviewer
-
-  skills:
-    - research
-    - financial-analysis
-    - report-writing
+  teams:
+    - software-development
 
   tools:
-    - market-data
-    - filings
+    - repository
+    - test-runner
+    - security-scanner
 
   security:
     profile: enterprise
@@ -1273,24 +1903,25 @@ spec:
 Then:
 
 ```text
-                Application Intent
-                        │
-                        ▼
-                Capability Resolver
-                        │
-                        ▼
-                  Plugin Registry
-                        │
-          ┌─────────────┼─────────────┐
-          ▼             ▼             ▼
-       Models        Runtime       Storage
-          │             │             │
-          └─────────────┼─────────────┘
-                        ▼
-                  Execution Plan
-                        │
-                        ▼
-                       RUN
+Application Intent
+       │
+       ▼
+Capability Resolver
+       │
+       ▼
+Plugin Registry
+       │
+       ▼
+Dependency Resolution
+       │
+       ▼
+Execution Plan
+       │
+       ▼
+Policies / Budgets
+       │
+       ▼
+RUN
 ```
 
 The developer specifies intent.
@@ -1299,9 +1930,9 @@ Lego AI assembles the runtime.
 
 ---
 
-# 33. AI-Native SDLC Intent
+# 46. AI-Native SDLC
 
-Lego AI itself MUST be developed using an AI-native software development lifecycle.
+Lego AI MUST itself be developed through an AI-native lifecycle.
 
 ```text
 Intent
@@ -1312,9 +1943,11 @@ Architecture
    ↓
 Contracts
    ↓
+Conformance Tests
+   ↓
 Implementation
    ↓
-Tests
+Testing
    ↓
 AI Evaluations
    ↓
@@ -1327,171 +1960,340 @@ Runtime Evaluation
 Observability
    ↓
 Feedback
-   └────────────────► Intent
+   └──────────────► Intent
 ```
 
-AI SHOULD assist with:
+AI MAY assist with:
 
 ```text
 Requirements refinement
+Specification analysis
 Architecture analysis
-ADR generation
+ADR preparation
+
 Implementation
 Code review
+
 Test generation
 Evaluation generation
+
 Threat modeling
+
 Documentation
+
 Migration analysis
 Dependency analysis
+
 Operational diagnosis
 ```
 
-Human engineers remain responsible for architectural intent, risk decisions, governance, and acceptance.
+Human engineers remain responsible for architectural intent, governance, risk acceptance, and final engineering decisions.
 
 ---
 
-# 34. Specification Hierarchy
+# 47. Specification Hierarchy
 
-Project decisions SHOULD flow downward from stable intent toward replaceable implementation.
+Project decisions MUST flow from stable intent toward replaceable implementation.
 
 ```text
 intent.md
-    │
-    ▼
-principles/
-    │
-    ▼
+     │
+     ▼
 spec/
-    │
-    ▼
+     │
+     ▼
 architecture/
-    │
-    ▼
+     │
+     ▼
 contracts/
-    │
-    ▼
-modules/
-    │
-    ▼
+     │
+     ▼
+plugin-spec/
+     │
+     ▼
+security/
+     │
+     ▼
+evaluation/
+     │
+     ▼
+conformance/
+     │
+     ▼
+adrs/
+     │
+     ▼
+runtime/
+     │
+     ▼
 adapters/
-    │
-    ▼
-deployments/
+     │
+     ▼
+blueprints/
+     │
+     ▼
+applications/
 ```
 
-The rule is:
+The governing rule is:
 
 > **Lower layers MUST NOT silently redefine higher-layer intent.**
 
-When an implementation conflicts with this document, either:
+If implementation conflicts with this document:
 
-1. the implementation is wrong, or
-2. this intent must be deliberately revised through an architectural decision.
+1. the implementation is incorrect, or
+2. the architectural intent must be deliberately amended.
 
-Technology convenience alone is insufficient justification for violating a foundational principle.
+Technology convenience alone is insufficient justification.
 
 ---
 
-# 35. Decision Priority
+# 48. Decision Priority
 
-When architectural goals conflict, use the following priority:
+When architectural goals conflict, use the following default priority:
 
 ```text
 1. Security & Correctness
-2. Contract Stability
+2. Contract Integrity
 3. Technology Independence
-4. Modularity
-5. Interoperability
-6. Replaceability
-7. Testability
-8. Operability
-9. Developer Experience
-10. Performance
-11. Implementation Convenience
+4. Data / Tenant Isolation
+5. Modularity
+6. Interoperability
+7. Replaceability
+8. Testability / Evaluability
+9. Operability
+10. Developer Experience
+11. Performance
+12. Implementation Convenience
 ```
 
-This ordering is guidance rather than a substitute for engineering judgment.
+This is guidance rather than a substitute for engineering judgment.
 
-Document significant trade-offs through Architecture Decision Records.
+Significant trade-offs MUST be documented through Architecture Decision Records.
 
 ---
 
-# 36. Success Criteria
+# 49. Initial Reference Implementation Strategy
 
-Lego AI is succeeding when a new application can reuse existing capabilities without understanding their internal implementation.
+The first implementation MUST prove the architecture rather than attempt feature completeness.
 
-A mature Lego AI application SHOULD be able to:
+The first vertical slice SHOULD demonstrate:
 
 ```text
-Select
-   ↓
+Application Manifest
+       │
+       ▼
+Capability Resolver
+       │
+       ▼
+Plugin Registry
+       │
+       ▼
+Workflow / Agent
+       │
+       ▼
+Model Port
+       │
+       ▼
+Tool Port
+       │
+       ▼
+Artifact
+       │
+       ▼
+Evaluation
+       │
+       ▼
+Observability
+```
+
+Important ports SHOULD eventually have at least two implementations.
+
+For example:
+
+```text
+ModelPort
+ ├── Adapter A
+ └── Adapter B
+
+MemoryPort
+ ├── InMemory Adapter
+ └── Persistent Adapter
+
+ToolPort
+ ├── Native Adapter
+ └── Protocol Adapter
+
+AgentRuntimePort
+ ├── Reference Runtime
+ └── Framework Adapter
+```
+
+Replaceability MUST be demonstrated through tests.
+
+---
+
+# 50. Reference Validation Applications
+
+Lego AI SHOULD NOT be considered mature merely because one application works.
+
+The architecture SHOULD be validated against applications with meaningfully different characteristics.
+
+Initial reference applications SHOULD include:
+
+```text
+1. RAG / Knowledge Assistant
+
+2. Software Development AI Team
+
+3. Event-Driven Automation
+```
+
+Later validation SHOULD include examples such as:
+
+```text
+Research Team
+Video Production Team
+Social Media Team
+Data Analysis Team
+Document Processing
+Trading / Market Analysis
+Customer Support
+```
+
+The purpose is to validate generality, not to move domain-specific behavior into Lego AI Core.
+
+---
+
+# 51. Architectural Litmus Test
+
+Every significant Lego AI contribution MUST be evaluated against questions including:
+
+```text
+Is the contract technology-neutral?
+
+Can the implementation be replaced?
+
+Can the capability be consumed independently?
+
+Can another application reuse it?
+
+Can another programming language implement it?
+
+Can another runtime implement it?
+
+Does it expose capability terminology rather than vendor terminology?
+
+Is configuration separated from implementation?
+
+Is state explicit where required?
+
+Are trust boundaries explicit?
+
+Is autonomy bounded?
+
+Is tenant context preserved where applicable?
+
+Can resources be governed?
+
+Is provenance available?
+
+Is it observable?
+
+Is it testable?
+
+Is it evaluable?
+
+Does it support versioning?
+
+Does it introduce unnecessary coupling?
+
+Does it reduce future application code?
+
+Does it preserve intentional provider escape hatches?
+```
+
+If several answers are no, the design SHOULD be reconsidered.
+
+---
+
+# 52. Success Criteria
+
+Lego AI succeeds when a new application can primarily:
+
+```text
+Declare Intent
+      ↓
+Select Capabilities
+      ↓
 Compose
-   ↓
+      ↓
 Configure
-   ↓
-Extend only domain-specific behavior
-   ↓
+      ↓
+Add Domain Behavior
+      ↓
 Evaluate
-   ↓
+      ↓
 Deploy
 ```
 
 rather than:
 
 ```text
-Rebuild infrastructure
-   ↓
-Reimplement integrations
-   ↓
-Reimplement memory
-   ↓
-Reimplement agents
-   ↓
-Reimplement security
-   ↓
-Reimplement observability
-   ↓
-Reimplement evaluation
+Rebuild Model Infrastructure
+      ↓
+Rebuild Agent Infrastructure
+      ↓
+Rebuild Integrations
+      ↓
+Rebuild Memory
+      ↓
+Rebuild Security
+      ↓
+Rebuild Observability
+      ↓
+Rebuild Evaluation
+      ↓
+Rebuild Governance
 ```
 
 ---
 
-# 37. Ultimate North Star
+# 53. Ultimate North Star
 
 The ultimate objective is:
 
-> **Any intelligent application should be constructible by composing Lego AI capabilities while remaining independent of the technologies that implement those capabilities.**
+> **Any suitable intelligent application or AI team should be constructible by composing Lego AI capabilities while remaining independent of the technologies implementing those capabilities.**
 
-A future application should be able to say:
+A future application should be able to declare:
 
 ```text
 I need:
 
 Reasoning
-+
+
 Retrieval
-+
+
 Memory
-+
-Three Agents
-+
+
 A Durable Workflow
-+
-Two Enterprise Tools
-+
+
+A Software Development Team
+
+Repository Tools
+
 Human Approval
-+
+
 Security
-+
+
 Evaluation
-+
+
 Observability
 ```
 
-and Lego AI should determine how those requirements are satisfied.
+and Lego AI should determine how those requirements can be satisfied.
 
-Technology changes.
+Technologies change.
 
 Models change.
 
@@ -1505,94 +2307,126 @@ Databases change.
 
 Programming languages change.
 
-**The application's intent should survive those changes.**
+**Application intent should survive those changes.**
 
 ---
 
-# 38. Architectural Litmus Test
+# 54. Final Constitutional Principle
 
-Every major contribution to Lego AI MUST be evaluated against these questions:
+> **Applications own Intent.**
+>
+> **Organizations own Goals.**
+>
+> **Teams own Outcomes.**
+>
+> **Roles define Responsibilities.**
+>
+> **Agents, Humans, and Services perform Roles.**
+>
+> **Skills provide Expertise.**
+>
+> **Tools provide Actions.**
+>
+> **Artifacts preserve Work.**
+>
+> **Policies bound Autonomy.**
+>
+> **Lego AI owns Contracts.**
+>
+> **Plugins provide Capabilities.**
+>
+> **Technology remains Replaceable.**
 
-1. Is it technology-neutral at the contract boundary?
-2. Can the implementation be replaced?
-3. Can the capability be used independently?
-4. Can another application reuse it?
-5. Can another programming language consume it?
-6. Can another runtime implement it?
-7. Does it expose capability rather than vendor terminology?
-8. Is configuration separated from implementation?
-9. Is state explicit where necessary?
-10. Is security enforced outside probabilistic components where possible?
-11. Is it observable?
-12. Is it testable and evaluable?
-13. Does it support versioning?
-14. Does it introduce unnecessary coupling?
-15. Does it reduce future application code?
-16. Does it preserve an escape hatch for implementation-specific capabilities?
-
-If several answers are **no**, the design SHOULD be reconsidered.
-
----
-
-# 39. Final Principle
-
-> **Lego AI owns the contracts. Plugins own the implementations. Applications own the intent.**
-
-Or, expressed architecturally:
+Architecturally:
 
 ```text
 APPLICATION
      │
      │ declares intent
      ▼
- LEGO AI
+GOAL / TEAM / WORKFLOW
      │
-     │ resolves capabilities
+     │ requests capabilities
      ▼
-  PLUGINS
+LEGO AI
+     │
+     │ resolves contracts
+     ▼
+PLUGINS
      │
      │ implement capabilities
      ▼
 TECHNOLOGY
 ```
 
-This separation is the foundation of the Lego AI Operating Layer.
+---
+
+# 55. Change Governance
+
+This document is foundational.
+
+Implementation work MUST NOT casually modify it.
+
+A significant change to `intent.md` SHOULD follow:
+
+```text
+Proposed Intent Change
+        │
+        ▼
+Impact Analysis
+        │
+        ▼
+Architecture Decision Record
+        │
+        ▼
+Review
+        │
+        ▼
+Intent Amendment
+        │
+        ▼
+Specification Alignment
+```
+
+Implementation SHOULD conform to intent.
+
+Intent SHOULD NOT drift merely to accommodate an implementation shortcut.
 
 ---
 
-## End State
+# 56. End State
 
 ```text
-                 ┌──────────────────────┐
-                 │      YOUR IDEA       │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ APPLICATION INTENT   │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-              ╔════════════════════════════╗
-              ║   LEGO AI OPERATING LAYER ║
-              ║                            ║
-              ║  Compose • Resolve • Run  ║
-              ╚═════════════╤══════════════╝
-                            │
-             ┌──────────────┼──────────────┐
-             ▼              ▼              ▼
-          Models          Agents         Tools
-             │              │              │
-          Memory         Workflows       Skills
-             │              │              │
-         Security         Evals       Observability
-             │              │              │
-             └──────────────┼──────────────┘
-                            ▼
-                  SWAPPABLE ADAPTERS
-                            │
-                            ▼
-                    ANY TECHNOLOGY
+                   ┌─────────────────────┐
+                   │      YOUR IDEA      │
+                   └─────────┬───────────┘
+                             │
+                             ▼
+                   ┌─────────────────────┐
+                   │ APPLICATION INTENT  │
+                   └─────────┬───────────┘
+                             │
+                             ▼
+                ╔══════════════════════════╗
+                ║  LEGO AI OPERATING LAYER║
+                ║                          ║
+                ║ Compose • Govern • Run  ║
+                ╚════════════╤═════════════╝
+                             │
+          ┌──────────────────┼──────────────────┐
+          ▼                  ▼                  ▼
+       Models             Agents              Tools
+       Memory              Teams              Skills
+       Knowledge         Workflows           Policies
+       Security            Evals        Observability
+       Artifacts          Humans           Events
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             ▼
+                    SWAPPABLE ADAPTERS
+                             │
+                             ▼
+                     ANY TECHNOLOGY
 ```
 
-**Build capabilities once. Compose applications repeatedly. Replace technologies freely. Preserve intent indefinitely.**
+> **Build capabilities once. Compose applications repeatedly. Assemble AI teams safely. Replace technologies freely. Preserve intent indefinitely.**
