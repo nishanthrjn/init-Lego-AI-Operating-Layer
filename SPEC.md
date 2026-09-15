@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Canonical Specification
 
 **Specification version:** 0.1.0  
-**Status:** Initial specification; acceptance pending  
+**Status:** ACCEPTED — CANONICAL SEMANTIC SPECIFICATION  
 **Authority:** [intent.md](intent.md), version 1.0, ACCEPTED — FOUNDATIONAL  
 **Scope:** Technology-neutral domain semantics and behavioral contracts
 
@@ -9,7 +9,11 @@
 
 This document defines WHAT Lego AI means. It refines, and MUST NOT override, `intent.md`. A conflict MUST be reported and resolved through the intent change process before the conflicting behavior is treated as conformant. No implementation convenience constitutes an amendment.
 
-MUST and MUST NOT are mandatory requirements. SHOULD and SHOULD NOT permit a documented exception with rationale, impact, and compensating measures. MAY denotes permission, not a requirement. Lowercase descriptive language explains concepts; it does not waive normative requirements. Required properties MUST have meaningful values; an empty collection is valid only where zero members is permitted. Optional properties MAY be absent; absence MUST NOT imply authority, consent, unlimited resources, or successful execution.
+The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in this document are to be interpreted as described in BCP 14 (RFC 2119 and RFC 8174) when, and only when, they appear in all capitals.
+
+MUST and MUST NOT represent mandatory requirements. SHOULD and SHOULD NOT permit a documented exception only when the full implications are understood and the rationale, impact, and compensating measures are recorded. MAY denotes permission, not a requirement.
+
+Lowercase descriptive language explains concepts and does not waive normative requirements. Required properties MUST have meaningful values; an empty collection is valid only where zero members is permitted. Optional properties MAY be absent; absence MUST NOT imply authority, consent, unlimited resources, successful execution, or any other implicit default not explicitly defined by this specification.
 
 This specification defines semantic properties, not programming interfaces, physical records, wire formats, or storage layouts. A property may be represented directly or through an unambiguous, authorized reference. Multiple independent implementations can conform without sharing representation or deployment topology.
 
@@ -880,13 +884,25 @@ The identifiers below are stable anchors for future conformance tests. A conform
 
 Blueprints in intent §23 are reusable compositions of the definitions above and MUST obey the same validation/governance rules. No separate privileged Blueprint execution semantics are introduced here. Registry and configuration in intent §42 are logical discovery and declaration responsibilities; they do not prescribe centralized services or persistence. Their representation contracts remain future work.
 
+## 12.2 Accepted semantic decisions
+
+### DEC-01 — Operational Result vs Canonical Outcome
+
+Direct primitive or capability execution MAY produce an operational result without creating a canonical Goal, Team, Organization, or Outcome.
+
+A result becomes a canonical **Outcome** only when the application intentionally represents an accountable organizational or business achievement requiring the semantics defined for Outcome.
+
+Therefore:
+
+```text
+Operational Result ≠ Canonical Outcome
+
 ## 13. Open questions, risks, and next document
 
 These are explicit unresolved governance/contract questions, not permission to bypass the safe rules above. The specification introduces semantic refinements where intent is silent; acceptance of this revision remains a project governance decision.
 
 | ID | Question / ambiguity | Current boundary and required follow-up |
 |---|---|---|
-| Q-01 | Intent §54 assigns Goals/Outcomes to Organizations/Teams while §§11–12 allow direct primitive usage. Must every business result become an Outcome? | §3 treats direct operational results separately and requires accountability when promoted to canonical Goal/Outcome. Confirm this distinction during specification acceptance; do not force Agents or Teams into every invocation. |
 | Q-02 | Can Organizations be co-owned across tenants, or is collaboration through scoped associations sufficient? | This revision uses one tenant per operational entity and explicit cross-scope grants. Joint cross-tenant ownership is unsupported until a deliberate semantic extension is accepted. |
 | Q-03 | Who governs canonical namespaces, approved extension vocabularies, and compatibility certification? | Namespace authority MUST be explicit; no global registry operator or distribution design is selected. Define governance before public contract publication. |
 | Q-04 | Which minimum feature sets deserve named conformance profiles? | §1.2 requires explicit supported scope; §12 supplies applicable invariants. Define profiles and evidence requirements before making implementation-wide conformance claims. |
