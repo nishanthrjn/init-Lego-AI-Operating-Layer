@@ -513,7 +513,7 @@ Owner: **Model Interaction**. Model invocation is independently usable and carri
 | cancel_model_request | Invocation identity/revision, advertised cancellation support, authority | Stop request/result with known/unknown in-flight work and charges; unsupported cancellation explicit, no false rollback claim | M/X; Base, CapabilityUnavailable, ModelFailure |
 | report_usage | Invocation/effect identity, unique report/source, quantity kind/units/measurement and uncertainty | Model-owned usage observation; Resource Accounting separately reconciles it through an allowed contract | F; Base, Conflict |
 
-**CTR-041.** Structured output is not proof of truth, safe instructions, authorization, or subject quality. Outputs retain trust and source attribution. Models may be multimodal or non-language models. Repeat invocation may differ even on the same input; deterministic inference or exact replay is not implied. A lost invocation result requires effect-safe retry and usage reconciliation. The HLC-01 direct Intelligence → Evaluation invocation remains unfinalized; an allowed external consumer may request evaluation of model results.
+**CTR-041.** Structured output is not proof of truth, safe instructions, authorization, or subject quality. Outputs retain trust and source attribution. Models may be multimodal or non-language models. Repeat invocation may differ even on the same input; deterministic inference or exact replay is not implied. A lost invocation result requires effect-safe retry and usage reconciliation. Evaluation of Model results is orchestrated by an authorized consumer permitted to depend on both Intelligence and Evaluation; Model Interaction does not directly invoke Evaluation.
 
 ## 17. Skill contracts
 
@@ -526,7 +526,7 @@ Owner: **Skill Asset**. Skills describe expertise and dependencies; consumers or
 | resolve_skill_dependencies | Versioned dependency requirements, consumer context, mandatory/optional constraints | CapabilityResolution or explicit non-success, pinned dependencies/provenance; no automatic dependency installation | M; Base, CapabilityResolutionError |
 | use_skill | Exact Skill version, authorized Context/resources, admitted work and bound dependencies | Attributable expertise use/result reference or action proposals for the consumer to mediate; usage evidence, not authority or control configuration mutation | X; Base, DependencyFailure |
 
-**CTR-042.** Skill use MUST NOT install arbitrary dependencies, grant Permissions, bypass Tool mediation, override Policy, or mutate control-plane configuration. Governing-definition publication requires its own authorized contract and cannot be implicit in instructions. Every contributing Skill version is attributable. HLC-01 also prevents finalization of direct Skill Asset → Evaluation calls pending Architecture correction.
+**CTR-042.** Skill use MUST NOT install arbitrary dependencies, grant Permissions, bypass Tool mediation, override Policy, or mutate control-plane configuration. Governing-definition publication requires its own authorized contract and cannot be implicit in instructions. Every contributing Skill version is attributable. Evaluation of Skill behavior is orchestrated by an authorized consumer permitted to depend on both Intelligence and Evaluation. Skill Asset MAY reference existing authorized Evaluation evidence but does not directly invoke Evaluation.
 
 ## 18. Context contracts
 
@@ -913,7 +913,7 @@ All rows require **T** = verified TenantContext/current authorized initiator and
 | Bootstrap | Unsupported dependency/evidence cycle fails; only explicitly admitted roots perform bootstrap duties |
 | Claims/partial completion | Losing one prerequisite before dispatch prevents handoff; late revocation reports in-flight scope; confirmed effect plus failed audit/publication retains separate repair obligations |
 
-**CTR-069.** A conformance declaration MUST identify implementation/release, all applicable SPEC/Architecture/Contract/Port/Capability versions, supported operations, extensions, profiles or explicit supported sets, claimed guarantees/failure domains, evidence and limitations. A claim cannot silently include HLC-01 or unsupported optional surfaces. Structural compatibility alone is insufficient. Replacement tests must preserve errors, context, authority, effects and resource semantics, not just output shape.
+**CTR-069.** A conformance declaration MUST identify implementation/release, all applicable SPEC/Architecture/Contract/Port/Capability versions, supported operations, extensions, profiles or explicit supported sets, claimed guarantees/failure domains, evidence and limitations. A claim cannot silently include unsupported optional surfaces. Structural compatibility alone is insufficient. Replacement tests must preserve errors, context, authority, effects and resource semantics, not just output shape.
 
 ## 35. Open questions, risks, and higher-level dispositions
 
@@ -949,7 +949,7 @@ The earlier resume-rejection issue is corrected in the current SPEC §5.8 and Ar
 
 | ID | Finding | Boundary / correction owner |
 |---|---|---|
-| HLC-01 | Architecture §4.7 permits Intelligence use of Evaluation but the exhaustive §5.2 matrix excludes I → Q | That direct interaction remains NOT FINALIZED. ARCHITECTURE must explicitly allow it or reallocate the orchestration; no lower-level dependency added |
+| HLC-01 | RESOLVED upstream: direct Intelligence → Evaluation invocation was removed from Architecture §4.7, preserving the exhaustive §5.2 dependency matrix. Evaluation is orchestrated by an allowed consumer; Intelligence may only reference existing authorized Evaluation evidence without a direct module dependency. | No further contract-layer action required unless Architecture changes again. |
 | CR-01 | Claim ordering across independent owners can be unavailable during failures | §6 requires fail-closed dispatch unless joint validity is demonstrable. SECURITY/CONFORMANCE must test failure domains; there is no availability promise during uncertainty |
 | CR-02 | Deduplication evidence may expire before a delayed retry | §§5, 28 require status coverage and intervention outside it; profile retention and maximum retry horizon must align |
 | CR-03 | Approval may be consumed although later dispatch fails | §6 preserves consumed use separately from actual effect; no automatic replay/refund. GOVERNANCE must define new-entitlement approval practice |
@@ -958,7 +958,7 @@ The earlier resume-rejection issue is corrected in the current SPEC §5.8 and Ar
 | CR-06 | Generic lifecycle publication could accidentally activate a specialized concept | §7 defers to specialized lifecycles; Plugin validation/publication is distinct from activation. CONFORMANCE must test this boundary |
 | CR-07 | Core enforcement/evidence operations could recursively require themselves | §§27, 29 require explicit bounded admitted roots and cycle failure; root authority is a SECURITY/GOVERNANCE decision, not a caller exception |
 
-Only HLC-01 is a newly identified higher-level dependency contradiction blocking finalization of a specific interaction. Its omission from executable contract claims is deliberate and reviewable. Other semantic operations are specified within existing authority; unresolved governance parameters must be supplied before claiming the corresponding guarantees.
+HLC-01 has been resolved at the architectural layer and no longer blocks contract finalization. The remaining contract risks are intentionally carried to Security, Governance, Conformance, profiles, or implementation ADRs according to their assigned owners.
 
 ## 36. Traceability and final self-review
 
@@ -976,7 +976,7 @@ Only HLC-01 is a newly identified higher-level dependency contradiction blocking
 | SPEC DEC-01, I-01–I-20; Architecture AR-07, §13 | CTR-028–CTR-032, CTR-041–CTR-050, CTR-068–CTR-069 |
 | Architecture AR-12, AR-15–AR-16, R-02, R-04–R-08 | CTR-019–CTR-022, CTR-048, CTR-053–CTR-061 |
 
-All operation rows are normative through CTR-003 and their family requirements. Inventory §33 and proof obligations §34 are the map for later representation contracts and conformance cases. HLC-01 is excluded until its higher-level correction is accepted.
+All operation rows are normative through CTR-003 and their family requirements. Inventory §33 and proof obligations §34 are the map for later representation contracts and conformance cases. HLC-01 is resolved by the accepted Architecture correction and introduces no direct Intelligence → Evaluation contract.
 
 ### 36.2 Thirty completion checks
 
@@ -1010,7 +1010,7 @@ All operation rows are normative through CTR-003 and their family requirements. 
 | 26 | Plugins cannot self-authorize | Pass — CTR-051, CTR-055 |
 | 27 | Adapter replacement preserves errors/governance | Pass — CTR-052, CTR-065, CTR-069 |
 | 28 | Cross-module partial completion representable | Pass — CTR-056–CTR-058 |
-| 29 | Independent observable testing | Pass — §§30, 33–34; HLC-01 expressly excluded |
+| 29 | Independent observable testing | Pass — §§30, 33–34; resolved HLC-01 preserves the declared dependency boundaries |
 | 30 | Required Q/R identifiers tracked | Pass — §35 lists every required identifier, owner and exit criterion |
 
 ### 36.3 Security and replacement review
@@ -1028,4 +1028,4 @@ All operation rows are normative through CTR-003 and their family requirements. 
 
 Model, Agent Runtime, Workflow, Memory, Retrieval, Tool, Event, Artifact storage and Policy realizations are replaceable at their declared Ports. Stateful replacement may require explicit migration and re-admission; it cannot redefine canonical meaning. Deployment topology may change while preserving the same failure, claim, identity, scope and evidence guarantees. These are contract obligations requiring future proof, not claims about an implemented system.
 
-**Recommended next document:** `security/SECURITY.md`, defining the threat model, trusted admission/evidence roots, revocation and dispatch trust assumptions, tenant enforcement, and policy/exception authorities required by the now-explicit contracts. Resolve HLC-01 in `architecture/ARCHITECTURE.md` before finalizing the excluded direct Intelligence–Evaluation interaction. `conformance/CONFORMANCE.md` should subsequently turn §34 into versioned proof obligations and approved profiles. None of these follow-up documents, schemas or implementations is created in this phase.
+**Recommended next document:** `security/SECURITY.md`, defining the threat model, trusted admission/evidence roots, revocation and dispatch trust assumptions, tenant enforcement, and policy/exception authorities required by the now-explicit contracts. `conformance/CONFORMANCE.md` should subsequently turn §34 into versioned proof obligations and approved profiles. None of these follow-up documents, schemas, or implementations is created in this phase.

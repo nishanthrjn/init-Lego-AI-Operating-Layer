@@ -188,7 +188,7 @@ The **Model Interaction module** owns model descriptors, ModelCapability declara
 
 The **Skill Asset module** owns versioned expertise definitions, instructions/resources, Skill dependencies, composition validation, and evaluation references. Executable Skill resources require the same governed action routes as other work.
 
-- **Uses:** Model/Skill Ports, governed invocation facilities, authorized Context, optional Artifact references, and Evaluation contracts.
+- **Uses:** Model/Skill Ports, governed invocation facilities, authorized Context, and optional Artifact references. Existing Evaluation evidence MAY be referenced where supplied through an authorized canonical reference. Intelligence does not directly invoke Evaluation; evaluation of Model or Skill behavior is orchestrated by a consumer permitted to depend on both Intelligence and Evaluation.
 - **Exports:** Validated model results, explicit output-contract failures, and reusable Skill assets.
 - **Boundary:** Models MUST remain independently consumable and MUST NOT imply Agents or Workflows. Generated plans/actions are proposals. Structured output is not proof of truth, safety, authorization, or domain correctness. Skill instructions cannot self-authorize dependency installation or control changes.
 
