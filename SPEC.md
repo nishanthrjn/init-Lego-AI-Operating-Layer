@@ -681,7 +681,7 @@ proposed → ready → assigned → running ↔ blocked → succeeded or failed.
 
 ### 5.8 Execution
 
-created → admitted → running ↔ waiting. Running or waiting MAY enter suspended; suspended → admitted after revalidation. Created MAY be rejected or cancelled; admitted MAY be cancelled or fail admission revalidation into rejected. Running MAY succeed or fail. Running, waiting, or suspended MAY enter cancelling → cancelled. Waiting/suspended MAY fail on deadline or unrecoverable conditions; cancelling MAY fail if cancellation cannot be completed, with effect uncertainty recorded. Terminal states are succeeded, failed, cancelled, rejected. Rejected means work did not begin; failed/cancelled MAY have effects. Every retry is a new linked attempt with independent status and shared applicable accounting.
+created → admitted → running ↔ waiting. Running or waiting MAY enter suspended; suspended → admitted after revalidation. Created MAY be rejected or cancelled; For an Execution that has not yet begun governed work or produced effects, admitted MAY be cancelled or fail admission revalidation into rejected. For an Execution that previously entered running, waiting, or suspended after work began, failed resume revalidation MUST NOT transition to rejected. It MUST transition to a permitted failure, cancellation, waiting, or intervention state according to the applicable cause while preserving all prior effects, Artifacts, resource consumption, and provenance. Running MAY succeed or fail. Running, waiting, or suspended MAY enter cancelling → cancelled. Waiting/suspended MAY fail on deadline or unrecoverable conditions; cancelling MAY fail if cancellation cannot be completed, with effect uncertainty recorded. Terminal states are succeeded, failed, cancelled, rejected. Rejected means governed work did not begin and no protected execution effect was admitted under that Execution. An Execution that previously began work MUST NOT later become rejected. Failed or cancelled Executions MAY have effects, which MUST remain recorded. Every retry is a new linked attempt with independent status and shared applicable accounting.
 
 ### 5.9 Workflow
 
@@ -896,10 +896,40 @@ Therefore:
 
 ```text
 Operational Result ≠ Canonical Outcome
+```text
+
+For example:
+
+Application
+    ↓
+Retriever
+    ↓
+Result
+
+does not require creation of:
+
+Organization
+Team
+Goal
+Outcome
+
+By contrast:
+
+Goal
+    ↓
+Team
+    ↓
+Tasks / Executions
+    ↓
+Evidence
+    ↓
+Outcome
+
+uses canonical Outcome semantics because accountable achievement is explicitly being represented.
 
 ## 13. Open questions, risks, and next document
 
-These are explicit unresolved governance/contract questions, not permission to bypass the safe rules above. The specification introduces semantic refinements where intent is silent; acceptance of this revision remains a project governance decision.
+These are explicit unresolved governance/contract questions, not permission to bypass the safe rules above. The specification introduces semantic refinements where intent is silent; all unresolved items remain subject to the authority, compatibility, and change-governance rules defined by this specification and intent.md.
 
 | ID | Question / ambiguity | Current boundary and required follow-up |
 |---|---|---|
@@ -941,4 +971,8 @@ These are explicit unresolved governance/contract questions, not permission to b
 
 This is a semantic review, not evidence that any runtime or adapter already conforms.
 
-**Next document:** `architecture/ARCHITECTURE.md`, a technology-neutral logical architecture derived from this specification. It should define module responsibilities, dependency direction, enforcement boundaries, configuration/discovery/resolution responsibilities, and independent conformance scopes; it should address Q-01 through Q-08 or carry them forward explicitly. Concrete contracts and conformance cases follow that architecture. No implementation is authorized by this specification task.
+**Next architectural artifact:** `architecture/ARCHITECTURE.md`, derived from this specification, defines the technology-neutral logical architecture, module responsibilities, dependency directions, enforcement boundaries, capability discovery/resolution responsibilities, and independent conformance surfaces.
+
+`ARCHITECTURE.md` MUST preserve accepted decision DEC-01 and explicitly resolve or carry forward Q-02 through Q-08.
+
+Concrete contracts, security/governance profiles, conformance cases, ADRs, and reference implementations remain lower-level work. No runtime implementation is authorized by this specification alone.

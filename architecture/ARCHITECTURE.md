@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Logical Architecture
 
 **Architecture version:** 0.1.0  
-**Status:** Proposed architecture; review pending  
+**Status:** ACCEPTED — CANONICAL LOGICAL ARCHITECTURE
 **Governing sources:** [intent.md](../intent.md), version 1.0, ACCEPTED — FOUNDATIONAL; [SPEC.md](../SPEC.md), version 0.1.0, ACCEPTED — CANONICAL SEMANTIC SPECIFICATION  
 **Scope:** Technology-neutral decomposition, responsibility allocation, interactions, and conformance boundaries
 
@@ -26,13 +26,10 @@ This architecture allocates the responsibilities necessary to realize those sema
 
 ### 1.2 Source issues and compatibility boundaries
 
-The supplied SPEC has an unclosed text fence following DEC-01 and §13 still says acceptance remains a governance decision despite the accepted header. These are recorded source defects, not authority for changing semantics. This architecture reads DEC-01 and the subsequent Q-02–Q-08 text as the intended sections and uses the explicit accepted status; it does not edit the source. A specification maintenance change should repair the fence and reconcile the stale status wording.
-
 The requested plugin activity sequence includes inspect, admit, configure, suspend, and upgrade. SPEC §5.12 does not define these as Plugin states. Section 11 maps them to activities and permitted transitions; it MUST NOT introduce an incompatible lifecycle.
 
 Intent §42 shows registry, resolver, events, and configuration within the Kernel. Here their stable meanings and contract anchors remain part of that Kernel boundary; their operating implementations and mutable state belong to surrounding modules. This is a decomposition of the illustrated responsibility, not removal of it or a dependency from Kernel to concrete providers.
 
-One additional lifecycle ambiguity affects recovery: SPEC §5.8 permits `suspended → admitted` and `admitted → rejected`, but defines rejected as work that did not begin. A resumed attempt may already have effects. Section 8.3 preserves failure/uncertainty and does not use rejected to erase prior work; the exact admissible transition guards require clarification in SPEC before recovery contracts are finalized (R-03).
 
 ## 2. Overall logical architecture
 
@@ -742,14 +739,11 @@ No open question is resolved by selecting an implementation technology. The owne
 |---|---|---|
 | R-01 | Small Kernel decomposition could be read as removing responsibilities shown inside Kernel in intent §42. | §1.2 and §4.2 retain their semantic/contract anchors and delegate only implementations/state. Review this allocation explicitly; do not silently move domain meaning into plugins. |
 | R-02 | Admission/resolution bootstrap can become cyclic, or inactive offers can accidentally become executable. | §11.3 separates inspection from binding, requires admitted bootstrap responsibility, and rejects unsupported cycles. SECURITY must specify initial trust establishment; CONTRACTS must define eligibility freshness. |
-| R-03 | SPEC §5.8 allows re-admission after suspension but calls rejected work never-started. | §8.3 preserves prior effects and uses suspended → failed on resume validation failure. SPEC maintenance must clarify rejection guards for previously started attempts before recovery contracts are finalized. |
 | R-04 | Separate authorization, approval, and resource checks can race or become stale before dispatch. | AR-17 requires owner-arbitrated claims and dispatch-time validation. CONTRACTS/SECURITY must specify freshness, consumption, and in-flight revocation semantics; a series of checks alone is insufficient proof. |
 | R-05 | Plugin suspension/upgrade activities could silently add states absent from SPEC. | §11.1 maps activities to canonical states; no new suspended/upgrading Plugin state. Any broader lifecycle needs a SPEC change. |
 | R-06 | A shared host may let an insufficiently trusted Plugin bypass logical boundaries. | AR-19 makes adequate trust/isolation an admission prerequisite; implementation ADRs must demonstrate enforcement and failure containment. |
 | R-07 | Cross-module partial completion can lose artifact publication, accounting, or audit evidence after a real effect. | §§6, 8–10 retain operation/effect identity and reconciliation obligations; contracts must define recoverability/acknowledgment guarantees without assuming global atomicity. |
 | R-08 | Mandatory evidence collection can recursively invoke its own governance or become a hidden availability dependency. | §§5, 11.3 separate established decision responsibilities from new work and distinguish required evidence from optional telemetry. SECURITY/CONFORMANCE must define minimum evidence and failure behavior. |
-| R-09 | Accepted SPEC formatting/status defects obscure the open-question register in rendered form. | §1.2 records the unclosed fence and stale acceptance wording. A separate source-maintenance change should fix presentation/status without altering accepted semantics. |
-
 These findings do not justify implementation work or a lower-level reinterpretation of SPEC. Higher-level semantic corrections must follow the project authority hierarchy.
 
 ### 15.2 Decisions deferred to ADRs
@@ -808,6 +802,6 @@ No option is selected here. ADRs must state supported contract guarantees, confo
 
 This review establishes architecture coverage, not verified runtime security, performance, or conformance. The source ambiguities in §15.1 remain explicitly tracked.
 
-**Recommended next document:** `contracts/CONTRACTS.md`. It should inventory canonical Port interactions and operation semantics, bind inputs/results/errors to exact SPEC concepts, specify revision and acknowledgment rules, separate admission from effects, define concurrency and claim-consumption guarantees, and map each surface to future conformance cases. It should carry the SECURITY, GOVERNANCE, and CONFORMANCE questions forward by identifier and resolve the SPEC lifecycle clarification before finalizing recovery contracts. Representation choices and implementation technologies remain separate decisions.
+**Recommended next document:** `contracts/CONTRACTS.md`. It should inventory canonical Port interactions and operation semantics, bind inputs/results/errors to exact SPEC concepts, specify revision and acknowledgment rules, separate admission from effects, define concurrency and claim-consumption guarantees, and map each surface to future conformance cases. It should carry the unresolved SECURITY, GOVERNANCE, and CONFORMANCE questions forward by identifier. Representation choices and implementation technologies remain separate decisions.
 
 The architecture phase ends with this document. No runtime, SDK, schema, Adapter, dependency, or deployment infrastructure is created by this deliverable.
