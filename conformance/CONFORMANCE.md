@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Conformance Specification
 
 **Conformance specification version:** 0.1.0  
-**Status:** PROPOSED — FOR CANONICAL REVIEW  
+**Status:** ACCEPTED — CANONICAL CONFORMANCE SPECIFICATION
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → [PLUGIN-SPEC.md](../plugin-spec/PLUGIN-SPEC.md) 0.1.0 → [SECURITY.md](../security/SECURITY.md) 0.1.0 → [EVALUATION.md](../evaluation/EVALUATION.md) 0.1.0 → this document.  
 **Scope:** Technology-neutral supported scopes, requirement closure, claims, findings, proof obligations, evidence sufficiency, and reassessment. No implementation proof is asserted by this specification.
 
