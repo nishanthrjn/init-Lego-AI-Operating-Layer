@@ -79,7 +79,7 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 |---|---|---|---|---|---|---|---|---|---|
 | ADR-001 | Reference language/runtime | A | P0 | 1 | All runtime source/package work | ARCHITECTURE §15.2; CONF-011, 076 | None | Comparative API/concurrency/packaging and solo burden analysis | Accepted |
 | ADR-002 | Reference packages and minimal Kernel mapping | A | P0 | 2 | All runtime source/package work | AR-01–08; R-01; CONF-011, 021, 056 | ADR-001 | Owner/dependency map; independent-use and replacement walkthrough | Accepted |
-| ADR-003 | Configuration revision and activation binding mechanism | B | P1 | 2 | Configuration loading and activation binding | S-06/S-08; PLG-025–027; CONF-074 | ADR-002 | Revision/overlay/change and Secret-reference analysis | Proposed |
+| ADR-003 | Configuration revision and activation binding mechanism | B | P1 | 2 | Configuration loading and activation binding | S-06/S-08; PLG-025–027; CONF-074 | ADR-002 | Revision/overlay/change and Secret-reference analysis | Accepted |
 | ADR-004 | Owner-local state consistency and recovery boundary | B | P1 | 1 | Stateful owner/persistence/recovery code | AR-14–18; CTR-013–016, 056–058; Q-07 | ADR-002 | Concurrency, crash/acknowledgment and recovery analysis | Proposed |
 | ADR-005 | Principal, authorization and tenant-context integration | B | P1 | 1 | Protected request/data paths | SEC-012–030, 035–037, 060–062; Q-05 | ADR-003 | Threat comparison; current context/policy/tenant flow | Proposed |
 | ADR-006 | Trusted bootstrap and contribution admission mechanism | B | P1 | 2 | Executable Plugin loading/activation | R-02/R-08; CTR-054–055, 061; SEC-054–056 | ADR-003, ADR-005, ADR-009 | Finite root graph, no-self-admission and lifecycle analysis | Proposed |
@@ -118,7 +118,7 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 ### ADR-003 — Configuration revision and activation binding mechanism
 
 - **Decision question / need:** How will the reference runtime load, validate, resolve overrides, and bind immutable/revisioned configuration to a specific activation without drift? This chooses configuration handling, not canonical serialization.
-- **Class / priority / blocking / reversibility / status:** B / P1 / configuration loading and activation binding / Type 2 / Proposed.
+- **Class / priority / blocking / reversibility / status:** B / P1 / configuration loading and activation binding / Type 2 / Accepted.
 - **Upstream authority:** SPEC S-06/S-08, E-02; PLUGIN-SPEC §§8, 11; SECURITY §17; CONF-025–027, 050, 074. **Questions:** Q-08 only for later vocabulary, not new defaults. **Risks:** Configuration drift; Version coexistence conflicts; Stale security profile; Environment drift; Version drift.
 - **Dependencies:** ADR-002. **Alternatives:** explicitly assembled immutable configuration snapshots; revisioned owner-managed configuration with validated activation snapshots; controlled overlays resolved to one pinned snapshot. Compare no implicit overlays against scoped overrides; no alternative may mutate active pinned meaning silently.
 - **Evidence / dominant criteria:** changed configuration/release/tenant walkthrough, invalid and conflicting overlays, Secret references without values, restart/version coexistence and invalidation mapping. Prioritize determinism, inspectability and simple local configuration over live-reconfiguration convenience.
