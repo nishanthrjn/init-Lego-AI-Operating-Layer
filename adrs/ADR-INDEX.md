@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — ADR Planning Index
 
 **Planning index version:** 0.1.0  
-**Status:** PROPOSED — FOR CANONICAL REVIEW  
+**Status:** ACCEPTED — CANONICAL ADR PLANNING INDEX
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → [PLUGIN-SPEC.md](../plugin-spec/PLUGIN-SPEC.md) 0.1.0 → [SECURITY.md](../security/SECURITY.md) 0.1.0 → [EVALUATION.md](../evaluation/EVALUATION.md) 0.1.0 → [CONFORMANCE.md](../conformance/CONFORMANCE.md) 0.1.0 → this planning index.  
 **Deliverable boundary:** Decision backlog, prerequisites, evidence, sequencing, and governance only. No individual ADR is decided or created here.
 
