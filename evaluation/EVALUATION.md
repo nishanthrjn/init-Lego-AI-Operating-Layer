@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Evaluation Specification
 
 **Evaluation specification version:** 0.1.0  
-**Status:** PROPOSED — FOR CANONICAL REVIEW  
+**Status:** ACCEPTED — CANONICAL EVALUATION SPECIFICATION
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → [PLUGIN-SPEC.md](../plugin-spec/PLUGIN-SPEC.md) 0.1.0 → [SECURITY.md](../security/SECURITY.md) 0.1.0 → this document.  
 **Scope:** Technology-neutral assessment definitions, attempts, methods, cases, datasets, judgments, coverage, uncertainty, comparison, and governed evidence.
 
