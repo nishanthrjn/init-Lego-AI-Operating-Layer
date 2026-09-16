@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Security Specification
 
 **Security specification version:** 0.1.0  
-**Status:** PROPOSED — FOR CANONICAL REVIEW  
+**Status:** ACCEPTED — CANONICAL SECURITY SPECIFICATION
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → [PLUGIN-SPEC.md](../plugin-spec/PLUGIN-SPEC.md) 0.1.0 → this document.  
 **Scope:** Technology-neutral trust, security decisions, enforcement obligations, threat assumptions, evidence, and safe failure.
 
