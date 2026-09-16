@@ -13,7 +13,6 @@
 
 **CTR-003.** Normative requirements use unique `CTR-###` identifiers. Each operation row inherits the shared envelopes, ownership, errors, revision, retry, evidence, and dispatch rules unless an explicit specialization narrows them. An operation's complete contract is its row plus its family rules, shared rules, and relevant Port obligations. Aliases separated by a slash name related semantic operations, not a required combined endpoint. Unspecified operations are unsupported, not implicit permission to mutate state.
 
-### 1.1 Higher-level observations and unfinalized interaction
 
 ### 1.1 Higher-level observations and resolved architectural issue
 
@@ -1032,4 +1031,8 @@ All operation rows are normative through CTR-003 and their family requirements. 
 
 Model, Agent Runtime, Workflow, Memory, Retrieval, Tool, Event, Artifact storage and Policy realizations are replaceable at their declared Ports. Stateful replacement may require explicit migration and re-admission; it cannot redefine canonical meaning. Deployment topology may change while preserving the same failure, claim, identity, scope and evidence guarantees. These are contract obligations requiring future proof, not claims about an implemented system.
 
-**Recommended next document:** `security/SECURITY.md`, defining the threat model, trusted admission/evidence roots, revocation and dispatch trust assumptions, tenant enforcement, and policy/exception authorities required by the now-explicit contracts. `conformance/CONFORMANCE.md` should subsequently turn §34 into versioned proof obligations and approved profiles. None of these follow-up documents, schemas, or implementations is created in this phase.
+**Recommended next document:** `plugin-spec/PLUGIN-SPEC.md`, defining the canonical technology-neutral Plugin declaration, contribution, dependency, compatibility, configuration, lifecycle-operation, bootstrap, health, trust-requirement, permission-requirement, and conformance-evidence contracts.
+
+`security/SECURITY.md` follows it and defines the threat model, trust roots, Plugin admission trust, identity establishment, tenant enforcement, revocation and dispatch assumptions, isolation requirements, evidence guarantees, Secret handling, and policy/exception authorities.
+
+`conformance/CONFORMANCE.md` subsequently turns the established semantics and proof obligations into versioned conformance profiles and testable evidence requirements.
