@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — ADR Planning Index
 
 **Planning index version:** 0.1.0  
-**Status:** ACCEPTED — ARCHITECTURE DECISION
+**Status:** ACCEPTED — CANONICAL ADR PLANNING INDEX
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → [PLUGIN-SPEC.md](../plugin-spec/PLUGIN-SPEC.md) 0.1.0 → [SECURITY.md](../security/SECURITY.md) 0.1.0 → [EVALUATION.md](../evaluation/EVALUATION.md) 0.1.0 → [CONFORMANCE.md](../conformance/CONFORMANCE.md) 0.1.0 → this planning index.  
 **Deliverable boundary:** Decision backlog, prerequisites, evidence, sequencing, and governance only. No individual ADR is decided or created here.
 
@@ -57,7 +57,7 @@ Class describes scope; priority describes timing. For example, a Class C isolati
 
 **Type 1:** expensive/difficult to reverse, requiring stronger comparative evidence and a migration argument. **Type 2:** relatively reversible behind a bounded interface, still requiring semantic and security evidence. Reversibility describes the planned boundary, not a promise that migrations are free.
 
-Allowed candidate/ADR statuses are **Proposed, Ready for Decision, Blocked, Accepted, Rejected, Superseded, Deferred**. This index starts all 13 allocated candidates at Proposed. None is Ready for Decision merely because its question is written; dependencies, viable alternatives, and evidence must be available. No candidate is Accepted. Deferred subjects in §9 are a watchlist, not speculative numbered ADRs; allocate an ID only when their trigger establishes an actual choice. Consequently, there are no Class E/P4 numbered candidates yet.
+Allowed candidate/ADR statuses are **Proposed, Ready for Decision, Blocked, Accepted, Rejected, Superseded, Deferred**. All 13 allocated ADR candidates were initially created as Proposed. This index is a living planning artifact and records the current disposition of each candidate. ADR-001 and ADR-002 are now Accepted; ADR-003 through ADR-013 remain Proposed. Acceptance of an ADR records its decision but does not by itself authorize implementation or constitute conformance proof. Deferred subjects in §9 are a watchlist, not speculative numbered ADRs; allocate an ID only when their trigger establishes an actual choice. Consequently, there are no Class E/P4 numbered candidates yet.
 
 ## 4. Decision criteria and evidence discipline
 
@@ -77,8 +77,8 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 
 | ADR | Decision | Class | Priority | Type | Blocks implementation? | Upstream drivers | Depends on | Evidence needed | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| ADR-001 | Reference language/runtime | A | P0 | 1 | All runtime source/package work | ARCHITECTURE §15.2; CONF-011, 076 | None | Comparative API/concurrency/packaging and solo burden analysis | Proposed |
-| ADR-002 | Reference packages and minimal Kernel mapping | A | P0 | 2 | All runtime source/package work | AR-01–08; R-01; CONF-011, 021, 056 | ADR-001 | Owner/dependency map; independent-use and replacement walkthrough | Proposed |
+| ADR-001 | Reference language/runtime | A | P0 | 1 | All runtime source/package work | ARCHITECTURE §15.2; CONF-011, 076 | None | Comparative API/concurrency/packaging and solo burden analysis | Accepted |
+| ADR-002 | Reference packages and minimal Kernel mapping | A | P0 | 2 | All runtime source/package work | AR-01–08; R-01; CONF-011, 021, 056 | ADR-001 | Owner/dependency map; independent-use and replacement walkthrough | Accepted |
 | ADR-003 | Configuration revision and activation binding mechanism | B | P1 | 2 | Configuration loading and activation binding | S-06/S-08; PLG-025–027; CONF-074 | ADR-002 | Revision/overlay/change and Secret-reference analysis | Proposed |
 | ADR-004 | Owner-local state consistency and recovery boundary | B | P1 | 1 | Stateful owner/persistence/recovery code | AR-14–18; CTR-013–016, 056–058; Q-07 | ADR-002 | Concurrency, crash/acknowledgment and recovery analysis | Proposed |
 | ADR-005 | Principal, authorization and tenant-context integration | B | P1 | 1 | Protected request/data paths | SEC-012–030, 035–037, 060–062; Q-05 | ADR-003 | Threat comparison; current context/policy/tenant flow | Proposed |
@@ -96,7 +96,7 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 ### ADR-001 — Reference implementation language and runtime
 
 - **Decision question / need:** Which language/runtime should implement the first reference runtime? Source layout, typing, concurrency and packaging need a concrete substrate; canonical neutrality does not make source implementation language-free.
-- **Class / priority / blocking / reversibility / status:** A / P0 / all runtime implementation / Type 1 / Proposed.
+- **Class / priority / blocking / reversibility / status:** A / P0 / all runtime implementation / Type 1 / Accepted.
 - **Upstream authority:** ARCHITECTURE §15.2; intent §§24–25, 38–42; CONFORMANCE CONF-011, 021, 076. **Questions:** no Q identifier directly selects a language. **Risks:** R-01; Hidden implementation coupling; Implementation-specific test overfitting.
 - **Dependencies:** none. **Alternatives:** a dynamic typed-at-tooling runtime, a managed statically typed runtime, and a compiled statically typed runtime, with concrete viable language/runtime candidates identified in the future ADR. A small single-language reference versus a mixed-language start must be compared; choosing multiple languages needs demonstrated need. Deferring actual runtime implementation is the valid no-decision alternative.
 - **Evidence / dominant criteria:** contract/context API walkthrough, concurrency/cancellation behavior, packaging and local tooling comparison; prioritize fidelity, solo productivity, testing and maintenance over hypothetical peak throughput. Include interoperability and migration costs without choosing a wire format.
@@ -107,7 +107,7 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 ### ADR-002 — Reference package structure and minimal Kernel mapping
 
 - **Decision question / need:** How should accepted logical owners and Kernel anchors map to independently testable source packages/modules and release boundaries? Logical allocation is closed; its concrete packaging is not.
-- **Class / priority / blocking / reversibility / status:** A / P0 / all runtime implementation / Type 2 / Proposed.
+- **Class / priority / blocking / reversibility / status:** A / P0 / all runtime implementation / Type 2 / Accepted.
 - **Upstream authority:** ARCHITECTURE §§1.2, 4–5, AR-01–08; intent §42; CONF-011, 021, 054–056. **Questions:** none reopened. **Risks:** R-01; Hidden implementation coupling; Dependency explosion; Extensions becoming de facto core.
 - **Dependencies:** ADR-001 accepted before final package/tooling selection; logical diagrams can be prepared earlier. **Alternatives:** one distributable with enforced internal module boundaries; independently releasable packages in one repository/workspace; multiple repositories only with evidence that their cost is justified. All preserve logical owners and the initial modular-monolith preference; physical service splitting is not the question.
 - **Evidence / dominant criteria:** map every initial responsibility to its owner, contract package and implementation boundary; inspect Architecture's exhaustive dependency matrix, including Intelligence/Evaluation. Compare isolated use, replaceability, local development and release burden. Kernel holds semantic/contract anchors, not Catalog, Policy, or accounting operating state by convenience.
