@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Canonical Behavioral Contracts
 
 **Contract document version:** 0.1.0  
-**Status:** Proposed; acceptance pending. The interaction marked HLC-01 is not finalized.  
+**Status:** ACCEPTED — CANONICAL BEHAVIORAL CONTRACTS
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → this document.  
 **Scope:** Observable semantic interactions, independent of language, representation, transport, and deployment.
 
@@ -15,9 +15,13 @@
 
 ### 1.1 Higher-level observations and unfinalized interaction
 
-**HLC-01 — Intelligence directly requesting Evaluation: NOT FINALIZED.** Architecture §4.7 lists Evaluation contracts among Intelligence's dependencies, while §5.2 states omitted targets are prohibited and omits Q (Evaluation) from I (Intelligence). Therefore a direct Model Interaction/Skill Asset → Evaluation invocation cannot be finalized here. Architecture must either permit that dependency explicitly or remove the direct dependency from §4.7 and allocate orchestration to an allowed consumer. Sections 16–17 do not introduce the edge. An Application may independently request evaluation of Model/Skill work; passing an existing evaluation evidence reference does not introduce a direct call.
+### 1.1 Higher-level observations and resolved architectural issue
 
-The corrected SPEC §5.8 and Architecture §8.3 now forbid rejection of previously begun work. Recovery contracts use only permitted states; “intervention” describes a reason/obligation, not a new Execution state. The DEC-01 example still contains a closing fence written with a `text` suffix, leaving its rendered extent ambiguous. This is a presentation defect for SPEC maintenance, not a semantic override; the accepted DEC-01 prose and Q register are preserved.
+**HLC-01 — RESOLVED.** The previously detected conflict between Architecture §4.7 and the exhaustive dependency matrix in §5.2 has been resolved at the architectural layer.
+
+Intelligence does not directly invoke Evaluation. Model and Skill behavior MAY be evaluated by an authorized consumer that is permitted to depend on both Intelligence and Evaluation. Intelligence MAY retain or reference existing authorized Evaluation evidence without introducing an Intelligence → Evaluation module dependency.
+
+The corrected SPEC §5.8 and Architecture §8.3 forbid rejection of previously begun work. Recovery contracts use only canonical Execution states; intervention is represented as an obligation, recovery condition, or required external decision rather than as an additional Execution lifecycle state.
 
 ## 2. Shared identity, reference, and request semantics
 
@@ -618,7 +622,7 @@ Owner: **Event Coordination** for publication/delivery records; source module ow
 
 ## 24. Evaluation contracts
 
-Owner: **Evaluation Management**. Any supported Evaluator realization sits behind its Port; callers follow Architecture's permitted dependencies, including the HLC-01 limitation.
+Owner: **Evaluation Management**. Any supported Evaluator realization sits behind its Port; callers MUST follow Architecture's permitted dependency matrix. Intelligence does not directly invoke Evaluation; authorized consumers MAY orchestrate evaluation of Model or Skill behavior.
 
 | Operation | Required additions / preconditions | Result and change | Retry / errors |
 |---|---|---|---|
@@ -794,7 +798,7 @@ No global atomic commit and no repeat of the original external effect.
 | Identity / Tenant Ports | Verified subject and scope, §§15.1, 15.4 | Establishment differs from a caller assertion; scope never wildcard |
 | Resource contract surface | Allowance/claim/usage arbitration, §§6, 15.3 | Concurrent conservation, unknown liability and clock/measurement meaning |
 
-The extra surfaces are logical contracts under existing Architecture owners, not new mandatory modules. Provider dependency and consumer invocation MUST follow Architecture §5.2; HLC-01 is excluded pending its correction.
+The extra surfaces are logical contracts under existing Architecture owners, not new mandatory modules. Provider dependency and consumer invocation MUST follow Architecture §5.2. Resolved HLC-01 introduces no direct Intelligence → Evaluation dependency.
 
 ## 31. Contract versioning and evolution
 
@@ -943,7 +947,7 @@ DEC-01 remains accepted: direct operational results do not automatically become 
 | R-07 | Behavioral contract resolved: owner-local acknowledgment, effect uncertainty and obligation reconciliation (§28) | CONFORMANCE / implementation ADRs | Failure-injection evidence demonstrates retained partial progress and no duplicate source effects |
 | R-08 | Partially resolved: mandatory evidence guarantees and finite admitted roots (§29) | SECURITY / GOVERNANCE / CONFORMANCE | Minimum evidence, root trust, persistence/failure guarantees and privacy/retention policy approved and proven |
 
-The earlier resume-rejection issue is corrected in the current SPEC §5.8 and Architecture §8.3. No old R-03 workaround or invented state is added. The remaining malformed DEC-01 fence is a presentation-maintenance item; it does not reopen accepted semantics.
+The earlier resume-rejection issue is corrected in SPEC §5.8 and Architecture §8.3. No old R-03 workaround or invented Execution state is introduced. Intervention remains an obligation or recovery condition rather than an Execution lifecycle state.
 
 ### 35.3 New contract risks and contradiction
 
