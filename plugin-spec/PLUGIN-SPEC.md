@@ -1,7 +1,7 @@
 # Lego AI Operating Layer — Plugin Specification
 
 **Plugin specification version:** 0.1.0  
-**Status:** PROPOSED — FOR CANONICAL REVIEW  
+**Status:** ACCEPTED — CANONICAL PLUGIN SPECIFICATION
 **Authority:** [intent.md](../intent.md) 1.0 → [SPEC.md](../SPEC.md) 0.1.0 → [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 0.1.0 → [CONTRACTS.md](../contracts/CONTRACTS.md) 0.1.0 → this document.  
 **Scope:** Technology-neutral Plugin declarations, contributions, dependencies, compatibility, configuration, lifecycle operations, bootstrap, and evidence.
 
