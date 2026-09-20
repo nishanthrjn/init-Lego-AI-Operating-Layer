@@ -1,0 +1,65 @@
+"""Initial error vocabulary, not exceptions or a complete CTR-011 envelope.
+
+Owner result contracts later supply operation/subject, time, safe diagnostics,
+named effects and conditional retry constraints. No retry decision lives here.
+"""
+
+from dataclasses import dataclass, field
+from enum import Enum
+
+from legoai.kernel.identity import _validate
+from legoai.kernel.references import OperationRef
+
+
+class ErrorCategory(Enum):
+    VALIDATION_ERROR = "ValidationError"
+    VERSION_MISMATCH = "VersionMismatch"
+    TENANT_VIOLATION = "TenantViolation"
+    CONFLICT = "Conflict"
+    DEPENDENCY_FAILURE = "DependencyFailure"
+
+
+class Recoverability(Enum):
+    TERMINAL = "terminal"
+    POTENTIALLY_RETRYABLE = "potentially retryable"
+    REQUIRES_INTERVENTION = "requires intervention"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class ErrorCause:
+    """Safe attributed category and enclosing-record key, never raw traceback."""
+
+    category: ErrorCategory
+    operation: OperationRef
+    record_key: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if type(self.category) is not ErrorCategory:
+            raise TypeError("cause requires ErrorCategory")
+        if type(self.operation) is not OperationRef:
+            raise TypeError("cause requires OperationRef")
+        _validate(self.record_key)
+
+
+@dataclass(frozen=True, slots=True)
+class ErrorDetail:
+    """Immutable classification/cause component, not an operational error result.
+
+    Callers supply every axis explicitly. Causes retain material secondary
+    failures too; their accessibility must be checked by the disclosing owner.
+    """
+
+    category: ErrorCategory
+    recoverability: Recoverability
+    causes: tuple[ErrorCause, ...]
+
+    def __post_init__(self) -> None:
+        if type(self.category) is not ErrorCategory:
+            raise TypeError("error detail requires ErrorCategory")
+        if type(self.recoverability) is not Recoverability:
+            raise TypeError("error detail requires Recoverability")
+        if type(self.causes) is not tuple or any(
+            type(cause) is not ErrorCause for cause in self.causes
+        ):
+            raise TypeError("causes must be an immutable tuple of ErrorCause")

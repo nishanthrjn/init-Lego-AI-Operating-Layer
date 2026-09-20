@@ -34,3 +34,53 @@ class PrincipalId:
 
     def __post_init__(self) -> None:
         _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class ApplicationId:
+    """Opaque application identity, not a declaration revision."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class OperationId:
+    """One logical operation; not an execution attempt or submission."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class RequestId:
+    """One submission, distinct from its logical operation."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class CorrelationId:
+    """Interaction-group identity, never a deduplication guarantee."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class TraceId:
+    """Trace attribution only; no logging or authority is established."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)

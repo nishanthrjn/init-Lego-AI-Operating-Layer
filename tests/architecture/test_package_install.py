@@ -60,9 +60,20 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai
     import legoai.kernel
     import legoai.kernel.identity
+    import legoai.kernel.references
+    import legoai.kernel.versions
+    import legoai.kernel.context
+    import legoai.kernel.errors
+    import legoai.kernel.effects
+    import legoai.governance
+    import legoai.governance.values
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
-assert not any(name.startswith("legoai.") and not name.startswith("legoai.kernel") for name in sys.modules)
+assert {name for name in sys.modules if name.startswith("legoai.")} == {
+    "legoai.kernel", "legoai.kernel.identity", "legoai.kernel.references",
+    "legoai.kernel.versions", "legoai.kernel.context", "legoai.kernel.errors",
+    "legoai.kernel.effects", "legoai.governance", "legoai.governance.values"
+}
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -83,6 +94,13 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/__init__.py",
         "legoai/kernel/__init__.py",
         "legoai/kernel/identity.py",
+        "legoai/kernel/references.py",
+        "legoai/kernel/versions.py",
+        "legoai/kernel/context.py",
+        "legoai/kernel/errors.py",
+        "legoai/kernel/effects.py",
+        "legoai/governance/__init__.py",
+        "legoai/governance/values.py",
         "legoai/py.typed",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
@@ -116,6 +134,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             ".gitignore",
             "docs/development.md",
             "tests/unit/kernel/test_identity.py",
+            "tests/unit/kernel/test_foundation.py",
+            "tests/unit/governance/test_context.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -143,6 +163,19 @@ import sys
 from pathlib import Path
 from importlib.metadata import version, requires
 import legoai.kernel.identity as identity
+import legoai.kernel.references as references
+import legoai.kernel.context as context
+import legoai.kernel.versions as versions
+import legoai.kernel.errors as errors
+import legoai.kernel.effects as effects
+import legoai.governance.values as governance
+for module in (references, context, versions, errors, effects, governance):
+    assert Path(module.__file__).is_relative_to(Path(sys.prefix))
+assert versions.Version(0, 1, 0) < versions.Version(0, 2, 0)
+assert context.TenantContext(identity.TenantId("t")).tenant_id == identity.TenantId("t")
+assert governance.Principal(references.PrincipalRef("issuer", identity.PrincipalId("p"))).reference.principal_id == identity.PrincipalId("p")
+assert len(effects.EffectExtent) == 4
+assert len(errors.ErrorCategory) == 5
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
 assert identity.TenantId("abc").value == "abc"
 assert identity.PrincipalId("abc").value == "abc"
@@ -152,3 +185,44 @@ assert Path(identity.__file__).parents[1].joinpath("py.typed").is_file()
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_f1_static_misuse(tmp_path: Path) -> None:
+    fixture = tmp_path / "f1_misuse.py"
+    fixture.write_text(
+        "from legoai.kernel.identity import ApplicationId, TenantId, OperationId, PrincipalId, RequestId, CorrelationId, TraceId\n"
+        "from legoai.kernel.references import OwnerRevision\n"
+        "from legoai.kernel.context import TenantContext\n"
+        "from legoai.governance.values import Principal\n"
+        "def tenant(value: TenantId) -> None: ...\n"
+        "def operation(value: OperationId) -> None: ...\n"
+        "def principal(value: Principal) -> None: ...\n"
+        "def request(value: RequestId) -> None: ...\n"
+        "def correlation(value: CorrelationId) -> None: ...\n"
+        "def misuse(revision: OwnerRevision) -> None:\n"
+        "    operation(revision)\n"
+        "tenant(ApplicationId('a'))\n"
+        "principal(PrincipalId('p'))\n"
+        "tenant(TenantContext(TenantId('t')))\n"
+        "request(OperationId('o'))\n"
+        "correlation(TraceId('t'))\n",
+        encoding="utf-8",
+    )
+    result = run(
+        [sys.executable, "-m", "mypy", "--strict", "--no-incremental", str(fixture)],
+        tmp_path,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    errors = [line for line in result.stdout.splitlines() if ": error:" in line]
+    expected = (
+        ("OwnerRevision", "OperationId"),
+        ("ApplicationId", "TenantId"),
+        ("PrincipalId", "Principal"),
+        ("TenantContext", "TenantId"),
+        ("OperationId", "RequestId"),
+        ("TraceId", "CorrelationId"),
+    )
+    assert len(errors) == len(expected), result.stdout
+    for error, (actual, required) in zip(errors, expected, strict=True):
+        assert "[arg-type]" in error
+        assert f'incompatible type "{actual}"; expected "{required}"' in error

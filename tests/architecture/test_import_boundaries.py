@@ -1,4 +1,4 @@
-"""ADR-002: static F0 import policy, including type-only imports and re-exports.
+"""ADR-002: F0/F1 import policy, including type-only imports and re-exports.
 
 This small source checker is a development control, not hostile-code isolation.
 Synthetic graphs are parsed as text, never written to executable import paths.
@@ -68,6 +68,19 @@ def violations(sources: dict[str, str]) -> set[str]:
                         target == "legoai.kernel" or target.startswith("legoai.kernel.")
                     ):
                         errors.add("kernel-owner")
+                    if name.startswith("legoai.governance.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.governance"
+                        or target.startswith("legoai.governance.")
+                    ):
+                        errors.add("governance-owner")
+                    if name.startswith("legoai.governance.") and any(
+                        target == f"legoai.governance.{layer}"
+                        or target.startswith(f"legoai.governance.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
                 elif root not in sys.stdlib_module_names:
                     errors.add("external")
                 if target in sources:
@@ -151,3 +164,64 @@ def test_valid_graph() -> None:
             "legoai.kernel.identity": "from dataclasses import dataclass",
         }
     )
+
+
+@pytest.mark.parametrize(
+    "owner", ["application", "reference", "runtime", "resources.values"]
+)
+def test_governance_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.governance.values": f"import legoai.{owner}"}) == {
+        "governance-owner"
+    }
+
+
+def test_kernel_cannot_import_governance() -> None:
+    assert violations(
+        {"legoai.kernel.context": "from legoai.governance.values import Principal"}
+    ) == {"kernel-owner"}
+
+
+def test_governance_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.governance.values": "from .ports import check"}
+    )
+    assert "governance-owner" in violations(
+        {
+            "legoai.governance.values": "from .pure import Principal",
+            "legoai.governance.pure": "from legoai.resources.values import Balance",
+        }
+    )
+
+
+def test_governance_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.governance.__init__": '"""Inert."""',
+            "legoai.governance.values": "from legoai.kernel.context import TenantContext",
+            "legoai.kernel.context": "from .identity import TenantId",
+            "legoai.kernel.identity": "from dataclasses import dataclass",
+        }
+    )
+
+
+def test_no_ambient_context_or_module_state() -> None:
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        assert not any(
+            isinstance(node, (ast.Assign, ast.AnnAssign)) for node in tree.body
+        ), path
+        assert not any(
+            isinstance(node, (ast.Global, ast.Nonlocal)) for node in ast.walk(tree)
+        ), path
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                assert not {alias.name.split(".")[0] for alias in node.names} & {
+                    "contextvars",
+                    "threading",
+                }, path
+            if isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] not in {
+                    "contextvars",
+                    "threading",
+                }, path
