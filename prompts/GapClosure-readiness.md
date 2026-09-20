@@ -1,1248 +1,936 @@
-Act as the **Principal Software Architect, AI Platform Architect, Runtime Architect, Developer-Experience Architect, Reliability Engineer, Security Architect, Test Architect, and Solo-Developer Technical Advisor** for the **Lego AI Operating Layer**.
+Act as the **Principal Software Architect, AI Platform Architect, Runtime Architect, Developer Experience Architect, Reliability Engineer, Security Architect, Test Architect, Production Readiness Architect, and Solo-Developer Technical Advisor** for the **Lego AI Operating Layer**.
 
-Your task is to perform a **formal implementation-readiness and architecture-gap closure review** of the Lego AI Operating Layer.
+We have completed a substantial canonical architecture/specification stack and multiple implementation ADRs. Before continuing architecture indefinitely, perform a **deep implementation-readiness, gap-closure, and risk-mitigation review**.
 
 Create:
 
-```text
-planning/IMPLEMENTATION-READINESS.md
-```
+`planning/IMPLEMENTATION-READINESS.md`
 
 Status:
 
-```text
-PROPOSED — FOR CANONICAL REVIEW
-```
+`PROPOSED — FOR CANONICAL REVIEW`
 
-This document is a **planning and decision-routing artifact**, not a new semantic specification.
+This document is a **planning / decision-routing artifact only**.
 
-Do NOT implement code.
+Do NOT implement source code.
 
-Do NOT modify accepted canonical documents.
+Do NOT modify accepted canonical specifications.
 
-Do NOT create new ADRs during this task.
+Do NOT create additional ADRs during this task.
 
-Do NOT modify `ADR-INDEX.md`.
+Do NOT modify ADR-INDEX yet.
 
-Instead, identify precisely:
+Your objective is to determine exactly what remains necessary before:
 
-1. which remaining gaps are already covered by existing ADRs,
-2. which require implementation decisions beneath existing ADRs,
-3. which genuinely require new ADR candidates,
-4. which should be resolved only after implementation/ForgeAI provides evidence,
-5. which risks must be mitigated immediately,
-6. where architecture work must stop and implementation must begin.
+1. implementation can safely begin,
+2. an executable deterministic Lego AI runtime can exist,
+3. ForgeAI can begin consuming Lego AI,
+4. AI/Agent/Multi-Agent functionality should be added,
+5. the first production-capable Lego AI release can be claimed.
 
 ---
 
-# 1. Governing Documents
+# 1. Read the Entire Current Project
 
-Read all current accepted project artifacts in authority order:
+Review all current accepted artifacts in authority order, including:
 
-1. `intent.md`
-2. `SPEC.md`
-3. `architecture/ARCHITECTURE.md`
-4. `contracts/CONTRACTS.md`
-5. `plugin-spec/PLUGIN-SPEC.md`
-6. `security/SECURITY.md`
-7. `evaluation/EVALUATION.md`
-8. `conformance/CONFORMANCE.md`
-9. `adrs/ADR-INDEX.md`
-10. `adrs/ADR-001.md`
-11. `adrs/ADR-002.md`
-12. `adrs/ADR-003.md`
-13. `adrs/ADR-004.md`
+* `intent.md`
+* `SPEC.md`
+* `architecture/ARCHITECTURE.md`
+* `contracts/CONTRACTS.md`
+* `plugin-spec/PLUGIN-SPEC.md`
+* `security/SECURITY.md`
+* `evaluation/EVALUATION.md`
+* `conformance/CONFORMANCE.md`
+* `adrs/ADR-INDEX.md`
+* every completed ADR through the latest accepted ADR, including ADR-009
+* ADR-010 / ADR-011 drafts if they already exist
 
-Also inspect ADR-005's intended scope from `ADR-INDEX.md`.
+Do not trust summaries alone.
 
-If later accepted ADRs exist when this task is run, include them.
+Use the actual documents.
 
-Preserve the authority hierarchy.
-
-No lower-level planning recommendation may silently redefine accepted semantics.
+Identify contradictions, duplication, missing ownership, undefined mechanisms, premature abstractions, and unnecessary complexity.
 
 ---
 
-# 2. Objective
+# 2. Review From Two Equal Perspectives
 
-Determine whether the current Lego AI program is sufficiently complete to move from:
+Do NOT evaluate Lego AI only as a governance/control plane.
 
-```text
-architecture/specification program
-```
+Review both:
 
-to:
-
-```text
-reference-runtime implementation
-+
-real application validation
-```
-
-without either:
-
-```text
-A. implementing too early with unresolved correctness/security gaps
-
-or
-
-B. continuing architecture indefinitely and overengineering the platform
-```
-
-The review must optimize for:
-
-```text
-semantic correctness
-security
-replaceability
-developer usability
-solo-developer feasibility
-time-to-first-working-runtime
-real-world validation
-long-term extensibility
-```
-
----
-
-# 3. Fundamental Constraint
-
-The original objective of Lego AI is not merely:
-
-```text
-build a correct runtime
-```
-
-It is:
-
-```text
-build reusable intelligent-application infrastructure once
-and compose future applications from reusable capabilities.
-```
-
-Therefore evaluate the architecture from TWO equally important perspectives:
-
-```text
 CONTROL / GOVERNANCE PLANE
-    security
-    tenancy
-    configuration
-    state
-    evidence
-    resources
-    effects
-    plugins
-    conformance
 
-AND
+* configuration
+* security
+* tenancy
+* state
+* Plugins
+* resources
+* evidence
+* authorization
+* effects
+* evaluation
+* conformance
+
+AND:
 
 DEVELOPER / EXECUTION PLANE
-    authoring
-    composition
-    runtime execution
-    debugging
-    testing
-    local development
-    application integration
-```
 
-Do not declare the program implementation-ready if only the first is mature.
+* application authoring
+* application composition
+* developer API
+* runtime execution
+* concurrency
+* cancellation
+* local development
+* testing
+* debugging
+* logging/tracing
+* packaging
+* deployment
+* application integration
+* AI integration
+* Agent integration
+* Multi-Agent integration
 
----
-
-# 4. Review the Current ADR Program
-
-Review ADR-001 through ADR-013.
-
-For each ADR determine:
-
-```text
-What risk does it close?
-What implementation blocker does it remove?
-What remains deliberately deferred?
-Is its current priority still correct?
-Does another gap already belong inside it?
-```
-
-Pay special attention to:
-
-```text
-ADR-005 Principal / Authorization / Tenant
-ADR-006 Plugin bootstrap
-ADR-007 Dispatch / resources
-ADR-008 Retry / reconciliation
-ADR-009 Mandatory evidence
-ADR-010 Secrets
-ADR-011 Release evidence
-ADR-012 Plugin isolation
-ADR-013 Operational observation
-```
-
-Do NOT create duplicates for responsibilities already owned by these ADRs.
+A platform is NOT implementation-ready merely because the control plane is rigorous.
 
 ---
 
-# 5. Gap 1 — Developer Experience / Application Authoring
+# 3. Evaluate the Major Gaps We Have Identified
 
-Evaluate whether the current program sufficiently decides:
+Perform an independent review of each.
 
-> How does an application developer actually build something using Lego AI?
+## GAP-A — Application Authoring / Developer Experience
 
-Analyze the developer-facing flow:
+Determine whether Lego AI sufficiently answers:
 
-```text
+> How will a developer actually build an application with Lego AI?
+
+Analyze the desired flow:
+
 Idea
-→ Application declaration
-→ select Capabilities
-→ select/resolve Plugins
-→ configuration
-→ domain logic
-→ Tools/Skills
-→ policies
-→ composition
-→ validation
-→ local execution
-→ inspect/debug
+→ define Application
+→ choose Capabilities
+→ choose/reconcile Plugins
+→ configure
+→ add domain logic
+→ connect Tools
+→ define Skills
+→ define policies
+→ compose runtime
+→ validate
+→ execute locally
 → test
-→ package/release
-```
+→ debug
+→ package
+→ deploy
 
-Determine whether a new candidate such as:
+Determine whether a future ADR such as:
 
-```text
-ADR-014 — Reference Application Authoring and Composition Experience
-```
+`ADR-014 — Reference Application Authoring and Composition Experience`
 
-is justified.
+is genuinely required.
 
-Possible approaches to evaluate later include:
+Evaluate future approaches such as:
 
-```text
-Python composition API
-declarative manifest
-builder DSL
-hybrid declarative + Python escape hatch
-```
+* Python API
+* builder API
+* declarative manifest
+* hybrid declarative + Python escape hatch
 
-Do NOT select one during this gap-review task.
+Do NOT select the mechanism now unless current evidence is sufficient.
 
-Decide only:
-
-```text
-Is a separate ADR required?
-When should it be written?
-What prerequisites must exist first?
-What exact question should it answer?
-```
-
-Prevent Lego AI from becoming architecturally rigorous but unpleasant to consume.
+State exactly when this ADR should happen.
 
 ---
 
-# 6. Gap 2 — Reference Execution Supervision / Concurrency
+## GAP-B — Execution Supervision / Concurrency
 
-Determine whether existing ADRs fully answer:
+Determine whether current ADRs fully define how actual admitted work executes.
 
-```text
-How does actual admitted work run?
-```
+Analyze:
 
-Analyze missing implementation concerns such as:
+* async task supervision
+* bounded concurrency
+* cancellation propagation
+* timeouts
+* shutdown
+* backpressure
+* orphan detection
+* worker ownership
+* context propagation
+* task cleanup
+* background work
+* restart interaction
 
-```text
-async task supervision
-bounded concurrency
-cancellation propagation
-timeouts
-shutdown
-backpressure
-orphaned tasks
-background work
-process termination
-context propagation
-worker ownership
-resource cleanup
-```
+Determine whether a future:
 
-Do not confuse:
+`ADR-015 — Reference Execution Supervision and Concurrency Model`
 
-```text
-Execution semantics
-```
+is necessary.
 
-with:
+Do not invent a distributed workflow engine.
 
-```text
-reference runtime scheduling/supervision mechanism.
-```
-
-Determine whether a future candidate such as:
-
-```text
-ADR-015 — Reference Execution Supervision and Concurrency Model
-```
-
-is needed.
-
-Do not create it now.
-
-If ADR-007/008 already own enough of this behavior, explicitly say so and identify only the residual mechanism decision.
+Prefer the smallest sufficient runtime mechanism.
 
 ---
 
-# 7. Gap 3 — Concrete Persistence Realization
+## GAP-C — Concrete Persistence Realization
 
-ADR-004 defines persistence behavior but intentionally does not select a datastore.
+ADR-004 defines the persistence semantics.
 
-Determine when the first reference implementation must decide the actual realization supporting:
+Determine where the actual datastore decision belongs.
 
-```text
-conditional owner-local commit
-durable mutation
-exact revision lookup
-history
-operation results
-outstanding obligations
-migration
-restart/recovery
-```
+Classify it as either:
 
-Decide whether this should be:
+* canonical architecture ADR,
+* implementation ADR beneath ADR-004,
+* ordinary implementation decision.
 
-```text
-a new architecture ADR
+Strongly prefer lower-level placement unless the technology changes canonical behavior.
 
-OR
+Do NOT select the database during this review.
 
-a lower-level implementation decision / implementation ADR
-under ADR-004
-```
-
-Prefer the lower-level decision if canonical architecture does not depend on the product.
-
-Do NOT select SQLite/PostgreSQL/etc. in this task.
-
-Define the trigger and decision criteria.
+Define required datastore capabilities and decision criteria.
 
 ---
 
-# 8. Gap 4 — Reference Runtime v0.1 Scope
+## GAP-D — Reference Runtime v0.1 Scope
+
+Define a finite first implementation profile.
 
 This is mandatory.
 
-Define a proposed finite:
+Derive the smallest useful governed runtime that proves Lego AI.
 
-```text
-Reference Runtime v0.1 Profile
-```
+Seriously evaluate this approximate scope:
 
-that prevents implementation scope explosion.
+* one explicit Tenant
+* one administrative Principal
+* one Application
+* one deterministic Capability
+* one Port
+* one Plugin
+* one Provider
+* one Adapter
+* one protected Tool/effect
+* immutable effective configuration
+* durable owner state
+* authorization
+* resource accounting
+* evidence
+* retry/reconciliation
+* structured logging/tracing
+* restart/recovery
 
-It should be the smallest governed slice that proves the architecture.
+Initially exclude unless required:
 
-Evaluate a candidate scope approximately like:
+* Agent
+* Model
+* Team
+* Workflow engine
+* RAG
+* persistent Memory
+* vector database
+* message broker
+* distributed services
+* hostile third-party Plugin execution
+* enterprise IAM
+* public remote API
 
-```text
-one explicit Tenant
-one administrative Principal
-one Application
-one deterministic Capability
-one Plugin
-one Provider
-one Adapter
-one Port
-one protected Tool/effect
-one configuration revision
-durable state
-authorization
-resource/effect handling
-evidence
-retry/reconciliation
-basic structured observation
-```
+For every included capability document:
 
-and initially exclude unless absolutely required:
+* why required,
+* owning module,
+* prerequisite ADR,
+* minimum test/proof.
 
-```text
-Agent
-Model
-Team
-Workflow engine
-persistent Memory
-RAG
-vector database
-event broker
-multi-service deployment
-hostile third-party Plugin execution
-enterprise IAM
-public protocol
-cloud-specific infrastructure
-```
+For every excluded capability document:
 
-Do not blindly accept this list.
-
-Derive the actual v0.1 profile from the accepted semantics and ADR dependencies.
-
-For every included feature state:
-
-```text
-why required
-owning module
-required ADR
-minimum proof
-```
-
-For every excluded feature state:
-
-```text
-why excluded
-trigger for inclusion
-```
+* why deferred,
+* trigger for inclusion.
 
 ---
 
-# 9. Gap 5 — Architecture Freeze / Stop Rule
+# 4. Establish an Architecture Freeze
 
-Define an explicit rule preventing endless architecture expansion.
+The project must stop producing foundational abstractions at some point.
 
-Seriously evaluate adopting:
+Determine the correct freeze point.
 
-```text
-FOUNDATIONAL ARCHITECTURE FREEZE
-after ADR-008
-```
+Evaluate a rule similar to:
 
-or the nearest dependency-safe point.
+> Once the foundational protected-execution chain is resolved, no new foundational abstraction may be introduced without evidence from implementation, a failed test/conformance case, ForgeAI, another real application, or measured operational evidence.
 
-Suggested principle:
+Determine whether the freeze should occur after:
 
-```text
-After the foundational execution chain is resolved,
-no new foundational abstraction is added
-without evidence from:
+* ADR-008,
+* ADR-009,
+* ADR-011,
+* or another dependency-safe point.
 
-1. reference-runtime implementation,
-2. a failing conformance/test case,
-3. ForgeAI consumption,
-4. another real consumer,
-5. measured operational evidence.
-```
+Explain why.
 
-Determine the exact freeze point.
+Define what “architecture freeze” actually means.
 
-If ADR-009 must precede the freeze because it is required by the execution path, say so.
+It must NOT prevent bug fixes or justified ADRs.
 
-Do not blindly use ADR-008 if the dependency graph proves another point is safer.
+It SHOULD prevent speculative generic abstractions.
 
 ---
 
-# 10. Gap 6 — ForgeAI as Architecture Validator
+# 5. Make ForgeAI the First Architecture Validator
 
-Define how **ForgeAI** should become the first serious consumer of Lego AI.
-
-The relationship should NOT be:
-
-```text
-Finish every possible Lego AI feature
-→ then start ForgeAI.
-```
-
-Evaluate instead:
-
-```text
-minimum safe Lego AI runtime
-→ ForgeAI consumes it
-→ friction/gap discovered
-→ evidence collected
-→ Lego AI abstraction changed only when justified
-```
-
-Define:
-
-```text
-earliest safe ForgeAI start point
-which Lego AI capabilities ForgeAI should consume first
-what ForgeAI-specific logic must stay outside Lego AI
-how reusable discoveries are promoted back into Lego AI
-how premature generalization is prevented
-```
-
-Create a formal rule:
-
-```text
-ForgeAI requirement
-≠ automatically Lego AI requirement.
-```
-
-A requirement should enter Lego AI only when it represents reusable infrastructure rather than ForgeAI domain logic.
-
----
-
-# 11. Gap 7 — Testing from Day One
-
-ADR-011 owns release/conformance evidence.
-
-That MUST NOT mean testing waits until ADR-011.
-
-Define an implementation testing strategy beginning with the first source commit.
-
-Cover:
-
-```text
-unit / invariant tests
-owner-state tests
-Port contract tests
-Adapter substitution tests
-architecture/import boundary tests
-configuration revision tests
-security negative tests
-tenant isolation tests
-concurrency tests
-crash/restart tests
-lost-ack tests
-effect uncertainty tests
-failure injection
-migration tests
-composition tests
-eventual conformance tests
-```
-
-Distinguish:
-
-```text
-development tests
-≠
-formal conformance evidence
-```
-
-Recommend when each layer begins.
-
-Do not select a test framework unless unavoidable.
-
----
-
-# 12. Gap 8 — Observability / Logging
-
-Confirm and preserve:
-
-```text
-operational logging/tracing/metrics
-≠
-authoritative owner state
-≠
-mandatory evidence
-≠
-provenance
-```
-
-ADR-013 may own full production operational integration.
-
-But determine the **minimum observation baseline required from the first executable slice**.
-
-At minimum consider:
-
-```text
-structured events
-Trace/correlation identity
-Execution identity
-tenant-safe identifiers
-configuration revision
-Plugin/provider version
-state transition
-authorization result reference
-effect status
-errors
-resource usage
-timing
-```
-
-while excluding:
-
-```text
-raw Secrets
-credentials
-sensitive payloads by default
-private chain-of-thought
-```
-
-Decide:
-
-```text
-what must exist immediately
-what may wait for ADR-013
-```
-
-Do NOT select an observability vendor/backend.
-
----
-
-# 13. Gap 9 — Secret Trigger
-
-Review ADR-010 priority.
-
-Do NOT automatically promote it.
-
-Instead define the hard trigger:
-
-```text
-Before the first implementation stores,
-retrieves or uses a real Secret-bearing credential,
-ADR-010 and its prerequisites MUST be resolved.
-```
-
-Examples include:
-
-```text
-Model API key
-GitHub token
-database password
-OAuth client secret
-cloud credential
-SMTP credential
-Tool credential
-```
-
-Prevent:
-
-```text
-temporary .env shortcut
-```
-
-from becoming an architectural bypass.
-
----
-
-# 14. Gap 10 — Plugin Isolation / Trust Claims
-
-Preserve the distinction:
-
-```text
-Python package boundary
-≠ security isolation
-```
-
-Until ADR-012 is resolved and implemented, define exactly how Plugins may be described.
-
-For example distinguish:
-
-```text
-admitted/trusted Plugin within declared threat model
-```
-
-from:
-
-```text
-arbitrary hostile third-party code safely sandboxed
-```
+ForgeAI is intended to be the first serious production application using Lego AI.
 
 Determine:
 
-```text
-initial Plugin trust assumption
-what claims may be made
-what claims must NOT be made
-trigger for ADR-012
-```
+* earliest safe point ForgeAI development can begin,
+* which Lego AI modules ForgeAI should consume first,
+* which ForgeAI functionality must remain ForgeAI-specific,
+* how discovered reusable infrastructure gets promoted into Lego AI,
+* how to prevent ForgeAI requirements from automatically becoming generic platform requirements.
 
-This must prevent misleading platform promises.
+Adopt this rule unless contradicted:
 
----
+`ForgeAI requirement ≠ Lego AI requirement.`
 
-# 15. Gap 11 — Supply Chain
-
-Determine whether ADR-006 + ADR-011 sufficiently own:
-
-```text
-dependency locking
-artifact integrity
-publisher identity
-release provenance
-vulnerability scanning
-SBOM
-signing/attestation
-dependency response
-```
-
-Do NOT invent another ADR if those responsibilities fit existing ones.
-
-If something remains unowned, identify it.
-
-Do not select signing/SBOM products.
+Promotion into Lego AI should require evidence of reusable infrastructure.
 
 ---
 
-# 16. Gap 12 — Non-Functional Baseline
+# 6. Define the Evidence-Driven Abstraction Rule
 
-The first runtime eventually needs measurable operating expectations.
+A new generic Lego AI abstraction should require at least one strong justification:
 
-Define when and how to establish a small benchmark profile covering things such as:
+* canonical semantic requirement,
+* at least two independent real use cases,
+* repeated implementation duplication,
+* demonstrated provider replacement need,
+* security/correctness/conformance requirement.
 
-```text
-startup time
-idle memory
-protected invocation overhead
-authorization overhead
-state-commit latency
-trace volume
-concurrent executions
-Plugin count
-state size
-recovery time
-```
+Speculative future reuse alone is insufficient.
 
-Do NOT invent arbitrary targets now.
+Create an explicit anti-overengineering policy.
+
+---
+
+# 7. Testing Must Start With Implementation
+
+ADR-011 / Conformance must NOT imply testing happens late.
+
+Define a day-one implementation test strategy covering:
+
+* unit/invariant tests,
+* package/import architecture tests,
+* Port contract tests,
+* Adapter substitution tests,
+* configuration revision tests,
+* owner-state tests,
+* concurrency tests,
+* tenant isolation tests,
+* security negative tests,
+* Plugin lifecycle tests,
+* lost-acknowledgment tests,
+* crash/restart tests,
+* partial-completion tests,
+* retry/reconciliation tests,
+* evidence tests,
+* migration tests,
+* composition tests,
+* fault injection,
+* eventual conformance suites.
+
+Explicitly separate:
+
+`development testing`
+
+from:
+
+`formal conformance evidence`.
+
+---
+
+# 8. Logging / Observability Baseline
+
+Preserve:
+
+Operational logging/tracing/metrics
+≠
+mandatory evidence
+≠
+authoritative owner state
+≠
+provenance.
+
+Determine the minimum observation capability that MUST exist in the first executable slice.
+
+At minimum evaluate recording:
+
+* Trace ID,
+* correlation/causation,
+* Execution ID,
+* tenant-safe identity,
+* configuration revision,
+* Plugin/Provider/Adapter versions,
+* state transitions,
+* authorization decision reference,
+* Tool/effect status,
+* resource usage,
+* latency,
+* error category.
+
+Explicitly prohibit ordinary logging of:
+
+* raw Secrets,
+* credentials,
+* unrestricted sensitive payloads,
+* private chain-of-thought.
+
+Determine what ADR-013 can safely defer.
+
+Do not select OpenTelemetry or a logging vendor unless a later implementation decision requires it.
+
+---
+
+# 9. Secret Handling Trigger
+
+Review ADR-010 priority.
+
+Do not automatically make Secrets a mandatory baseline feature.
+
+Instead define this hard gate:
+
+> Before any real credential/Secret is stored, resolved, or consumed by Lego AI, ADR-010 and all prerequisites MUST be resolved and implemented.
+
+Include:
+
+* model API keys,
+* GitHub tokens,
+* OAuth credentials,
+* database credentials,
+* cloud credentials,
+* external Tool credentials.
+
+Explicitly prevent temporary `.env` handling from bypassing the architecture.
+
+`.env` may eventually be an input mechanism only if it participates in the governed Secret mechanism.
+
+---
+
+# 10. Plugin Isolation Claims
+
+Preserve:
+
+`Python package isolation ≠ security isolation.`
+
+Until ADR-012 is resolved and implemented, define the allowed threat model.
+
+State precisely whether initial Plugins are:
+
+* built-in,
+* locally trusted,
+* admitted trusted code,
+* semi-trusted,
+* untrusted.
+
+Do not claim arbitrary hostile Plugin safety until actual isolation exists and is proven.
+
+Define the trigger that activates ADR-012.
+
+---
+
+# 11. Supply-Chain Security
+
+Determine whether ADR-006 and ADR-011 sufficiently own:
+
+* dependency pinning,
+* package integrity,
+* publisher identity,
+* Plugin provenance,
+* SBOM,
+* dependency scanning,
+* vulnerability management,
+* signing/attestation,
+* release provenance.
+
+Do not create a new ADR if existing owners already cover these correctly.
+
+Identify only genuinely unowned concerns.
+
+---
+
+# 12. Non-Functional Requirements
+
+Define when performance measurements should begin.
+
+Consider:
+
+* startup latency,
+* idle memory,
+* state commit latency,
+* authorization overhead,
+* protected invocation overhead,
+* Plugin activation latency,
+* recovery time,
+* concurrent executions,
+* trace/log volume,
+* persistence growth.
+
+Do not fabricate production thresholds.
 
 Instead define:
 
-```text
-when measurement begins
-what needs measurement
-what evidence determines acceptable thresholds
-```
+* benchmark scenarios,
+* measurement phase,
+* when targets are set,
+* evidence required before optimizing.
 
-Performance requirements must be evidence-driven.
+Adopt:
 
----
-
-# 17. Gap 13 — Technology Neutrality vs Technology Avoidance
-
-Explicitly preserve this principle:
-
-```text
-Canonical contracts are technology-neutral.
-
-Reference implementation is allowed
-and expected to be opinionated.
-```
-
-The project must eventually choose concrete:
-
-```text
-validation library
-persistence implementation
-migration tooling
-testing tools
-logging implementation
-packaging/build tooling
-runtime concurrency mechanism
-CLI/developer tooling
-```
-
-at lower layers.
-
-Reject the idea that choosing a concrete reference implementation violates portability.
-
-The correct model is:
-
-```text
-neutral semantics
-+
-opinionated reference implementation
-+
-replaceable Ports/Adapters
-```
+`No optimization ADR without measurement.`
 
 ---
 
-# 18. Gap 14 — Reuse Target / Framework Creep
+# 13. Technology Neutrality vs Technology Avoidance
 
-Review the long-term reuse aspiration.
+Review whether the project is accidentally avoiding concrete implementation decisions.
 
-Prevent:
+Preserve:
 
-```text
-maximize percentage of code reused
-```
+`Canonical architecture = technology-neutral.`
 
-from becoming a design constraint.
+But also adopt:
 
-Adopt instead:
+`Reference implementation = deliberately opinionated.`
 
-```text
-reuse recurring infrastructure
-without forcing irreducible domain logic
-into generic Lego AI abstractions.
-```
+The reference runtime will eventually need concrete choices for:
 
-Define indicators of framework creep:
+* validation library,
+* datastore,
+* migration tooling,
+* serialization,
+* testing stack,
+* logging stack,
+* packaging,
+* concurrency implementation,
+* CLI/developer tools.
 
-```text
-domain-specific concepts entering Kernel
-one-consumer abstraction
-complex generic interface with no second use
-Plugin extension added only for ForgeAI
-mandatory dependency introduced for optional feature
-```
+These do NOT violate platform neutrality if hidden behind correct boundaries.
 
-Define a rejection rule.
+Determine which choices happen before implementation versus during implementation.
 
 ---
 
-# 19. Gap 15 — Solo-Developer Complexity Budget
+# 14. Framework-Creep Detection
 
-Create a complexity budget.
+Define warning signs that Lego AI is absorbing application-specific concepts.
 
-For every proposed new subsystem/ADR ask:
+At minimum:
 
-```text
-Can one developer:
-understand it?
-run it locally?
-test it deterministically?
-upgrade it?
-debug it?
-recover it?
-deploy it?
-```
+* concept exists only because ForgeAI needs it,
+* no second use case,
+* domain-specific object appears in Kernel,
+* generic interface becomes very complex for one provider,
+* optional capability becomes mandatory,
+* application-domain workflow becomes canonical runtime behavior,
+* Plugin extension exists only for one consumer.
 
-Classify complexity as:
-
-```text
-necessary now
-necessary before release
-triggered later
-not justified
-```
-
-Reject enterprise-platform machinery without a current semantic requirement.
+Define when such a proposal should be rejected or kept in the consuming application.
 
 ---
 
-# 20. Required Gap Matrix
+# 15. Solo-Developer Complexity Budget
 
-Create a table with columns:
+For every platform mechanism ask:
 
-```text
-Gap
-Severity
-Already covered?
-Current owner
-Remaining decision
-Needed before source start?
-Needed before executable slice?
-Needed before ForgeAI?
-Needed before release?
-Trigger
-Recommended action
-```
+Can one developer realistically:
 
-At minimum include:
+* understand it,
+* run it locally,
+* test it,
+* debug it,
+* upgrade it,
+* migrate it,
+* recover it,
+* deploy it?
 
-```text
-developer authoring
-execution supervision
-persistence realization
-runtime v0.1 profile
-architecture freeze
-ForgeAI validation
-testing
-baseline observation
-Secrets
-Plugin isolation
-supply chain
-NFR benchmarks
-technology choices
-framework creep
-solo-developer complexity
-```
+Classify every pending subsystem as:
+
+* needed now,
+* needed before executable slice,
+* needed before ForgeAI,
+* needed before release,
+* trigger-based later,
+* unjustified.
+
+Do not copy enterprise architecture patterns merely because they are theoretically robust.
 
 ---
 
-# 21. Decision Routing
+# 16. Multiple AI Coding Assistants / Agentic Development
 
-For every gap classify it into EXACTLY one category:
+We intend to use multiple coding/reasoning systems such as ChatGPT, Astra, Claude, and future coding agents during development.
 
-```text
-A — Already covered by existing accepted specification/ADR
+Define a safe AI-native SDLC for this project.
 
-B — Must be resolved inside an existing planned ADR
+The assistants may perform:
 
-C — Needs lower-level implementation decision after an ADR
+* architecture analysis,
+* implementation,
+* code review,
+* test generation,
+* documentation,
+* refactoring,
+* threat modeling,
+* fault analysis.
 
-D — Justifies a new ADR candidate
+But no model's output should be accepted merely because another model agrees with it.
 
-E — Must wait for runtime/ForgeAI evidence
+Define roles such as:
 
-F — Not required / reject as overengineering
-```
+`Architect`
+→ creates decision/spec
 
-Explain each classification.
+`Implementer`
+→ implements a bounded task
 
----
+`Reviewer`
+→ independently reviews diff against contract
 
-# 22. Proposed New ADR Candidates
+`Test/Adversarial Agent`
+→ attempts to break assumptions
 
-Do NOT create them.
+`Human Maintainer`
+→ accepts/rejects consequential architecture/release changes
 
-Only propose candidates that survive the routing analysis.
+Define controls against:
 
-Likely candidates to evaluate include:
+* shared hallucination,
+* specification drift,
+* models reviewing their own assumptions,
+* massive unreviewable generated commits,
+* hidden dependency introduction,
+* unsafe automated migrations,
+* false test confidence.
 
-```text
-ADR-014 — Reference Application Authoring and Composition Experience
-
-ADR-015 — Reference Execution Supervision and Concurrency Model
-```
-
-But these are NOT mandatory.
-
-A candidate is justified only if:
-
-```text
-the decision is cross-cutting
-hard to reverse
-not already owned
-materially affects multiple modules/consumers
-```
-
-If a problem can be solved as an implementation detail, do not create an ADR.
-
----
-
-# 23. ADR-INDEX Amendment Proposal
-
-Do NOT edit `ADR-INDEX.md`.
-
-Instead include:
-
-```text
-## Proposed ADR-INDEX Amendments
-```
-
-containing:
-
-```text
-new candidate
-class
-priority
-reversibility
-dependencies
-trigger
-blocks
-reason
-```
-
-Also recommend whether any existing priorities/triggers should change.
-
-For ADR-010/012/013 prefer explicit feature triggers unless strong evidence says they must become baseline blockers.
+Require small reviewable changes and executable evidence.
 
 ---
 
-# 24. Implementation Start Gate
+# 17. Application Throughput Expectations
 
-Define objective criteria for:
+Analyze realistic application-development velocity after Lego AI matures.
 
-```text
-SOURCE START
-```
+Distinguish:
 
-and separately:
+`prototype`
+from
+`production-ready application`
+from
+`regulated/high-risk enterprise application`.
 
-```text
-EXECUTABLE GOVERNED SLICE
-```
+Do NOT claim that dozens of unrelated production-grade applications can automatically be created in one or two weeks.
 
-and:
+Instead determine which categories of applications could plausibly become highly compositional once Lego AI has reusable:
 
-```text
-FORGEAI INTEGRATION START
-```
+* authentication,
+* Models,
+* Tools,
+* Artifacts,
+* workflows,
+* evaluation,
+* observability,
+* deployment templates.
 
-and:
-
-```text
-USABLE RELEASE
-```
-
-Example distinction:
-
-```text
-SOURCE START
-package/contracts/state foundations may be coded
-
-EXECUTABLE SLICE
-safe protected action can actually execute
-
-FORGEAI START
-stable enough for first real consumer
-
-RELEASE
-supported scope has required proof/evidence
-```
-
-Derive actual conditions from the project.
+Define conditions under which rapid application creation is realistic.
 
 ---
 
-# 25. Proposed Development Phases
+# 18. Required Gap-Routing Matrix
 
-Produce a concrete phased plan.
+Create a matrix:
 
-Use approximately:
+| Gap | Severity | Existing owner? | Remaining work | Route | Needed before source? | Before slice? | Before ForgeAI? | Before release? | Trigger |
+| --- | -------- | --------------- | -------------- | ----- | --------------------- | ------------- | --------------- | --------------- | ------- |
 
-```text
-Phase 0 — Finish critical ADR chain
+Route must be exactly one of:
 
-Phase 1 — Foundation implementation
+A — Already covered
+B — Resolve in an existing ADR
+C — Lower-level implementation decision
+D — New ADR justified
+E — Wait for runtime/ForgeAI evidence
+F — Reject as unnecessary/overengineering
 
-Phase 2 — Governed deterministic walking skeleton
+Include at least:
 
+* developer experience,
+* execution supervision,
+* persistence product,
+* testing,
+* observability,
+* Secrets,
+* Plugin isolation,
+* supply chain,
+* performance,
+* deployment,
+* application composition,
+* AI integration,
+* Agent integration,
+* Multi-Agent integration,
+* ForgeAI integration,
+* AI-assisted SDLC.
+
+---
+
+# 19. Proposed ADR Changes
+
+Do NOT modify ADR-INDEX.
+
+Create:
+
+`## Proposed ADR-INDEX Amendments`
+
+Recommend only justified changes.
+
+Assess whether future candidates are warranted, including:
+
+* Reference Application Authoring / Composition
+* Execution Supervision / Concurrency
+
+Do not create these ADRs yet.
+
+For each proposed candidate specify:
+
+* decision question,
+* class,
+* priority,
+* reversibility,
+* dependency,
+* trigger,
+* reason it cannot be an implementation detail.
+
+Reject unnecessary ADR candidates.
+
+---
+
+# 20. Define Four Gates
+
+Produce exact criteria for:
+
+## GATE 1 — SOURCE START
+
+When foundational implementation may begin.
+
+## GATE 2 — GOVERNED EXECUTABLE SLICE
+
+When Lego AI can safely execute its first protected deterministic action.
+
+## GATE 3 — FORGEAI START
+
+When ForgeAI can begin consuming Lego AI without forcing unsafe premature abstractions.
+
+## GATE 4 — FIRST USABLE RELEASE
+
+When Lego AI can be presented as a supported reference runtime.
+
+Do not combine these gates.
+
+---
+
+# 21. Define the Walking Skeleton
+
+Specify the first end-to-end implementation:
+
+Application
+→ configuration
+→ Principal/TenantContext
+→ Capability requirement
+→ resolution
+→ Plugin
+→ Provider
+→ Adapter
+→ Execution
+→ authorization
+→ resource admission
+→ protected effect
+→ owner-state commit
+→ evidence
+→ trace/log
+→ result
+
+Then exercise:
+
+* success,
+* denial,
+* timeout,
+* lost acknowledgment,
+* retry,
+* partial completion,
+* runtime restart.
+
+Avoid Agent/Model complexity initially.
+
+---
+
+# 22. First AI Slice
+
+After the deterministic skeleton is reliable, define the smallest Model integration.
+
+Prefer proving:
+
+Application
+→ ModelPort
+→ replaceable Model Provider/Adapter
+→ governed invocation
+→ resource accounting
+→ evidence
+→ tracing
+→ Artifact/result
+
+without requiring an Agent.
+
+Explain prerequisites.
+
+---
+
+# 23. First Agent Slice
+
+Only after the Model/Tool/runtime paths are stable, define prerequisites for:
+
+* Agent state,
+* planning,
+* Tool requests,
+* delegation,
+* checkpointing,
+* cancellation,
+* evaluation.
+
+Do not add multi-agent complexity prematurely.
+
+---
+
+# 24. First Multi-Agent Slice
+
+Define what must already be proven before:
+
+Supervisor
+→ Worker Agents
+→ Delegation
+→ Tool calls
+→ shared Artifacts
+→ independent authority checks.
+
+Explicitly require bounded delegation and traceable execution.
+
+---
+
+# 25. Development Phases
+
+Produce a recommended sequence approximately like:
+
+Phase 0 — Critical ADR completion
+Phase 1 — Foundation/package implementation
+Phase 2 — Deterministic walking skeleton
 Phase 3 — Failure/recovery proof
-
-Phase 4 — ForgeAI consumption
-
-Phase 5 — First reusable AI capability
-
-Phase 6 — Release qualification
-
-Phase 7 — Triggered features
-```
+Phase 4 — Model/AI integration
+Phase 5 — ForgeAI integration
+Phase 6 — Agent capability
+Phase 7 — Multi-Agent capability
+Phase 8 — Release assurance
+Phase 9 — Triggered production features
 
 For every phase define:
 
-```text
-entry criteria
-deliverables
-exit criteria
-tests
-risks
-what must NOT be built yet
-```
+* entry criteria,
+* deliverables,
+* tests,
+* exit criteria,
+* risks,
+* explicit non-goals.
 
 ---
 
-# 26. Walking Skeleton
+# 26. Risk Register
 
-Define the smallest end-to-end reference flow that should be implemented first.
+Include at minimum:
 
-It should test the architecture from:
+* architecture paralysis,
+* overengineering,
+* control-plane dominance,
+* bad developer experience,
+* excessive generic abstraction,
+* missing runtime supervision,
+* hidden persistence weakness,
+* insufficient failure testing,
+* logging/evidence confusion,
+* temporary Secret bypass,
+* false Plugin isolation claim,
+* dependency/supply-chain compromise,
+* AI-generated code quality drift,
+* shared hallucination across AI assistants,
+* unreviewable generated diffs,
+* ForgeAI/Lego AI coupling,
+* premature multi-agent complexity,
+* premature distributed architecture,
+* false production-readiness claims.
 
-```text
-Application
-→ configuration
-→ Principal/Tenant
-→ Capability resolution
-→ Plugin/Provider/Adapter
-→ Execution
-→ protected action
-→ state commit
-→ evidence
-→ observation
-→ result
-```
+For each:
 
-through:
-
-```text
-failure
-retry/reconciliation
-restart
-```
-
-The skeleton should initially avoid unrelated AI complexity.
-
----
-
-# 27. First AI Slice
-
-Only after the deterministic walking skeleton is sound, define what the first AI integration should prove.
-
-Potentially:
-
-```text
-ModelPort
-→ one replaceable Model Adapter
-→ governed invocation
-→ resource accounting
-→ evidence/trace
-```
-
-No Agent is required merely to prove Model integration.
-
-Determine the correct order.
+* likelihood,
+* impact,
+* trigger,
+* mitigation,
+* owner,
+* exit condition.
 
 ---
 
-# 28. First Agent Slice
+# 27. Architecture Stop Rules
 
-Define what must already be stable before adding:
+Recommend explicit engineering rules such as:
 
-```text
-Agent
-planning
-delegation
-Tool selection
-multi-agent work
-```
+1. No new foundational abstraction without evidence.
+2. No new framework layer because one application needs it.
+3. No production claim without corresponding evidence.
+4. No optimization without measurement.
+5. No arbitrary Plugin-trust claim without isolation evidence.
+6. No Secret shortcut outside ADR-010.
+7. No generated code accepted without tests/review.
+8. No large AI-generated commits spanning unrelated modules.
+9. No canonical dependency on optional AI functionality.
+10. No new technology-neutral abstraction when an implementation-local choice is sufficient.
 
-Do not let Agent complexity mask defects in the underlying runtime.
-
----
-
-# 29. ForgeAI Integration Boundary
-
-Define which capabilities ForgeAI should initially consume from Lego AI.
-
-Examples to evaluate:
-
-```text
-configuration
-Plugin system
-Model capability
-Tool capability
-Execution
-Artifacts
-Policy
-Evidence
-Tracing
-```
-
-Then identify ForgeAI-specific concepts that must remain outside Lego AI.
+Improve these rules where necessary.
 
 ---
 
-# 30. Evidence-Driven Abstraction Rule
+# 28. Final Verdict
 
-Adopt a strict rule:
+Conclude with exactly:
 
-```text
-A new reusable abstraction requires at least one of:
-
-1. two independent real use cases,
-2. a canonical semantic requirement,
-3. a demonstrated replaceability need,
-4. repeated implementation duplication,
-5. conformance/security correctness requirement.
-```
-
-One speculative future use case is insufficient.
-
----
-
-# 31. Stop Conditions
-
-Define explicit stop conditions for architecture work.
-
-Examples:
-
-```text
-No new foundational specification
-while an accepted mechanism remains unimplemented.
-
-No new generic subsystem
-without consumer evidence.
-
-No new provider abstraction
-before at least one working provider exists,
-unless canonical contracts already require it.
-
-No optimization ADR
-without measurement.
-```
-
-Refine these rules.
-
----
-
-# 32. Risk Register Update
-
-Produce a gap-specific risk register.
-
-At minimum include:
-
-```text
-architecture paralysis
-framework overgeneralization
-developer UX neglect
-control-plane dominance
-integration complexity
-untested abstractions
-hidden runtime concurrency failure
-logging/evidence confusion
-temporary Secret bypass
-false Plugin isolation claims
-technology-choice avoidance
-ForgeAI divergence
-premature distributed architecture
-release-before-proof
-```
-
-For every risk provide:
-
-```text
-probability
-impact
-trigger
-mitigation
-owner
-exit condition
-```
-
-Use qualitative ratings.
-
----
-
-# 33. Do Not Reopen Good Decisions
-
-Do NOT revisit without contradiction:
-
-```text
-technology-neutral canonical semantics
-Ports/Adapters
-minimal Kernel
-owner-local state
-immutable configuration revisions
-explicit tenancy
-Agent ≠ Principal
-Evaluation ≠ Conformance
-logging ≠ mandatory evidence
-no global transaction
-AI optionality
-modular-monolith-first
-```
-
-The goal is gap closure, not architecture churn.
-
----
-
-# 34. Do Not Implement
-
-During this task DO NOT:
-
-```text
-write source code
-create Python packages
-choose database
-choose IAM product
-choose logging backend
-choose Agent framework
-choose Workflow engine
-create ADR-014
-create ADR-015
-modify ADR-INDEX
-modify canonical specs
-start ForgeAI implementation
-```
-
----
-
-# 35. Required Final Recommendation
-
-Conclude with ONE program recommendation using this structure:
-
-```text
 Current architecture readiness:
 READY / READY WITH CONDITIONS / NOT READY
 
-Critical gaps before continuing ADR work:
+Then provide:
+
+Critical gaps before further ADR work:
 ...
 
-Critical gaps before implementation:
+Critical gaps before source implementation:
 ...
 
-Critical gaps before executable slice:
+Critical gaps before executable runtime:
 ...
 
 Critical gaps before ForgeAI:
+...
+
+Critical gaps before AI/Agents:
 ...
 
 Critical gaps before release:
@@ -1254,58 +942,56 @@ New ADR candidates justified:
 New ADR candidates rejected:
 ...
 
-Recommended architecture freeze point:
+Architecture freeze point:
 ...
 
-Recommended implementation start point:
+Source implementation start:
 ...
 
-Recommended ForgeAI start point:
+ForgeAI start:
 ...
-```
 
-Do not use vague language.
+Recommended next action:
+...
 
 ---
 
-# 36. Completion Report
+# 29. Completion Requirements
 
-After creating:
-
-```text
-planning/IMPLEMENTATION-READINESS.md
-```
-
-STOP.
-
-Report only:
+At completion report only:
 
 1. file created,
-2. overall readiness verdict,
-3. gaps found,
+2. readiness verdict,
+3. critical gaps,
 4. gaps already covered,
-5. gaps routed into existing ADRs,
-6. implementation decisions required,
-7. proposed new ADR candidates,
+5. gaps routed to existing ADRs,
+6. lower-level implementation decisions needed,
+7. justified new ADR candidates,
 8. rejected ADR candidates,
-9. proposed v0.1 scope,
-10. proposed architecture freeze point,
+9. v0.1 runtime scope,
+10. architecture freeze point,
 11. source-start gate,
 12. executable-slice gate,
 13. ForgeAI-start gate,
-14. release gate,
-15. Secrets trigger,
-16. Plugin-isolation trigger,
-17. observability baseline,
+14. AI/Agent-start gate,
+15. release gate,
+16. Secrets trigger,
+17. Plugin-isolation trigger,
 18. testing baseline,
-19. persistence-decision placement,
-20. execution-supervision decision placement,
-21. developer-experience decision placement,
-22. NFR measurement strategy,
-23. framework-creep controls,
-24. top five risks,
-25. recommended development phases,
-26. proposed ADR-INDEX amendments,
-27. whether accepted canonical documents require changes.
+19. observability baseline,
+20. persistence decision placement,
+21. execution-supervision placement,
+22. developer-experience placement,
+23. AI-native SDLC recommendation,
+24. NFR measurement approach,
+25. top risks,
+26. framework-creep controls,
+27. recommended development phases,
+28. proposed ADR-index changes,
+29. whether accepted canonical documents require amendment.
 
-Do NOT create or modify any ADR.
+STOP afterward.
+
+Do NOT create another ADR.
+
+Do NOT implement source code.
