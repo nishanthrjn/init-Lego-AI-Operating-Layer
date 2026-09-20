@@ -57,7 +57,7 @@ Class describes scope; priority describes timing. For example, a Class C isolati
 
 **Type 1:** expensive/difficult to reverse, requiring stronger comparative evidence and a migration argument. **Type 2:** relatively reversible behind a bounded interface, still requiring semantic and security evidence. Reversibility describes the planned boundary, not a promise that migrations are free.
 
-Allowed candidate/ADR statuses are **Proposed, Ready for Decision, Blocked, Accepted, Rejected, Superseded, Deferred**. All 13 allocated ADR candidates were initially created as Proposed. This index is a living planning artifact and records the current disposition of each candidate. ADR-001 through ADR-011 are now Accepted; ADR-012 and ADR-013 remain Proposed. ADR-005 acceptance was explicitly confirmed by the project maintainer on 2026-09-19; ADR-009 acceptance was explicitly confirmed on 2026-09-20. ADR-007 passed its final acceptance gate with explicit maintainer confirmation on 2026-09-20. Acceptance of an ADR records its decision but does not by itself authorize implementation or constitute conformance proof. Deferred subjects in §9 are a watchlist, not speculative numbered ADRs; allocate an ID only when their trigger establishes an actual choice. Consequently, there are no Class E/P4 numbered candidates yet.
+Allowed candidate/ADR statuses are **Proposed, Ready for Decision, Blocked, Accepted, Rejected, Superseded, Deferred**. Fourteen numbered ADRs are allocated; ADR-014 remains intentionally unallocated until its separate authoring/composition decision is authorized. This index is a living planning artifact and records the current disposition of each candidate. ADR-001 through ADR-011 and ADR-015 are Accepted; ADR-012 and ADR-013 remain Proposed. ADR-005 acceptance was explicitly confirmed by the project maintainer on 2026-09-19; ADR-007 passed its final acceptance gate on 2026-09-20; ADR-009 and ADR-015 were explicitly accepted by the project maintainer on 2026-09-20. Acceptance of an ADR records its decision but does not by itself authorize implementation or constitute conformance proof. Deferred subjects in §9 are a watchlist, not speculative numbered ADRs; allocate an ID only when their trigger establishes an actual choice. Consequently, there are no Class E/P4 numbered candidates yet.
 
 ## 4. Decision criteria and evidence discipline
 
@@ -90,8 +90,9 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 | ADR-011 | Reference release evidence and compatibility assessment workflow | B | P2 | 2 | First usable release or conformance claim | CTR-063–069; EVAL-077–084; CONF-060–077 | ADR-006, ADR-008, ADR-009 | Complete scope ledger, evidence reuse and release-change walkthrough | Accepted |
 | ADR-012 | Isolation mechanism for expanded Plugin threat scope | C | P3 | 1 | Hostile/insufficiently trusted Plugin support | R-06; SEC-051–053; CONF-048, 078–079 | ADR-005, ADR-006; ADR-010 if Secrets exposed | Threat comparison; co-location/collusion/side-channel evidence | Proposed |
 | ADR-013 | Operational observation and diagnostic integration | D | P3 | 2 | Production observation/operational-assurance claims | CTR-050; SEC-073–077; EVAL-073–076; CONF-069, 080–081 | ADR-003, ADR-005, ADR-009 | Failure/volume/privacy and diagnostic usability evidence | Proposed |
+| ADR-015 | Reference execution supervision and concurrency model | B | P1 | 1 | Supervised live work and the governed executable slice | SPEC §5.8, S-03/08/12, E-01–11, B-01–04; CTR-013–028, 033–038, 056–061 | ADR-001, ADR-002, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009 | Ownership, bounded concurrency, cancellation, shutdown, restart and orphan/failure walkthroughs | Accepted |
 
-**Count:** 13 candidates; P0 = 2, P1 = 7, P2 = 2, P3 = 2, P4 = 0. Classes: A = 2, B = 8, C = 2, D = 1, E = 0. There is no need to expand the backlog to match every optional technology family.
+**Count:** 14 allocated ADRs; P0 = 2, P1 = 8, P2 = 2, P3 = 2, P4 = 0. Classes: A = 2, B = 9, C = 2, D = 1, E = 0. ADR-014 is not counted because it is not yet allocated. There is no need to expand the backlog to match every optional technology family.
 
 ### ADR-001 — Reference implementation language and runtime
 
@@ -237,6 +238,18 @@ All candidates inherit this acceptance gate: real alternatives fairly compared; 
 - **If deferred / downstream impact:** required basic observation/evidence still implemented under earlier decisions; production integration waits. Affects replaceable exporters and operational procedures, not canonical telemetry authority.
 - **Acceptance:** required correlation accessible under authorization, optional failure cannot masquerade as mandatory evidence success, no private chain-of-thought or raw Secrets required, observation gaps explicit and collection bounded.
 
+### ADR-015 — Reference execution supervision and concurrency model
+
+- **Decision question / need:** How will the first local CPython reference runtime own, bound, cancel, supervise, shut down and recover live work while preserving canonical Execution states, current authority, resource bounds, effect uncertainty and durable recovery semantics?
+- **Class / priority / blocking / reversibility / status:** B / P1 / supervised live work and the governed executable slice / Type 1 / Accepted.
+- **Upstream authority:** SPEC §5.8, S-03/08/12, E-01–11 and B-01–04; ARCHITECTURE §§4.4, 8.3 and 9; CONTRACTS CTR-013–028, 033–038 and 056–061; accepted implementation-readiness plan. **Risks:** detached work, stale supervisors, false cancellation, hidden SDK threads/retries, unbounded queues, deadlocks, unknown effects, false completion and lost repair duties.
+- **Dependencies:** ADR-001, ADR-002, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008 and ADR-009. ADR-003, ADR-010 and ADR-011 remain relevant accepted inputs without new decision edges; ADR-014 is downstream.
+- **Selected mechanism:** one runtime-owned structured `asyncio` supervision tree with explicit bounded admission and queues, plus a separately bounded thread bridge only for qualified trusted blocking Adapters. Durable owner records preserve accepted scheduling obligations and effect facts; in-memory tasks, queues and worker registries remain non-authoritative scheduling state. No general process-worker, broker, distributed scheduler or workflow engine is selected.
+- **Evidence / dominant criteria:** explicit ownership and parent/child lifetime; queue and worker bounds; cancellation/start/handoff races; blocking-driver hangs; shutdown, restart, stale-supervisor and orphan recovery; lost acknowledgment and unknown effects; current Plugin/resource/evidence integration. Actual storage/process restart and driver-termination claims require implementation tests against selected primitives.
+- **Decision owner / trigger:** execution/runtime maintainer; accepted before implementation and qualification of supervised live work for the governed executable slice.
+- **Downstream impact:** ADR-014 may later select supported developer-facing lifecycle/composition syntax over these semantics. ADR-012 still owns hostile-code isolation, ADR-013 production observation integration, and the lower-level ADR-004 realization decision selects persistence technology.
+- **Acceptance:** all live work has an Execution or named bounded duty owner; acceptance stages stay distinct; concurrency and memory are bounded; cancellation never rewrites effect truth; shutdown and restart preserve durable obligations; stale supervisors cannot share dispatch/spend authority; no task registry, semaphore, log or Python exception becomes canonical state, authoritative accounting or Evidence.
+
 ## 6. P0 — Decisions required before implementation starts
 
 Only **ADR-001 and ADR-002** are global source-implementation blockers. They establish the reference substrate and how the already accepted logical boundaries map to packages. A future language-neutral paper review can precede them; creating runtime packages, code, build setup or dependencies cannot.
@@ -245,7 +258,7 @@ Configuration and state mechanisms are important but do not determine whether in
 
 ## 7. P1 — Decisions required during runtime foundation
 
-The seven P1 decisions are ADR-003–ADR-009. Recommended order is configuration and owner-local state; then authority/tenant integration; then mandatory evidence; then bootstrap and dispatch coordination; then retry/reconciliation. ADR-003 and ADR-004 can be researched independently after package boundaries; ADR-006 and ADR-007 share prerequisites and can be compared independently. A solo developer should finish one coherent decision at a time rather than maintain many incomplete ADRs.
+The eight P1 decisions are ADR-003–ADR-009 and ADR-015. Recommended order is configuration and owner-local state; then authority/tenant integration; then mandatory evidence; then bootstrap and dispatch coordination; then retry/reconciliation; then execution supervision before the governed executable slice. ADR-003 and ADR-004 can be researched independently after package boundaries; ADR-006 and ADR-007 share prerequisites and can be compared independently. A solo developer should finish one coherent decision at a time rather than maintain many incomplete ADRs.
 
 Reference trust assumptions, supported operations, failure model, resource units and evidence requirements must be declared as inputs to these decisions. They are scope proposals requiring the appropriate decision owner; this index does not silently fix a first release guarantee profile. Mandatory canonical behavior applies regardless of scope size.
 
@@ -317,11 +330,19 @@ flowchart TD
   A3 --> A13[ADR-013 Operational observation]
   A5 --> A13
   A9 --> A13
+  A1 --> A15[ADR-015 Execution supervision]
+  A2 --> A15
+  A4 --> A15
+  A5 --> A15
+  A6 --> A15
+  A7 --> A15
+  A8 --> A15
+  A9 --> A15
 ```
 
 There is intentionally no ADR-006 → ADR-005 or ADR-009 decision edge. Identity and evidence mechanisms define independently established bounded root duties; bootstrap later assembles those duties without self-admission. Their actual initialization order and authority graph must be proven in ADR-006. Any newly discovered executable dependency cycle blocks that composition rather than being excused by this planning graph.
 
-No optional Agent/Model/Workflow/Memory/broker decision gates the initial Kernel. Secret-based bootstrap is an additional feature trigger: resolve ADR-010 and its prerequisites before using it, and revisit ADR-006's selected composition without inventing a circular dependency. One valid topological writing order is 001 → 002 → 003 → 004 → 005 → 009 → 006 → 007 → 008 → 011, with 010 before any Secret use, and 012/013 at their triggers.
+No optional Agent/Model/Workflow/Memory/broker decision gates the initial Kernel. Secret-based bootstrap is an additional feature trigger: resolve ADR-010 and its prerequisites before using it, and revisit ADR-006's selected composition without inventing a circular dependency. One valid topological writing order is 001 → 002 → 003 → 004 → 005 → 009 → 006 → 007 → 008 → 015 → 011, with 010 before any Secret use, and 012/013 at their triggers. ADR-014 remains downstream of ADR-015 if and when it is allocated.
 
 ## 11. Risk-to-ADR mapping
 
@@ -336,7 +357,7 @@ Mappings assign follow-up responsibility; they do not claim that choosing a mech
 | Q-04 | ADR-011 uses explicit supported scope; official profile definitions deferred | Conformance/Governance approves named versioned requirements/evidence bundles |
 | Q-05 | ADR-005 enforces decisions/conflicts; ADR-009 realizes governed retention; precedence remains upstream | Entitled Governance/Security resolves applicable conflicts; protected scope stays blocked while unresolved |
 | Q-06 | ADR-007 realizes parameterized accounting; external metering choice deferred | Resource/Governance owner approves units, precision, uncertainty/overrun limits; mechanism demonstrates them |
-| Q-07 | ADR-004/007/008/009/011 declare and substantiate exact reference guarantees; broker/Workflow extensions deferred | Capability/Contract/Conformance owners approve any official profiles; no universal durability/order invented |
+| Q-07 | ADR-004/007/008/009/011/015 declare and substantiate exact reference guarantees; broker/Workflow extensions deferred | Capability/Contract/Conformance owners approve any official profiles; no universal durability/order invented |
 | Q-08 | ADR-003 preserves explicit configuration vocabulary; domain standardization deferred | SPEC/Contract/Blueprint owners approve new vocabularies when a use case exists |
 
 ### 11.2 Architecture and Contract risks
@@ -464,6 +485,7 @@ All rows are conditional work gates; only the first two are global P0 gates. “
 | ADR-011 | Release claim could exceed actual supported/evidenced scope | Internal implementation under preceding decisions | Clause coverage, negative proof, exact versions, delta workflow |
 | ADR-012 | Hostile Plugin could bypass host boundaries | Explicit trusted-contribution scope with adequate admission proof | Attacker-scoped containment and composition evidence |
 | ADR-013 | Production diagnostic/assurance claims could lack safe usable observations | Mandatory local evidence/observation under earlier decisions | Volume, failure, privacy, retention and usability analysis |
+| ADR-015 | Live work could detach, exceed bounds, deadlock, lose obligations, or misstate cancellation/effect truth | Inert foundation and owner/contract implementation without supervised execution | Ownership, bounded queue/worker, race, shutdown, restart, orphan and actual-primitive failure proof |
 
 ## 13. Future individual ADR template
 
@@ -577,7 +599,7 @@ Recommend a **single-tenant, deterministic direct Capability slice**, with exact
 | 2 | Configuration snapshots and owner-local revision/state interfaces; Catalog/Resolution interfaces and realizations in their proper modules | ADR-003/004; Kernel does not acquire mutable Catalog/resolver state |
 | 3 | Verified Principal/TenantContext, bounded policy/resource interfaces, required evidence and dispatch coordination | ADR-005/009/007; current authority and resource/evidence gates before executable use |
 | 4 | Bounded root initialization; one owning Plugin's validation/admission/configuration/initialization/activation and contribution publication | ADR-006; no candidate self-trust or ordinary inactive binding |
-| 5 | One deterministic CapabilityProvider and one replaceable Adapter through its Port, with Execution attribution | Applicable P1 decisions; owning Plugin/version and all cross-cutting obligations preserved |
+| 5 | One deterministic CapabilityProvider and one replaceable Adapter through its Port, with bounded supervised Execution attribution | ADR-015 and applicable P1 decisions; owning Plugin/version, task ownership, cancellation, shutdown and all cross-cutting obligations preserved |
 | 6 | Operation identity, equivalent duplicates, declared errors, failure/partial facts and reconciliation where applicable | ADR-008; no hidden exactly-once promise, uncertainty retained |
 | 7 | Future positive/negative conformance cases, scope ledger and release evidence for independent use and composition | ADR-011; assess actual implementation, do not infer proof from ADR acceptance |
 
@@ -594,13 +616,13 @@ After the first batch is accepted and implementation is explicitly authorized, i
 | 1 | All accepted governing documents read | Satisfied — reviewed in authority order; upstream files unchanged |
 | 2 | No upstream semantics redefined | Satisfied — §§1–2 and candidate constraints |
 | 3 | No closed issue reopened | Satisfied — §2; kernel/lifecycle/semantics remain binding |
-| 4 | Every candidate is an unresolved choice | Satisfied — 13 mechanism/workflow questions in §5 |
-| 5 | Solo-developer candidate count | Satisfied — 13, with coherent grouping |
+| 4 | Every allocated ADR has a recorded disposition | Satisfied — 12 Accepted and two Proposed decisions in §5 |
+| 5 | Solo-developer ADR count | Satisfied — 14 allocated, with coherent grouping; ADR-014 remains unallocated |
 | 6 | Small P0 list | Satisfied — two global source-start blockers |
 | 7 | Meaningful priorities | Satisfied — §§3, 6–9 separate source, path, feature and production gates |
 | 8 | Explicit blockers | Satisfied — §§5, 12, 16 |
 | 9 | Explicit deferrals | Satisfied — §9 |
-| 10 | No technologies selected | Satisfied — alternatives only; all candidates Proposed |
+| 10 | Accepted technology choices remain bounded | Satisfied — accepted reference mechanisms stay behind canonical boundaries; Proposed ADR-012/013 choices remain open |
 | 11 | Model/Agent frameworks not foundational | Satisfied — §9 and deterministic slice |
 | 12 | Workflow engine not mandatory | Satisfied — ADR-004 boundary and §9 |
 | 13 | Event broker not mandatory | Satisfied — §9 |
