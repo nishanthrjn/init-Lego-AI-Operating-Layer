@@ -1,6 +1,6 @@
 # Lego AI Operating Layer — Implementation Readiness, Gap Closure and Risk Mitigation
 
-**Status:** PROPOSED — FOR CANONICAL REVIEW
+**Status:** ACCEPTED — IMPLEMENTATION READINESS PLAN
 
 **Date:** 2026-09-20
 
@@ -11,6 +11,8 @@
 **Scope:** Source start, governed deterministic runtime, first ForgeAI consumption, later Model/Agent/Multi-Agent integration, and bounded release/production claims.
 
 **Decision boundary:** This plan proposes sequencing and gates. It does not authorize source implementation, change canonical semantics, accept a new ADR, select a datastore or developer API, or establish implementation/security/Conformance proof. ADR-INDEX is unchanged.
+
+**Acceptance:** Accepted after architectural review on 2026-09-20. Acceptance authorizes the planning sequence and architecture freeze described here; it does not itself authorize implementation, establish executable-runtime readiness, approve ForgeAI consumption, or constitute release, Conformance, security, or production-readiness evidence.
 
 ## 1. Verdict and evidence basis
 
