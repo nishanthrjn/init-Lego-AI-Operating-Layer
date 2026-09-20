@@ -1,6 +1,6 @@
 # Reference Local Persistence Realization and Qualification
 
-**Status:** PROPOSED — FOR IMPLEMENTATION REVIEW
+**Status:** ACCEPTED — IMPLEMENTATION DECISION
 
 **Date:** 2026-09-20
 
@@ -11,6 +11,8 @@
 **Classification:** Lower-level implementation decision beneath ADR-004. No numbered ADR, canonical amendment or ADR-index allocation.
 
 **Decision versus proof:** This record selects a mechanism and specifies its qualification. No persistence source, executable schema, migration, database or test is implemented by this task. Decision acceptance is not implementation qualification, Gate-2 readiness, Conformance or production approval.
+
+**Acceptance:** Accepted after implementation-architecture review on 2026-09-20. Acceptance selects the reference local persistence mechanism and qualification obligations. It does not qualify the implementation, establish machine-durability guarantees, authorize operational protected use, or constitute Conformance, release, security, or production-readiness evidence.
 
 ## 1. Authority and decision question
 
