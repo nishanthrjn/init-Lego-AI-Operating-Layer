@@ -1353,6 +1353,10 @@ download-cache/
 !tests/
 !tests/**
 
+# Keep generated test bytecode ignored after the test-source allowlist.
+tests/**/__pycache__/
+tests/**/*.py[cod]
+
 # ==============================================================================
 
 # 57. Final safety notes
