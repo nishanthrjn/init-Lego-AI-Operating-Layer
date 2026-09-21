@@ -166,6 +166,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/runtime/__init__.py",
         "legoai/runtime/_composition/__init__.py",
         "legoai/runtime/_composition/direct.py",
+        "legoai/execution/__init__.py",
+        "legoai/execution/values.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -223,6 +225,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/support/observation.py",
             "tests/support/migration_fixture.py",
             "tests/integration/application/test_migration_interruption.py",
+            "tests/unit/execution/test_values.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -273,7 +276,8 @@ import legoai.reference.declarations as declarations
 import legoai.reference.resolution as resolution
 import legoai.reference.deterministic as deterministic
 import legoai.runtime._composition.direct as composition
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition):
+import legoai.execution.values as execution_values
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -297,6 +301,8 @@ evidence_req = evidence.EvidenceRequirement(
     "evidence needed",
 )
 assert evidence_req.description == "evidence needed"
+assert len(execution_values.ExecutionState) == 10
+assert execution_values.ExecutionId("exec-1").value == "exec-1"
 assert hasattr(ports, "ConfigurationStorePort")
 assert hasattr(application, "ConfigurationPublicationOperation")
 assert hasattr(application, "ConfigurationSourceSubmissionDuty")

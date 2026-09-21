@@ -947,3 +947,11 @@ All seventeen Gate-1 §18.1 foundation-exit criteria are `PASS`, independently r
 ## 27. Gate-2 planning (pointer)
 
 Gate-2 planning-only work (no implementation) is recorded in `planning/GATE-2-IMPLEMENTATION-PLAN.md` (status: `PROPOSED — GATE 2 IMPLEMENTATION PLAN`). Summary: authoritative Gate-2 scope is ADR-005 through ADR-009 plus ADR-015 realized toward one governed deterministic executable invocation (the "governed executable slice" ADR-015 names); no separate numbered Gate-2 exit checklist exists in accepted planning documents. Selected first implementation batch: `legoai.execution` public values only (`ExecutionState`, `ExecutionId`, `ExecutionContext`, `ExecutionResult`) — no Ports, no realization, no Model/Embedding/Agent/Workflow. `READY_TO_IMPLEMENT_GATE2_BATCH_1 = YES`. No Gate-1 milestone history above is altered by this pointer.
+
+## 28. Gate-2 M1 implementation (pointer)
+
+```text
+GATE2_M1_COMPLETE = YES
+```
+
+M1 (`legoai.execution` semantic values: `ExecutionState`, `ExecutionId`, `SecurityContextRef`, `ExecutionContext`, `ExecutionResult`) is implemented — see `planning/GATE-2-IMPLEMENTATION-PLAN.md` §28 for full detail. No Ports, Coordinator, Resolver, runtime orchestration, persistence or asyncio were implemented; no Governance/Resources/Plugins/Evidence expansion occurred; zero new runtime dependencies. Verified: Core pytest 708 passed (was 634), mypy/ruff clean, architecture tests 153 passed (was 141), package-install 5 passed (fresh wheel includes the new package), Document Pack unchanged at 268 passed/64 skipped, canonical documents and DocuMind untouched. **Next Gate-2 prerequisite remains governance expansion** (plan §20's M2: Grant/Policy/Approval values+Ports, ADR-005) — not started, not pre-authorized by this pointer. No milestone history above is rewritten by this entry.
