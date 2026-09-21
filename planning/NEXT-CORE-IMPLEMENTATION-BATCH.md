@@ -838,3 +838,106 @@ F9_RE_REVIEW_REQUIRED = YES
 Verified before closing this batch: `pytest` 634 passed (was 618 before this batch; +16 new); `mypy src tests` — no issues in 64 source files; `ruff check`/`ruff format --check` — clean; coverage unchanged at 94% overall (confirming zero production lines were added); architecture tests unchanged at 141 passed (no boundary rule needed — test code importing production private helpers is unrestricted); package-install tests unchanged at 5 passed; Document Pack unchanged at 268 passed/64 skipped; zero new runtime dependencies; no canonical document changed; no DocuMind file touched.
 
 **F9 must be re-run** to update `GATE_1_EXIT_VERDICT`. This batch does not itself declare Gate 1 passed.
+
+---
+
+## 26. F9 re-review (post G1-EXIT-08 remediation)
+
+```text
+F9_RE_REVIEW = COMPLETE
+GATE_1_EXIT_VERDICT = READY
+```
+
+This is a re-review only. No implementation was added, changed, or planned in this task. The only repository change from this task is this section (`planning/NEXT-CORE-IMPLEMENTATION-BATCH.md`); `git status --porcelain=v1` was empty at the start of this task.
+
+No `planning/GATE-1-EXIT-REVIEW.md` file exists in this repository (`ls planning/` confirmed: `DOCUMIND-EXTRACTION-ASSESSMENT.md`, `GATE-1-FOUNDATION-IMPLEMENTATION.md`, `IMPLEMENTATION-READINESS.md`, `NEXT-CORE-IMPLEMENTATION-BATCH.md`, `documind/`, `runtime/`). The established convention in this repository has been to record all F9/Gate-1-exit review content in this document (§24 = original review, §25 = remediation status). Per this task's own instruction not to create a second competing exit-review document unless repository convention explicitly requires one, this re-review is recorded here, continuing that convention, rather than creating the named-but-nonexistent file.
+
+### 26.1 Original verdict and gap (unchanged history — not overwritten)
+
+§24.5 originally recorded `GATE_1_EXIT_VERDICT = NOT_READY`, 16 PASS / 1 PARTIAL / 0 FAIL, with the sole partial being **G1-EXIT-08** ("Revision/conflict/duplicate/lost-ack/process-restart and migration-interruption evidence for the selected owner") — specifically the absence of any migration-interruption evidence, against the Gate-1 plan's own §9.3 instruction to "use a clearly synthetic predecessor fixture to exercise interrupted migration." That original PARTIAL determination and its full reasoning remain intact in §24.3 above, unedited by this section.
+
+### 26.2 G1-EXIT-08 re-evaluation
+
+`PARTIAL` → **`PASS`**, on direct re-verification of the remediation evidence against each required point:
+
+1. **Synthetic predecessor clearly test-only, not misrepresented as historical.** `tests/support/migration_fixture.py` lives under `tests/`, is never imported by any production module — confirmed by both a dedicated AST-scan test (`test_migration_fixture_module_is_test_only_not_imported_by_production`, re-run passing) and a direct `grep -rn migration_fixture src/legoai` (no matches, re-confirmed in this review). Its module docstring states explicitly that `SYNTHETIC_PREDECESSOR_SCHEMA_VERSION = 0` "was never a released LegoAI representation."
+2. **Migration transactional.** Directly re-read `migrate_predecessor_to_current` (lines ~255-350): opens one `BEGIN IMMEDIATE`, performs all renames/creates/data-moves inside it, commits once at the end. SQLite's transactional DDL guarantees all-or-nothing rollback on interruption.
+3. **Real subprocess termination before COMMIT.** Directly re-read `test_migration_killed_before_commit_leaves_predecessor_intact` (lines ~189-233): launches `subprocess.Popen([sys.executable, "-c", child_script], cwd=REPO_ROOT, ...)` — a genuine separate OS process, not a thread, mock, or exception injection — polls `ready_marker.exists()` in a bounded loop (0.05s interval, 10s deadline; not a fixed sleep guess), then calls `process.kill()` (real OS-level abrupt termination) followed by `process.wait(timeout=10)`.
+4. **Schema marker not advanced prematurely.** Confirmed by direct source read: the `stop_before_commit` branch writes `ready_marker` then calls `time.sleep(3600)` and returns, never reaching the `store_metadata.schema_version` bump or `COMMIT`, which are the last two statements in the non-interrupted path.
+5. **Interrupted migration leaves no partial current-schema state.** `test_migration_killed_before_commit_leaves_predecessor_intact` asserts `_physical_tables(path) == original_tables` and the explicit absence of `config_duty`/`config_revision`/`config_head`/`config_result` post-kill — re-run passing.
+6. **Restart doesn't misinterpret predecessor state as current.** `test_interrupted_store_is_refused_by_production_construction` asserts `SQLiteConfigurationStore(path)` raises the existing, unmodified `UnsupportedPhysicalSchemaVersionError`.
+7. **Recovery blocks safely.** `test_interrupted_store_is_blocked_by_recovery_qualification` and `test_interrupted_migration_never_reports_qualified` assert `qualify_store(path)` returns the existing, unmodified `RecoveryStatus.BLOCKED` with `physical_schema_version == 0` and `scopes == ()` — no per-scope interpretation is attempted once the version check fails, so no mixed-state report is ever possible. `test_repeated_recovery_attempts_remain_stable_after_interruption` and `test_no_silent_repair_or_cleanup_after_interruption` confirm this is stable and non-mutating across repeated attempts.
+8. **Successful control case proves genuine migratability.** `TestSuccessfulMigrationControlCase` (7 tests) runs the same transform to completion (no kill) and proves the resulting store is usable through the unchanged production `SQLiteConfigurationStore`/`qualify_store` APIs, ending in `RecoveryStatus.QUALIFIED`.
+9. **Semantic identities/results/duties/history intact.** `test_migration_preserves_historical_revision_content_exactly`, `test_migration_preserves_operation_result_without_recomputation`, `test_migration_preserves_unknown_effect_exactly` (`EffectExtent.UNKNOWN`, never downgraded to `NONE`), `test_migration_preserves_outstanding_duty_as_outstanding`, and `test_migration_preserves_owner_revision_and_configuration_revision_distinctly` (explicit `not hasattr` checks proving H and R remain structurally distinct types) — all re-run passing.
+10. **No production-code changes.** `git diff --stat HEAD -- src/legoai` — empty, re-confirmed in this task.
+
+Additional robustness check performed in this re-review (not present in the original remediation report): the full `test_migration_interruption.py` file was run three independent times in a row to rule out subprocess-timing flakiness — **16/16 passed each time** (3.41s, 2.15s, 1.60s). No flakiness observed.
+
+**G1-EXIT-08 = PASS.**
+
+### 26.3 Regression reconfirmation for the other sixteen criteria
+
+The remediation batch added only two test files (`tests/support/migration_fixture.py`, `tests/integration/application/test_migration_interruption.py`) plus a two-line addition to the sdist expected-file list in `tests/architecture/test_package_install.py`. `git diff --stat HEAD -- src/legoai` is empty, so no criterion whose evidence cites production source in §24.3 has had that source altered. Regression evidence re-run fresh in this task (not taken from the remediation batch's own report):
+
+- `pytest` (Core): **634 passed** (matches remediation report exactly: 618 original + 16 new).
+- `mypy src tests`: **"Success: no issues found in 64 source files."**
+- `ruff check src tests`: **"All checks passed!"** `ruff format --check src tests`: **"64 files already formatted."**
+- `coverage` (branch, same module set as §24.2): **94% overall**, TOTAL 1404 stmts / 78 miss / 502 branch / 33 partial — identical to the pre-remediation figure, confirming zero production lines were added or altered.
+- `tests/architecture` suite: **141 passed** — identical count to §24.3's G1-EXIT-04 evidence, confirming import-boundary/inertness/no-ambient-state/no-Gate-2-symbol rules all still hold unchanged.
+- Document Pack (`packages/legoai-document`, independent `.venv`): **268 passed, 64 skipped** — identical to §24.2, confirming the Document Pack was untouched.
+- Fresh `uv build --no-build-isolation` + wheel inspection: file list identical to the pre-remediation wheel (35 files, no new production module); `METADATA` shows `Requires-Python: <3.15,>=3.14` and **no `Requires-Dist` line at all** — zero new runtime dependencies, matching §24.2/§26.6.
+- Package-install tests: **5 passed**, including the fresh-wheel-build-and-install test (now also covering the two new sdist-listed test files, per the one non-production edit this remediation made).
+
+On this basis, **G1-EXIT-01 through G1-EXIT-07 and G1-EXIT-09 through G1-EXIT-17 are reconfirmed `PASS`**, retaining the original evidence citations in §24.3 (which remain valid, since nothing they depend on changed) rather than re-deriving them from zero. No regression was found in any of the sixteen.
+
+### 26.4 Production source verification
+
+`git diff --stat HEAD -- src/legoai` — empty. Zero production source changes from either the remediation batch or this re-review task.
+
+### 26.5 Canonical authority documents verification
+
+`git status --porcelain=v1 -- intent.md SPEC.md architecture/ARCHITECTURE.md contracts/CONTRACTS.md plugin-spec/PLUGIN-SPEC.md security/SECURITY.md evaluation/EVALUATION.md conformance/CONFORMANCE.md adrs` — empty. No canonical document or Accepted ADR was touched. `git status --porcelain=v1` filtered for `documind` — no output; the DocuMind extraction work is untouched.
+
+### 26.6 Dependency and wheel-metadata verification
+
+`pyproject.toml` still declares `dependencies = []`. Fresh wheel `METADATA` (rebuilt in this task) carries no `Requires-Dist` line at all — identical to the pre-remediation wheel. `uv.lock` unchanged (build/test tooling only). Zero new runtime dependencies introduced by either the remediation batch or this re-review.
+
+### 26.7 Gate-2 absence reconfirmation
+
+`grep -rln "class CapabilityResolver\|class Execution\|class PluginAdmission\|class ExecutionContext\|class ModelPort\|class Agent\b\|class Workflow\b" src/legoai` — no matches. `find src/legoai -iname "*execution*" -o -iname "*resolver*" -o -iname "*catalog*" -o -iname "*admission*"` — no matches. No Execution, ExecutionContext, CapabilityResolver runtime, Plugin admission/activation, authorization enforcement, dispatch, resource claim enforcement, async supervision, ModelPort, Embedding, Agent runtime, or Workflow runtime exists anywhere in the repository.
+
+### 26.8 Final seventeen-item checklist
+
+| Criterion | Previous | Re-review | Evidence |
+|---|---|---|---|
+| G1-EXIT-01 — installable distribution / wheel-sdist smoke test | PASS | PASS | §24.3; wheel/sdist rebuilt and re-inspected in this task, §26.3/§26.6 |
+| G1-EXIT-02 — reproducible test/type/lint/format/build loop | PASS | PASS | §24.3; all commands re-run fresh in this task, §26.3 |
+| G1-EXIT-03 — minimal nominal values / safe explicit contexts with negative tests | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-04 — enforced import/dependency direction, inert package parents | PASS | PASS | §24.3; 141 architecture tests re-run passing, §26.3 |
+| G1-EXIT-05 — immutable candidate composition / exact published revision | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-06 — SQLite owner boundary, compound guards/results/duties, durability disclaimer | PASS | PASS | §24.3; unchanged, no source diff; further corroborated (not superseded) by the new interruption evidence in §26.2 |
+| G1-EXIT-07 — safe versioned serialization, supported-reader rejection | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-08 — revision/conflict/duplicate/lost-ack/process-restart/migration-interruption evidence | **PARTIAL** | **PASS** | §26.2; `tests/support/migration_fixture.py` + `tests/integration/application/test_migration_interruption.py`, 16/16 passing across 3 independent runs, zero production changes |
+| G1-EXIT-09 — inert Plugin/Capability declarations, no executable inactive binding | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-10 — explicit Principal/Tenant inputs, no ambient/fake authority | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-11 — safe source/Evidence/provenance references, duty ≠ custody | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-12 — bounded safe local diagnostics with failure tests | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-13 — deterministic internal non-effectful composition, substitution test | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-14 — no real Secret/provider dependency | PASS | PASS | §24.3; unchanged, no source diff |
+| G1-EXIT-15 — no optional AI dependency / unnecessary service | PASS | PASS | §24.3; wheel METADATA re-checked in this task, §26.6 |
+| G1-EXIT-16 — applicable checks pass, counterevidence/limitations remain visible | PASS | PASS | §24.3/§26.3; original PARTIAL history for G1-EXIT-08 preserved above, not concealed |
+| G1-EXIT-17 — named Gate-2 blockers, not relabeled optional | PASS | PASS | §24.3; §18.2 blocker table unchanged, Gate-2 absence reconfirmed, §26.7 |
+
+**17 / 17 PASS. 0 PARTIAL. 0 FAIL.**
+
+### 26.9 Final verdict
+
+```text
+GATE_1_EXIT_VERDICT = READY
+```
+
+**Artifact status: ACCEPTED — GATE 1 EXIT QUALIFIED.**
+
+All seventeen Gate-1 §18.1 foundation-exit criteria are `PASS`, independently re-verified from source in this task, with the previous sole gap (G1-EXIT-08) closed by the remediation batch's migration-interruption evidence and no regression found in any of the other sixteen. Production source, canonical authority documents, the runtime dependency set, and the absence of any Gate-2 concept are all reconfirmed unchanged.
+
+**Gate 1 foundation is qualified. Gate 2 may now be planned in a separate task.** No Gate-2 planning or implementation was performed in this task.
