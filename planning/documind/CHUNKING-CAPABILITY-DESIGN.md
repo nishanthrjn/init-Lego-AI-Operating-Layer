@@ -1,7 +1,7 @@
 # Chunking Capability — Implementation Design
 
 **Document:** `planning/documind/CHUNKING-CAPABILITY-DESIGN.md`
-**Status:** PROPOSED — IMPLEMENTATION DESIGN
+**Status:** AUTHORIZED — IMPLEMENTED (Batch 1: `document.chunking` in `packages/legoai-document/`)
 **This is NOT a canonical LegoAI Core specification.** It defines a single proposed reusable **Document Capability Pack** capability, derived from DocuMind evidence, subordinate to and constrained by (but not amending) `intent.md`, `SPEC.md`, `ARCHITECTURE.md`, `CONTRACTS.md`, and ADR-001/002.
 **Parent document:** [`planning/DOCUMIND-EXTRACTION-ASSESSMENT.md`](../DOCUMIND-EXTRACTION-ASSESSMENT.md) §16.1, §24
 **Source evidence:** `DocuMind-SK/src/DocuMind.Core/Services/ChunkingService.cs`, `DocuMind-SK/tests/DocuMind.Tests/ChunkingServiceTests.cs`, `DocuMind-AgentFramework/src/DocuMind.Core/Services/ChunkingService.cs`, `DocuMind-AgentFramework/tests/DocuMind.Tests/ChunkingServiceTests.cs` — all four files read directly for this design (not summarized secondhand); the SK and MAF implementations are **byte-for-byte identical**, as are their test suites.
@@ -234,7 +234,9 @@ Built directly from reading `DocuMind-SK/tests/DocuMind.Tests/ChunkingServiceTes
 | **Protocol + implementation** | A `Protocol` earns its keep when a Port must admit *multiple substitutable realizations* behind a stable interface (e.g., `EmbeddingCapability` behind an SK-Adapter and an MAF-Adapter — parent assessment §16.2). `document.chunking` has exactly one realization today and no Provider/Adapter concept applies at all (§6). Introducing a `Protocol` now would be exactly the "speculative abstraction" AGENTS.md and ADR-002 §11 warn against ("No generic `common`... package is allocated... Promotion to a shared primitive requires... explicit dependency review"). | Rejected for now — revisit only if/when a second, genuinely different chunking realization (§11) is actually built and needs to be swapped behind a common interface. |
 | **Callable capability object** (a class with `__call__` or a `.run()` method, perhaps carrying configuration as instance state) | Would only be justified if the capability needed to hold configuration across multiple invocations, manage a resource (a connection, a loaded model), or participate in a registry/lifecycle. None of these apply — `chunk_size`/`overlap` are per-call parameters, not session-level configuration, and there is no resource to hold open. | Rejected — would introduce object lifecycle and state management for a function that has none. |
 
-### Proposed public signature and value types (no implementation body)
+### Public signature and value types (as implemented)
+
+The three blockers noted in the original §14 gate were authorized and resolved (see the updated §14 below) before this signature was implemented. `errors.py` is now a fourth module alongside `values.py`/`api.py`, holding a single pack-local exception rather than a dependency on `legoai.kernel.errors`.
 
 ```python
 # legoai_document/chunking/values.py
@@ -245,6 +247,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True, slots=True)
 class ChunkingRequest:
     """Immutable input to the document.chunking capability."""
+
     text: str
     chunk_size: int = 512
     overlap: int = 50
@@ -255,6 +258,7 @@ class Chunk:
     """A single chunk produced by document.chunking. Carries no persistence
     or document-correlation fields -- see the parent design document's
     entity-separation section."""
+
     index: int
     content: str
     word_count: int
@@ -263,45 +267,71 @@ class Chunk:
 @dataclass(frozen=True, slots=True)
 class ChunkingResult:
     """Immutable, ordered output of document.chunking."""
+
     chunks: tuple[Chunk, ...]
+
+
+# legoai_document/chunking/errors.py
+
+
+class ChunkingValidationError(ValueError):
+    """Raised when a document.chunking request has invalid parameters."""
 
 
 # legoai_document/chunking/api.py
 
-def chunk_text(request: ChunkingRequest) -> ChunkingResult:
-    """Split request.text into overlapping word-count windows.
 
-    Deterministic, pure, effect-free (see design doc SS5-6).
-    Raises ValidationError-equivalent for chunk_size <= 0, overlap < 0,
-    or overlap >= chunk_size, pending the characterization decision in
-    design doc SS4/SS12 -- exact error type is a Core-contract question,
-    not decided in this pack-level document.
+def chunk_text(request: ChunkingRequest) -> ChunkingResult:
+    """Split request.text into overlapping ASCII-space-delimited word windows.
+
+    Raises:
+        ChunkingValidationError: if chunk_size <= 0, overlap < 0, or
+            overlap >= chunk_size.
     """
     ...
 ```
-
-No implementation body is provided, per the design-gate scope of this document. The exact exception type raised for the three UNDECIDED validation cases is deliberately left unresolved here (see §14) rather than invented.
 
 ---
 
 ## 14. Implementation gate
 
 ```text
-READY_TO_IMPLEMENT_CHUNKING = NO
+READY_TO_IMPLEMENT_CHUNKING = YES
 ```
 
-**Blockers (must all clear before flipping to YES):**
+### Authorized decisions (resolving the three original blockers)
 
-1. **Three UNDECIDED validation behaviors (§4, §12) are not yet resolved:** `chunk_size <= 0`, `overlap < 0`, and `overlap >= chunk_size`. The C# oracle's actual behavior for these cases ranges from silent data loss to an unbounded-loop defect — none of it is fit to characterize as intended behavior. A deliberate decision (recommended: raise a validation-category error for all three, consistent with SPEC §10's canonical error model) must be made and recorded — by whoever authorizes implementation — before code is written, not discovered mid-implementation.
-2. **Exact exception/error type is not yet chosen.** This document deliberately stops at "a validation-category error" without picking a concrete Python exception type or committing to a specific `legoai` Core error contract dependency, since that is a Core-contract-level decision (whether `legoai_document` depends on `legoai.kernel.errors` at all, given today it needs zero Core dependencies) that should be made deliberately, not implicitly, when implementation is authorized.
-3. **Packaging mechanics for `legoai_document` are not yet chosen** (single distribution with a second top-level import package vs. two separate distributions vs. some other layout) — §"Package placement" resolves the *architectural* question (separate import root, ADR-002 §13 mechanism) but explicitly defers the *mechanical* packaging choice, consistent with ADR-002 itself deferring build-tool/workspace-manager choices.
+1. **Invalid parameter behavior.** `chunk_size <= 0`, `overlap < 0`, and `overlap >= chunk_size` are all rejected before any computation runs. None of the source oracle's defects (crash for invalid `chunk_size`, silent word loss for negative overlap, infinite loop for `overlap >= chunk_size`) are reproduced.
+2. **Exception type.** A pack-local `legoai_document.chunking.errors.ChunkingValidationError(ValueError)` is used, with no new error hierarchy and no dependency on `legoai.kernel.errors`. A future governed Execution boundary may map this to LegoAI's canonical `ValidationError` category (SPEC §10) at the boundary; that mapping is explicitly out of scope for this batch.
+3. **Packaging mechanics.** A separate first-party distribution at `packages/legoai-document/` (import root `legoai_document`), `src/` layout, Hatchling build backend, `pyproject.toml` mirroring `legoai-reference`'s own conventions (Python `>=3.14,<3.15`, `uv`-managed dev group of pytest/mypy/ruff/coverage). Zero declared runtime dependencies.
 
-**Already resolved (not blockers):**
+### Gate criteria re-checked
 
-- Package placement is resolved (§"Package placement" — separate import root `legoai_document`, no new ADR needed).
-- Capability boundary is resolved (§0, §2, §3 — Core/Document-Pack split, request/result/entity/Artifact separation).
-- Existing behavior (the 6 tested cases) is fully characterized (§12).
-- No accepted ADR is contradicted (§"Package placement" decision section).
-- Dependency direction is valid (§"Package placement" — inward-only, Core untouched).
+- Package placement is resolved and implemented (separate import root `legoai_document`, no new ADR needed).
+- Capability boundary is resolved and implemented (Core/Document-Pack split; request/result/entity/Artifact separation — `Chunk`/`ChunkingRequest`/`ChunkingResult` carry no `document_id`, `artifact_id`, `tenant_id`, `created_at`, `page_number`, provider, or model fields).
+- Existing behavior (the 6 tested cases) is fully characterized and implemented identically.
+- The three previously UNDECIDED validation behaviors are now decided, implemented, and tested.
+- No accepted ADR is contradicted; none was modified.
+- Dependency direction is valid and verified by an automated check: `legoai_document` imports nothing from `legoai`, and `legoai` imports nothing from `legoai_document` (§"Implementation status" below).
+
+See **§"Implementation status"** below for the concrete result of building and verifying this design.
+
+---
+
+## Implementation status (Batch 1 — complete)
+
+**Files created** under `packages/legoai-document/`: `pyproject.toml`, `.python-version`, `.gitignore`, `README.md`, `uv.lock`, `src/legoai_document/__init__.py`, `src/legoai_document/py.typed`, `src/legoai_document/chunking/__init__.py` (explicit named exports only), `src/legoai_document/chunking/values.py`, `src/legoai_document/chunking/errors.py`, `src/legoai_document/chunking/api.py`, `tests/unit/chunking/test_chunk_text.py` (6 ported behavioral cases + immutability/determinism/non-mutation checks), `tests/unit/chunking/test_characterization.py` (whitespace-only, invalid-parameter rejection, ASCII-space-only splitting parity, Unicode preservation), `tests/unit/chunking/test_invariants.py` (parametrized invariants across chunk_size/overlap combinations), `tests/architecture/test_dependency_boundaries.py` (zero runtime deps; no forbidden framework/provider imports; no `legoai` Core dependency), `tests/architecture/test_core_does_not_import_pack.py` (confirms `legoai` Core has no outward import of `legoai_document`).
+
+**Verification performed:**
+
+- `pytest`: 227 passed, 64 skipped (skips are invalid `overlap >= chunk_size` combinations intentionally excluded from invariant parametrization, covered separately by dedicated characterization tests) — 100% statement and branch coverage of `legoai_document.chunking`.
+- `mypy --strict`: no issues found in 10 source files.
+- `ruff check` / `ruff format --check`: all checks passed.
+- Packaging: `uv build` produced a wheel containing exactly the 5 expected source files plus `py.typed` and no `Requires-Dist` line; installed with `uv pip install --no-deps --offline` into a fresh, pip-less venv; a clean-interpreter (`-I -B`) script confirmed the exact documented import surface (`Chunk`, `ChunkingRequest`, `ChunkingResult`, `ChunkingValidationError`, `chunk_text`), correct behavior, and `importlib.metadata.requires("legoai-document")` returning empty.
+- LegoAI Core regression: all 150 pre-existing Core tests still pass, unchanged; Core's own mypy/ruff checks remain clean.
+
+**Deviations from the approved design:** none of substance. The only change from the design sketch is cosmetic (docstring blank-line placement to satisfy `ruff format`, applied automatically).
+
+**Deferred (explicitly, per the authorized scope):** the performance smoke measurement (§10 — no benchmark infrastructure exists in the repository and none was introduced); the eventual mapping of `ChunkingValidationError` into LegoAI's canonical `ValidationError` category at a future governed Execution boundary; all other Document Pack capabilities (Parsing, Embedding, Retrieval, Rerank, Ingestion Workflow, Answering).
 
 **Once blockers 1–3 are explicitly decided** (a short follow-up decision, not a redesign — the options are already laid out in §4 and §14 above), this gate should be re-evaluated and can reasonably flip to `YES` without further architectural work.
