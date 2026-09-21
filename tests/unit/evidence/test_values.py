@@ -6,7 +6,12 @@ import pytest
 
 from legoai.evidence.values import EvidenceRequirement
 from legoai.kernel.identity import ApplicationId, TenantId
-from legoai.kernel.references import ApplicationRef, ConfigurationRef, ConfigurationRevisionRef, ReferenceScope
+from legoai.kernel.references import (
+    ApplicationRef,
+    ConfigurationRef,
+    ConfigurationRevisionRef,
+    ReferenceScope,
+)
 from legoai.kernel.versions import Version
 
 VERSION = Version(0, 1, 0)

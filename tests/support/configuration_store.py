@@ -56,7 +56,9 @@ class InMemoryConfigurationStore:
         self._revision_counters: dict[ConfigurationRef, int] = {}
         self._history: dict[ConfigurationRevisionRef, ComposedConfiguration] = {}
         self._results: dict[OperationRef, ConfigurationPublicationResult] = {}
-        self._duties: dict[ConfigurationRef, list[ConfigurationSourceSubmissionDuty]] = {}
+        self._duties: dict[
+            ConfigurationRef, list[ConfigurationSourceSubmissionDuty]
+        ] = {}
         self._duty_ids = count(1)
 
     def current_head(self, target: ConfigurationRef) -> OwnerRevision | None:

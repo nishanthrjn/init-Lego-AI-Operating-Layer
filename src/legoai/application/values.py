@@ -240,11 +240,15 @@ class ConfigurationPublicationOperation:
             raise ValueError("operation subject must match the publication target")
         if self.expected_revision is not None:
             if type(self.expected_revision) is not OwnerRevision:
-                raise TypeError("expected revision must be OwnerRevision or explicit None")
+                raise TypeError(
+                    "expected revision must be OwnerRevision or explicit None"
+                )
             if self.expected_revision.subject != self.target:
                 raise ValueError("expected revision subject mismatch")
         if type(self.candidate) is not ComposedConfiguration:
-            raise TypeError("publication operation requires ComposedConfiguration candidate")
+            raise TypeError(
+                "publication operation requires ComposedConfiguration candidate"
+            )
         if self.candidate.target != self.target:
             raise ValueError("candidate target mismatch")
         if type(self.requested_by) is not Principal:
@@ -292,7 +296,9 @@ class ConfigurationPublicationResult:
             if type(self.published) is not ConfigurationRevisionRef:
                 raise TypeError("published reference must be ConfigurationRevisionRef")
             if self.published.configuration != self.resulting_revision.subject:
-                raise ValueError("published reference and resulting revision subject mismatch")
+                raise ValueError(
+                    "published reference and resulting revision subject mismatch"
+                )
             if self.error is not None:
                 raise ValueError("committed result cannot carry an error")
         else:
@@ -338,7 +344,9 @@ class ConfigurationSourceSubmissionDuty:
         if type(self.operation.subject) is not ConfigurationRef or (
             self.operation.subject != self.published.configuration
         ):
-            raise ValueError("duty operation subject must match the published configuration")
+            raise ValueError(
+                "duty operation subject must match the published configuration"
+            )
         if type(self.responsible_principal) is not Principal:
             raise TypeError("duty requires a responsible Principal")
         if type(self.tenant_context) is not TenantContext:
@@ -347,8 +355,12 @@ class ConfigurationSourceSubmissionDuty:
             self.tenant_context.tenant_id
             != self.published.configuration.application.scope.tenant_id
         ):
-            raise ValueError("duty tenant context does not match published configuration scope")
+            raise ValueError(
+                "duty tenant context does not match published configuration scope"
+            )
         if type(self.requirement) is not EvidenceRequirement:
             raise TypeError("duty requires EvidenceRequirement")
         if self.requirement.subject != self.published:
-            raise ValueError("duty requirement subject must match the published revision")
+            raise ValueError(
+                "duty requirement subject must match the published revision"
+            )

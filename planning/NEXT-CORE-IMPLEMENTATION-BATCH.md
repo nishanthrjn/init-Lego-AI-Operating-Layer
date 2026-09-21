@@ -338,3 +338,27 @@ READY_TO_IMPLEMENT_NEXT_CORE_BATCH = YES
 - No missing ADR blocks it (§14).
 - A concrete test strategy exists, requiring no external service (§8).
 - No AI, Model, Embedding, Ollama, or any external provider is required (§5.2) — fully deterministic.
+
+---
+
+## 16. Implementation status
+
+```text
+F4_IMPLEMENTATION = COMPLETE
+```
+
+Implemented as scoped in §5.1/§5.2, nothing beyond:
+
+- `kernel/provenance.py` — `DutyId`, `DutyKind` (owner-neutral duty anchors; `EvidenceId` deliberately omitted — no F4 consumer needs it yet).
+- `evidence/values.py` (new `evidence` package) — `EvidenceRequirement`, the one narrow evidence-owned value F4's duty shape needs.
+- `application/values.py` extended with `OperationStage`, `ConfigurationPublicationOperation`, `ConfigurationPublicationResult`, `ConfigurationSourceSubmissionDuty` — H (`OwnerRevision`) and R (`ConfigurationRevisionRef`) kept distinct throughout, per §7's own model.
+- `application/ports.py` (new) — `ConfigurationStorePort` (`Protocol`, `@runtime_checkable`) with `current_head`/`current_published`/`read_revision`/`publish`/`operation_result`/`outstanding_duties`; `UnknownRevisionError` for exact-historical-read misses (no fallback to current).
+- `tests/support/configuration_store.py` — `InMemoryConfigurationStore`, the only Port realization this batch ships; explicitly test infrastructure, never a runtime fallback.
+- `tests/contract/test_configuration_store.py` — `STORE_FACTORIES`-parametrized Protocol conformance suite (currently one factory), written so F6a adds a second factory and reuses every test unchanged.
+- Unit tests for the new provenance/evidence/application values; architecture tests extended to allow the ADR-002 §9.2 `application → governance, evidence` dependency, add an `evidence`-owner boundary (Kernel-only, stricter than application's), and assert no SQLite/database driver, no AI/agent-framework import, and no DocuMind/Document-Pack import anywhere in Core.
+
+Verified before closing this batch: `pytest` 228 passed; `mypy src tests` — no issues in 32 source files; `ruff check`/`ruff format --check` — clean; zero new runtime dependencies (`pyproject.toml`/`uv.lock` untouched); no canonical document changed; no DocuMind file touched; no Gate-2, SQLite, or AI/Model code introduced anywhere in the diff.
+
+Deviations from this document's original plan: none of substance. The Port was designed here with `current_revision()` collapsing H and R into one method; that was caught and split into `current_head()`/`current_published()` before the fake or contract tests were written, matching §7's own H/R distinction — not a scope change, a correction during implementation.
+
+**F5 has not been started.** This document's own sequencing (§3) still names F5 (versioned codecs/migration) as the next candidate; nothing in this batch's diff touches serialization, migration, SQLite, or any Gate-2 package.
