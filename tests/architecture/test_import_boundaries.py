@@ -64,6 +64,28 @@ def violations(sources: dict[str, str]) -> set[str]:
                 if root in {"tests", "test_support"}:
                     errors.add("test-import")
                 elif root == "legoai":
+                    if name.startswith("legoai.application.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.application"
+                        or target.startswith("legoai.application.")
+                    ):
+                        errors.add("application-owner")
+                    if name.startswith("legoai.application.") and any(
+                        target == f"legoai.application.{layer}"
+                        or target.startswith(f"legoai.application.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
+                    if name.startswith("legoai.reference.application.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.application.values"
+                        or target.startswith("legoai.application.values.")
+                        or target == "legoai.reference.application"
+                        or target.startswith("legoai.reference.application.")
+                    ):
+                        errors.add("reference-owner")
                     if name.startswith("legoai.kernel.") and not (
                         target == "legoai.kernel" or target.startswith("legoai.kernel.")
                     ):
@@ -220,8 +242,82 @@ def test_no_ambient_context_or_module_state() -> None:
                     "contextvars",
                     "threading",
                 }, path
+
             if isinstance(node, ast.ImportFrom):
                 assert (node.module or "").split(".")[0] not in {
                     "contextvars",
                     "threading",
                 }, path
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.reference.application import configuration",
+            "application-owner",
+        ),
+        (
+            "legoai.application.values",
+            "from legoai.governance.values import Principal",
+            "application-owner",
+        ),
+        ("legoai.application.values", "from .ports import Store", "values-layer"),
+        (
+            "legoai.reference.application.configuration",
+            "import legoai.runtime",
+            "reference-owner",
+        ),
+        (
+            "legoai.reference.application.configuration",
+            "import legoai.reference.governance",
+            "reference-owner",
+        ),
+        (
+            "legoai.reference.application.configuration",
+            "import provider_sdk",
+            "external",
+        ),
+        ("legoai.kernel.context", "import legoai.application.values", "kernel-owner"),
+    ],
+)
+def test_f2_boundaries(module: str, source: str, reason: str) -> None:
+    assert reason in violations({module: source})
+
+
+def test_f2_cycle_and_indirect_import() -> None:
+    assert {"application-owner", "cycle"} <= violations(
+        {
+            "legoai.application.values": "from .helper import Value",
+            "legoai.application.helper": "from legoai.reference.application.configuration import compose",
+            "legoai.reference.application.configuration": "from legoai.application.values import Value",
+        }
+    )
+
+
+def test_f2_pure_module_dependencies() -> None:
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    for relative in ("application/values.py", "reference/application/configuration.py"):
+        tree = ast.parse((root / relative).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] in {
+                    "dataclasses",
+                    "enum",
+                    "typing",
+                    "legoai",
+                }
+                assert not {alias.name for alias in node.names} & {
+                    "OwnerRevision",
+                    "ConfigurationRevisionRef",
+                    "OperationContext",
+                }
+            if isinstance(node, ast.Import):
+                assert all(
+                    alias.name.split(".")[0]
+                    in {"dataclasses", "enum", "typing", "legoai"}
+                    for alias in node.names
+                )
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                assert node.func.id not in {"open", "print", "input"}
