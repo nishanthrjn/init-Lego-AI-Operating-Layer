@@ -1,0 +1,43 @@
+
+--- MAF PlainTextParser: 01_empty_utf8.txt ---
+OK. Length=0
+Repr: ""
+
+--- MAF PlainTextParser: 15_invalid_utf8.txt ---
+OK. Length=9
+Repr: "\u8000\u6F6E\u2074\u6176\u696C\u2064\u7475\u2D66\uFFFD"
+
+=== Deterministic-path fixtures (real text layer, OCR should NOT be invoked) ===
+
+--- MAF PdfDocumentParser: 08_one_page_text.pdf ---
+OK. Length=26
+Repr: "Hello world from page one."
+
+--- MAF PdfDocumentParser: 09_multi_page_text.pdf ---
+OK. Length=90
+Repr: "Page one line A Page one line B\r\n\r\nPage two line A Page two line B\r\n\r\nPage three only line"
+
+--- MAF PdfDocumentParser: 10_blank_page_middle.pdf ---
+THREW: System.InvalidOperationException: OCR should not have been invoked for this fixture.
+
+--- MAF PdfDocumentParser: 11_unicode_pdf.pdf ---
+OK. Length=24
+Repr: "Unicode: caf\u00E9 na\u00EFve \u00FCber"
+
+--- MAF PdfDocumentParser: 13_malformed_truncated.pdf ---
+THREW: UglyToad.PdfPig.Core.PdfDocumentFormatException: Could not find the startxref within the last 452 characters.
+
+--- MAF PdfDocumentParser: 13b_malformed_garbage.pdf ---
+THREW: UglyToad.PdfPig.Core.PdfDocumentFormatException: Could not find the startxref within the last 49 characters.
+
+--- MAF PdfDocumentParser: 14_encrypted.pdf ---
+THREW: UglyToad.PdfPig.Exceptions.PdfDocumentEncryptedException: The document was encrypted and none of the provided passwords were the user or owner password.
+
+=== Image-only fixture (expected to fall back to OCR -- using an offline stub, not a real model) ===
+
+--- MAF PdfDocumentParser: 12_image_only.pdf ---
+OK. Length=42
+Repr: "[STUB OCR OUTPUT -- not a real model call]"
+Offline OCR stub was invoked: True (confirms wiring only; content quality not characterized)
+
+Done.

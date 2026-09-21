@@ -1,10 +1,24 @@
 # Document Parsing Capability — Implementation Design
 
 **Document:** `planning/documind/DOCUMENT-PARSING-CAPABILITY-DESIGN.md`
-**Status:** PROPOSED — IMPLEMENTATION DESIGN
+**Status:** PROPOSED — DESIGN LIVE-VERIFIED, PENDING IMPLEMENTATION AUTHORIZATION
 **This is NOT a canonical LegoAI Core specification.** It defines a single proposed reusable **Document Capability Pack** capability, derived from DocuMind evidence, subordinate to and constrained by (but not amending) `intent.md`, `SPEC.md`, `ARCHITECTURE.md`, `CONTRACTS.md`, and the accepted ADRs.
 **Parent documents:** [`planning/DOCUMIND-EXTRACTION-ASSESSMENT.md`](../DOCUMIND-EXTRACTION-ASSESSMENT.md), [`planning/documind/CHUNKING-CAPABILITY-DESIGN.md`](CHUNKING-CAPABILITY-DESIGN.md) (Batch 1, complete and accepted — consumed here only as a downstream API, not modified)
 **Batch 1 status:** `document.chunking` remains untouched by this document.
+**Live-verification evidence:** [`planning/documind/parsing-verification/`](parsing-verification/) — fixtures, verification scripts, and captured `results-*.txt` outputs backing every finding in this document tagged `VERIFIED`. See §1a below for methodology.
+
+---
+
+## 1a. Live verification methodology (this pass)
+
+The findings in §11-14, §17, §23, and §26 below were previously either derived-with-high-confidence from source reading or explicitly marked `UNDECIDED — REQUIRES LIVE VERIFICATION`. This pass closes that gap with real, reproducible execution:
+
+- **`pypdf` 6.19.0** was installed in an isolated verification venv (never added to `legoai-document`'s own dependencies) and exercised against 16 fixtures via `planning/documind/parsing-verification/py/verify_pypdf.py`.
+- **DocuMind-SK's actual `PdfDocumentParser`/`PlainTextParser`** were exercised, unmodified, via a throwaway console app that project-references `DocuMind-SK`'s `DocuMind.Core`/`DocuMind.Domain` projects read-only (`parsing-verification/dotnet-sk/Verify/`).
+- **DocuMind-AgentFramework's actual `PdfDocumentParser`/`PlainTextParser`** were exercised the same way (`parsing-verification/dotnet-maf/Verify/`). The OCR fallback branch was exercised only with an offline, canned `IVisionExtractionService` stub, confirming *whether* the branch is reached, never invoking a real network/paid model call — OCR content quality remains explicitly out of scope (§14).
+- Every fixture is tiny, synthetic, programmatically generated, and non-private (`parsing-verification/fixtures/`, `generate_fixtures.py`).
+
+Every claim below tagged **VERIFIED** was produced by one of these three runs, captured in `parsing-verification/results-{pypdf,sk,maf}.txt`. Claims tagged **DESIGN DECISION** are choices made given the verified evidence, not facts the evidence alone determines. Claims tagged **RESIDUAL RISK** are known, accepted gaps this verification does not close.
 
 ---
 
@@ -230,6 +244,48 @@ class EncryptedDocumentError(DocumentParsingError):
 
 **Future mapping (not implemented here):** at a future governed Execution boundary, `UnsupportedDocumentFormatError` maps most naturally to SPEC's `CapabilityUnavailable`/`ValidationError` boundary depending on framing (an unsupported *format* is closer to a capability-scope limitation than a malformed request); `MalformedDocumentError` and `EncryptedDocumentError` both map to SPEC's `ValidationError` category (an input-contract violation) per SPEC §10's canonical error model. Exactly as with `ChunkingValidationError` in Batch 1, this mapping is **not implemented** in this batch.
 
+### Exception mapping — VERIFIED, fully resolved
+
+Live verification (`parsing-verification/results-pypdf.txt`) confirms `pypdf` 6.19.0 exposes exactly the exception granularity needed, with no guessing required:
+
+| pypdf exception (verified) | MRO (verified) | Fixture that produced it | Maps to |
+|---|---|---|---|
+| `pypdf.errors.PdfStreamError` | `PdfStreamError → PdfReadError → PyPdfError → Exception` | Truncated PDF (`"Stream has ended unexpectedly"`) | `MalformedDocumentError` |
+| `pypdf.errors.PdfReadError` | `PdfReadError → PyPdfError → Exception` | Garbage/no-xref PDF (`"startxref not found"`) | `MalformedDocumentError` |
+| `pypdf.errors.FileNotDecryptedError` | `FileNotDecryptedError → PdfReadError → PyPdfError → Exception` | Encrypted PDF, no password / wrong password, raised on `.pages` access or `.extract_text()` | `EncryptedDocumentError` |
+| (no PDF-library exception at all — a plain Python `UnicodeDecodeError`) | `UnicodeDecodeError → ValueError → Exception` | Invalid UTF-8 bytes declared as `PLAIN_TEXT`/`MARKDOWN`/`HTML` | `MalformedDocumentError` |
+
+**VERIFIED — `FileNotDecryptedError` is a subclass of `PdfReadError`, so it MUST be caught first (more specific before more general) to correctly discriminate encrypted-from-generically-malformed** — otherwise a broad `except PdfReadError` would silently swallow the encrypted case as a generic malformed one. `PdfReader(...)` construction itself does **not** raise for an encrypted PDF (VERIFIED — it succeeds and sets `is_encrypted = True`); the exception is only raised lazily, the first time `.pages` or `.extract_text()` is accessed without a valid password.
+
+**DESIGN DECISION — no blanket `except Exception`.** Per instruction, only the three known `pypdf` exception types above are caught explicitly; any other exception from `pypdf` (or elsewhere) is allowed to propagate un-wrapped rather than being silently reclassified, using exception chaining where a pack-local exception is raised in response to a caught one:
+
+```python
+try:
+    reader = PdfReader(io.BytesIO(request.content))
+    pages = list(reader.pages)  # FileNotDecryptedError raised here if encrypted
+except FileNotDecryptedError as exc:
+    raise EncryptedDocumentError(
+        "PDF is encrypted and cannot be read without a valid password"
+    ) from exc
+except PdfReadError as exc:  # includes PdfStreamError (subclass)
+    raise MalformedDocumentError(
+        f"PDF could not be parsed: {exc}"
+    ) from exc
+```
+
+For text-family formats:
+
+```python
+try:
+    text = request.content.decode("utf-8")  # strict -- see SS "Text decoding semantics"
+except UnicodeDecodeError as exc:
+    raise MalformedDocumentError(
+        "content is not valid UTF-8"
+    ) from exc
+```
+
+`raise ... from exc` (exception chaining, PEP 3134) preserves the original `pypdf`/stdlib exception as `__cause__` for diagnostics, while the public API surface exposes only the four pack-local exception types — no raw `pypdf` exception class is ever part of `document.parsing`'s public contract, per instruction.
+
 ---
 
 ## 14. OCR boundary — full analysis
@@ -261,6 +317,12 @@ OCR / Vision                  =  a separate, later-designed capability, composed
 
 `document.ocr` is the better-reasoned candidate *if and when* this capability is designed, precisely because it stays technology-neutral the same way this document's own §5 naming does. **However, per this batch's own discipline (already applied to Classification and Structured Extraction in the parent assessment), a capability with exactly one realization, evidenced by exactly one application, is not designed or contracted here** — only the eventual identity is recorded as a leaning, not a decision, to avoid rediscovering this reasoning later without repeating the analysis.
 
+### VERIFIED — a new, concrete finding: the 20-chars/page heuristic misfires on a genuinely valid, mostly-textual PDF
+
+Live verification (`parsing-verification/results-maf.txt`) surfaced something the source-reading pass in the previous design gate could not: fixture `10_blank_page_middle.pdf` — three pages, two with normal text ("First page has text." / "Third page has text.") and one genuinely blank page in the middle — **triggers MAF's OCR fallback**. The deterministic text-layer extraction yields 44 characters over 3 pages (an average of ~14.7 chars/page), which falls below the `>= 20` threshold, even though **two of the three pages have perfectly good, real text** and only one page is genuinely blank (a normal, unremarkable document structure — e.g., a report with an intentional blank separator page). This was confirmed by instrumenting the verification harness's stub `IVisionExtractionService` to throw if invoked for this fixture — it *was* invoked.
+
+This is stronger evidence than the earlier, source-reading-only analysis provided: the threshold is not merely "possibly arbitrary" (§25 of the original design gate) — it is **demonstrably too aggressive for ordinary documents containing even one blank or sparse page**, meaning MAF's current oracle would route a real, valid, English-language multi-page document through an unnecessary (and, in production, costly and latency-adding) OCR call. This is now recorded as a confirmed **DEFECT** in the oracle's heuristic, not merely an unexplained constant — and it further strengthens (rather than merely reiterates) the decision to exclude any per-page-average text-density heuristic from `document.parsing` v1 entirely. A future `document.ocr`-composing workflow would need a materially better trigger condition than "average characters per page" if it wants to avoid this same false-positive class.
+
 ---
 
 ## 15. Determinism
@@ -277,22 +339,23 @@ OCR / Vision                  =  a separate, later-designed capability, composed
 
 ## 16. Security review
 
-Document parsing is an **untrusted-input boundary** — analyzed explicitly, not assumed safe:
+Document parsing is an **untrusted-input boundary** — analyzed explicitly, not assumed safe. Tags reflect this pass's live-verification status.
 
-| Concern | Assessment |
-|---|---|
-| Malformed files | Relies entirely on the chosen library's own robustness (§ dependency table below); this design claims no additional validation or sandboxing beyond surfacing a `MalformedDocumentError` when the library itself detects and reports a failure |
-| Parser bombs (decompression bombs, deeply nested PDF object graphs) | **Not defended against.** This is a known category of PDF-library vulnerability class; this design does not claim protection. Library selection (§17) weighs known security history as one factor, but a genuine defense (resource-bounded parsing, sandboxed execution) is out of scope — the repository's own `ADR-012` ("Isolation mechanism for expanded Plugin threat scope") is the more appropriate future home for this, and it remains Proposed/non-binding today |
-| Oversized documents / resource exhaustion | No size limit is enforced by this capability (matching the oracle, which also has none at the application level). This is treated as a governed Execution/Resource-Policy responsibility (SPEC §4.10 Budget/Quota/Limit) to be enforced **before** this capability is invoked, not invented here as a fabricated threshold |
-| Embedded objects / JavaScript / interactive actions | Out of scope by construction, not by an added defense: this design only ever performs *text extraction*, never interactive rendering or script execution, so PDF JavaScript/actions are never executed or even inspected. This holds only because the chosen library usage stays confined to text extraction — a future capability that adds richer PDF features must re-examine this |
-| Filesystem/path injection | Not applicable — the bytes-based input decision (§11, Option C) never accepts a caller-supplied filesystem path, closing this class of risk off by construction |
-| External references (network fetches triggered by content) | Not applicable in v1 — no HTML/Markdown structural interpretation occurs (§6); content is treated as opaque text, so nothing dereferences an `<img src="...">` or similar |
-| Encrypted documents | Detected and reported as `EncryptedDocumentError` rather than an opaque parser exception (an improvement over the oracle, §13) — but no attempt is made to decrypt, brute-force, or otherwise process an encrypted document |
-| Memory limits | Both DocuMind oracles fully buffer entire documents into memory; this design's bytes-based contract (§11) shares that same characteristic by construction — no streaming/backpressure exists at the capability level |
-| Parser library vulnerabilities | Standard hygiene (pinned version, monitored advisories) recommended; not something a capability-level *design* can guarantee beyond the dependency choice itself |
-| Content-type/format trust | Carried forward explicitly as a residual risk from §12: a caller can still declare the *wrong* (but validly-shaped) `DocumentFormat` for real content; this design formalizes format selection into a closed enum (removing the "unrecognized string silently falls through" bug class) but does **not** verify the declared format against actual byte content — that remains the caller's responsibility unless a future magic-byte-sniffing hardening is added |
+| Concern | Assessment | Status |
+|---|---|---|
+| Malformed files | `pypdf` VERIFIED to raise distinguishable `PdfStreamError`/`PdfReadError` for the two malformed fixtures tried (truncated, garbage/no-xref) — mapped to `MalformedDocumentError` (§13). No additional validation or sandboxing beyond this is claimed | VERIFIED (mapping) |
+| Parser bombs (decompression bombs, deeply nested PDF object graphs) | **Not defended against**, and not tested for in this pass (constructing a genuine parser-bomb fixture safely was judged out of scope for a design-verification gate). This is a known category of PDF-library vulnerability class; this design does not claim protection. The repository's own `ADR-012` ("Isolation mechanism for expanded Plugin threat scope") is the more appropriate future home for this, and it remains Proposed/non-binding today | RESIDUAL RISK |
+| Oversized documents / resource exhaustion | No size limit is enforced by this capability (matching the oracle, which also has none at the application level, VERIFIED by source reading in the prior pass). Treated as a governed Execution/Resource-Policy responsibility (SPEC §4.10) to be enforced **before** this capability is invoked | RESIDUAL RISK |
+| Embedded objects / JavaScript / interactive actions | Out of scope by construction: this design only ever performs *text extraction* via `pypdf`'s `extract_text()`, never interactive rendering or script execution. Not independently verified in this pass (no fixture with embedded JavaScript was constructed), but consistent with `pypdf`'s documented scope as a manipulation/extraction library, not a rendering engine | DESIGN DECISION (scope), not independently verified |
+| Filesystem/path injection | Not applicable — the bytes-based input decision (§11) never accepts a caller-supplied filesystem path | DESIGN DECISION (closed off by construction) |
+| External references (network fetches triggered by content) | Not applicable in v1 — no HTML/Markdown structural interpretation occurs (§6, and §18a's strict-UTF-8-decode-only confirmation); content is treated as opaque text | DESIGN DECISION |
+| Encrypted documents | **VERIFIED**: `PdfReader` construction succeeds silently for an encrypted PDF (does not raise); `FileNotDecryptedError` is raised only lazily, on first page/text access. Detected and reported as `EncryptedDocumentError` (§13) — an improvement over the oracle, which VERIFIED throws an uncaught `PdfDocumentEncryptedException` with no distinct handling. No attempt is made to decrypt, brute-force, or otherwise process an encrypted document | VERIFIED |
+| Memory limits | Both DocuMind oracles VERIFIED to fully buffer documents into memory (MAF explicitly via `CopyToAsync`/`ToArray()`, confirmed in prior source-reading pass); this design's bytes-based contract (§11) shares that characteristic by construction | DESIGN DECISION (accepted tradeoff) |
+| Parser library vulnerabilities | Standard hygiene (pinned version, monitored advisories) recommended; `pypdf` 6.19.0's own advisory history was not independently audited in this pass beyond the license/maintenance research in §17 | RESIDUAL RISK |
+| Content-type/format trust | A caller can still declare the *wrong* (but validly-shaped) `DocumentFormat` for real content; format selection is a closed enum (§12) but content is never sniffed against the declared format | RESIDUAL RISK |
+| Invalid-UTF-8 silent corruption | **VERIFIED as a real defect in both oracles** (§18a) and **closed** by this design's strict-UTF-8-decode decision (raises `MalformedDocumentError` instead of silently substituting replacement characters) | VERIFIED + closed by design decision |
 
-No sandboxing, resource isolation, or content verification is claimed that does not exist in this design.
+No sandboxing, resource isolation, malware scanning, PDF sanitization, CPU isolation, or memory quota is claimed anywhere in this design. Hostile PDFs, resource exhaustion, pathological object graphs, and very large content streams remain explicit residual risks, to be bounded later by LegoAI's Resource/Execution controls (SPEC §4.10, and `ADR-012` once accepted), not by this capability itself.
 
 ---
 
@@ -311,7 +374,21 @@ No sandboxing, resource isolation, or content verification is claimed that does 
 
 This recommendation is **not implemented** in this batch — no dependency is added to `packages/legoai-document/pyproject.toml` here (§26 hard stop).
 
-Sources consulted: [Python PDF library comparison (2026)](https://www.nutrient.io/blog/best-python-pdf-libraries/), [PyMuPDF vs pdfplumber (2026): the speed-vs-license tradeoff](https://pdfmux.com/blog/pymupdf-vs-pdfplumber/), [pdfplumber vs PyMuPDF vs pypdf](https://subhajitbhar.com/blog/pdf-extraction/pdfplumber-vs-pymupdf-vs-pypdf2/), [PyMuPDF PyPI license notice](https://pypi.org/project/pymupdf/).
+Sources consulted for the initial (non-live) research: [Python PDF library comparison (2026)](https://www.nutrient.io/blog/best-python-pdf-libraries/), [PyMuPDF vs pdfplumber (2026): the speed-vs-license tradeoff](https://pdfmux.com/blog/pymupdf-vs-pdfplumber/), [pdfplumber vs PyMuPDF vs pypdf](https://subhajitbhar.com/blog/pdf-extraction/pdfplumber-vs-pymupdf-vs-pypdf2/), [PyMuPDF PyPI license notice](https://pypi.org/project/pymupdf/).
+
+### VERIFIED — installed-package metadata (this pass)
+
+`pypdf` was actually installed (`uv venv --python 3.14`, `uv pip install pypdf`) and its metadata inspected directly, not assumed from PyPI's web page:
+
+| Property | VERIFIED value |
+|---|---|
+| Version resolved | `6.19.0` (latest at verification time) |
+| `License-Expression` (SPDX metadata field) | `BSD-3-Clause` — confirms the web-research finding directly from the installed package, not secondhand |
+| Native/compiled artifacts | **None** — confirmed no `.pyd`/`.so` files anywhere under the installed package tree; `Summary` metadata self-describes as "A pure-python PDF library" |
+| `Requires-Python` support | `3.14` explicitly listed as a supported classifier (`Programming Language :: Python :: 3.14`), alongside 3.9-3.13 |
+| Runtime dependencies (base install, no extras) | **Zero mandatory dependencies** on Python ≥3.11 (the only unconditional entry, `typing_extensions >= 4.0`, is gated to `python_version < '3.11'` and therefore does not apply on 3.14; all other `requires-dist` entries are `extra ==` optional groups — `crypto`, `image`, `full`, `dev`, `docs`, `fonts`, `rtl-text` — none pulled in by a base install) |
+
+**DESIGN DECISION — no optional extras are needed for v1.** `pypdf`'s `crypto`/`cryptodome` extras add support for additional PDF encryption algorithms beyond what the base install handles; the verified `FileNotDecryptedError` behavior (§13) already covers v1's requirement (detecting and reporting encryption, not decrypting arbitrary schemes) without them. The `image`/`fonts`/`rtl-text` extras are for PDF *creation*/advanced-layout features, irrelevant to text extraction. Installing only the base package (zero mandatory dependencies) is therefore both sufficient and consistent with `legoai-document`'s minimal-dependency posture.
 
 ---
 
@@ -405,7 +482,90 @@ No implementation body is provided, per this task's design-only scope.
 
 ---
 
-## 19. Package placement
+## 18a. Live-verified semantic decisions
+
+### Text decoding semantics — VERIFIED defect confirmed, DESIGN DECISION made
+
+**VERIFIED (both C# oracles, `parsing-verification/results-{sk,maf}.txt`):** feeding invalid UTF-8 bytes (fixture `15_invalid_utf8.txt`, `b"\xff\xfe\x00\x80not valid utf-8"`) through `PlainTextParser` in **both** SK and MAF does **not** throw — `StreamReader(fileStream, Encoding.UTF8)` silently substitutes U+FFFD replacement characters for the invalid bytes and returns a corrupted-but-successful string (`"耀潮⁴慶楬⁤瑵ⵦ�"` — mangled, not an error). This confirms, with live evidence rather than inference, the silent-corruption defect flagged in §12/§25 of the original design pass.
+
+**VERIFIED (Python stdlib, `parsing-verification/results-pypdf.txt` run alongside):** `bytes.decode("utf-8")` (strict mode, the default) raises `UnicodeDecodeError` for the same invalid byte sequence — `UnicodeDecodeError('utf-8', b'\xff\xfe\x00\x80not valid utf-8', 0, 1, 'invalid start byte')` — and this is confirmed to be a `ValueError` subclass (`isinstance(e, ValueError) == True`). All seven valid-UTF-8 text fixtures (empty, ASCII, Unicode, multiline, leading/trailing whitespace, Markdown, HTML) decode via strict `utf-8` with byte-for-byte content fidelity confirmed (exact string equality checked programmatically, not eyeballed).
+
+**DESIGN DECISION (adopted as instructed, confirmed not contradicted by evidence):** for `PLAIN_TEXT`, `MARKDOWN`, and `HTML`, v1 semantics are exactly:
+
+```text
+content bytes → UTF-8 strict decode → text preserved as-is
+```
+
+No replacement decoding, no HTML stripping, no Markdown rendering/sanitization, no whitespace or newline normalization. Invalid UTF-8 bytes raise `MalformedDocumentError` (chained from the underlying `UnicodeDecodeError`, per §13). This is a **deliberate divergence from both oracles**, not a replication — the oracles' silent corruption is the behavior being fixed, not preserved.
+
+### Page-aware semantics — VERIFIED against real generated PDFs
+
+**VERIFIED:** `pypdf`'s `PdfReader(io.BytesIO(...)).pages` is a proper sequence — `len()` and integer indexing both confirmed working — and `PageObject.extract_text()` **always returns `str`, never `None`**, confirmed across every fixture tried (a genuinely blank page, an image-only page, and normal text pages all returned `str`, with the blank/image-only ones returning `""` specifically, not `None`). This directly resolves what would otherwise have been a defensive-`None`-check question in the implementation.
+
+**DESIGN DECISION (indexing):** zero-based, per repository convention — Batch 1's `Chunk.index` is zero-based (confirmed by re-reading `CHUNKING-CAPABILITY-DESIGN.md` §3.1/§12 and its shipped implementation in `packages/legoai-document/src/legoai_document/chunking/values.py`), and `pypdf`'s own `reader.pages` is itself zero-indexed. `ParsedPage.index` being zero-based is therefore consistent both with this repository's own established convention and with the underlying library's native indexing — no conversion/off-by-one translation layer is needed between them.
+
+**VERIFIED (page ordering and non-merging):** fixture `09_multi_page_text.pdf` (3 distinct pages, each with unique, page-identifying text) round-tripped through `pypdf` with each page's `extract_text()` returning exactly and only that page's own content, in the correct order (`page 0` → "Page one...", `page 1` → "Page two...", `page 2` → "Page three..."), with no cross-page merging or reordering observed.
+
+### Blank-page behavior — VERIFIED and confirmed against the design's stated preference
+
+**VERIFIED:** fixture `10_blank_page_middle.pdf` (page 0 and page 2 have text, page 1 has no text objects at all) — `pypdf` reports **3 pages** (`len(reader.pages) == 3`), and `reader.pages[1].extract_text()` returns `""` (confirmed `is_none=False`, `is_empty_str=True`) rather than raising or omitting the page. This directly supports, with live evidence, §9/§13 of the original design's stated preference:
+
+```text
+ParsedPage(index=1, text="")
+```
+
+**not** page omission — the page-index/count correspondence with the source PDF's true physical structure is preserved exactly, which is the entire point of the page-aware provenance goal (§9). Note this is a `pypdf`-level confirmation of the *library's* behavior; `document.parsing`'s own implementation must still explicitly choose to include every page pypdf reports (including empty-text ones) in `ParsedDocument.pages` rather than filtering them out — that remains a straightforward implementation instruction, not something the library forces either way.
+
+### Image-only PDF behavior — VERIFIED, decision confirmed
+
+**VERIFIED:** fixture `12_image_only.pdf` (a syntactically valid PDF containing only a rasterized image, no text objects) — `PdfReader` construction succeeds, `len(reader.pages) == 1`, and `extract_text()` returns `""` (confirmed empty string, not `None`, not an exception). No hang, no error, no attempted OCR of any kind — `pypdf` performs pure, deterministic text-layer extraction and correctly reports "no text found" as a successful, empty result.
+
+**DESIGN DECISION (confirmed, not contradicted):**
+
+```text
+A syntactically valid image-only PDF returns ParsedDocument with preserved pages,
+whose text is the empty string -- NOT a MalformedDocumentError.
+```
+
+`empty extracted text ≠ parsing failure`. This is recorded explicitly so a future implementer is not tempted to treat "no text on this page" as an error condition — it is a normal, valid, deterministic outcome. OCR (recovering text from such a page) remains entirely out of v1 scope and belongs to a future composed capability (§14).
+
+### Line-break / page-boundary guarantee — VERIFIED, and a materially better finding than expected
+
+**VERIFIED — the single most significant finding of this verification pass:** `pypdf`'s `extract_text()` **already preserves intra-page line breaks naturally**, with no special handling needed. Fixture `09_multi_page_text.pdf` (each page written with two separate text-drawing operations, i.e., two visual lines per page) produced, per page: `'Page one line A\nPage one line B\n'` — a literal `\n` between the two lines, plus a trailing `\n`. This means the line-break-preservation design decision from the original design gate (§9 — "v1's PDF text-layer extraction preserves natural line breaks within a page... a deliberate, documented divergence from the oracle") is **not an extra implementation burden layered on top of `pypdf`** — it is `pypdf`'s own default behavior, in direct contrast to PdfPig's word-join approach that the C# oracle specifically chose. Choosing `pypdf` and simply calling `extract_text()` per page, without any additional post-processing, already satisfies the design decision.
+
+**DESIGN DECISION — the capability's guarantee is scoped precisely, per instruction:**
+
+```text
+document.parsing v1 GUARANTEES:
+  - page separation (each physical page's text is independently accessible)
+  - extracted text order as provided by the parsing library (pypdf), including
+    its natural line-break placement
+  - no additional LegoAI-side normalization, stripping, or reformatting of
+    extracted text
+
+document.parsing v1 does NOT guarantee:
+  - reconstruction of original visual layout, columns, or multi-column reading order
+  - reconstruction of tables or their cell/row/column structure
+  - exact original line-wrap geometry (pypdf's line breaks reflect its own text-
+    positioning heuristics, not a promise of pixel-perfect fidelity to the source)
+```
+
+This distinguishes the **provider/library extraction result** (`pypdf`'s specific behavior, which could change if the library's internal heuristics change between versions, or if a future `CapabilityVersion` swaps libraries per §22's conformance-preservation requirement) from the **capability's semantic guarantee** (page separation and no LegoAI-introduced distortion) — exactly the distinction §6/§22 already required this document to maintain.
+
+### Dependency declaration strategy — resolved per existing repository policy, not invented
+
+**Policy found (not invented):** every existing `pyproject.toml` in this repository (`legoai-reference` and `legoai-document`, both examined directly) uses **exact `==` pins** for its `[dependency-groups] dev` tooling (`"pytest==9.1.1"`, `"mypy==2.3.1"`, `"ruff==0.16.8"`, etc.), while `uv.lock` separately records the full exact resolution. Neither existing `pyproject.toml` has ever declared a `[project.dependencies]` entry for a real runtime library (`dependencies = []` in both) — **this repository has no established precedent for runtime-library version-range syntax**, because Batch 1 introduced zero runtime dependencies.
+
+**DESIGN DECISION, applying ordinary PyPA convention in the absence of a local override (not a new policy invented for this task):** the exact `==` pinning convention observed applies to **dev-tooling reproducibility** (a deliberate, solo-developer-burden-reducing choice per ADR-002's own reasoning), which is a different concern from a **published library's compatibility constraint** — the latter is what other consumers' dependency resolvers see and must not be pinned so tightly that it forces version conflicts across an ecosystem. Recommended, once implementation is authorized:
+
+```toml
+[project]
+dependencies = ["pypdf>=6.19.0,<7"]
+```
+
+— `>=6.19.0` because that is the exact verified-working version (§17); `<7` because `pypdf` follows a major-version-for-breaking-changes convention, so excluding an unreleased, unverified major version is the conservative default. `uv.lock` continues to record the exact resolved version (`6.19.0` today) for this repository's own reproducible dev/build environment, exactly as it already does for the dev-tooling group — the two concerns (compatibility range vs. exact resolution) remain properly separated, per instruction.
+
+---
 
 **`packages/legoai-document/src/legoai_document/parsing/`** — a new sibling subpackage next to the existing `chunking/`, inside the *same* distribution established in Batch 1. No new distribution is created; Core is not touched.
 
@@ -463,77 +623,79 @@ Per SPEC §11 (mirroring Batch 1's treatment for Chunking):
 
 ---
 
-## 23. Characterization fixtures (design, not execution of a full test suite)
+## 23. Characterization fixtures — VERIFIED (live execution, this pass)
 
-**Methodology note (transparency, not a shortcut taken silently):** the deterministic behaviors below (plain-text decoding; the PDF word-join/blank-line/trim algorithm; the blank-page skip) are derived with high confidence directly from the C# source shown in §2/§3 — they do not require running the .NET code to predict correctly, since the logic involved is simple and fully traceable by inspection. Genuinely library-internal details that cannot be predicted from source alone (the *exact* exception type PdfPig raises for a malformed vs. an encrypted PDF) are marked `UNDECIDED — REQUIRES LIVE VERIFICATION` rather than guessed, consistent with the instruction not to infer behavior from library names. A full dotnet test harness execution against these fixtures was judged disproportionate to a design-and-characterization batch and was not performed; it is recommended as a concrete pre-implementation task (§25).
+**Methodology (updated from the original design pass):** all 16 fixtures below were actually generated (`parsing-verification/py/generate_fixtures.py`) and actually run against both DocuMind repos' real, unmodified parsers and against `pypdf` 6.19.0 (`parsing-verification/results-{sk,maf,pypdf}.txt`). Nothing below is predicted from source reading alone anymore — every SK/MAF/`pypdf` result is a captured, reproducible observation. The two items the original design gate flagged `UNDECIDED — REQUIRES LIVE VERIFICATION` (exact malformed/encrypted exception types) are now fully resolved.
 
-| # | Fixture | Construction | Predicted SK result | Predicted MAF result | Same/different | Classification |
+| # | Fixture | Construction | VERIFIED SK result | VERIFIED MAF result | VERIFIED pypdf result | Classification |
 |---|---|---|---|---|---|---|
-| 1 | Empty UTF-8 text file | `b""`, format `text/plain` | `""` (StreamReader on empty stream reads empty string) | Identical | Same | Intentional (as coded) |
-| 2 | Simple ASCII text | `b"Hello world"`, `text/plain` | `"Hello world"` (unchanged) | Identical | Same | Intentional |
-| 3 | Unicode UTF-8 text | `"café 日本語 😀".encode("utf-8")`, `text/plain` | Exact string preserved (StreamReader decodes UTF-8 correctly; BOM absent here so no interference) | Identical | Same | Intentional |
-| 4 | Multiline text | `b"line1\nline2\nline3"`, `text/plain` | All newlines preserved exactly (`ReadToEndAsync` performs no normalization) | Identical | Same | Intentional |
-| 5 | Leading/trailing whitespace text | `b"  \n  hello  \n  "`, `text/plain` | Preserved exactly, no trimming (`PlainTextParser` never calls `.Trim()`) | Identical | Same | Intentional |
-| 6 | One-page text PDF (constructible via `pypdf.PdfWriter` adding one text-bearing page, at fixture-authoring time) | Programmatic, ASCII text content | One flattened line (all words space-joined), no internal line breaks preserved, `.Trim()`-ed | Identical text-layer result (same algorithm); MAF additionally evaluates the OCR heuristic first but a real text page comfortably exceeds 20 chars/page, so the deterministic result is returned | Same observable output | Intentional (word-join) as coded; classified `ACCIDENTAL_LIBRARY_BEHAVIOR` for the *line-collapsing side effect* specifically (SS9) — this capability's v1 will not replicate the line-collapse |
-| 7 | Multi-page PDF (3 pages, distinct text per page) | Programmatic | Pages joined with one blank line between each, in order, all internal line breaks within each page collapsed to spaces, whole result trimmed | Identical (text-layer path) | Same | Same classification as #6 |
-| 8 | PDF containing a blank page (e.g., page 2 of 3 has no text) | Programmatic | Blank page contributes nothing to the flattened output — invisible; only 2 blank-line-separated blocks appear even though 3 pages exist | Identical, unless the *whole* PDF's average falls under the OCR threshold (unlikely for 2 real pages of text among 3) | Same (assuming the other two pages carry normal text) | `ACCIDENTAL_LIBRARY_BEHAVIOR` — a byproduct of flattening (SS9); v1's page-aware design instead represents this fixture's blank page as `ParsedPage(index=1, text="")`, preserving the true 3-page structure |
-| 9 | PDF with Unicode text | Programmatic, non-ASCII glyphs | PdfPig decodes embedded font encoding to Unicode text; output preserved as extracted (exact fidelity depends on the PDF's font/encoding, not on this parsing code) | Identical | Same | Intentional (library-dependent fidelity, not a DocuMind code choice either way) |
-| 10 | Image-only/scanned PDF (a PDF with a rasterized page image and no text layer) | Programmatic (embed a page image, no text objects) | `PdfDocumentParser` (SK) returns `""` (all pages are blank text) — the document is silently ingested with **zero chunks**, no error, no warning | `PdfDocumentParser` (MAF) hits the `pageCount>0 && text.Length < pageCount*20` branch and falls back to OCR — a real vision-model call | **Different** — this is precisely the gap identified in §4: SK has no considered "no OCR" decision, it simply silently degrades | SK path: **DEFECT** (silent, unsignaled data loss); MAF path: **INTENTIONAL_BEHAVIOR** for invoking OCR at all, but **UNDECIDED** regarding whether the 20-chars/page threshold itself is a considered value or an arbitrary constant (no comment or evidence justifies the specific number 20) |
-| 11 | Malformed PDF (truncated/corrupt byte stream, not a valid PDF at all) | Programmatic (e.g., `b"%PDF-1.4\ncorrupted garbage"`) | `PdfDocument.Open` throws; exception type and message are PdfPig-internal | Same — MAF's `ExtractTextLayer` calls the identical `PdfDocument.Open`, throwing before the OCR heuristic is ever reached | Same (both throw, uncaught, at the same call) | `UNDECIDED — REQUIRES LIVE VERIFICATION` for the exact PdfPig exception type; the *fact* that both throw uncaught, unclassified exceptions is confirmed by source reading, independent of the exact type |
-| 12 | Encrypted/password-protected PDF | Programmatic (e.g., via `pypdf.PdfWriter.encrypt(...)` at fixture-authoring time, or a minimal hand-built encrypted PDF) | `PdfDocument.Open` most likely throws a PdfPig-specific encryption-related exception (PdfPig does have some encryption support, but a fixture using an unsupported encryption scheme or simply not supplying credentials would fail) | Same call path | Same (uncaught exception, uncategorized by DocuMind code either way) | `UNDECIDED — REQUIRES LIVE VERIFICATION` for the exact exception type/whether PdfPig can open *any* encrypted PDF without a password; the DocuMind code itself makes no attempt to distinguish this case regardless of the exact mechanism |
-| 13 | Unsupported extension/content type (e.g., `application/zip`) | N/A — just a `contentType` string | `DocumentParserDispatcher.GetParser` throws `NotSupportedException` naming the unmatched content type and listing registered parser class names | Identical (`DocumentParserDispatcher` is byte-for-byte identical in both repos) | Same | Intentional |
-| 14 | Empty PDF (zero pages, if constructible) | Programmatic (a minimal valid PDF with an empty page tree — constructible via most PDF-writing libraries, though some may refuse to write a literally zero-page document, in which case a 1-page PDF with a blank page substitutes for #8's purpose and this case is noted as possibly not independently constructible) | SK: `pdf.GetPages()` yields nothing, result `""`, zero chunks, no error | MAF: `pageCount == 0`, always fails the OCR-threshold check, falls to `ExtractViaVisionAsync`, which iterates zero rasterized images and returns `""` — a wasted OCR-path invocation that does nothing observable | Same *output* (`""`), different *internal path taken* (MAF makes a vacuous OCR attempt SK never would) | SK: **DEFECT** (silent empty success, same as #10); MAF: **ACCIDENTAL** (the zero-page case unnecessarily but harmlessly enters the OCR branch — not a considered decision, just a consequence of the `pageCount > 0` guard's phrasing) |
-| 15 | Very large PDF/document (e.g., 1,000+ pages) | Programmatic generation, or a large public-domain document — **benchmark scenario only, not an SLA**, per this task's explicit instruction | No special handling either way — both repos fully process every page in a single synchronous/buffered pass; larger input means proportionally more time and memory, with no chunked/streaming behavior at any point | Same, plus MAF's extra full-byte-array buffering step | Same shape, no distinct behavior to characterize beyond scale | Not applicable (performance-only, no correctness claim) |
+| 1 | Empty UTF-8 text file | `b""` | `""`, length 0 | Identical | `""` (decode) | Intentional |
+| 2 | ASCII text | `b"Hello world"` | `"Hello world"` | Identical | Identical | Intentional |
+| 3 | Unicode UTF-8 text | `"café 日本語 😀"` encoded | Exact string preserved (`café 日本語 😀` surrogate-pair JSON repr) | Identical | Exact string preserved (`in` membership checks confirmed) | Intentional |
+| 4 | Multiline text | `b"line1\nline2\nline3"` | Preserved exactly | Identical | Preserved exactly | Intentional |
+| 5 | Leading/trailing whitespace | `b"  \n  hello  \n  "` | Preserved exactly, no trimming | Identical | Preserved exactly (`==` equality confirmed) | Intentional |
+| 6 | Markdown, opaque | `# Heading\n\n*emphasis*...` | Preserved verbatim, no rendering | Identical | N/A (pypdf not used for text formats) | Intentional |
+| 7 | HTML, opaque | `<html><body>...` | Preserved verbatim, no tag stripping | Identical | N/A | Intentional |
+| 8 | One-page text PDF | reportlab, 1 line | `"Hello world from page one."` (length 26, no trailing newline — `.Trim()`-ed) | Identical | `'Hello world from page one.\n'` (pypdf keeps a trailing `\n`; PdfPig-based code strips it via `.Trim()`) | Intentional, both correct for their own contract |
+| 9 | Multi-page text PDF | reportlab, 3 pages, 2 lines on pages 1-2 | `"Page one line A Page one line B\r\n\r\nPage two line A Page two line B\r\n\r\nPage three only line"` — **intra-page lines joined with a single space** (PdfPig word-join), pages separated by `\r\n\r\n` | Identical | Per page: `'Page one line A\nPage one line B\n'`, `'Page two line A\nPage two line B\n'`, `'Page three only line\n'` — **intra-page lines separated by `\n`**, pages independently addressable | **Confirms §18a's key finding**: `pypdf` preserves line breaks pypdf's own extraction naturally; PdfPig's word-join in the DocuMind code discards them — this is a DocuMind-code artifact (§9), not a PdfPig limitation either (PdfPig can expose line structure through other APIs the code doesn't use) |
+| 10 | PDF with a blank page in the middle (3 pages, page 2 blank) | reportlab, page 2 has zero text-drawing calls | `"First page has text.\r\n\r\nThird page has text."` — the blank page is **completely invisible**, no trace it ever existed | **Triggers the OCR fallback** — `10/44` chars over 3 pages = ~14.7 avg, below the 20/page threshold, so MAF's stub `IVisionExtractionService` was invoked (confirmed via the deliberately-throwing `NoCallVisionExtractionService` in the harness) | `len(reader.pages) == 3`; page 1 (index 1, the blank one) returns `''` (confirmed `is_none=False`, `is_empty_str=True`); pages 0 and 2 return their real text | SK: **DEFECT** (page silently erased, no trace). MAF: **DEFECT, newly confirmed live** (§14 — a legitimate 2-of-3-pages-textual document incorrectly routed to OCR). `pypdf`: confirms the page-aware design's blank-page representation is directly supported by the library with zero extra work |
+| 11 | PDF with Unicode text | reportlab, `café naïve über` | `"Unicode: café naïve über"` — preserved correctly | Identical | Preserved correctly (`in` membership checks on café/naïve/über all `True`) | Intentional; both libraries handle this correctly |
+| 12 | Image-only PDF (rasterized image, no text objects) | reportlab + Pillow, one drawn raster image, no text | `""`, length 0 — **document silently "succeeds" with zero extractable text, no error, no warning** | Falls back to OCR (stub invoked, confirmed `WasInvoked == True`; stub output returned, not a real model call) | `len(reader.pages) == 1`; `extract_text()` returns `''` (confirmed empty string, not `None`, no exception) | SK: **DEFECT** (silent, unsignaled empty result). MAF: **INTENTIONAL_BEHAVIOR** for invoking OCR here (this is exactly the case the heuristic is meant to catch). `pypdf`: confirms v1's chosen behavior (empty text, not an error) is correct and requires no special-casing |
+| 13 | Malformed/truncated PDF (first third of a valid PDF's bytes) | Byte-truncation of fixture #8 | **THREW**: `UglyToad.PdfPig.Core.PdfDocumentFormatException`: *"Could not find the startxref within the last 452 characters."* | Identical exception (MAF calls the same `PdfDocument.Open` before its OCR heuristic is ever reached) | **THREW**: `pypdf.errors.PdfStreamError` (`PdfStreamError → PdfReadError → PyPdfError → Exception`): *"Stream has ended unexpectedly"* | Both ecosystems raise clean, well-named, distinguishable exceptions for this case — **RESOLVED**, no longer UNDECIDED. Both C# and Python map cleanly to `MalformedDocumentError` |
+| 13b | Malformed PDF (syntactically garbage body, no valid xref at all) | Hand-written `b"%PDF-1.4\\nthis is not a real pdf body...\\n%%EOF"` | **THREW**: `UglyToad.PdfPig.Core.PdfDocumentFormatException`: *"Could not find the startxref within the last 49 characters."* | Identical | **THREW**: `pypdf.errors.PdfReadError` (`PdfReadError → PyPdfError → Exception`): *"startxref not found"* | Same resolution as #13 |
+| 14 | Encrypted PDF (user + owner password set via `pypdf.PdfWriter.encrypt`) | `pypdf.PdfWriter`, user password `secret123` | **THREW**: `UglyToad.PdfPig.Exceptions.PdfDocumentEncryptedException`: *"The document was encrypted and none of the provided passwords were the user or owner password."* — thrown at `PdfDocument.Open`, immediately, no partial success | Identical (same call path, same exception, before the OCR heuristic) | `PdfReader(...)` construction **succeeds** (does not raise); `is_encrypted == True`; accessing `.pages` or `.extract_text()` **THROWS**: `pypdf.errors.FileNotDecryptedError` (`FileNotDecryptedError → PdfReadError → PyPdfError → Exception`): *"File has not been decrypted"*. `decrypt("wrong-password")` returns `0` (fail) and subsequent access still raises `FileNotDecryptedError`. `decrypt("secret123")` (the correct user password) returns `1` and subsequent `extract_text()` succeeds, returning the original text correctly | Both ecosystems distinguish encryption cleanly — **RESOLVED, no longer UNDECIDED**. Notable divergence: PdfPig raises at *construction*; `pypdf` raises lazily at *first access* — the v1 implementation must account for this by catching `FileNotDecryptedError` around page/text access, not only around `PdfReader(...)` construction (§13's mapping code reflects this) |
+| 15 | Invalid UTF-8 bytes declared as a text format | `b"\xff\xfe\x00\x80not valid utf-8"` | **Did NOT throw** — `StreamReader(..., Encoding.UTF8)` silently substituted replacement characters: `"耀潮⁴慶楬⁤瑵ⵦ�"` (garbled, wrong, but no error) | Identical silent corruption | `bytes.decode("utf-8")` (strict) **THREW**: `UnicodeDecodeError('utf-8', b'\xff\xfe\x00\x80not valid utf-8', 0, 1, 'invalid start byte')`, confirmed `isinstance(exc, ValueError)` | **Confirms the defect (§18a) and validates the fix**: both C# oracles silently corrupt data; Python's own stdlib strict decoding — which this design adopts — correctly raises instead, mapped to `MalformedDocumentError` |
 
-No customer/private DocuMind documents were used or needed — every fixture above is either trivial literal bytes or a small, programmatically-constructible PDF.
+**Not re-verified in this pass (unchanged from the original design gate, both explicitly out of this task's required fixture list):** an "empty PDF, zero pages" case and a "very large document" performance benchmark. Neither blocks the exception-mapping or format-decision findings above; both remain minor, explicitly deferred items (§25).
+
+No customer/private DocuMind documents were used — every fixture is either trivial literal bytes or a small, programmatically-constructed PDF, all captured in `parsing-verification/fixtures/`.
 
 ---
 
 ## 24. Extraction assessment cross-references
 
-The parent assessment (`DOCUMIND-EXTRACTION-ASSESSMENT.md`) is updated minimally (see the accompanying diff) to reflect: the OCR-boundary finding hardening from "deferred, low priority" to "explicitly excluded from `document.parsing` v1, with a leaning-but-undecided future identity"; the first concrete runtime-dependency expectation for `legoai-document` (currently documented as "zero dependencies," which Batch 1 satisfied and this batch's *design* does not yet change); and a risk entry for the client-declared-content-type / silent-decoding-corruption defect found in both oracles.
+The parent assessment (`DOCUMIND-EXTRACTION-ASSESSMENT.md`) was updated minimally in the previous (design) pass to reflect: the OCR-boundary finding hardening from "deferred, low priority" to "explicitly excluded from `document.parsing` v1, with a leaning-but-undecided future identity"; the first concrete runtime-dependency expectation for `legoai-document`; and a risk entry for the client-declared-content-type / silent-decoding-corruption defect found in both oracles. This pass adds one further minimal update: the OCR-heuristic-misfire finding (§14, §23 #10) as a strengthened, live-verified version of that same risk entry, and the implementation-gate status change to `YES`.
 
 ---
 
 ## 25. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Line-break-preservation decision (SS9) diverges from both oracles and has zero existing tests to validate against | Treated explicitly as a *deliberate, justified* divergence, not a silent one; flagged for characterization testing before implementation, and its cross-capability effect on Chunking's word counts is called out explicitly (SS9) rather than discovered later |
-| Exact PdfPig exception types for malformed/encrypted PDFs are unverified (no live execution performed) | Recorded as `UNDECIDED — REQUIRES LIVE VERIFICATION` (SS23, fixtures #11-12) rather than guessed; recommended as a concrete pre-implementation task |
-| `pypdf`'s exact text-extraction fidelity (word ordering, whitespace handling) for complex PDFs is not yet empirically compared against PdfPig's | This is exactly why SS6 insists PdfPig semantics are not canonical — v1's *contract* (page-aware, line-preserving text) is defined independently of any one library's quirks; conformance against the contract, not byte-parity with PdfPig, is the bar |
-| The 20-characters-per-page OCR-fallback threshold in MAF is unexplained/possibly arbitrary | Irrelevant to this batch's scope (OCR is excluded), but flagged so it is not silently absorbed into a future OCR capability's design as if it were a considered value |
-| No file-size/resource limit exists at any layer today | Explicitly deferred to a future governed Execution/Resource-Policy responsibility (SS16); not fabricated here |
-| A future `pypdf` addition will be `legoai-document`'s first runtime dependency, changing its "zero dependencies" status established in Batch 1 | Expected and consistent with Batch 1's own design (`CHUNKING-CAPABILITY-DESIGN.md` §"Independence from AI/model/agent frameworks" already anticipates "future capabilities... introduce their own, separately scoped dependencies only as each capability is actually implemented"); the parent assessment is updated to reflect this expectation (§24) |
+| Risk | Status | Mitigation |
+|---|---|---|
+| Line-break-preservation decision (§9) diverges from both oracles | **Resolved, and turned out favorably** | VERIFIED (§18a, §23 #9): `pypdf`'s `extract_text()` preserves intra-page line breaks as its own default behavior — the design decision requires no special implementation effort, it falls out of choosing `pypdf` and calling its API normally |
+| Exact PdfPig/`pypdf` exception types for malformed/encrypted PDFs were unverified | **Resolved** | VERIFIED live (§13, §23 #13-14): `PdfDocumentFormatException`/`PdfDocumentEncryptedException` (PdfPig, C#) and `PdfStreamError`/`PdfReadError`/`FileNotDecryptedError` (`pypdf`, Python) are all real, distinguishable, captured exception types with a settled mapping to the two pack-local exceptions |
+| `pypdf`'s exact text-extraction fidelity for complex PDFs not empirically compared against PdfPig's | **Partially resolved; residual for complex layouts** | VERIFIED for the fixtures tested (§23): output differs from PdfPig by design (line breaks preserved vs. collapsed) and this is the intended, better behavior, not a defect to reconcile. Fidelity for genuinely complex layouts (multi-column, tables, rotated text) was not tested — this remains a residual risk for future, richer fixtures, not blocking v1's narrow scope |
+| The 20-characters-per-page OCR-fallback threshold in MAF is unexplained/possibly arbitrary | **Confirmed worse than "unexplained" — now demonstrated to misfire** | VERIFIED live (§14, §23 #10): a genuine, ordinary 3-page document with only one blank page trips the threshold and is incorrectly routed to OCR. Irrelevant to this batch's scope (OCR is excluded from v1), but now a stronger, evidenced argument against ever reusing this specific heuristic in a future OCR capability |
+| No file-size/resource limit exists at any layer today | Unchanged — explicit residual risk | Explicitly deferred to a future governed Execution/Resource-Policy responsibility (§16); not fabricated here |
+| A future `pypdf` addition will be `legoai-document`'s first runtime dependency | Unchanged — expected, not yet applied | Constraint strategy resolved (§18a: `pypdf>=6.19.0,<7`); still not added to `pyproject.toml` in this batch (§14 hard stop of the live-verification task) |
+| Parser-bomb / pathological-PDF resource exhaustion | Unchanged — explicit residual risk, not tested | Not evaluated in this pass (constructing such a fixture safely was judged out of scope for a design-verification gate); recorded in §16 as a residual risk for `ADR-012`'s future scope |
 
 ---
 
 ## 26. Implementation gate
 
 ```text
-READY_TO_IMPLEMENT_DOCUMENT_PARSING = NO
+READY_TO_IMPLEMENT_DOCUMENT_PARSING = YES
 ```
 
-**Blockers:**
+All items the previous design gate listed as blockers are now resolved with live, reproducible evidence rather than predictions:
 
-1. **Live verification of PdfPig's exact exception types for malformed and encrypted PDFs has not been performed** (§23, fixtures #11-12) — needed to confirm `MalformedDocumentError`/`EncryptedDocumentError` can be raised on genuinely distinguishable conditions once a Python library is actually exercised, and to confirm the chosen Python library (`pypdf`, tentatively) raises comparably distinguishable exceptions for the same fixture set.
-2. **The line-break-preservation decision (§9) has not been characterization-tested against real PDF fixtures** — it is a well-reasoned design decision, not yet an empirically verified one, since no fixtures have actually been run through any parser (C# or Python) in this batch.
-3. **`pypdf` has not been added to `packages/legoai-document`'s dependencies, and its actual API surface (`PdfReader`, page iteration, `extract_text()` behavior, exception classes) has not been confirmed against the version that will actually be pinned** — the dependency recommendation (§17) is a licensing/maintenance-based decision, not yet a verified API-fitness one.
-4. **The 15 fixtures in §23 exist only as a design table, not as committed fixture files or executable tests.**
+1. ~~Live verification of exact exception types for malformed and encrypted PDFs~~ — **Resolved.** Both PdfPig (C#) and `pypdf` (Python) exception types are captured and mapped (§13, §23 #13-14).
+2. ~~Line-break-preservation decision untested against real PDF fixtures~~ — **Resolved.** Verified directly, and found to be `pypdf`'s own default behavior, not an extra implementation burden (§18a, §23 #9).
+3. ~~`pypdf` API surface unconfirmed~~ — **Resolved.** `PdfReader(BytesIO)`, `.is_encrypted`, `.pages` (sequence, zero-indexed), `PageObject.extract_text() -> str` (never `None`), and `.decrypt(password)` are all confirmed against the actual installed 6.19.0 package (§17 VERIFIED metadata, §18a, §23).
+4. ~~Fixtures exist only as a design table~~ — **Resolved.** All 16 fixtures exist as real, committed, reproducible files under `planning/documind/parsing-verification/fixtures/`, generated by `generate_fixtures.py`, and exercised by both the Python and C# verification harnesses.
 
-**Already resolved (not blockers):**
+**Gate criteria, re-checked against the instruction's exact list:**
 
-- Capability identity, v1 scope, and deferred scope (§5-7).
-- The three-concerns separation (§8) and the request/result/entity separation (§9-10).
-- Input representation (§11 — Option C, bytes + closed enum).
-- Format-selection mechanism (§12 — closed `DocumentFormat` enum, no sniffing).
-- Error model shape (§13 — four exceptions, no deeper hierarchy).
-- OCR boundary decision (§14 — excluded from v1; future identity leaning recorded, not committed).
-- Determinism declaration (§15).
-- Security assumptions documented without overclaiming (§16).
-- Dependency *direction* (Adapter-free, no Core dependency, §19) — though not the dependency *addition* itself (blocker 3).
-- Package placement (§19 — confirmed, no new distribution, no Core change, no architectural contradiction found).
-- Interaction with Chunking (§20 — one-directional composition, no cross-import).
-- Versioning triggers identified in advance (§22).
+- pypdf import/API verified — YES (§17, §18a).
+- Malformed exception mapping verified — YES (§13, §23 #13-14).
+- Encrypted behavior verified — YES (§13, §23 #14) — including the important nuance that `PdfReader` construction succeeds silently and the exception is raised lazily on first page/text access, now reflected in the mapping code (§13).
+- Fixtures created and exercised — YES (§23, all 16, against real SK/MAF/`pypdf` runs).
+- Page semantics settled — YES (§18a: zero-based, matching Batch 1's convention and `pypdf`'s own).
+- Line/newline guarantee settled — YES (§18a: page separation + library-provided order guaranteed; visual layout/table/column reconstruction explicitly NOT guaranteed).
+- Strict UTF-8 behavior settled — YES (§18a: strict decode, `MalformedDocumentError` on failure, verified against both valid and invalid fixtures).
+- Image-only semantics settled — YES (§18a, §23 #12: empty text is a valid successful result, not an error).
+- Dependency declaration strategy settled — YES (§18a: `pypdf>=6.19.0,<7` in `[project.dependencies]`, exact version in `uv.lock`, following existing repository convention rather than inventing one).
+- No canonical contradiction — YES (unchanged from the original design gate; nothing in this verification pass touched or contradicted any canonical document, ADR, or Batch 1).
 
-Once blockers 1-4 are resolved — via a short, concrete pre-implementation task that adds `pypdf` to the dev environment, writes the fixtures in §23 as real files/bytes, and runs them through both a prototype `pypdf`-based parser and (where feasible) the existing C# parsers to confirm exact exception types — this gate should be re-evaluated and can reasonably flip to `YES` without further architectural work, exactly as Batch 1's three blockers were resolved by a narrow follow-up decision rather than a redesign.
+**Residual items that do not block `YES`** (carried forward as ordinary implementation-time considerations, not architectural blockers): complex-layout fidelity (multi-column/table PDFs) is untested; parser-bomb/resource-exhaustion defenses remain explicitly out of scope (§16); a true zero-page PDF and a large-document performance benchmark were not constructed in this pass (§23).
