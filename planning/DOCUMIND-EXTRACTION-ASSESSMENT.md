@@ -2,9 +2,12 @@
 
 **Document:** `planning/DOCUMIND-EXTRACTION-ASSESSMENT.md`
 **Status:** DRAFT — ANALYSIS ONLY, NO IMPLEMENTATION AUTHORIZED
-**Authority chain respected:** intent.md → SPEC.md → ARCHITECTURE.md → CONTRACTS.md → PLUGIN-SPEC.md → SECURITY.md → EVALUATION.md → CONFORMANCE.md → ADRs (001–011, 015 Accepted; 012–013 Proposed/non-binding)
+**Authority chain respected:** intent.md → SPEC.md → ARCHITECTURE.md → CONTRACTS.md → PLUGIN-SPEC.md → SECURITY.md → EVALUATION.md → CONFORMANCE.md → ADRs (001–011, 015 Accepted = 12 Accepted; 012–013 Proposed/non-binding; 014 unallocated)
 **Inputs:** `init-Lego-AI-Operating-Layer/*` (governing docs + `src/legoai` + tests), `DocuMind-SK/*` (Semantic Kernel implementation), `DocuMind-AgentFramework/*` (Microsoft Agent Framework implementation)
 **Scope:** Analysis and classification only. No source moved, no adapters written, no C# translated, no LegoAI or DocuMind files modified.
+**Companion artifact:** [`planning/documind/CHUNKING-CAPABILITY-DESIGN.md`](documind/CHUNKING-CAPABILITY-DESIGN.md) — PROPOSED implementation design for the first Document Pack capability, `document.chunking`.
+
+**Revision note (this pass):** corrects the ADR acceptance count (§0, was miscounted as 13 of 14 — the correct count is 12 of 14 allocated ADRs Accepted), reclassifies DocuMind's graceful-degradation DI wiring as a `REFERENCE_RUNTIME_VALIDATION_CASE` rather than an architecture gap (§21), sharpens the Answering placement to keep `document.answering` in the Document Pack and only its underlying primitives (Model, Retrieval, Execution, Artifact, Provenance) in Core (§9, §16.5), resolves Document Pack package placement per ADR-002 §13's existing "future integration distribution" mechanism rather than proposing a new `legoai.*` owner package (§17), and adopts a revised extraction sequence (§15/§23) that separates Retrieval and Rerank into sequential steps and moves the deterministic Ingestion Workflow ahead of the probabilistic Answering capability. No canonical LegoAI document was modified; no ADR was reopened.
 
 ---
 
@@ -13,7 +16,7 @@
 LegoAI is **not an executable runtime**. Per the LegoAI inventory:
 
 - 8 canonical documents (intent, SPEC, ARCHITECTURE, CONTRACTS, PLUGIN-SPEC, SECURITY, EVALUATION, CONFORMANCE) are ACCEPTED and fully specify semantics, but **create no runtime code, schemas, wire formats, or technology choices by design**.
-- 13 of 14 allocated ADRs are Accepted (ADR-001–011, ADR-015); **ADR-012 (Plugin isolation) and ADR-013 (operational observability) remain Proposed** — not binding.
+- **12 of 14** allocated ADRs are Accepted — ADR-001 through ADR-011 (11 ADRs) plus ADR-015 (1 ADR) = 12 Accepted, verified directly against each ADR file's `**Status:**` line and against `adrs/ADR-INDEX.md` §3 acceptance table. **ADR-012 (Plugin isolation for expanded threat scope) and ADR-013 (operational observation/diagnostic integration) remain Proposed** — not binding. **ADR-014 is unallocated** (reserved, not yet authored). *(Correction: an earlier pass of this assessment miscounted this as "13 of 14" — arithmetic error, corrected here after direct file inspection rather than trusting a prior summary.)*
 - Actual code in `src/legoai/` is limited to Kernel value objects (`identity.py`, `context.py`, `references.py`, `versions.py`, `errors.py` [5 of 16 canonical error categories implemented], `effects.py`), a `Principal`/`OperationContext` governance stub, and a pure, I/O-free configuration-composition fixture proving ADR-003. **There is no Plugin loader, no Execution Coordination engine, no CapabilityResolver, no Port implementations, no Model/Agent/Workflow/Tool/Memory/Retriever runtime of any kind.** Gate 2 (first executable slice) has not been reached; `planning/GATE-1-FOUNDATION-IMPLEMENTATION.md` explicitly excludes Model/Agent/Team/Workflow/RAG/vector-store work from the current gate.
 
 **Consequence for this assessment:** the canonical "wrap before rewrite" strangler sequence (§12 of the prompt) — `LegoAI Port → ExistingDocuMindAdapter → existing C# implementation` — cannot be wired into a live LegoAI runtime today because the Port/Adapter/Execution machinery it depends on does not exist yet. This assessment therefore:
@@ -132,7 +135,7 @@ MAF is also used **narrowly**, and specifically does **not** exercise its orches
 | Knowledge graph extraction | Not present | `KnowledgeGraphExtractor` agent + `KnowledgeGraphService` + Neo4j, per-conversation scoped, custom truncation-tolerant JSON parser | MAF-only | `StructuredExtractionCapability` (graph-shaped); Neo4j coupling and conversation-scoping are DocuMind-specific for now |
 | Web search tool | Not present | `TavilyWebSearchService`/`NoOpWebSearchService`, exposed as an `AIFunctionFactory` tool | MAF-only | `ToolCapability` — a generic `tool.web-search` realization; the *pattern* (Tool exposed to a Model via a typed function schema) is the reusable part, not the Tavily binding |
 | Voice / image generation | Not present | `GeminiVoiceService`/`GeminiImageGenerationService` + NoOp fallbacks | MAF-only, single-provider, thin HTTP wrappers | Low priority — thin, single-vendor, low architectural insight |
-| Graceful-degradation provider selection | Groq/Ollama chat fallback; Cohere/NoOp reranker fallback | Same, plus Tavily/NoOp, Gemini×2/NoOp | **Identical pattern**, repeated 2× (SK) and 5× (MAF) | Not a component to extract — see §21 architecture-gap note: this is DocuMind's ad hoc stand-in for LegoAI's not-yet-implemented CapabilityResolver |
+| Graceful-degradation provider selection | Groq/Ollama chat fallback; Cohere/NoOp reranker fallback | Same, plus Tavily/NoOp, Gemini×2/NoOp | **Identical pattern**, repeated 2× (SK) and 5× (MAF) | **REFERENCE_RUNTIME_VALIDATION_CASE** (revised — see §21): not a component to extract, and not an architecture gap in LegoAI's specification. SPEC §7/C-04 and ARCHITECTURE.md's Capability Resolution module already fully specify the required behavior; DocuMind supplies four concrete, reusable **test scenarios** to validate LegoAI's still-unbuilt reference CapabilityResolver against once it exists |
 | Identity/auth | None (no auth) | ASP.NET Identity + roles + internal-key header between Web/Api | MAF-only | DocuMind-specific; the *shape* (TrustBoundary between Web and Api, Principal via Identity) is illustrative but the concrete mechanism is not a reusable Port realization |
 
 **Duplication ranking (highest extraction value first):** Chunking (identical, zero coupling) > Hybrid retrieval + reranking (identical, zero coupling) > Embedding wrapper (same provider, different framework wrapper — proves the Adapter seam) > Document parsing (near-identical, MAF superset via OCR) > RAG answering (same logic, different framework "shape" — Model vs Agent) > Ingestion orchestration (same core, MAF superset) > everything MAF-only (single-repo, no cross-implementation duplication signal, lower confidence that it generalizes).
@@ -211,7 +214,7 @@ Legend for classification: `KEEP_DOCUMIND`, `LEGOAI_CORE`, `LEGOAI_DOCUMENT`, `S
 
 These are drawn directly from §6; restated here per the required assessment structure.
 
-**§9 LEGOAI_CORE candidates:** RAG-answering orchestration *pattern* (Direct-invocation vs. trivial-Agent duality — proves I-04/I-13/DEC-01), Tool Port exposure pattern (typed function schema attached to a Model, evidenced by `AIFunctionFactory`/web-search tool), the requirements gap that DocuMind's graceful-degradation DI wiring exposes for the still-unbuilt CapabilityResolver (a requirements input, not code to move).
+**§9 LEGOAI_CORE candidates — generic primitives only, not `document.answering` itself:** the primitives that `document.answering` composes are Core-level and already exist as canonical concepts — `ModelCapability` (`model.reasoning`/chat-completion), `RetrieverCapability`'s general shape (though its *hybrid document* realization stays in the Document Pack — see §16.3), `Execution` (Direct-invocation driver, proven sufficient by the SK evidence), `Artifact`, and `Provenance`/`Evidence`. The RAG-answering orchestration *pattern itself* (Direct-invocation vs. trivial-Agent duality — proves I-04/I-13/DEC-01) and the Tool Port exposure pattern (typed function schema attached to a Model, evidenced by `AIFunctionFactory`/web-search tool) are Core-proving *evidence*, not proposals to add a generic "RAG answering" concept to Core — `document.answering` remains a Document Capability Pack capability (§16.5) until an independent, non-document consumer demonstrates the same composite is needed outside document Q&A. DocuMind's graceful-degradation DI wiring is **not** treated as a Core requirements gap — see the corrected classification in §21.
 
 **§10 LEGOAI_DOCUMENT candidates:** `ChunkingCapability`, `DocumentParsingCapability` (PDF/text, with a vision/OCR sub-capability), `RetrieverCapability` (`retrieval.hybrid`), `RerankCapability`, `AnsweringCapability` (retrieval+generation+citations), `IngestionWorkflow`, `DocumentClassificationCapability` (lower priority), `StructuredExtractionCapability` (graph-shaped, lower priority, single-repo evidence only).
 
@@ -225,27 +228,35 @@ These are drawn directly from §6; restated here per the required assessment str
 
 ---
 
-## 15. First 3–5 extraction candidates (scored)
+## 15. Extraction sequence (revised)
 
-Scoring dimensions: reusability, framework independence, testability, dependency count, migration risk, business value, Python portability, ability to prove LegoAI's architecture.
+**Revision note:** the prior pass of this assessment scored these five candidates (§15 table below, retained for its per-candidate dimensions) but then applied an inconsistent order in §18/§23 — grouping Retrieval+Rerank as one combined batch and placing the deterministic Ingestion Workflow after the probabilistic Answering capability. This pass corrects that by evaluating the full seven-capability set explicitly against: minimum dependency count, deterministic-first development, testability, ability to form useful vertical slices, minimum framework coupling, and progressive introduction of probabilistic behavior (intent §12's own preferred escalation: deterministic code → deterministic workflow → model → agent).
+
+Scoring dimensions (unchanged): reusability, framework independence, testability, dependency count, migration risk, business value, Python portability, ability to prove LegoAI's architecture.
 
 | Rank | Candidate | Reusability | Framework independence | Testability | Dep. count | Migration risk | Business value | Python portability | Architecture-proving value |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | **Chunking** (`ChunkingCapability`) | High | Total (zero framework coupling in both repos) | Excellent (existing tests in both repos are a ready-made oracle) | None | Very low | Medium | Trivial | Low-medium (simple, but proves the whole pipeline end to end fastest) |
 | 2 | **Document parsing** (`DocumentParsingCapability`, PDF+text only, OCR deferred) | High | High (PdfPig is a local library, not a framework) | Weak (no existing tests) — must write conformance tests first | Low (needs a Python PDF text-extraction library) | Low | Medium-high | High | Medium |
-| 3 | **Hybrid retrieval + reranking** (`RetrieverCapability` + `RerankCapability`) | High | Total (zero SK/MAF coupling in either repo — pure SQL + HTTP) | Weak (no existing tests) — must write conformance tests capturing exact RRF behavior first | Medium (Postgres+pgvector, Cohere API) | Medium | High | High | High — proves "Retrieval ≠ Agent" (I-14) directly |
-| 4 | **Embedding capability** (`EmbeddingCapability`, Ollama-backed) | High | This *is* the seam — SK and MAF each wrap it differently around the same provider | Weak (no existing tests) | Low (Ollama HTTP API) | Low | High | High | Very high — the cleanest possible demonstration of one `CapabilityVersion` with two independent framework-specific Adapters (`SEMANTIC_KERNEL_ADAPTER` vs `MAF_ADAPTER`) both realizing the same LegoAI `ModelPort` |
-| 5 | **Answering capability** (`AnsweringCapability`, Direct-invocation shape) | Medium-high | Low — this is where framework shape genuinely diverges (Model call vs. Agent wrapper) | Weak (no existing tests) — must capture citation/format behavior as an oracle first | High (depends on 1–4 existing) | Medium-high | High | Medium | Very high — the single clearest specimen of DEC-01 (Operational Result ≠ canonical Outcome) and I-04/I-13 (Agent optional, reasoning ≠ authority) |
+| 3 | **Embedding capability** (`EmbeddingCapability`, Ollama-backed) | High | This *is* the seam — SK and MAF each wrap it differently around the same provider | Weak (no existing tests) | Low (Ollama HTTP API) | Low | High | High | Very high — the cleanest possible demonstration of one `CapabilityVersion` with two independent framework-specific Adapters (`SEMANTIC_KERNEL_ADAPTER` vs `MAF_ADAPTER`) both realizing the same LegoAI `ModelPort` |
+| 4 | **Hybrid retrieval** (`RetrieverCapability`) | High | Total (zero SK/MAF coupling in either repo — pure SQL) | Weak (no existing tests) — must write conformance tests capturing exact RRF behavior first | Medium (needs Embedding's output + Postgres+pgvector) | Medium | High | High | High — proves "Retrieval ≠ Agent" (I-14) directly |
+| 5 | **Reranking** (`RerankCapability`) | High | Total (zero SK/MAF coupling — pure HTTP) | Weak (no existing tests) | Low-medium (Cohere API; consumes Retriever's output but has no structural dependency on it) | Low-medium | Medium | High | Medium — demonstrates optional-provider CapabilityResolution (§21.1 case #2) |
+| 6 | **Ingestion Workflow** (`IngestionWorkflow`) | Medium-high | Total — pure orchestration, no new framework surface | Weak (no existing tests; both C# repos test only its constituent parts) | High (composes 1–3) | Medium | High — the first genuinely useful end-to-end vertical slice (upload → searchable) | Medium | High — proves a deterministic Workflow needs no Agent (I-13), and forms the last all-deterministic milestone before Answering |
+| 7 | **Answering capability** (`AnsweringCapability`, Direct-invocation shape) | Medium-high | Low — this is where framework shape genuinely diverges (Model call vs. Agent wrapper) | Weak (no existing tests) — must capture citation/format behavior as an oracle first | Highest (depends on 3, 4, 5) | Medium-high | High | Medium | Very high — the single clearest specimen of DEC-01 (Operational Result ≠ canonical Outcome) and I-04/I-13 (Agent optional, reasoning ≠ authority); deliberately last because it is the only genuinely probabilistic capability in the pack |
 
-**Recommendation:** run candidates 1 and 4 as the first two batches, in that order — see §16 for full detail on candidate 1, and §23 for the phased sequence covering all five.
+**Why this order and not the prompt's alternative groupings:** Chunking and Parsing tie on zero dependency count and zero probabilism, but Chunking is smaller and already has a byte-identical, fully passing test oracle in both C# repos (§24), so it goes first. Embedding is promoted ahead of Retrieval/Rerank because Retrieval structurally consumes Embedding's output (§18 dependency graph) and because Embedding is the single best specimen for proving the SK-Adapter/MAF-Adapter duality (§6, §16.2) — sequencing it early lets that architectural proof land before the harder, untested retrieval work. Retrieval is sequenced before Rerank because Rerank is only meaningful applied to Retrieval's candidate list, even though neither has a hard code dependency on the other. Ingestion Workflow is deliberately promoted **ahead of** Answering (reversing the prior draft's order) because it is a pure composition of already-deterministic capabilities (1–3) — it introduces no new probabilism, forms the first complete, demonstrably useful vertical slice ("upload a document, have it become searchable"), and lets the Workflow driver itself be proven out while everything underneath it is still deterministic. Answering is last because it is the only capability in this set that is genuinely probabilistic (LLM generation) and the only one where the SK/MAF framework shapes actually diverge (§4–5) — per intent §12's escalation principle, probabilistic behavior should be introduced last, once the deterministic foundation beneath it is proven.
+
+**Recommendation:** run candidates 1 and 3 as the first two implementation batches (in that order — Chunking now, Embedding once Chunking's conformance approach is proven), following the full seven-step sequence above thereafter. See §16 for full contract detail on Chunking, the companion [`CHUNKING-CAPABILITY-DESIGN.md`](documind/CHUNKING-CAPABILITY-DESIGN.md) for its complete implementation design, and §23 for the phased plan.
 
 ---
 
 ## 16. Proposed capability contracts (language-neutral)
 
-### 16.1 `ChunkingCapability` (LEGOAI_DOCUMENT)
+### 16.1 `ChunkingCapability` (LEGOAI_DOCUMENT — Document Capability Pack, not Core)
 
-- **Capability identity:** `document.chunking` (namespace `legoai.document`)
+Full detail, including the characterization table and Python API shape, is in the companion design document: [`planning/documind/CHUNKING-CAPABILITY-DESIGN.md`](documind/CHUNKING-CAPABILITY-DESIGN.md). Summary retained here for continuity:
+
+- **Capability identity:** `document.chunking` (import root `legoai_document` — a separate, sibling import root to `legoai`, per §17's revised target architecture; **not** `legoai.document`)
 - **Inputs:** document identity/reference, full extracted text (string), chunk size (word/token count, default 512), overlap (default 50)
 - **Outputs:** ordered list of chunks, each with: chunk index, content, token/word count, source document reference, optional page number (declared but MAY be unset — evidence shows both DocuMind repos never populate it)
 - **Errors:** `ValidationError` (empty/invalid input), no other categories apply — this is a pure, deterministic, effect-free computation
@@ -323,14 +334,33 @@ LegoAI Core (existing plane structure per ARCHITECTURE.md — unchanged by this 
 │   └── Action Mediation module
 │        └── ToolPort — evidenced by MAF's `AIFunctionFactory` web-search tool pattern
 
-LegoAI Document Pack (NEW — does not exist yet; first concrete Port-realizing package)
+LegoAI Document Capability Pack (NEW — does not exist yet)
+│  Package placement (resolved — see planning/documind/CHUNKING-CAPABILITY-DESIGN.md §"Package placement"
+│  for the full evaluation): this is NOT a 13th `legoai.*` owner package and NOT placed under
+│  `legoai.reference` — those are reserved for the canonical Core owners ADR-002 §5/§7.1 already
+│  enumerates (kernel, application, capabilities, execution, tools, governance, resources, plugins,
+│  observability, evidence, runtime, reference), none of which is "document." Document capabilities
+│  are not SPEC-defined canonical concepts; they are an application-domain composition over Core
+│  primitives. ADR-002 §13 already anticipates and authorizes exactly this case: "Future integration
+│  distributions use their own import roots... They depend on documented Lego AI Ports/SPI, not
+│  legoai.reference." The Document Pack therefore gets its OWN import root, proposed as `legoai_document`
+│  (distribution `legoai-document`), living beside — not inside — the `legoai` distribution in the same
+│  repository for solo-developer simplicity. Core never imports it; it may import Core's stable public
+│  contracts once they exist, and needs none at all for its first capability (Chunking is pure). This is
+│  a small implementation decision consistent with an already-accepted ADR, not a new ADR.
 │
+├── chunking        — ChunkingCapability (`document.chunking`)   [FIRST BATCH — see §16.1, §23, and the
+│                      companion design doc]
 ├── parsing         — DocumentParsingCapability (PDF/text now; vision/OCR sub-capability later)
-├── chunking        — ChunkingCapability   [FIRST BATCH — see §16.1, §23]
+├── embedding       — EmbeddingCapability (thin wrapper around a ModelCapability(embedding) offer)
 ├── retrieval       — RetrieverCapability (hybrid vector+text)
 ├── rerank          — RerankCapability
-├── answering       — AnsweringCapability (composite; Direct-invocation shape first)
-└── ingestion       — IngestionWorkflow (deterministic composition of the above)
+├── ingestion       — IngestionWorkflow (deterministic composition of the above — ordered ahead of
+│                      Answering; see the revised sequence in §15/§23)
+└── answering       — AnsweringCapability (composite, the only genuinely probabilistic capability in
+                       this pack; composes Core's ModelCapability/Execution/Artifact/Provenance
+                       primitives plus this pack's own Retriever/Rerank — kept in the Document Pack,
+                       not promoted to Core, until an independent non-document consumer needs it)
 
 Adapters (all deferred — no Execution/Plugin engine exists to host them yet)
 │
@@ -369,16 +399,18 @@ RetrieverCapability  ──requires──▶  EmbeddingCapability (for query emb
         ▼
 RerankCapability (optional dependency of Retriever's consumers, not of Retriever itself)
         │
-        ▼
-AnsweringCapability  ──requires──▶  RetrieverCapability + RerankCapability + ChatCompletionCapability
-        │
-        ▼
-IngestionWorkflow  ──requires──▶  DocumentParsingCapability + ChunkingCapability + EmbeddingCapability
-                                    (+ optionally DocumentClassificationCapability, StructuredExtractionCapability
-                                     once/if those are built — MAF evidence only, lower priority)
+        ├────────────────────────────────────────────┐
+        ▼                                              ▼
+IngestionWorkflow  ──requires──▶  DocumentParsingCapability   AnsweringCapability  ──requires──▶
+  + ChunkingCapability + EmbeddingCapability                    RetrieverCapability + RerankCapability
+  (+ optionally DocumentClassificationCapability,                + ChatCompletionCapability
+   StructuredExtractionCapability once/if those are
+   built — MAF evidence only, lower priority)
 ```
 
-No cycles. `ChunkingCapability` and `DocumentParsingCapability` are the only nodes with zero upstream dependencies, confirming §16's ranking.
+`IngestionWorkflow` and `AnsweringCapability` are independent branches with no dependency on each other — the graph itself does not force an order between them. §15's revised sequence orders `IngestionWorkflow` before `AnsweringCapability` anyway, on non-dependency grounds: it is the last purely deterministic milestone and forms a complete, demonstrably useful vertical slice before the pack's first genuinely probabilistic capability is introduced.
+
+No cycles. `ChunkingCapability` and `DocumentParsingCapability` are the only nodes with zero upstream dependencies, confirming §15's ranking.
 
 ---
 
@@ -408,13 +440,26 @@ Per CONFORMANCE.md's judgment vocabulary (conformant / nonconformant / not asses
 
 | Gap | Classification | Justification |
 |---|---|---|
-| DocuMind's DI-time graceful-degradation wiring (Groq/Ollama, Cohere/NoOp, Tavily/NoOp, Gemini/NoOp) has no equivalent in LegoAI today because CapabilityResolver is unimplemented (Gate 2 not reached) | DOMAIN_REUSABLE (pattern) — not CORE_REUSABLE, because ARCHITECTURE.md and SPEC.md §7 already fully specify the CapabilityResolver's required behavior; DocuMind merely supplies a concrete, informal instance of the *problem* the resolver must solve (optional providers, declared fallback behavior, "resolution MUST NOT silently fall back... without declared acceptable behavior" — SPEC C-04). No amendment to accepted LegoAI documents is justified; this is confirmation the existing spec is on the right track, plus a concrete test case to validate the future reference CapabilityResolver against. | 
+| DocuMind's DI-time graceful-degradation wiring (Groq/Ollama, Cohere/NoOp, Tavily/NoOp, Gemini/NoOp) has no equivalent in LegoAI today because CapabilityResolver is unimplemented (Gate 2 not reached) | **REFERENCE_RUNTIME_VALIDATION_CASE** (revised classification — this is neither a new Core capability proposal nor an open architecture gap) | ARCHITECTURE.md and SPEC.md §7/C-04 already fully specify the CapabilityResolver's required behavior end to end. DocuMind contributes no new requirement — it contributes four concrete, reusable **test fixtures** (§21.1 below) that a future reference CapabilityResolver implementation must be validated against once Gate 2 opens. No amendment to accepted LegoAI documents is justified or needed. |
 | DocuMind's per-conversation scoping (MAF repo) resembles but is not equivalent to LegoAI's TenantContext | APPLICATION_SPECIFIC | Conversation scope is a narrower, single-dimension partition invented for chat-session isolation, not a verified, externally-issued tenant boundary (SPEC S-10/S-11 require verified TenantContext with cross-tenant grant semantics). No gap in LegoAI; DocuMind simply hasn't needed full tenancy yet. |
 | DocuMind's Web↔Api internal-key header is a TrustBoundary crossing with no formal Policy/Approval semantics behind it | APPLICATION_SPECIFIC | This is a minimal, ad hoc mechanism sufficient for DocuMind's own deployment topology; LegoAI's TrustBoundary/Policy/Authorization concepts already specify a considerably richer model (SPEC §4.9, SECURITY.md §6-7). No gap — DocuMind simply doesn't need the full model yet. |
 | Neither DocuMind repo records model identity/version in provenance alongside produced embeddings or answers | APPLICATION_SPECIFIC / minor conformance gap in DocuMind itself, not LegoAI | SPEC S-12 requires this; it is a DocuMind implementation gap to flag to DocuMind's own maintainers, not evidence that LegoAI's Provenance concept (§4.11) is insufficiently specified — the opposite: LegoAI already requires more than DocuMind currently does. |
 | Neither DocuMind repo has retrieval, rerank, embedding, or answering test coverage | UNCERTAIN (risk, not an architecture gap) | Affects extraction confidence (§29) but is not a LegoAI architecture question. |
 
 **No accepted LegoAI document requires amendment based on this evidence.** The evidence instead validates several already-accepted decisions: DEC-01 (operational result ≠ canonical Outcome — SK's direct Model-invocation answering path is a clean real-world instance of this), I-13/I-14 (Agent and generation are optional for retrieval — both repos' retrieval code never touches an Agent or Model), and I-04 (reasoning must not create authority — neither repo's agents/models are ever granted unmediated tool/data access; the one tool exposed, web search, is a narrow, read-only, explicitly-attached function).
+
+### 21.1 CapabilityResolver reference-runtime validation cases (from DocuMind evidence)
+
+These are **test scenarios for a future reference CapabilityResolver implementation**, not a specification change and not code to extract now — the resolver itself does not exist yet (§0). Each scenario distinguishes **declared fallback** (an explicitly modeled, policy-visible degradation the resolver is allowed to select per SPEC C-04: "a fallback MUST have declared acceptable behavior and remain within all effective constraints") from **silent fallback** (an undeclared, invisible substitution — forbidden by C-04 regardless of whether the substitute happens to work).
+
+| # | DocuMind evidence | Resolver scenario to validate | Declared vs. silent in DocuMind today |
+|---|---|---|---|
+| 1 | Groq chat-completion provider absent (`Groq:ApiKey` unset) → falls back to local Ollama chat model | Given a `model.chat-completion` requirement with a preferred remote provider offer and an eligible local-provider offer, when the preferred offer is unavailable, resolution MUST select the eligible alternative only if the caller's requirement explicitly permits degradation (e.g., an accepted quality/latency trade-off), and MUST record which offer was actually bound and why | **Declared in spirit, silent in mechanism**: the choice is made once at DI-composition time in C#, with no runtime-visible resolution record, no requirement object stating the acceptable degradation, and no per-request explanation of which provider served a given answer — i.e., DocuMind's *outcome* matches C-04's intent but its *mechanism* has no CapabilityResolution artifact, so it cannot itself be cited as a conformant resolver implementation |
+| 2 | Cohere reranker absent (`Cohere:ApiKey` unset) → `NoOpReranker` (identity/truncation, not real reranking) | Resolution of an *optional* `retrieval.rerank` requirement with zero eligible providers MUST succeed with the requirement explicitly recorded as omitted (SPEC C-03: "optional requirements MAY be omitted with explicit reasons and resulting degradation"), not silently vanish from the caller's view | Same gap as #1 — DocuMind's behavior (skip reranking, return top-N as-is) is the *correct* shape for an optional requirement, but there is no `CapabilityResolution` record stating "rerank omitted, reason: no eligible provider" |
+| 3 | Tavily web-search tool absent (`WebSearch:TavilyApiKey` unset) → `NoOpWebSearchService`, and the tool is never attached to the Answering agent at all in that case | Resolution of an optional `tool.web-search` dependency of a composite capability MUST propagate the omission to the composite's own advertised guarantees (SPEC §4.4 CompositeCapability: "MUST NOT hide provider coupling... define... failure/degradation behavior") — i.e., an Answering capability without web search MUST be able to state that its grounding guarantee is now narrower | DocuMind's MAF version already does this at the code level (the tool is conditionally attached) but the narrowed guarantee is not a caller-visible, resolvable fact — it is an implementation detail baked into DI wiring |
+| 4 | Gemini voice/image-generation absent → `NoOpVoiceService`/`NoOpImageGenerationService`, both of which **throw** rather than degrade | Resolution MUST distinguish "capability unavailable, caller informed before invocation" from "capability nominally resolved, then fails at invocation time" — a `NoOp` implementation that throws on use is evidence that DocuMind conflates *resolution-time* unavailability with *invocation-time* failure; a conformant resolver must surface `CapabilityUnavailable` at resolution, not defer to a runtime `ModelFailure`/`ToolFailure` masquerading as a successful binding | **Silent** in the sense that matters: DocuMind reports success at DI-registration time and only fails when a request actually needs the missing feature, which is exactly the deferred-failure shape SPEC §7.2 step 8 and C-04 are designed to prevent at the resolution boundary |
+
+These four scenarios should become literal `tests/contracts/capability_resolution/*` conformance cases once `legoai.capabilities`/`legoai.reference.resolution` exist (ADR-002 §7.1/§7.2) — they are recorded here so that work is not rediscovered from scratch later.
 
 ---
 
@@ -447,19 +492,19 @@ Per CONFORMANCE.md's judgment vocabulary (conformant / nonconformant / not asses
 
 **Phase 2 — Extraction classification (COMPLETE, §6).** Exit: every component has exactly one classification.
 
-**Phase 3 — Capability contract definitions.** Files: none yet (design only). Changes: write formal contract documents for `ChunkingCapability` and `EmbeddingCapability` (the two highest-scored candidates) in LegoAI's contracts style, following CONTRACTS.md's format (request/result envelopes, error mapping, ack semantics) — as a new addition, not a modification, to `contracts/CONTRACTS.md` or a Document-Pack-scoped contracts file, subject to LegoAI's own ADR process if it constitutes a "significant architecture decision" per AGENTS.md. Exit: contract text reviewed against SPEC §2 shared semantic rules.
+**Phase 3 — Capability contract definitions.** Files: the companion design artifact [`planning/documind/CHUNKING-CAPABILITY-DESIGN.md`](documind/CHUNKING-CAPABILITY-DESIGN.md) (created this pass) completes this phase for `document.chunking`. Changes: this is a PROPOSED Document-Pack-scoped design document, explicitly **not** a modification to canonical `contracts/CONTRACTS.md` (§0 of that document restates the Core/Document-Pack boundary). A later contract document for `EmbeddingCapability` follows the same pattern once Phase 5 for Chunking is complete. Exit: contract text reviewed against SPEC §2 shared semantic rules — done for Chunking in the companion document's design gate (§10 there).
 
 **Phase 4 — First C# Adapter wrapping.** **Not applicable in the near term** (§17) — no Execution/Plugin engine exists to host an Adapter yet, and no accepted ADR authorizes .NET interop in the Python reference runtime. Skip until Gate 2+ and until intent §39's future .NET compatibility path is separately authorized by an ADR.
 
-**Phase 5 — LegoAI capability extraction (Python).** Entry: Phase 3 contracts reviewed; `src/legoai/` has progressed past Gate 1 to the point a Document Pack package can be added without violating ADR-002's package-structure rules. Files: new `legoai_document` (or equivalent) package, added following ADR-002's inward-only dependency direction. Changes: implement `ChunkingCapability` as a pure Python function/dataclass pair. Tests: port the existing xUnit `ChunkingServiceTests` cases into the Python conformance suite first, then implement to satisfy them. Exit: full mypy/Ruff/pytest conformance per the same bar `src/legoai/kernel` already meets. Rollback: the capability is additive and has zero consumers yet — deletion is a clean rollback.
+**Phase 5 — LegoAI capability extraction (Python), step 1: Chunking.** Entry: Phase 3 contract reviewed (companion document); package placement resolved (§17 — `legoai_document`, its own import root per ADR-002 §13, not a 13th `legoai.*` owner package). Files: new `legoai_document` package. Changes: implement `ChunkingCapability` as a pure Python function/dataclass pair. Tests: port the existing xUnit `ChunkingServiceTests` cases into the Python conformance suite first, then implement to satisfy them. Exit: full mypy/Ruff/pytest conformance per the same bar `src/legoai/kernel` already meets. Rollback: the capability is additive and has zero consumers yet — deletion is a clean rollback.
 
-**Phase 6 — Python implementation of remaining first-batch capabilities.** Repeat Phase 5's shape for `EmbeddingCapability` (batch 2), then `RetrieverCapability`+`RerankCapability` (batch 3), writing conformance specs first since no C# oracle tests exist for these (§20).
+**Phase 6 — Python implementation of remaining capabilities, in the revised §15 order.** Step 2: `DocumentParsingCapability`. Step 3: `EmbeddingCapability` (the SK-Adapter/MAF-Adapter duality proof point). Step 4: `RetrieverCapability`. Step 5: `RerankCapability`. Step 6: `IngestionWorkflow` (composition of steps 1–3; the last purely deterministic milestone). Each step writes a conformance spec first since no C# oracle tests exist for any of these beyond Chunking (§20).
 
 **Phase 7 — Cross-language conformance.** Only relevant once/if a future .NET Adapter is authorized; until then, "cross-language" reduces to "conformance between the C#-observed behavior (as documented, not as tested) and the Python implementation," tracked via the conformance specs written in Phase 6.
 
 **Phase 8 — DocuMind migration.** Not authorized by this assessment. If pursued later, DocuMind would consume LegoAI's Python Document Pack only if DocuMind itself moves toward Python or LegoAI grows a .NET-consumable interface — neither is in scope now. DocuMind's C# repos remain independent products; this whole assessment treats them as read-only evidence sources, never as migration targets.
 
-**Phase 9 — Repeat capability-by-capability.** `AnsweringCapability` (batch 4, requires an Execution Plane Direct-invocation driver to exist) and `IngestionWorkflow` (batch 5, requires a Workflow driver) follow once Phases 5–6 land and once LegoAI's Execution Plane has a working Direct-invocation driver (not yet built — this is itself a LegoAI Core milestone independent of DocuMind).
+**Phase 9 — Step 7: `AnsweringCapability`.** Deliberately last, per §15's revised sequence — the only genuinely probabilistic capability in the pack, requiring an Execution Plane Direct-invocation driver to exist (not yet built — this is itself a LegoAI Core milestone independent of DocuMind) plus Phase 6's `RetrieverCapability`/`RerankCapability`.
 
 **Phase 10 — Framework-specific cleanup.** Not applicable — no framework-specific code has been introduced into LegoAI by this plan (§17 explicitly avoids SK/MAF Adapters in the near term).
 
@@ -480,13 +525,13 @@ Per CONFORMANCE.md's judgment vocabulary (conformant / nonconformant / not asses
 - **Source classes:** `ChunkingService : IChunkingService`, method `Chunk(Guid documentId, string fullText, int chunkSize = 512, int overlap = 50)`
 - **Dependencies:** none (pure function over strings and primitives; only a `DocumentChunk` result shape depends on `DocuMind.Domain.Entities`)
 - **Current tests:** 6 xUnit cases per repo (empty text → empty list; short text → single chunk with correct index/token-count; long text → multiple non-blank chunks; overlap correctness — consecutive chunks share overlapping words; DocumentId propagated to every chunk; sequential chunk indexing)
-- **Proposed LegoAI contract:** §16.1 above (`document.chunking`, namespace `legoai.document`)
+- **Proposed LegoAI contract:** §16.1 above and the full companion design ([`CHUNKING-CAPABILITY-DESIGN.md`](documind/CHUNKING-CAPABILITY-DESIGN.md)) — semantic identity `document.chunking`, namespace `legoai_document` (its own import root; **not** `legoai.document`, since `legoai.*` is reserved for ADR-002 §5's twelve canonical Core owner groups and Chunking is not one of them — see §17's revised target architecture)
 - **Proposed Adapter boundary:** none needed for v1 — this is a pure computation capability with no external provider; a "Provider" in LegoAI's sense here is just the reference implementation itself (self-contained, no `Adapter` layer required, matching SPEC §4.4's allowance for direct capability use without inventing infrastructure that isn't needed)
-- **Target location:** a new Python package under `src/legoai/` — exact package name and its position in ADR-002's package map (e.g. whether it lives under a new `legoai-document` distribution vs. inside `legoai-reference`) is a Phase-3 decision requiring its own lightweight ADR-002-consistency check, not decided in this assessment
-- **Python target:** a pure module exposing a function (or a small `Protocol`+implementation pair, consistent with `src/legoai/kernel`'s existing style of dataclasses/enums/Protocols per the Gate-1 tooling table) implementing sliding-window chunking with explicit `chunk_size`/`overlap` parameters and no hidden defaults beyond what the contract declares
-- **New tests:** direct ports of the 6 xUnit cases above, expressed as pytest cases, run against both the Python implementation and (manually, once) cross-checked against the two C# implementations' actual output for a shared sample document to confirm behavioral parity before declaring the Python version conformant
-- **Migration order:** first — zero dependencies, existing oracle tests, lowest risk of all candidates identified in §15
-- **Rollback method:** the new package is purely additive with no consumers in the current `src/legoai/` tree (Gate 1 has no Document Pack yet); rollback is simply removing the new package and its tests — no other code changes are entangled with it
+- **Target location:** **resolved** — a new, separate `legoai_document` import root/distribution, sibling to (not nested inside) `legoai`, per ADR-002 §13's already-accepted "future integration distributions use their own import roots" mechanism. This required no new ADR; full evaluation of the three placement options is in the companion design document's package-placement section.
+- **Python target:** a pure module exposing a function (or a small `Protocol`+implementation pair, consistent with `src/legoai/kernel`'s existing style of dataclasses/enums/Protocols per the Gate-1 tooling table) implementing sliding-window chunking with explicit `chunk_size`/`overlap` parameters and no hidden defaults beyond what the contract declares — see the companion document's Python API shape section for the exact proposed signature
+- **New tests:** direct ports of the 6 xUnit cases above, expressed as pytest cases, run against both the Python implementation and (manually, once) cross-checked against the two C# implementations' actual output for a shared sample document to confirm behavioral parity before declaring the Python version conformant — see the companion document's full characterization table, including behaviors the existing C# tests do **not** cover
+- **Migration order:** first — zero dependencies, existing oracle tests, lowest risk of all candidates identified in the revised §15 sequence
+- **Rollback method:** the new package is purely additive with no consumers anywhere in the repository (Gate 1 has no Document Pack yet, and `legoai_document` is a separate import root that `legoai.*` never imports); rollback is simply removing the new package and its tests — no other code changes are entangled with it
 
 ---
 
