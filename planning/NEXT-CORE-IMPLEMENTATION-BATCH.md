@@ -941,3 +941,9 @@ GATE_1_EXIT_VERDICT = READY
 All seventeen Gate-1 §18.1 foundation-exit criteria are `PASS`, independently re-verified from source in this task, with the previous sole gap (G1-EXIT-08) closed by the remediation batch's migration-interruption evidence and no regression found in any of the other sixteen. Production source, canonical authority documents, the runtime dependency set, and the absence of any Gate-2 concept are all reconfirmed unchanged.
 
 **Gate 1 foundation is qualified. Gate 2 may now be planned in a separate task.** No Gate-2 planning or implementation was performed in this task.
+
+---
+
+## 27. Gate-2 planning (pointer)
+
+Gate-2 planning-only work (no implementation) is recorded in `planning/GATE-2-IMPLEMENTATION-PLAN.md` (status: `PROPOSED — GATE 2 IMPLEMENTATION PLAN`). Summary: authoritative Gate-2 scope is ADR-005 through ADR-009 plus ADR-015 realized toward one governed deterministic executable invocation (the "governed executable slice" ADR-015 names); no separate numbered Gate-2 exit checklist exists in accepted planning documents. Selected first implementation batch: `legoai.execution` public values only (`ExecutionState`, `ExecutionId`, `ExecutionContext`, `ExecutionResult`) — no Ports, no realization, no Model/Embedding/Agent/Workflow. `READY_TO_IMPLEMENT_GATE2_BATCH_1 = YES`. No Gate-1 milestone history above is altered by this pointer.
