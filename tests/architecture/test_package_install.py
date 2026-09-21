@@ -65,17 +65,24 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.kernel.context
     import legoai.kernel.errors
     import legoai.kernel.effects
+    import legoai.kernel.provenance
     import legoai.governance
     import legoai.governance.values
+    import legoai.evidence
+    import legoai.evidence.values
     import legoai.application.values
+    import legoai.application.ports
     import legoai.reference.application.configuration
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.kernel", "legoai.kernel.identity", "legoai.kernel.references",
     "legoai.kernel.versions", "legoai.kernel.context", "legoai.kernel.errors",
-    "legoai.kernel.effects", "legoai.governance", "legoai.governance.values",
-    "legoai.application", "legoai.application.values", "legoai.reference",
+    "legoai.kernel.effects", "legoai.kernel.provenance",
+    "legoai.governance", "legoai.governance.values",
+    "legoai.evidence", "legoai.evidence.values",
+    "legoai.application", "legoai.application.values", "legoai.application.ports",
+    "legoai.reference",
     "legoai.reference.application", "legoai.reference.application.configuration"
 }
 """
@@ -103,11 +110,15 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/kernel/context.py",
         "legoai/kernel/errors.py",
         "legoai/kernel/effects.py",
+        "legoai/kernel/provenance.py",
         "legoai/governance/__init__.py",
         "legoai/governance/values.py",
+        "legoai/evidence/__init__.py",
+        "legoai/evidence/values.py",
         "legoai/py.typed",
         "legoai/application/__init__.py",
         "legoai/application/values.py",
+        "legoai/application/ports.py",
         "legoai/reference/__init__.py",
         "legoai/reference/application/__init__.py",
         "legoai/reference/application/configuration.py",
@@ -144,8 +155,15 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "docs/development.md",
             "tests/unit/kernel/test_identity.py",
             "tests/unit/kernel/test_foundation.py",
+            "tests/unit/kernel/test_provenance.py",
             "tests/unit/governance/test_context.py",
             "tests/unit/application/test_configuration.py",
+            "tests/unit/application/test_operation_result.py",
+            "tests/unit/evidence/test_values.py",
+            "tests/__init__.py",
+            "tests/contract/test_configuration_store.py",
+            "tests/support/__init__.py",
+            "tests/support/configuration_store.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -178,10 +196,13 @@ import legoai.kernel.context as context
 import legoai.kernel.versions as versions
 import legoai.kernel.errors as errors
 import legoai.kernel.effects as effects
+import legoai.kernel.provenance as provenance
 import legoai.governance.values as governance
+import legoai.evidence.values as evidence
 import legoai.application.values as application
+import legoai.application.ports as ports
 import legoai.reference.application.configuration as configuration
-for module in (references, context, versions, errors, effects, governance, application, configuration):
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -197,6 +218,17 @@ assert identity.PrincipalId("abc").value == "abc"
 assert version("legoai-reference") == "0.1.0.dev0"
 assert not requires("legoai-reference")
 assert Path(identity.__file__).parents[1].joinpath("py.typed").is_file()
+duty_id = provenance.DutyId("duty-1")
+duty_kind = provenance.DutyKind("source-submission")
+assert duty_id != duty_kind
+evidence_req = evidence.EvidenceRequirement(
+    references.ConfigurationRevisionRef(target, "r1", versions.Version(0, 1, 0)),
+    "evidence needed",
+)
+assert evidence_req.description == "evidence needed"
+assert hasattr(ports, "ConfigurationStorePort")
+assert hasattr(application, "ConfigurationPublicationOperation")
+assert hasattr(application, "ConfigurationSourceSubmissionDuty")
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr

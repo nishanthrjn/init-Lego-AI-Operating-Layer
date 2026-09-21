@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from legoai.application.values import (
+    ComposedConfiguration,
     ConfigurationPublicationOperation,
     ConfigurationPublicationResult,
     ConfigurationSourceSubmissionDuty,
@@ -14,7 +15,7 @@ from legoai.evidence.values import EvidenceRequirement
 from legoai.governance.values import Principal
 from legoai.kernel.context import TenantContext
 from legoai.kernel.effects import EffectExtent
-from legoai.kernel.errors import ErrorCategory, ErrorCause, ErrorDetail, Recoverability
+from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.identity import ApplicationId, OperationId, PrincipalId, TenantId
 from legoai.kernel.provenance import DutyId, DutyKind
 from legoai.kernel.references import (
@@ -32,7 +33,12 @@ from legoai.reference.application.configuration import compose_configuration
 VERSION = Version(0, 1, 0)
 
 
-def _target(tenant: str = "t1", owner: str = "owner1", app: str = "app1", instance: str = "inst1") -> ConfigurationRef:
+def _target(
+    tenant: str = "t1",
+    owner: str = "owner1",
+    app: str = "app1",
+    instance: str = "inst1",
+) -> ConfigurationRef:
     scope = ReferenceScope(owner, TenantId(tenant))
     return ConfigurationRef(ApplicationRef(scope, ApplicationId(app)), instance)
 
@@ -45,8 +51,10 @@ def _principal(pid: str = "p1") -> Principal:
     return Principal(PrincipalRef("issuer1", PrincipalId(pid)))
 
 
-def _candidate(target: ConfigurationRef):
-    return compose_configuration(target, (), contract_version=VERSION, interpretation_version=VERSION)
+def _candidate(target: ConfigurationRef) -> ComposedConfiguration:
+    return compose_configuration(
+        target, (), contract_version=VERSION, interpretation_version=VERSION
+    )
 
 
 def _duty_id() -> DutyId:
@@ -171,9 +179,7 @@ class TestConfigurationPublicationResult:
                 resulting_revision=OwnerRevision(target, 1),
                 published=ConfigurationRevisionRef(target, "r1", VERSION),
                 effect=EffectExtent.COMPLETED,
-                error=ErrorDetail(
-                    ErrorCategory.CONFLICT, Recoverability.TERMINAL, ()
-                ),
+                error=ErrorDetail(ErrorCategory.CONFLICT, Recoverability.TERMINAL, ()),
                 duties=(),
             )
 
@@ -268,7 +274,7 @@ class TestConfigurationPublicationResult:
                 published=ConfigurationRevisionRef(target, "r1", VERSION),
                 effect=EffectExtent.COMPLETED,
                 error=None,
-                duties=["not-a-duty-id"],  # type: ignore[list-item]
+                duties=["not-a-duty-id"],  # type: ignore[arg-type]
             )
 
     def test_frozen(self) -> None:
@@ -287,7 +293,9 @@ class TestConfigurationPublicationResult:
 
 
 class TestConfigurationSourceSubmissionDuty:
-    def _valid_duty(self, target: ConfigurationRef | None = None) -> ConfigurationSourceSubmissionDuty:
+    def _valid_duty(
+        self, target: ConfigurationRef | None = None
+    ) -> ConfigurationSourceSubmissionDuty:
         target = target or _target()
         published = ConfigurationRevisionRef(target, "r1", VERSION)
         op = _operation_ref(target)

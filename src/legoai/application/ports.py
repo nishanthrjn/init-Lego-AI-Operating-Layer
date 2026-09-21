@@ -10,7 +10,7 @@ SQLite adapter) lives here, and no transaction object is exposed publicly.
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from legoai.application.values import (
     ComposedConfiguration,
@@ -35,6 +35,7 @@ class UnknownRevisionError(LookupError):
     """
 
 
+@runtime_checkable
 class ConfigurationStorePort(Protocol):
     """Synchronous owner-local storage boundary for one configuration owner.
 

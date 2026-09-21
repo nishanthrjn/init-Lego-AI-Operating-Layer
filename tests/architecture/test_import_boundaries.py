@@ -69,6 +69,14 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.application"
                         or target.startswith("legoai.application.")
+                        # ADR-002 SS9.2: Application's allowed-foreign-targets row
+                        # includes G (Governance) and O (Evidence/Observability).
+                        # F4 is the first real consumer of both; only these two
+                        # are widened here, not the full ADR-002 maximum.
+                        or target == "legoai.governance"
+                        or target.startswith("legoai.governance.")
+                        or target == "legoai.evidence"
+                        or target.startswith("legoai.evidence.")
                     ):
                         errors.add("application-owner")
                     if name.startswith("legoai.application.") and any(
@@ -100,6 +108,22 @@ def violations(sources: dict[str, str]) -> set[str]:
                     if name.startswith("legoai.governance.") and any(
                         target == f"legoai.governance.{layer}"
                         or target.startswith(f"legoai.governance.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
+                    if name.startswith("legoai.evidence.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.evidence"
+                        or target.startswith("legoai.evidence.")
+                    ):
+                        # F4 gives evidence.values only Kernel, deliberately
+                        # stricter than ADR-002's G-inclusive maximum for O,
+                        # matching the Gate-1 plan's own narrower F4 scope.
+                        errors.add("evidence-owner")
+                    if name.startswith("legoai.evidence.") and any(
+                        target == f"legoai.evidence.{layer}"
+                        or target.startswith(f"legoai.evidence.{layer}.")
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
@@ -260,7 +284,7 @@ def test_no_ambient_context_or_module_state() -> None:
         ),
         (
             "legoai.application.values",
-            "from legoai.governance.values import Principal",
+            "from legoai.resources.values import Balance",
             "application-owner",
         ),
         ("legoai.application.values", "from .ports import Store", "values-layer"),
@@ -297,8 +321,13 @@ def test_f2_cycle_and_indirect_import() -> None:
 
 
 def test_f2_pure_module_dependencies() -> None:
+    # Scoped to reference/application/configuration.py only: F4 deliberately
+    # extends application/values.py beyond F2's original pure-fixture scope
+    # (it now legitimately imports OwnerRevision/ConfigurationRevisionRef for
+    # the operation/result/duty model) -- see test_f4_boundaries below for
+    # values.py's own, F4-scoped import constraints.
     root = Path(__file__).resolve().parents[2] / "src" / "legoai"
-    for relative in ("application/values.py", "reference/application/configuration.py"):
+    for relative in ("reference/application/configuration.py",):
         tree = ast.parse((root / relative).read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
@@ -321,3 +350,176 @@ def test_f2_pure_module_dependencies() -> None:
                 )
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in {"open", "print", "input"}
+
+
+# --- F4: evidence-owner boundary, and application's widened (but still
+# narrow) access to evidence/governance -----------------------------------
+
+
+@pytest.mark.parametrize(
+    "owner", ["application", "reference", "runtime", "resources.values", "capabilities"]
+)
+def test_evidence_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.evidence.values": f"import legoai.{owner}"}) == {
+        "evidence-owner"
+    }
+
+
+def test_evidence_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.evidence.values": "from .ports import check"}
+    )
+    assert "evidence-owner" in violations(
+        {
+            "legoai.evidence.values": "from .pure import Requirement",
+            "legoai.evidence.pure": "from legoai.governance.values import Principal",
+        }
+    )
+
+
+def test_evidence_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.evidence.__init__": '"""Inert."""',
+            "legoai.evidence.values": "from legoai.kernel.references import ConfigurationRevisionRef",
+            "legoai.kernel.references": "from .identity import ApplicationId",
+            "legoai.kernel.identity": "from dataclasses import dataclass",
+        }
+    )
+
+
+def test_kernel_cannot_import_evidence() -> None:
+    assert violations(
+        {
+            "legoai.kernel.provenance": "from legoai.evidence.values import EvidenceRequirement"
+        }
+    ) == {"kernel-owner"}
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.evidence.values import EvidenceRequirement",
+            None,
+        ),
+        (
+            "legoai.application.values",
+            "from legoai.governance.values import Principal",
+            None,
+        ),
+        (
+            "legoai.application.values",
+            "from legoai.capabilities.values import Requirement",
+            "application-owner",
+        ),
+        (
+            "legoai.application.values",
+            "from legoai.execution.values import ExecutionId",
+            "application-owner",
+        ),
+        (
+            "legoai.application.values",
+            "from legoai.plugins.values import PluginId",
+            "application-owner",
+        ),
+    ],
+)
+def test_f4_boundaries(module: str, source: str, reason: str | None) -> None:
+    result = violations({module: source})
+    if reason is None:
+        assert "application-owner" not in result
+    else:
+        assert reason in result
+
+
+def test_application_ports_does_not_depend_on_reference_implementation() -> None:
+    assert "application-owner" in violations(
+        {
+            "legoai.application.ports": "from legoai.reference.application import configuration"
+        }
+    )
+
+
+def test_test_support_configuration_store_is_rejected_as_production_import() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.application.values": "from tests.support.configuration_store import InMemoryConfigurationStore"
+        }
+    )
+
+
+def test_no_database_driver_imported_by_production_source() -> None:
+    # sqlite3 is stdlib, so the generic "external" check does not catch it --
+    # F4/F5 introduce no real persistence yet (that is F6a's scope), so no
+    # production module may import it or any other database driver.
+    forbidden_db_roots = {
+        "sqlite3",
+        "psycopg",
+        "psycopg2",
+        "asyncpg",
+        "sqlalchemy",
+        "pymongo",
+        "redis",
+    }
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    offenders: dict[str, set[str]] = {}
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        found: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                found |= {
+                    alias.name.split(".")[0] for alias in node.names
+                } & forbidden_db_roots
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                if node.module.split(".")[0] in forbidden_db_roots:
+                    found.add(node.module.split(".")[0])
+        if found:
+            offenders[str(path.relative_to(root))] = found
+    assert offenders == {}
+
+
+def test_no_ai_or_agent_framework_imported_by_production_source() -> None:
+    forbidden_ai_roots = {
+        "semantic_kernel",
+        "agent_framework",
+        "openai",
+        "anthropic",
+        "ollama",
+        "langchain",
+        "langgraph",
+    }
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    offenders: dict[str, set[str]] = {}
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        found: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                found |= {
+                    alias.name.split(".")[0] for alias in node.names
+                } & forbidden_ai_roots
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                if node.module.split(".")[0] in forbidden_ai_roots:
+                    found.add(node.module.split(".")[0])
+        if found:
+            offenders[str(path.relative_to(root))] = found
+    assert offenders == {}
+
+
+def test_no_documind_or_document_pack_import_by_core() -> None:
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    offenders: list[str] = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            roots: set[str] = set()
+            if isinstance(node, ast.Import):
+                roots = {alias.name.split(".")[0] for alias in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                roots = {node.module.split(".")[0]}
+            if roots & {"legoai_document", "documind"}:
+                offenders.append(str(path.relative_to(root)))
+    assert offenders == []
