@@ -712,3 +712,100 @@ Deviations from the F8b task's plan: none of substance.
 **F9 is now unblocked**: F7 and F8b are both complete, and F8a was already complete. F9 itself has not been started — no foundation-exit review, no Gate-2 work, and no claim that Gate 1 is complete exists anywhere in this diff.
 
 **Gate 2 has not been started.** No Execution, ExecutionContext, CapabilityResolver, Plugin admission/activation, authorization enforcement, resource-claim, or async-supervision code exists anywhere in this diff.
+
+---
+
+## 24. F9 — Foundation Exit Review and Handoff
+
+```text
+F9_REVIEW = COMPLETE
+GATE_1_EXIT_VERDICT = NOT_READY
+```
+
+This is a qualification/review task only. No implementation was added or changed to make the gate pass, per this task's own hard rule; the one gap found below (G1-EXIT-08) is reported, not patched. The only repository change from this task is this section.
+
+### 24.1 Authoritative checklist confirmed
+
+`planning/GATE-1-FOUNDATION-IMPLEMENTATION.md` §18.1 is confirmed, by direct re-read of that section, to still be the accepted seventeen-item Gate-1 foundation-exit checklist, verbatim. No substitute checklist was used. Each item is assigned `G1-EXIT-01` through `G1-EXIT-17` below in the exact original order and wording.
+
+### 24.2 Verification method
+
+Re-run directly for this review (not taken from prior completion reports): `pytest` (full suite, both `legoai-reference` and the independent `packages/legoai-document` Document Pack), `mypy --strict`, `ruff check`, `ruff format --check`, `coverage run --branch` across every implemented package, a clean `uv build` with wheel-content inspection, and targeted `grep`/source reads for specific claims (durability-boundary disclaimers, `QUALIFIED` usage, pickle/marshal absence, migration code presence).
+
+Results: `pytest` — **618 passed** (`legoai-reference`); **268 passed, 64 skipped** (Document Pack, skips are documented pre-existing invariant-coverage overlaps, not failures). `mypy src tests` — **no issues in 62 source files**. `ruff check`/`ruff format --check` — **clean**. Coverage — **94% overall** across `application`, `reference.application`, `observability`, `reference`, `capabilities`, `plugins`, `runtime` (every F7/F8a/F8b module at 100%; the 88-92% modules are F4-F6 files whose gaps are exclusively repetitive defensive `except sqlite3.Error` translation branches and secondary type-guard branches, already documented in their own batch reports). Wheel contents inspected directly: exactly `legoai.{kernel,application,governance,evidence,observability,capabilities,plugins,reference,runtime}` and their exact implemented submodules — no `legoai.execution`, no unimplemented package. Wheel `METADATA` carries no `Requires-Dist` line at all. `uv.lock` contains only build/test tooling and its own transitive dependencies (`hatchling`, `editables`, `pytest`, `mypy`, `ruff`, `coverage`, and their dependencies) — zero runtime packages.
+
+### 24.3 Checklist evaluation
+
+**G1-EXIT-01 — "Local installable distribution and clean wheel/sdist smoke test."**
+`PASS`. `pyproject.toml` declares one distribution (`legoai-reference`) with `dependencies = []`. `tests/architecture/test_package_install.py::test_build_and_fresh_wheel` builds the real wheel+sdist via `uv build --no-build-isolation`, asserts exact file contents, installs into a fresh isolated venv, and imports/exercises the package from that installation — re-run directly for this review, passing, wheel contents independently re-verified above.
+
+**G1-EXIT-02 — "Reproducible documented local test/type/lint/format/build loop."**
+`PASS`. `docs/development.md` documents the exact command loop (`uv sync --locked ...`, `pytest`, `mypy`, `ruff check`, `ruff format --check`, `uv build`), matching Gate-1 plan §12.4 verbatim. All commands re-run directly in this review with the results in §24.2.
+
+**G1-EXIT-03 — "Minimal nominal values and safe explicit contexts with negative tests."**
+`PASS`. `kernel/identity.py` (`TenantId`, `PrincipalId`, `ApplicationId`, `OperationId`, `RequestId`, `CorrelationId`, `TraceId`), `governance/values.py` (`Principal`, `OperationContext` — explicit tenant/requester, no `trusted=True`/ambient authority field of any kind). Negative tests: `tests/unit/kernel/test_identity.py`, `tests/architecture/test_package_install.py::test_f1_static_misuse` (cross-kind ID substitution rejected by mypy, asserted directly), `tests/unit/governance/test_context.py` (wrong/missing scope rejected).
+
+**G1-EXIT-04 — "Enforced import/dependency direction and inert package parents."**
+`PASS`. `tests/architecture/test_import_boundaries.py` — 61 test functions (141 parametrized cases), covering every owner (`application`, `governance`, `evidence`, `observability`, `capabilities`, `plugins`, every `reference.*` module, `runtime._composition`) with both positive (`test_production_boundaries` scanning the real `src/legoai` tree) and negative (synthetic forbidden-graph) cases; all inert `__init__.py` files checked by the same `initializer` rule. Re-run directly: 141 passed.
+
+**G1-EXIT-05 — "Immutable candidate composition and exact published revision behavior in isolated owner tests."**
+`PASS`. `reference/application/configuration.py::compose_configuration` (F2, immutable `ComposedConfiguration`/`EffectiveConfiguration`) plus `application/ports.py::ConfigurationStorePort.publish` (F4) realized by both `tests/support/configuration_store.py::InMemoryConfigurationStore` and `reference/application/sqlite_store.py::SQLiteConfigurationStore` (F6a), proven identical via the shared parametrized suite `tests/contract/test_configuration_store.py` (`STORE_FACTORIES` = `[in-memory-fake, sqlite]`, 17 test methods × 2 backends). `test_exact_historical_revision_read`, `test_missing_historical_revision_does_not_fall_back`, `test_old_revision_remains_readable_after_a_new_publish` prove exact-revision behavior on both realizations.
+
+**G1-EXIT-06 — "SQLite owner boundary selected/recorded, compound guards/results/duties implemented and tested; any unqualified durability environment explicitly blocks durable runtime use... never described as qualified."**
+`PASS`, with the required disclaimer confirmed present at the source level, not only in planning prose. `planning/runtime/LOCAL-PERSISTENCE-REALIZATION.md` (Accepted) records the selection. `reference/application/sqlite_store.py` implements owner-local compound commit (`_insert_committed_result` writes revision/head/result/duty in one `BEGIN IMMEDIATE`/`COMMIT`); `tests/unit/application/test_sqlite_store.py::test_failure_during_commit_leaves_no_partial_mutation` proves no partial set survives an injected mid-transaction failure. The durability-boundary disclaimer is present verbatim in `reference/application/recovery.py`'s own module docstring ("Failure model scope... does NOT qualify disk destruction... `synchronous=EXTRA` is not claimed here as a universal durability guarantee") — confirmed by direct `grep` in this review, not merely asserted in a completion report.
+
+**G1-EXIT-07 — "Safe versioned serialization and supported-reader rejection."**
+`PASS`. `reference/application/codec.py` is the sole F5 codec authority (confirmed: no other module in `src/legoai` implements JSON encode/decode of these record kinds). `RecordSchemaVersion` distinct from `Version`/`OwnerRevision`/`ConfigurationRevisionRef` (module docstring states this explicitly; `tests/unit/application/test_codec.py::test_record_schema_version_type_is_distinct_from_domain_version`). Unsupported version rejection: `test_unsupported_record_schema_version_fails_closed`. No pickle/marshal anywhere in `src/legoai` — confirmed by direct source `grep` in this review (zero matches).
+
+**G1-EXIT-08 — "Revision/conflict/duplicate/lost-ack/process-restart and migration-interruption evidence for the selected owner."**
+`PARTIAL` — **this is the one real gap this review found.** Revision/conflict evidence: `TestConditionalMutation` (contract suite) + `test_two_writers_expecting_same_head_only_one_advances` (SQLite-specific, real second writer). Duplicate/lost-ack evidence: `test_lost_acknowledgment_does_not_create_second_commit` (contract suite) + `test_lost_ack_result_recoverable_after_logical_restart` (F6b, spans an actual store-object discard/reopen). Process-restart evidence: `tests/unit/application/test_recovery.py::TestSubprocessDurability` — two **real OS subprocess** tests, including one that kills a child process mid-transaction and proves zero partial state survives. All five of those sub-clauses are solidly evidenced. **Migration-interruption evidence does not exist anywhere in the repository**: `grep -rn migration src/legoai tests` finds only two files (`codec.py`, `sqlite_store.py`) and only as prose explaining that no migration mechanism is implemented ("no migration is attempted by F6a"). This is a genuine shortfall against the Gate-1 plan's own explicit instruction (§9.3): *"Use a clearly synthetic predecessor fixture to exercise interrupted migration before a real upgrade exists; do not invent a historical supported release."* F5/F6a/F6b's own completion reports characterized omitting this as consistent with the plan's anti-overengineering stance; on direct re-reading of §9.3 for this review, that characterization conflated "don't invent a false historical release narrative" (correctly avoided) with "don't build the interruption-test fixture at all" (not actually authorized — the plan asks for exactly this fixture). **Classification: incomplete test evidence, not a missing production capability** (the plan explicitly says no real migration *code* is warranted yet). **Owning milestone: F5/F6a** (record schema versioning + physical schema versioning are where the synthetic fixture and interruption test belong). Per this task's own hard rule, no fixture or test was added during this review to close the gap.
+
+**G1-EXIT-09 — "Inert Plugin/Capability declarations, no executable inactive binding."**
+`PASS`. `plugins/values.py::PluginDeclaration`/`PluginId` and `capabilities/values.py::CapabilityId`/`CapabilityOffer`/`CapabilityRequirement`/`CapabilityVersionRange` — every field is a closed dataclass field (Kernel identity/version types or bounded text), no callable/module/entry-point field exists at all. Proven, not merely asserted: `tests/unit/plugins/test_values.py::test_cannot_pass_callable_as_unsupported_field` and `tests/unit/capabilities/test_values.py::test_no_executable_field_exists` both use a real callable canary that never fires, asserted via `TypeError` before construction completes. `tests/integration/composition/test_direct.py::TestNoExecutableDeclarationBinding` and `TestNoGate2Symbols` (AST source scan for `eval`/`exec`/`compile`/`__import__`, and `dir()` scan for forbidden Gate-2 symbol names) prove the private F8b composition root never converts an inert declaration into an executable one either.
+
+**G1-EXIT-10 — "Explicit Principal/Tenant inputs, no ambient or fake authority."**
+`PASS`. `governance/values.py::Principal`/`OperationContext` require explicit `PrincipalRef`/`TenantContext` at construction; `OperationContext.__post_init__` rejects a self-causing operation and cross-tenant reference mismatches. No `trusted=True`, no thread-local/contextvar ambient state anywhere — `tests/architecture/test_import_boundaries.py::test_no_ambient_context_or_module_state` scans all of `src/legoai` for `contextvars`/`threading` imports and module-level mutable state; confirmed passing.
+
+**G1-EXIT-11 — "Safe source/Evidence/provenance references; source duty not mistaken for custody."**
+`PASS`. `evidence/values.py::EvidenceRequirement` is explicitly documented as "not custody: no store, no retention engine, no receipt/acknowledgment"; `kernel/provenance.py::DutyId`/`DutyKind` are "not a custody receipt and not proof any obligation was accepted or resolved." `application/values.py::ConfigurationSourceSubmissionDuty` docstring states resolving it "is explicitly deferred to later custody work."
+
+**G1-EXIT-12 — "Bounded safe local diagnostics with failure tests."**
+`PASS`. `observability/values.py::Observation` — closed, enumerated field set (no attributes bag), bounded text via the shared `_validate` (1-256 code points), non-finite numeric rejection. Security/canary tests: `tests/unit/observability/test_values.py::TestSensitiveDataCannotBeExpressed` (canary values for secret/authorization-header/private-payload all rejected via `TypeError` on unsupported fields). Failure test: `tests/unit/observability/test_sink.py::TestFailingSinkContainment`.
+
+**G1-EXIT-13 — "Deterministic internal non-effectful composition and substitution test."**
+`PASS`. `reference/deterministic.py::normalize_text` — pure, no I/O/randomness/wall-clock (module docstring and `tests/unit/reference/test_deterministic.py::TestDeterminism` including a 50-iteration no-drift check). Substitution: `runtime/_composition/direct.py::compose_direct`'s `normalization_function` parameter, proven by `tests/integration/composition/test_direct.py::TestSubstitutability::test_alternative_pure_function_is_used_when_supplied` (an entirely different pure function substituted at the call site, no code change to the composition root).
+
+**G1-EXIT-14 — "No real Secret/provider dependency."**
+`PASS`. No `SecretRef`/credential-resolution code exists anywhere in `src/legoai` (F8a/F8b explicitly declined to introduce Secret plumbing per their own tasks' instructions). No provider SDK import anywhere — confirmed by the existing `test_no_ai_or_agent_framework_imported_by_production_source` architecture test (scans for `semantic_kernel`, `agent_framework`, `openai`, `anthropic`, `ollama`, `langchain`, `langgraph`), passing.
+
+**G1-EXIT-15 — "No optional AI dependency or unnecessary service."**
+`PASS`. `pyproject.toml` `dependencies = []` (confirmed by direct read in this review); wheel `METADATA` carries no `Requires-Dist` line (confirmed by direct wheel inspection in this review, §24.2). No network/broker/cache/database-server code anywhere in `src/legoai`.
+
+**G1-EXIT-16 — "Applicable tests/static/package checks pass; counterevidence and limitations remain visible."**
+`PASS` for the checks-pass half (§24.2's re-run results). For "limitations remain visible": every batch's own residual-risk section is preserved in this document (§18, §21-23) and not overwritten by this review; G1-EXIT-08's gap is recorded here rather than concealed, which is itself evidence this criterion is being honored rather than merely claimed.
+
+**G1-EXIT-17 — "Gate-2 blockers below have named owners and are not relabeled optional to claim progress."**
+`PASS`. `planning/GATE-1-FOUNDATION-IMPLEMENTATION.md` §18.2's "Remaining Gate-2 blockers" table (Qualified persistence, Finite independent roots, Current owner-boundary enforcement, Resources and Approval, Real Plugin lifecycle and Catalog, Evidence custody, Supervision, Protected Tool/Adapter, Final arbitration, Retry/reconciliation, Composed crash/restart proof, Conditional features) already names an owner and accepted basis for every row in the Accepted planning document itself; this review neither weakens nor relabels any of them, and confirms none has been silently implemented as a shortcut (§24.4 below).
+
+### 24.4 Cross-milestone regression review (task §7)
+
+- **F4 semantics vs F5 representation**: `application/ports.py`/`application/values.py` (F4) confirmed byte-for-byte unchanged by every later batch (`git diff --stat HEAD` checked at the close of F5 through F8b; re-confirmed here — zero uncommitted diff against them). F5's `codec.py` encodes/decodes the exact F4 value shapes without adding fields.
+- **F4 Port vs F6a SQLite realization**: `SQLiteConfigurationStore` implements `ConfigurationStorePort` structurally (no inheritance, pure Protocol conformance — `tests/unit/application/test_sqlite_store.py` and the shared contract suite both instantiate it directly against the same Protocol).
+- **F5 codec vs F6b recovery**: `recovery.py` imports and calls `codec.decode_revision_content`/`decode_publication_result`/`loads` directly (confirmed by source read) — it does not reimplement decoding.
+- **F7 declarations vs F8b composition**: confirmed inert in G1-EXIT-09 above; `text_normalization_declaration()` (F8b) constructs an ordinary `PluginDeclaration` with no new field.
+- **F8a observation vs F8b containment**: `compose_direct`'s `_emit_best_effort` is the only broad `except Exception` in the entire private composition module (confirmed by source read — one occurrence, explicitly commented as diagnostic-boundary-only).
+- **F2 configuration vs F8b deterministic composition**: `compose_direct` calls the unchanged F2 `compose_configuration` and passes its `EffectiveConfiguration` straight into F8b's `normalize_text` — no new configuration object was invented.
+
+No later milestone was found to have retroactively altered an earlier invariant.
+
+### 24.5 Verdict
+
+```text
+GATE_1_EXIT_VERDICT = NOT_READY
+```
+
+**Reason**: G1-EXIT-08 is `PARTIAL`, not `PASS` — migration-interruption evidence, explicitly called for by the Gate-1 plan's own §9.3, does not exist. Every other criterion (16 of 17) is `PASS` with concrete, independently-verified evidence. This is a narrow, precisely bounded gap, not a systemic one: no production capability is missing (the plan itself says no real migration code is warranted yet), only one class of test evidence (a synthetic old-format decode fixture plus a migration-interruption test, following the exact subprocess-kill pattern F6b's own `TestSubprocessDurability` already establishes).
+
+**Recommended remaining work before re-attempting Gate-1 exit**: one small, bounded follow-up batch, owned by F5/F6a, adding (a) one clearly-labeled synthetic "legacy" record-schema-version-0 fixture in the F5 codec tests proving a decode-time version-mismatch rejection path distinct from the current "future unsupported version" tests already in place, and (b) one subprocess-based test in the F6a/F6b test area proving that a killed-mid-migration-marker-write process leaves the store in its prior complete state on reopen (using the same barrier/kill pattern as `test_uncommitted_transaction_absent_after_abrupt_termination`). Neither requires implementing a real migration runner; F6a's existing schema-version check already provides the fail-closed behavior the interruption test needs to observe.
+
+Gate 2 must not begin until this batch closes G1-EXIT-08 and this review is re-run.
