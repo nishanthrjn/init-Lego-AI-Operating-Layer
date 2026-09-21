@@ -17,6 +17,12 @@ class ErrorCategory(Enum):
     TENANT_VIOLATION = "TenantViolation"
     CONFLICT = "Conflict"
     DEPENDENCY_FAILURE = "DependencyFailure"
+    # Gate-2 M4: CONTRACTS' Base error table names these as distinct
+    # canonical categories from the five above; M4's current-authority
+    # evaluation is their first real consumer (mirroring how F4/F5 grew
+    # this enum incrementally for their own first real consumers).
+    AUTHORIZATION_DENIED = "AuthorizationDenied"
+    POLICY_VIOLATION = "PolicyViolation"
 
 
 class Recoverability(Enum):

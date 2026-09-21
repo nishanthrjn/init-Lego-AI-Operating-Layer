@@ -170,6 +170,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/execution/values.py",
         "legoai/resources/__init__.py",
         "legoai/resources/values.py",
+        "legoai/governance/ports.py",
+        "legoai/reference/governance.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -230,6 +232,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/execution/test_values.py",
             "tests/unit/governance/test_authority.py",
             "tests/unit/resources/test_values.py",
+            "tests/unit/governance/test_ports.py",
+            "tests/contract/test_authorization.py",
+            "tests/support/governance.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -283,7 +288,9 @@ import legoai.reference.deterministic as deterministic
 import legoai.runtime._composition.direct as composition
 import legoai.execution.values as execution_values
 import legoai.resources.values as resources_values
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values):
+import legoai.governance.ports as governance_ports
+import legoai.reference.governance as reference_governance
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values, governance_ports, reference_governance):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -301,8 +308,16 @@ quantity = resources_values.ResourceQuantity(resources_values.ResourceDimension(
 resource_operation = references.OperationRef(target, identity.OperationId("res-op"), "smoke")
 claim = resources_values.ResourceClaim(resources_values.ResourceClaimId("c1"), resource_operation, context.TenantContext(identity.TenantId("t")), quantity)
 assert claim.quantity.magnitude == Decimal("1")
+class _AllActive:
+    def current_revocation_status(self, grant): return governance_ports.RevocationStatus.ACTIVE
+    def current_use_state(self, approval): return governance_ports.ApprovalUseState(approval.approval_id, 0)
+    def current_status(self, policy_ref): return governance_ports.PolicyCurrencyStatus.CURRENT
+security_context = governance_ports.SecurityContext(grant_principal, context.TenantContext(identity.TenantId("t")), resource_operation, "action", "scope", grant, None, policy_ref, datetime(2026, 1, 1, tzinfo=timezone.utc))
+evaluator = reference_governance.DeterministicAuthorizationEvaluator(_AllActive(), _AllActive(), _AllActive())
+decision = evaluator.evaluate(security_context)
+assert decision.outcome is governance_ports.AuthorizationOutcome.ALLOWED
 assert len(effects.EffectExtent) == 4
-assert len(errors.ErrorCategory) == 5
+assert len(errors.ErrorCategory) == 7
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
 assert identity.TenantId("abc").value == "abc"
 assert identity.PrincipalId("abc").value == "abc"

@@ -177,6 +177,8 @@ def test_effect_error_recovery_independence() -> None:
         "TenantViolation",
         "Conflict",
         "DependencyFailure",
+        "AuthorizationDenied",
+        "PolicyViolation",
     }
     for category in ErrorCategory:
         for recovery in Recoverability:
