@@ -40,7 +40,7 @@ def test_cross_kind_typing(tmp_path: Path) -> None:
 def test_inert_import(tmp_path: Path) -> None:
     # Preload stdlib dependencies; then observe only our package import interval.
     script = """
-import dataclasses, datetime, logging, threading, socket, os, sys
+import dataclasses, datetime, hashlib, json, logging, threading, socket, os, sys
 from unittest.mock import patch
 handlers = tuple(logging.getLogger().handlers)
 threads = tuple(threading.enumerate())
@@ -71,6 +71,8 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.reference.application.configuration
     import legoai.application.ports
     import legoai.evidence.values
+    import legoai.reference.application.records
+    import legoai.reference.application.migrations
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -79,7 +81,8 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.kernel.effects", "legoai.governance", "legoai.governance.values",
     "legoai.application", "legoai.application.values", "legoai.reference",
     "legoai.reference.application", "legoai.reference.application.configuration",
-    "legoai.application.ports", "legoai.evidence", "legoai.evidence.values"
+    "legoai.application.ports", "legoai.evidence", "legoai.evidence.values",
+    "legoai.reference.application.records", "legoai.reference.application.migrations"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -114,6 +117,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/__init__.py",
         "legoai/reference/application/__init__.py",
         "legoai/reference/application/configuration.py",
+        "legoai/reference/application/records.py",
+        "legoai/reference/application/migrations.py",
         "legoai/application/ports.py",
         "legoai/evidence/__init__.py",
         "legoai/evidence/values.py",
@@ -155,6 +160,10 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/__init__.py",
             "tests/support/__init__.py",
             "tests/support/configuration_store.py",
+            "tests/support/record_fixtures.py",
+            "tests/unit/application/test_records.py",
+            "tests/security/test_record_decoding.py",
+            "tests/migration/test_application_records.py",
             "tests/contracts/conftest.py",
             "tests/contracts/test_configuration_store.py",
             "tests/architecture/test_import_boundaries.py",
@@ -194,8 +203,12 @@ import legoai.application.values as application
 import legoai.reference.application.configuration as configuration
 import legoai.application.ports as ports
 import legoai.evidence.values as evidence
-for module in (references, context, versions, errors, effects, governance, application, configuration, ports, evidence):
+import legoai.reference.application.records as records
+import legoai.reference.application.migrations as migrations
+for module in (references, context, versions, errors, effects, governance, application, configuration, ports, evidence, records, migrations):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
+assert migrations.supported_migrations().transitions == ()
+assert isinstance(records.decode_publication_result(b'{}'), records.RecordFailure)
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
 assert result.effective.max_input_length == 4096
@@ -309,4 +322,26 @@ def test_f4_static_misuse(tmp_path: Path) -> None:
     for error, expected in zip(
         errors, ("OwnerRevision", "ObligationId", "ConfigurationRef"), strict=True
     ):
+        assert "[arg-type]" in error and f'expected "{expected}"' in error
+
+
+def test_f5_static_misuse(tmp_path: Path) -> None:
+    fixture = tmp_path / "f5_misuse.py"
+    fixture.write_text(
+        "from legoai.reference.application.records import encode_published_configuration\n"
+        "from legoai.reference.application.migrations import MigrationObservation\n"
+        "from legoai.kernel.references import OwnerRevision\n"
+        "def misuse(revision: OwnerRevision) -> None:\n"
+        "    encode_published_configuration({})\n"
+        "    MigrationObservation(revision, 1, True, None)\n",
+        encoding="utf-8",
+    )
+    result = run(
+        [sys.executable, "-m", "mypy", "--strict", "--no-incremental", str(fixture)],
+        tmp_path,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    errors = [line for line in result.stdout.splitlines() if ": error:" in line]
+    assert len(errors) == 2, result.stdout
+    for error, expected in zip(errors, ("PublishedConfiguration", "int"), strict=True):
         assert "[arg-type]" in error and f'expected "{expected}"' in error

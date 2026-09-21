@@ -100,15 +100,46 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for allowed in ("legoai.kernel", "legoai.evidence.values")
                     ):
                         errors.add("evidence-owner")
-                    if name.startswith("legoai.reference.application.") and not (
-                        target == "legoai.kernel"
-                        or target.startswith("legoai.kernel.")
-                        or target == "legoai.application.values"
-                        or target.startswith("legoai.application.values.")
-                        or target == "legoai.reference.application"
-                        or target.startswith("legoai.reference.application.")
+                    if (
+                        name.startswith("legoai.reference.application.")
+                        and name
+                        not in {
+                            "legoai.reference.application.records",
+                            "legoai.reference.application.migrations",
+                        }
+                        and not (
+                            target == "legoai.kernel"
+                            or target.startswith("legoai.kernel.")
+                            or target == "legoai.application.values"
+                            or target.startswith("legoai.application.values.")
+                            or target == "legoai.reference.application"
+                            or target.startswith("legoai.reference.application.")
+                        )
                     ):
                         errors.add("reference-owner")
+                    if name in {
+                        "legoai.reference.application.records",
+                        "legoai.reference.application.migrations",
+                    }:
+                        allowed_modules = (
+                            (
+                                "legoai.kernel",
+                                "legoai.application.values",
+                                "legoai.application.ports",
+                                "legoai.evidence.values",
+                                "legoai.governance.values",
+                            )
+                            if name.endswith(".records")
+                            else (
+                                "legoai.kernel.identity",
+                                "legoai.reference.application.records",
+                            )
+                        )
+                        if not any(
+                            target == allowed or target.startswith(allowed + ".")
+                            for allowed in allowed_modules
+                        ):
+                            errors.add("record-owner")
                     if name.startswith("legoai.kernel.") and not (
                         target == "legoai.kernel" or target.startswith("legoai.kernel.")
                     ):
@@ -395,7 +426,46 @@ def test_f4_inward_graph_and_no_persistence() -> None:
             if isinstance(node, ast.Import):
                 assert not {alias.name.split(".")[0] for alias in node.names} & {
                     "sqlite3",
-                    "json",
+                    *({"json"} if path.name != "records.py" else set()),
                 }
             if isinstance(node, ast.ImportFrom):
-                assert (node.module or "").split(".")[0] not in {"sqlite3", "json"}
+                assert (node.module or "").split(".")[0] not in {"sqlite3"} | (
+                    {"json"} if path.name != "records.py" else set()
+                )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.reference.application.configuration import compose_configuration",
+        "import legoai.runtime",
+        "import legoai.reference.application.sqlite_store",
+    ],
+)
+def test_f5_records_no_runtime_or_recomposition(source: str) -> None:
+    assert "record-owner" in violations(
+        {"legoai.reference.application.records": source}
+    )
+
+
+def test_f5_data_only_modules() -> None:
+    root = Path(__file__).resolve().parents[2] / "src/legoai/reference/application"
+    for name in ("records.py", "migrations.py"):
+        tree = ast.parse((root / name).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                assert not {alias.name.split(".")[0] for alias in node.names} & {
+                    "pickle",
+                    "marshal",
+                    "shelve",
+                    "sqlite3",
+                }
+            if isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] not in {
+                    "pickle",
+                    "marshal",
+                    "shelve",
+                    "sqlite3",
+                }
+            if isinstance(node, ast.Name):
+                assert node.id not in {"eval", "exec", "literal_eval", "open"}

@@ -1,8 +1,8 @@
 # Foundation developer workflow
 
 This is an identity/package foundation, not an executable Lego AI runtime.
-It implements Gate-1 F0/F1, F2 pure configuration composition and F4 owner
-contracts under the accepted ADRs. No durable persistence, authority engine or
+It implements Gate-1 F0/F1, F2 pure configuration composition, F4 owner contracts
+and F5 record codecs/migration mechanics under the accepted ADRs. No durable persistence, authority engine or
 executable runtime exists.
 
 ## Environment and dependencies
@@ -68,7 +68,7 @@ uv run --locked --no-sync python -m pytest tests/architecture/test_package_insta
 
 Wheel runtime content includes inert initializers, Kernel modules,
 Governance/Application/Evidence values, Application ports, reference Application
-configuration and `py.typed`, plus packaging metadata. The sdist includes tests,
+configuration, record codecs/migration mechanics and `py.typed`, plus packaging metadata. The sdist includes tests,
 the test-only store and this guide so source verification can be reproduced;
 tests are not wheel runtime content. It also contains Hatchling's included
 `.gitignore`. No caches, planning documents, database or credentials belong in
@@ -96,7 +96,7 @@ mutation; no in-process security isolation is claimed.
 Tests derive from F0/F1 and ADR-002: validation/immutability/nominal distinction,
 strict typing in both directions, import policy negative graphs, inert imports
 and installed artifacts. Invalid typing examples are generated only in temporary
-directories and checked for two F0, six F1, three F2 and three F4 expected mypy argument diagnostics.
+directories and checked for two F0, six F1, three F2, three F4 and two F5 expected mypy argument diagnostics.
 
 The static checker parses source without executing synthetic fixtures. It checks
 Kernel and Governance value boundaries, non-stdlib imports, test imports,
@@ -109,7 +109,7 @@ The inert-import subprocess preloads stdlib dependencies, disables bytecode
 writes, rejects non-code file access/write and network/process/database audit
 events, and guards thread startup, environment reads and logging configuration.
 It checks remaining threads/log handlers/modules and an unchanged temporary
-directory. This observes all F0/F1/F2/F4 module imports; it is not a hostile-code sandbox.
+directory. This observes all F0/F1/F2/F4/F5 module imports; it is not a hostile-code sandbox.
 
 Local `noqa: B010` markers permit `setattr` in immutability tests to exercise runtime
 rejection without inserting a deliberately invalid assignment into strict typing.
@@ -343,3 +343,82 @@ paths are defensive malformed-record/context/scope checks and the fake's signed
 64-bit head-exhaustion guard; no crash/durability coverage is implied. Strict
 mypy checks 29 files. Dependency selections and runtime dependency count are
 unchanged. No accepted canonical/planning artifact is modified.
+
+## F5 record representation and migration boundary
+
+`reference.application.records` owns three closed record kinds:
+`published_configuration`, `publication_result`, `pending_source_duty`.
+Each has explicit schema version **1**, reader contract version **1**, repeated
+subject and a closed payload. These numbers are independent of configuration
+contract/interpretation `Version(0, 1, 0)`, OwnerRevision, immutable configuration
+revision and distribution version. Unsupported schema/readers or semantic
+interpretations return `RecordFailure` with VersionMismatch. Invalid shape,
+scope or representation returns a safe ValidationError classification; neither
+retains submitted bytes, exception text or traceback. Failures require review
+or intervention, without retry or authority inference.
+
+The six explicit encode/decode functions accept typed F4 records / UTF-8 bytes
+and return bytes / reconstructed immutable records, or RecordFailure. Encoding
+maps every field explicitly; sorted keys, compact separators, `allow_nan=False`
+and unescaped valid Unicode produce reproducible output. Readers accept other
+JSON whitespace/key order with identical meaning. Semantic equality remains F4
+value equality; serialized bytes never become operation identity or authority.
+
+Before parsing, bytes are limited to **65536**, nesting to **32**, and lexical
+tokens/punctuation to **8192**, using a string/escape-aware preflight. The JSON
+parser still validates grammar. Duplicate keys at every depth, invalid UTF-8 or
+surrogates, floats/non-finite numbers, bool-as-int, missing/extra fields and wrong
+kinds/types fail. Integer representations are bounded to signed 64-bit; semantic
+constructors further enforce positive revisions and nonnegative versions. These
+are reference qualification bounds, not universal canonical limits. Retained
+sources are bounded to three, whitespace to six, duty requirements to eight;
+nominal strings retain F1's 1–256 code-point rules with no normalization.
+
+Captured patch absence is a required explicit null, distinct from an empty
+whitespace array; missing durable fields never acquire defaults. Effective
+configuration, captured sources, descriptor, original context, UTC observation
+and uncertainty, head/predecessor, duty references and coverage are reconstructed
+through existing constructors. UTC timestamps use the exact fixed-width
+`YYYY-MM-DDTHH:MM:SS.ffffff+00:00` grammar. Reading never invokes the composer or
+consults current defaults. Unknown coverage stays unknown. Scope mismatches are
+failures; `record_subject` and decoded typed references expose keys for F6's
+independent relational-key comparison, which remains F6's responsibility.
+
+Descriptors and coverage are nested in their consuming records. No separate
+JSON head/store-metadata format or durable cursor is introduced: selected head
+keys belong to later relational storage, and paging continuation is transient.
+Successful retained results contain no fabricated error/cause/recoverability
+payload; F4 rejected responses are not durable records. The effect vocabulary
+is validated and only `completed` is valid for this committed-result kind.
+All four obligation statuses are recognized, but schema 1 reconstructs only
+F4 PendingSourceDuty; recognized repaired states are explicitly unsupported,
+unknown states are malformed. No custody, repair endpoint or Secret field exists.
+
+`reference.application.migrations` supplies an explicit immutable registry,
+transition descriptors and pure single-record preparation. The production
+registry is empty because no historical durable release exists. A selected
+transition names owner, migration ID, record kind, source/target schema and exact
+reader requirements, with a SHA-256 fingerprint of reviewed artifact bytes.
+The fingerprint binds bytes; it neither authenticates the artifact nor proves
+that supplied callbacks implement it. Trusted code registration review owns that
+binding. No callback can be selected by serialized class/module names.
+
+The bounded registry allows at most sixteen unambiguous transitions and no graph
+search. Reviewed artifact input is 1–65536 bytes. An intact source observation
+with no marker allows explicit preparation. A complete target plus the matching
+committed marker requires validation without reapplying. Missing/mismatched
+markers, incomplete state or unknown versions block for intervention. Changing
+an ID's fingerprint cannot silently match an old marker. Preparation validates
+source/target envelopes and compares their full interpreted values, including
+historical diagnostics, before returning bounded bytes and a **prepared** marker.
+Callback failures return a safe failure without partial output. No committed
+marker is issued by this function. Downgrade, automatic migration and import-time
+registration/execution are absent.
+
+Synthetic schema 1-to-2 tests live only under `tests/migration`; they wrap payload
+representation and demonstrate unchanged semantic meaning. They also reject
+semantic alteration, mismatched versions/artifacts and inconsistent interruption
+observations. These tests prove decision mechanics only. F6 must establish actual
+store identity, authorization, exclusion, cross-row consistency, atomic migration,
+commit/reopen and interruption evidence. F5 performs no storage I/O and provides
+no durability, restart, real release-upgrade or hostile-host integrity claim.
