@@ -648,3 +648,37 @@ Deviations from the F8a task's plan: none of substance.
 **F8b remains blocked until F7 is complete** (it needs both F7 and F8a; only F8a is now done). No `reference/deterministic.py` or `runtime/_composition/direct.py` exists anywhere in this diff.
 
 **Gate 1 is not complete.** F9's own exit checklist (§18.1) was not evaluated by this batch.
+
+---
+
+## 22. F7 — Inert Plugin/Capability declarations and analysis (implementation status)
+
+```text
+F7_IMPLEMENTATION = COMPLETE
+```
+
+Implemented exactly the Gate-1 plan §14 file list, nothing beyond: `plugins/{__init__,values}.py`, `capabilities/{__init__,values}.py` (new packages), `reference/declarations.py` and `reference/resolution.py` (new modules, siblings to `reference/observation.py` and `reference/application/*`).
+
+**Plugin declarations implemented.** `PluginId` (namespace + local identity, PLG-006) and `PluginDeclaration` (identity, release `Version`, declared `CapabilityOffer`/`CapabilityRequirement` tuples, PLG-004/009/011/040). Deliberately **not** modeled: PLUGIN-SPEC's full PLG-063 manifest (owner/publisher, metadata, configuration contract, lifecycle contract, health, permissions/trust, tenant/isolation, extensions, resource/Secret requirements) — none has a real consumer in this batch, and none is needed to prove pure compatibility analysis or the "no executable inactive binding" exit criterion. Most deliberately absent: any implementation locator (module/class/entry-point/factory/command/URL/executable) — omitted outright rather than represented-but-unused, so there is no field a future implementer could be tempted to resolve "just this once."
+
+**Capability declarations implemented.** `CapabilityId`, `CapabilityVersionRange` (explicit inclusive/exclusive minimum, optional unbounded-above maximum — PLG-008's "ranges with inclusive/exclusive bounds," never semver caret/tilde shorthand, never implicit 0.x compatibility), `CapabilityRequirement` (what a consumer needs), `CapabilityOffer` (what a Plugin release declares, attributed to its containing `PluginDeclaration` rather than duplicating Plugin identity on the offer itself — Provider identity, PLG-014, is not separately modeled since no real consumer needs Provider-vs-Plugin distinctness yet).
+
+**Pure compatibility analysis implemented.** `reference/resolution.py`'s `analyze_compatibility`/`analyze_requirements` — deliberately not named `resolve` (PLUGIN-SPEC's own `Resolution` row is Gate-2's future `CapabilityResolver`). `CompatibilityStatus` is exactly `NO_MATCH`/`UNIQUE_MATCH`/`AMBIGUOUS` (a fourth "invalid declaration" status does not exist, since a structurally invalid `PluginDeclaration` cannot be constructed at all — validated at its own `__post_init__`). `reference/declarations.py` provides `normalize_declarations` (deterministic ordering with no preference meaning) and `find_duplicate_identities` (surfaces, never resolves, an identical-`(PluginId, release)` collision across independently supplied declarations — PLUGIN-SPEC's "Namespace impersonation" risk row).
+
+**Ambiguity preserved.** Proven directly: two Plugins offering the same Capability at different versions returns both candidates as `AMBIGUOUS`, never the highest version, never the alphabetically-first namespace — no selection logic of any kind exists in this batch.
+
+**No executable inactive binding: proven, not merely asserted.** Every value type's fields are closed (Python dataclass field sets, not an open dict); attempting to pass a callable through any unsupported keyword argument raises `TypeError` before construction completes, verified with an actual callable canary that never fires; a source-level AST scan of `reference/resolution.py` confirms no `eval`/`exec`/`compile`/`__import__`/dynamic-import call exists in the module. Hostile text (`"os.system(...)"`, `"import os; os.system('x')"`, `"../../etc"`) passed through `CapabilityId`/`PluginId` remains ordinary inert string data — never resolved, imported, or executed, since no code path in this batch ever does either.
+
+**Architecture boundaries**, mirroring F8a's exact precedent: `capabilities.values` may depend only on Kernel (narrower than ADR-002 §9.2's G/R/O/X maximum for the C plane); `plugins.values` may depend on Kernel plus `capabilities.values` only (the one ADR-002-authorized X→C peer, narrower than the full C/G/R/Q/O/V maximum); `reference.declarations`/`reference.resolution` may depend on Kernel plus `plugins.values`/`capabilities.values` only — neither can import the abstract `application.ports`, any other reference-owner realization, or leak a test fake. No F0-F8a semantic package depends on either new reference module.
+
+Verified before closing this batch: `pytest` 543 passed; `mypy src tests` — no issues in 55 source files; `ruff check`/`ruff format --check` — clean; coverage of every new F7 module is 100% (`plugins/values.py`, `capabilities/values.py`, `reference/declarations.py`, `reference/resolution.py`); zero new runtime dependencies; no canonical document changed; no DocuMind file touched; no F0-F8a file touched (confirmed via `git diff --stat HEAD` against every prior package, including `observability`/`reference/observation.py`).
+
+Deviations from the F7 task's plan: none of substance.
+
+**F8a is already complete** (unaffected by this batch — confirmed byte-for-byte unchanged).
+
+**F8b is now unblocked**: both of its prerequisites (F7, F8a) are complete. F8b itself has not been started — no `reference/deterministic.py` or `runtime/_composition/direct.py` exists anywhere in this diff.
+
+**Gate 1 is not complete.** F9's own exit checklist (§18.1) was not evaluated by this batch; F9 additionally requires F8b, which has not started.
+
+**Gate 2 has not been started.** No Execution, ExecutionContext, CapabilityResolver runtime, Plugin admission/activation, authorization enforcement, or resource-claim code exists anywhere in this diff.

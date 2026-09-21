@@ -80,6 +80,12 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.observability.values
     import legoai.observability.ports
     import legoai.reference.observation
+    import legoai.plugins
+    import legoai.plugins.values
+    import legoai.capabilities
+    import legoai.capabilities.values
+    import legoai.reference.declarations
+    import legoai.reference.resolution
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -95,7 +101,10 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.reference.application.sqlite_store",
     "legoai.reference.application.recovery",
     "legoai.observability", "legoai.observability.values", "legoai.observability.ports",
-    "legoai.reference.observation"
+    "legoai.reference.observation",
+    "legoai.plugins", "legoai.plugins.values",
+    "legoai.capabilities", "legoai.capabilities.values",
+    "legoai.reference.declarations", "legoai.reference.resolution"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -141,6 +150,12 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/observability/values.py",
         "legoai/observability/ports.py",
         "legoai/reference/observation.py",
+        "legoai/plugins/__init__.py",
+        "legoai/plugins/values.py",
+        "legoai/capabilities/__init__.py",
+        "legoai/capabilities/values.py",
+        "legoai/reference/declarations.py",
+        "legoai/reference/resolution.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -184,6 +199,10 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/evidence/test_values.py",
             "tests/unit/observability/test_values.py",
             "tests/unit/observability/test_sink.py",
+            "tests/unit/capabilities/test_values.py",
+            "tests/unit/plugins/test_values.py",
+            "tests/unit/reference/test_declarations.py",
+            "tests/unit/reference/test_resolution.py",
             "tests/__init__.py",
             "tests/contract/test_configuration_store.py",
             "tests/support/__init__.py",
@@ -233,7 +252,11 @@ import legoai.reference.application.recovery as recovery
 import legoai.observability.values as observability_values
 import legoai.observability.ports as observability_ports
 import legoai.reference.observation as observation
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation):
+import legoai.plugins.values as plugins_values
+import legoai.capabilities.values as capabilities_values
+import legoai.reference.declarations as declarations
+import legoai.reference.resolution as resolution
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -283,6 +306,18 @@ obs = observability_values.Observation(
 sink = observation.LocalLoggingObservationSink()
 sink.emit(obs)
 assert isinstance(sink, observability_ports.ObservationSinkPort)
+cap_id = capabilities_values.CapabilityId("smoke.capability")
+version_range = capabilities_values.CapabilityVersionRange(versions.Version(1, 0, 0))
+requirement = capabilities_values.CapabilityRequirement(cap_id, version_range)
+offer = capabilities_values.CapabilityOffer(cap_id, versions.Version(1, 0, 0))
+plugin_id = plugins_values.PluginId("smoke.namespace", "smoke-plugin")
+declaration = plugins_values.PluginDeclaration(
+    plugin_id, versions.Version(1, 0, 0), (offer,)
+)
+analysis = resolution.analyze_compatibility(requirement, (declaration,))
+assert analysis.status is resolution.CompatibilityStatus.UNIQUE_MATCH
+normalized = declarations.normalize_declarations((declaration,))
+assert normalized == (declaration,)
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
