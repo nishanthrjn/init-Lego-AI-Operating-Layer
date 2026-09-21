@@ -149,6 +149,31 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
+                    if name.startswith("legoai.observability.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.observability"
+                        or target.startswith("legoai.observability.")
+                    ):
+                        # F8a gives observability only Kernel, narrower than
+                        # ADR-002 SS9.2's G-inclusive maximum for O -- no
+                        # actual field in this batch needs Governance.
+                        errors.add("observability-owner")
+                    if name.startswith("legoai.observability.") and any(
+                        target == f"legoai.observability.{layer}"
+                        or target.startswith(f"legoai.observability.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
+                    if name == "legoai.reference.observation" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.observability.values"
+                        or target.startswith("legoai.observability.values.")
+                        or target == "legoai.observability.ports"
+                        or target.startswith("legoai.observability.ports.")
+                    ):
+                        errors.add("reference-owner")
                 elif root not in sys.stdlib_module_names:
                     errors.add("external")
                 if target in sources:
@@ -711,5 +736,115 @@ def test_f6b_recovery_does_not_leak_test_fake() -> None:
     assert "test-import" in violations(
         {
             "legoai.reference.application.recovery": "from tests.support.configuration_store import InMemoryConfigurationStore"
+        }
+    )
+
+
+# --- F8a: observability owner and reference.observation boundary ----------
+
+
+def test_kernel_cannot_import_observability() -> None:
+    assert violations(
+        {"legoai.kernel.errors": "from legoai.observability.values import Observation"}
+    ) == {"kernel-owner"}
+
+
+@pytest.mark.parametrize(
+    "owner", ["application", "reference", "runtime", "resources.values", "evidence"]
+)
+def test_observability_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.observability.values": f"import legoai.{owner}"}) == {
+        "observability-owner"
+    }
+
+
+def test_observability_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.observability.values": "from .ports import check"}
+    )
+    assert "observability-owner" in violations(
+        {
+            "legoai.observability.values": "from .pure import Observation",
+            "legoai.observability.pure": "from legoai.governance.values import Principal",
+        }
+    )
+
+
+def test_observability_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.observability.__init__": '"""Inert."""',
+            "legoai.observability.values": "from legoai.kernel.errors import ErrorCategory",
+            "legoai.kernel.errors": "from .identity import _validate",
+            "legoai.kernel.identity": "from dataclasses import dataclass",
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.reference.observation import LocalLoggingObservationSink",
+            "application-owner",
+        ),
+        (
+            "legoai.evidence.values",
+            "from legoai.reference.observation import LocalLoggingObservationSink",
+            "evidence-owner",
+        ),
+        (
+            "legoai.governance.values",
+            "from legoai.reference.observation import LocalLoggingObservationSink",
+            "governance-owner",
+        ),
+        (
+            "legoai.kernel.provenance",
+            "from legoai.reference.observation import LocalLoggingObservationSink",
+            "kernel-owner",
+        ),
+    ],
+)
+def test_f8a_semantic_packages_do_not_depend_on_reference_observation(
+    module: str, source: str, reason: str
+) -> None:
+    assert reason in violations({module: source})
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.observability.values import Observation",
+        "from legoai.observability.ports import ObservationSinkPort",
+        "from legoai.kernel.errors import ErrorCategory",
+    ],
+)
+def test_f8a_reference_observation_may_depend_on_its_own_port_and_values(
+    source: str,
+) -> None:
+    assert "reference-owner" not in violations({"legoai.reference.observation": source})
+
+
+def test_f8a_reference_observation_cannot_import_other_reference_realizations() -> None:
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.observation": "from legoai.reference.application.sqlite_store import SQLiteConfigurationStore"
+        }
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.observation": "import legoai.reference.governance"}
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.observation": "from legoai.application.ports import ConfigurationStorePort"
+        }
+    )
+
+
+def test_f8a_reference_observation_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.observation": "from tests.support.observation import CapturingObservationSink"
         }
     )
