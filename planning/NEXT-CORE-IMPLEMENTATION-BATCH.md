@@ -456,3 +456,163 @@ Deviations from the F6b task's plan: none of substance.
 **What remains for F9/Gate-1 exit**: F7 (inert Plugin/Capability declarations) and F8a/F8b (observability + deterministic composition) are still unimplemented per this document's own §3 sequencing — F6b does not touch either. **Gate 1 is NOT complete**: F9's own exit criteria (not evaluated by this batch) govern that determination, and this batch does not claim it.
 
 **Gate 2 has not been started.** No Execution, ExecutionContext, CapabilityResolver, Plugin admission, authorization enforcement, resource accounting, or any runtime engine exists anywhere in this diff.
+
+---
+
+## 20. Remaining Gate-1 critical path and next-batch selection (readiness analysis only)
+
+**Planning-only task; no production code was written to produce this section.** Verified directly against `planning/GATE-1-FOUNDATION-IMPLEMENTATION.md` §14/§14.1/§18, current `src/legoai`/`tests` tree contents, and a full green `pytest` run — not against prior completion-report summaries alone.
+
+### 20.1 Verified current state
+
+`src/legoai` contains exactly: `kernel/{identity,references,versions,context,errors,effects,provenance}.py`, `governance/values.py`, `application/{values,ports}.py`, `evidence/values.py`, `reference/application/{configuration,codec,sqlite_store,recovery}.py`. No `plugins/`, `capabilities/`, `observability/`, or `runtime/` package exists anywhere — confirming F7/F8a/F8b are genuinely unstarted, not merely unlabeled. `pytest` reports 356 passed (no failures, no skips) across `tests/{unit,contract,architecture}`; `mypy`/`ruff` were last confirmed clean in the F6b batch. No exit criterion for F0-F6b was found unmet: F4's contract suite, F5's codec round-trip/corruption suite, F6a's real-SQLite contract-suite reuse, and F6b's restart/integrity/subprocess-durability suite are all present and passing, matching Gate-1 plan §12.1's required test families for those increments (`tests/contract`, `tests/unit/application/test_{codec,sqlite_store,recovery}.py`). One accepted, previously-reported deviation stands: F5 was implemented as a single `reference/application/codec.py` rather than the plan's original `records.py`/`migrations.py` split (no real migration case existed to split out — consistent with the plan's own anti-overengineering stance in §24).
+
+### 20.2 F7, F8a, F8b, F9 — authoritative definitions (Gate-1 plan §14 table; not inferred from numbering)
+
+**F7 — Inert Plugin/Capability declarations and analysis.**
+Authority: ADR-002, ADR-006 (Accepted), Plugin contracts (CONTRACTS §26); owners X (Plugins) and C (Capabilities).
+Files: `plugins/values.py`, `capabilities/values.py`, `reference/declarations.py`, `reference/resolution.py`, plus unit/architecture tests.
+Prerequisites: F1/F2 (both done); F4 references only if a test actually uses them.
+Required behavior: exact Plugin identity/release/contribution/dependency/trust declarations as **inert data only** — no executable import, no candidate-module loading, no SPI callback invocation; pure lifecycle transition-table validation (`discovered → validated → initialized → active → degraded → stopping → stopped → failed → retired`, no `configured`/`admitted`/`bootstrapping`/`quarantined` state); Capability requirement/version-constraint/offer compatibility as **pure analysis** reporting invalid/unsatisfied/conflicting/ambiguous/uniquely-compatible findings — never an executable `CapabilityResolution` binding.
+Explicit exclusions: Catalog, admission, init/activation, publication, SPI execution, live eligibility.
+Exit criteria (Gate-1 plan §18.1 item 9): "Inert Plugin/Capability declarations, no executable inactive binding."
+
+**F8a — Safe local observation.**
+Authority: CONTRACTS §25 (`record_trace_activity`/`record_telemetry`, CTR-050), ADR-009 baseline (Accepted); owner O (Observation).
+Files: `observability/values.py`, `observability/ports.py`, `reference/observation.py`, plus observation/security tests.
+Prerequisites: F1 only (done). Explicitly does **not** require ADR-013 (still Proposed, per `adrs/ADR-INDEX.md`) — Gate-1 plan §11 states ADR-013 "cannot defer the local safe diagnostic baseline," i.e. this bounded slice is justified directly by already-Accepted CONTRACTS/ADR-009, not gated on ADR-013's acceptance.
+Required behavior: allowlisted bounded diagnostic record shape (schema version, safe event code, owner/module, trace/correlation/causation refs, safe tenant-safe identity token, revision refs, stage/error-category/safe-cause, bounded latency/size); an injected sink boundary with a capturing test sink and an explicitly failing sink; bounded truncation/gap indicator on overflow; no raw Secret/payload/repr leakage (canary tests required).
+Explicit exclusions: exporters, sampling/retention policy, dashboards/alerting, any production observability backend, Evidence custody.
+Exit criteria (§18.1 item 12): "Bounded safe local diagnostics with failure tests."
+
+**F8b — Private deterministic composition.**
+Authority: ADR-002 (private technical composition root); no new ADR.
+Files: `reference/deterministic.py`, `runtime/_composition/direct.py`, needed inert parent `__init__.py`s, composition tests, developer-evidence notes for the future ForgeAI brief (§19).
+Prerequisites: F2 (done) + **F7 and F8a both** (neither done yet) + F6 only for the storage-backed fixture variant (F6a/F6b done).
+Required behavior: the Gate-1 plan §13 "internal walking skeleton" — a synthetic Application declaration → Principal/Tenant values → captured immutable configuration → Capability requirement/inert Plugin metadata → non-executable compatibility findings → one explicitly injected pure trusted normalization function → typed result → one safe local diagnostic record; a test-local substitute function proves substitutability. Ordinary synchronous calls only.
+Explicit exclusions: canonical Execution, live Tool/effect dispatch, asyncio, scheduler, any public authoring API.
+Exit criteria (§18.1 item 13): "Deterministic internal non-effectful composition and substitution test."
+
+**F9 — Foundation exit review and handoff.**
+Authority: ADR-011 evidence discipline; not a new feature — a **qualification/integration/readiness-verification** milestone over F0-F8, not implementation.
+Files: relevant tests/docs only; source changes limited to bounded identified-defect fixes, not new capability.
+Prerequisites: **F0-F8 complete** (F7, F8a, F8b included — none done yet).
+Required output: the full §18.1 seventeen-item foundation-exit checklist evaluated against actual executed evidence (clean install/build, reproducible check loop, F0-F6b evidence already largely in hand, F7/F8a/F8b evidence still needed, named Gate-2 blockers per §18.2). F9 does **not** itself imply Gate-1 exit is achieved — it is the review that determines whether the checklist is actually met or reports the exact unmet criterion.
+
+### 20.3 Remaining Gate-1 dependency graph (Gate-1 plan §14.1, unmodified)
+
+```text
+F6b ✓ (done)
+   │
+   ├── F7   (needs F1 ✓ / F2 ✓)                 READY_NOW, independent
+   │
+   └── F8a  (needs F1 ✓)                        READY_NOW, independent
+          │
+   F7 ────┴── F8b  (needs F2 ✓, F7, F8a)        BLOCKED until F7 AND F8a both done
+                │
+               F9   (needs F0-F8 complete)       BLOCKED until F8b done
+                │
+          Gate-1 exit review outcome (§18.1)
+```
+
+No prerequisite outside these four labels was found missing. F7 and F8b together are the only path introducing new owner packages before F9; F8a and F8b together are the only path touching diagnostics. Gate-2 work (Execution, CapabilityResolver, Plugin admission, authorization/resource enforcement, Model/Agent/Workflow/Retriever runtimes) is excluded from this graph entirely, per Gate-1 plan §2/§15.
+
+### 20.4 Readiness matrix
+
+| Item | Status | Basis |
+| --- | --- | --- |
+| F7 | **READY_NOW** | F1/F2 implemented and verified; ADR-002/006 Accepted; `plugins`/`capabilities`/`reference.declarations`/`reference.resolution` are all reserved-but-authorized in Gate-1 plan §20's tree; no unresolved canonical decision found; zero new external dependency needed (pure stdlib data/analysis). |
+| F8a | **READY_NOW** | F1 implemented and verified; CONTRACTS §25 + ADR-009 Accepted and sufficient (ADR-013 explicitly not required for this bounded slice); `observability` package reserved-but-authorized; zero new dependency (stdlib `logging` + explicit JSON formatter per Gate-1 plan §3 tooling table). |
+| F8b | **BLOCKED** | Needs F7 and F8a, neither implemented yet. Not selectable now regardless of its own readiness otherwise. |
+| F9 | **BLOCKED** | Needs F0-F8 complete; F7/F8a/F8b outstanding. |
+
+F7 and F8a may proceed in either order or in parallel per Gate-1 plan §14.2 ("F7 and F8a can run independently once the shared F1 types are stable"); for a solo maintainer/single-session implementer, §14.2 also prefers one shared-file implementer at a time, and since F8b needs both regardless of order, sequencing between them does not change total time-to-F9. The tie-break is bounded scope: F7 introduces **two** new owner packages (`plugins`, `capabilities`) plus **two** reference modules, including a Capability compatibility/ambiguity-matching algorithm with real design risk (deterministic ordering "must not arbitrarily break an ambiguity the contract requires the caller to resolve"); F8a introduces **one** new owner package (the standard `values.py`/`ports.py` two-file shape already used by every prior Gate-1 owner) plus **one** reference module, with a well-precedented bounded-record/sink/leakage-test shape this codebase has already exercised repeatedly (F4's `ErrorDetail`/`ErrorCause` safe-cause pattern, F5's closed-field JSON discipline). F8a is the smaller, lower-design-risk, equally-necessary unit.
+
+### 20.5 Selected next batch: **F8a — Safe local observation**
+
+Not selected merely because it is unblocked; selected because among the two equally-ready, equally-necessary candidates it is the smaller bounded unit with lower design risk, satisfying every §10 criterion (Gate-1 critical path; prerequisites complete; bounded; deterministic; locally testable — pure in-process capture/failing sinks, no real log destination; no external infrastructure; no Gate-2 leakage; concrete value toward F8b and F9).
+
+#### WILL IMPLEMENT
+
+- `observability/values.py`: an immutable, bounded, allowlisted diagnostic-record value (schema version; safe event code; owner/module identity; trace/correlation/causation references reusing existing Kernel identity types; a safe tenant-scoped identity token; relevant configuration-revision reference; stage/transition observation; canonical `ErrorCategory` + safe cause reference reusing F1's `ErrorDetail`/`ErrorCause`; bounded latency/size observation fields). Explicit validated construction; no raw payload/arbitrary-object field.
+- `observability/ports.py`: one narrow `ObservationSinkPort` Protocol (`emit(record) -> None` or equivalent) — the boundary a capturing test sink and a deliberately-failing test sink both implement, proving substitution.
+- `reference/observation.py`: one explicit local sink realization using stdlib `logging` plus a bounded JSON formatter/serializer reusing F5's closed-field JSON discipline (sorted keys, reject non-finite, bounded size/depth) — **not** the F5 module itself, a sibling narrow one for this owner. No handler configured at import; no root-logger mutation; injected explicitly by callers/tests only.
+- Unit tests: `tests/unit/observability/test_values.py` (record construction/validation, allowlist enforcement), `tests/unit/observability/test_sink.py` or similar (capturing sink round-trip, failing sink does not raise past the caller in an uncontrolled way, bounded truncation indicator on oversize input).
+- Security tests: canary raw-Secret/payload/repr values must never reach an emitted record, exercised across normal, oversize, and sink-failure paths.
+- Architecture tests: extend `tests/architecture/test_import_boundaries.py` with an `observability`-owner boundary (Kernel + own values only, mirroring `evidence`'s existing narrow pattern), a `reference.observation` reference-owner boundary (Kernel + own values/ports + allowed peers, mirroring `reference.application.*`'s existing pattern), and the same no-test-fake-leak / no-forbidden-import checks already established for every prior owner.
+- Package/install tests: extend `test_inert_import` and `test_build_and_fresh_wheel`'s expected file/module sets exactly as every prior batch has (F4 added `evidence`, F5/F6a/F6b added their reference modules).
+
+#### WILL NOT IMPLEMENT
+
+- No exporter, telemetry service, sampling/retention policy, dashboard, or alert routing (ADR-013 scope, Proposed, deferred).
+- No Evidence custody, audit, or provenance operation (CONTRACTS §25's `record_audit_evidence`/`record_provenance` remain Evidence-owner Gate-2+ work; F8a is Observation Collection's bounded diagnostic slice only).
+- No F8b composition harness, no F7 Plugin/Capability values, no Execution/ExecutionContext, no real Model/Agent/Workflow.
+- No global root-logger configuration or ambient logging state; no background thread/queue/exporter.
+- No canonical document or Accepted ADR change.
+
+#### Invariants (mapped to authority)
+
+- Bounded, allowlisted fields only; no arbitrary payload — CONTRACTS §25/CTR-050 ("no generic logging operation substitutes for required evidence"; sensitivity-aware).
+- No raw Secret/credential/payload/traceback in any emitted record — Gate-1 plan §11, ADR-009 baseline, ADR-010 (Secrets remain out of scope entirely here).
+- Sink failure is a diagnostic gap, never authoritative — Gate-1 plan §11: "cannot rewrite a committed owner result, close a mandatory obligation, or falsely establish recovery state."
+- No global mutable logging state / no import-time side effect — ADR-002 §7 inert-parent discipline, already enforced by this repository's `test_no_ambient_context_or_module_state`.
+- Closed/versioned record schema, reject unknown/malformed shape — same discipline as F5's codec (`RepresentationError`-style fail-closed, not literally reused since this is a different owner's record).
+- Owner boundary: `observability` may depend only on Kernel and its own values (narrower than the ADR-002 §9.2 maximum), matching the already-established stricter pattern F4 chose for `evidence`.
+
+#### Tests
+
+Unit (record validation, allowlist, immutability), contract-style (capturing sink vs. failing sink both satisfy the same `ObservationSinkPort` — a small parametrized suite, not a full `STORE_FACTORIES`-style reusable contract since there is only one production sink realization), negative (unknown field, oversize/deep payload, non-finite numbers reusing F5's preflight pattern), security (canary-value leakage across normal/oversize/failure paths), architecture/import (owner and reference-owner boundaries, no test-fake leak, no forbidden import), package/install (inert import, wheel/sdist content). No restart/durability tests apply (no persistence in this batch). No new external service.
+
+#### New dependencies
+
+`new runtime dependencies: NO`. stdlib `logging` and `json` only, exactly as Gate-1 plan §3's tooling table already selects for "Local observation."
+
+#### ADR requirement
+
+`NEW ADR REQUIRED = NO`. CONTRACTS §25 and the Accepted ADR-009 baseline already settle what this bounded slice needs; ADR-013 governs only the later production-observability claims this batch explicitly excludes.
+
+### 20.6 Path to F9
+
+```text
+F8a (selected)
+  → F7 (independently ready, implement next in either order)
+  → F8b (needs both F7 and F8a)
+  → F9 (needs F0-F8 complete: evaluates the full §18.1 checklist)
+  → Gate-1 exit determination (F9's own outcome, not assumed here)
+```
+
+After F8a, F7 remains the other independently-ready item before F8b can start; nothing about selecting F8a first changes that. F9 itself is not "the next feature" — it is Gate-1's own qualification review and must not be started until F7/F8a/F8b are all actually implemented and tested.
+
+### 20.7 Relationship to Embedding (unchanged, not accelerated)
+
+```text
+Gate-1 exit (F9 outcome)
+  → Gate-2 prerequisites (Execution/ExecutionContext, CapabilityResolver, Plugin admission, authorization/resource enforcement — none of which this batch touches)
+  → Capability/Execution substrate
+  → ModelPort
+  → Ollama Adapter
+  → legoai.intelligence.model / Embedding
+```
+
+F8a's diagnostic-record shape is generic infrastructure only; it does not model, accelerate, or presuppose any Embedding/Model/Ollama concept, consistent with the Embedding assessment's own conclusion (`EMBEDDING-CAPABILITY-DESIGN.md`) that `legoai.intelligence.model` does not exist yet and is not created by Gate-1 work.
+
+### 20.8 DocuMind extraction status
+
+```text
+DOCUMIND_EXTRACTION = PAUSED
+```
+
+Confirmed unchanged. No Retriever/Reranker/Ingestion/Answering design occurs in this task; DocuMind-SK/DocuMind-AgentFramework were not read or touched.
+
+### 20.9 Implementation readiness verdict
+
+```text
+READY_TO_IMPLEMENT_NEXT_GATE1_BATCH = YES
+```
+
+- Exact milestone scope (F8a) is found in the accepted Gate-1 plan (§6, §11, §14, §18.1, §20), not inferred.
+- Prerequisites (F1) are implemented and verified.
+- No unresolved ADR blocks it (ADR-009 Accepted and sufficient; ADR-013's Proposed status does not gate this bounded slice, per the plan's own §11 wording).
+- Package placement (`observability/{values,ports}.py`, `reference/observation.py`) is exactly the Gate-1 plan's own §20 proposed tree location — no `legoai.observability` global framework, no generic logging vendor.
+- Tests are defined (§20.5 above).
+- No Gate-2 functionality is required or introduced.
