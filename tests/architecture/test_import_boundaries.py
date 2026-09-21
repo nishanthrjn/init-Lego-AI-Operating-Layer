@@ -174,6 +174,52 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.observability.ports.")
                     ):
                         errors.add("reference-owner")
+                    if name.startswith("legoai.capabilities.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.capabilities"
+                        or target.startswith("legoai.capabilities.")
+                    ):
+                        # F7 gives capabilities only Kernel, narrower than
+                        # ADR-002 SS9.2's G/R/O/X maximum for the C plane --
+                        # no field in this batch needs any of those peers.
+                        errors.add("capabilities-owner")
+                    if name.startswith("legoai.capabilities.") and any(
+                        target == f"legoai.capabilities.{layer}"
+                        or target.startswith(f"legoai.capabilities.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
+                    if name.startswith("legoai.plugins.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.plugins"
+                        or target.startswith("legoai.plugins.")
+                        # ADR-002 SS9.2: Plugins' (X) allowed-foreign row
+                        # includes C (Capabilities); F7 is the first real
+                        # consumer, only this one peer is widened.
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                    ):
+                        errors.add("plugins-owner")
+                    if name.startswith("legoai.plugins.") and any(
+                        target == f"legoai.plugins.{layer}"
+                        or target.startswith(f"legoai.plugins.{layer}.")
+                        for layer in ("ports", "reference", "runtime", "spi")
+                    ):
+                        errors.add("values-layer")
+                    if name in (
+                        "legoai.reference.declarations",
+                        "legoai.reference.resolution",
+                    ) and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                    ):
+                        errors.add("reference-owner")
                 elif root not in sys.stdlib_module_names:
                     errors.add("external")
                 if target in sources:
@@ -846,5 +892,161 @@ def test_f8a_reference_observation_does_not_leak_test_fake() -> None:
     assert "test-import" in violations(
         {
             "legoai.reference.observation": "from tests.support.observation import CapturingObservationSink"
+        }
+    )
+
+
+# --- F7: capabilities/plugins owner boundaries and reference analysis -----
+
+
+def test_kernel_cannot_import_capabilities_or_plugins() -> None:
+    assert violations(
+        {"legoai.kernel.errors": "from legoai.capabilities.values import CapabilityId"}
+    ) == {"kernel-owner"}
+    assert violations(
+        {"legoai.kernel.errors": "from legoai.plugins.values import PluginId"}
+    ) == {"kernel-owner"}
+
+
+@pytest.mark.parametrize(
+    "owner", ["application", "reference", "runtime", "plugins", "evidence"]
+)
+def test_capabilities_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.capabilities.values": f"import legoai.{owner}"}) == {
+        "capabilities-owner"
+    }
+
+
+def test_capabilities_does_not_depend_on_plugins() -> None:
+    assert "capabilities-owner" in violations(
+        {"legoai.capabilities.values": "from legoai.plugins.values import PluginId"}
+    )
+
+
+def test_capabilities_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.capabilities.values": "from .ports import check"}
+    )
+
+
+def test_capabilities_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.capabilities.__init__": '"""Inert."""',
+            "legoai.capabilities.values": "from legoai.kernel.versions import Version",
+            "legoai.kernel.versions": "from dataclasses import dataclass",
+        }
+    )
+
+
+@pytest.mark.parametrize("owner", ["application", "reference", "runtime", "evidence"])
+def test_plugins_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.plugins.values": f"import legoai.{owner}"}) == {
+        "plugins-owner"
+    }
+
+
+def test_plugins_may_depend_on_capabilities_values() -> None:
+    assert "plugins-owner" not in violations(
+        {"legoai.plugins.values": "from legoai.capabilities.values import CapabilityId"}
+    )
+
+
+def test_plugins_values_cannot_import_ports_or_spi_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.plugins.values": "from .ports import check"}
+    )
+    assert "values-layer" in violations(
+        {"legoai.plugins.values": "from .spi import author_hook"}
+    )
+
+
+def test_plugins_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.plugins.__init__": '"""Inert."""',
+            "legoai.plugins.values": "from legoai.capabilities.values import CapabilityId",
+            "legoai.capabilities.__init__": '"""Inert."""',
+            "legoai.capabilities.values": "from legoai.kernel.versions import Version",
+            "legoai.kernel.versions": "from dataclasses import dataclass",
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.reference.resolution import analyze_compatibility",
+            "application-owner",
+        ),
+        (
+            "legoai.evidence.values",
+            "from legoai.reference.resolution import analyze_compatibility",
+            "evidence-owner",
+        ),
+        (
+            "legoai.governance.values",
+            "from legoai.reference.resolution import analyze_compatibility",
+            "governance-owner",
+        ),
+        (
+            "legoai.kernel.provenance",
+            "from legoai.reference.declarations import normalize_declarations",
+            "kernel-owner",
+        ),
+    ],
+)
+def test_f7_semantic_packages_do_not_depend_on_reference_analysis(
+    module: str, source: str, reason: str
+) -> None:
+    assert reason in violations({module: source})
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.plugins.values import PluginDeclaration",
+        "from legoai.capabilities.values import CapabilityRequirement",
+        "from legoai.kernel.versions import Version",
+    ],
+)
+def test_f7_reference_resolution_may_depend_on_plugin_and_capability_values(
+    source: str,
+) -> None:
+    assert "reference-owner" not in violations({"legoai.reference.resolution": source})
+    assert "reference-owner" not in violations(
+        {"legoai.reference.declarations": source}
+    )
+
+
+def test_f7_reference_modules_cannot_import_other_reference_realizations() -> None:
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.resolution": "from legoai.reference.application.sqlite_store import SQLiteConfigurationStore"
+        }
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.resolution": "from legoai.reference.observation import LocalLoggingObservationSink"
+        }
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.declarations": "from legoai.application.ports import ConfigurationStorePort"
+        }
+    )
+
+
+def test_f7_reference_modules_do_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.resolution": "from tests.support.observation import CapturingObservationSink"
+        }
+    )
+    assert "test-import" in violations(
+        {
+            "legoai.reference.declarations": "from tests.support.configuration_store import InMemoryConfigurationStore"
         }
     )
