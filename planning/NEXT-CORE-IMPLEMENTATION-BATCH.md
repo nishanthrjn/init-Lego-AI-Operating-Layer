@@ -809,3 +809,32 @@ GATE_1_EXIT_VERDICT = NOT_READY
 **Recommended remaining work before re-attempting Gate-1 exit**: one small, bounded follow-up batch, owned by F5/F6a, adding (a) one clearly-labeled synthetic "legacy" record-schema-version-0 fixture in the F5 codec tests proving a decode-time version-mismatch rejection path distinct from the current "future unsupported version" tests already in place, and (b) one subprocess-based test in the F6a/F6b test area proving that a killed-mid-migration-marker-write process leaves the store in its prior complete state on reopen (using the same barrier/kill pattern as `test_uncommitted_transaction_absent_after_abrupt_termination`). Neither requires implementing a real migration runner; F6a's existing schema-version check already provides the fail-closed behavior the interruption test needs to observe.
 
 Gate 2 must not begin until this batch closes G1-EXIT-08 and this review is re-run.
+
+---
+
+## 25. G1-EXIT-08 remediation (implementation status)
+
+```text
+G1_EXIT_08_REMEDIATION = COMPLETE
+F9_RE_REVIEW_REQUIRED = YES
+```
+
+**This is a narrow remediation batch only — it does not itself constitute a re-run of F9.** The authoritative Gate-1 exit review must still be independently re-performed against all seventeen criteria before any `GATE_1_EXIT_VERDICT` is updated.
+
+**Evidence added**: `tests/support/migration_fixture.py` (test-only synthetic predecessor construction + migration transform) and `tests/integration/application/test_migration_interruption.py` (16 tests: 7 control-case/successful-migration tests, 6 real-subprocess interruption tests, 1 precondition test, 2 fixture-hygiene tests).
+
+**Zero production-code changes.** `git diff --stat HEAD -- src/legoai` is empty — confirmed at the close of this batch. The migration transform reuses F6a's own `_schema_statements()`/`_physical_schema_version()` private helpers directly (imported by the test fixture, not duplicated), so the "current" side of the migration is guaranteed structurally identical to production with zero drift risk. `SQLiteConfigurationStore`, `ConfigurationStorePort`, F5's codec, and F4's semantic values are all confirmed unchanged; no bug was found in any of them that would have required stopping.
+
+**Synthetic predecessor is not a historical release.** `SYNTHETIC_PREDECESSOR_SCHEMA_VERSION = 0` is documented, in the fixture module's own docstring and in the test file's own module docstring, as never having been a released LegoAI representation — F6a's real schema has been version 1 since its first implementation. The fixture's one deliberate structural difference from v1 (an outstanding duty embedded as a nullable JSON column on the result row, `duty_json_embedded`, instead of living in a separate `config_duty` table) is a plausible pre-refactor shape invented solely to give the migration something genuine to transform, not a claim about what LegoAI ever shipped.
+
+**Migration mechanics**: one explicit `BEGIN IMMEDIATE` transaction (LOCAL-PERSISTENCE-REALIZATION.md §11) performing table renames (`config_revision_v0`→`config_revision`, `config_head_v0`→`config_head`, SQLite auto-updating the FK reference), current-shape table creation via F6a's own schema statements, duty extraction into the new `config_duty` table, a result-row copy dropping the obsolete embedded column, and the physical `store_metadata.schema_version` marker bumped to 1 **last**, immediately before `COMMIT`.
+
+**Control case (successful migration)**: `TestSuccessfulMigrationControlCase` proves migration actually completes and the resulting store is fully usable through the **unchanged** production `SQLiteConfigurationStore`/`qualify_store` APIs — including exact preservation of the historical revision content, the operation result without recomputation, `EffectExtent.UNKNOWN` (never downgraded to `NONE`), the outstanding duty (still outstanding, never auto-resolved), and the distinctness of `OwnerRevision` (H) from `ConfigurationRevisionRef` (R) after migration.
+
+**Interruption case (the primary required proof)**: `TestInterruptedMigration` launches a real child OS process (`subprocess.Popen` + `sys.executable`) running the migration with `stop_before_commit=True`; the child performs every structural step, writes a ready-marker file, then blocks in `time.sleep(3600)` — deliberately never reaching the schema-version bump or `COMMIT`. The parent polls for the marker (no sleep-based timing guess) and then calls `process.kill()` — a real, abrupt OS-level termination, not exception injection. Verified outcomes: the physical table set is byte-for-byte the original v0 set (no `config_duty`/renamed tables exist at all — SQLite's transactional DDL fully rolled back every structural step); `store_metadata.schema_version` is still exactly `0`; `SQLiteConfigurationStore(path)` raises the existing `UnsupportedPhysicalSchemaVersionError` unchanged; `qualify_store(path)` returns the existing `RecoveryStatus.BLOCKED` with `physical_schema_version == 0` and zero scopes interpreted; repeated qualification attempts are stable; qualification itself performs no silent repair or cleanup of the interrupted file.
+
+**Central invariant proven** (never a mixed-version healthy report): at no point does the interrupted store expose `some-predecessor-rows + some-current-rows + a current schema marker` as `QUALIFIED` — the schema-version check happens before any per-scope interpretation is attempted at all, exactly as F6b's existing `qualify_store` already implements it.
+
+Verified before closing this batch: `pytest` 634 passed (was 618 before this batch; +16 new); `mypy src tests` — no issues in 64 source files; `ruff check`/`ruff format --check` — clean; coverage unchanged at 94% overall (confirming zero production lines were added); architecture tests unchanged at 141 passed (no boundary rule needed — test code importing production private helpers is unrestricted); package-install tests unchanged at 5 passed; Document Pack unchanged at 268 passed/64 skipped; zero new runtime dependencies; no canonical document changed; no DocuMind file touched.
+
+**F9 must be re-run** to update `GATE_1_EXIT_VERDICT`. This batch does not itself declare Gate 1 passed.

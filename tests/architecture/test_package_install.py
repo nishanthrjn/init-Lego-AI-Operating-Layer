@@ -221,6 +221,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/support/__init__.py",
             "tests/support/configuration_store.py",
             "tests/support/observation.py",
+            "tests/support/migration_fixture.py",
+            "tests/integration/application/test_migration_interruption.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
