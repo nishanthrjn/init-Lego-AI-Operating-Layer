@@ -453,3 +453,30 @@ Extended the existing `legoai.governance.values` module only (no new package, no
 Full verification: Core `pytest` 772 passed (was 708 before this batch: +49 initial unit tests on the new Governance values, +9 additional coverage-closing tests for wrong-type temporal fields, +6 sdist/wheel smoke additions counted in the architecture suite); `mypy src tests` — no issues in 68 source files; `ruff check`/`ruff format --check` — clean; `legoai.governance.values` at 100% branch coverage, overall coverage **95%** (up from 94%, since the new module is fully covered); architecture tests 153 passed (unchanged — no new boundary rule was needed, since Governance's existing Kernel-only-plus-own-values rule already covers the new classes); package-install tests 5 passed including a fresh wheel build/install with `Grant`/`Approval`/`PolicyRef` constructed and asserted in the smoke script; Document Pack unchanged at 268 passed/64 skipped; zero new runtime dependencies (`git diff --stat HEAD -- pyproject.toml uv.lock` empty); no canonical document or Accepted ADR touched; DocuMind untouched.
 
 **No AuthorizationPort, policy engine, Grant lookup, Approval consumption/replay-store, Resources package, Plugin admission, Catalog, CapabilityResolver, Coordinator, async supervision, or AI/Model code were introduced.** Gate-2 Batch 3 (Resources, per §20's M3) was not started.
+
+---
+
+## 30. M3 implementation status
+
+```text
+GATE2_M3_COMPLETE = YES
+```
+
+Created the ADR-002-authorized `legoai.resources` package (`__init__.py` + `values.py`) with the minimum declarative vocabulary needed to describe a resource requirement or accounting fact: `ResourceDimension`, `ResourceAmountKind`, `ResourceQuantity`, `ResourceClaimId`, `ResourceClaim`. No `ResourcePort`, allocation/reservation engine, quota/budget service, or capacity discovery was implemented.
+
+**Deliberately not modeled, with reasons:**
+- **Budget/Quota/Limit** (ADR-007 §9.1's three distinct constraint concepts) — these are allocation/policy constraint types whose meaning depends on window/reset/occupancy semantics that are runtime accounting concerns owned later by Resource Admission and Accounting, not needed merely to describe a declared claim.
+- **Precision/rounding/uncertainty** (ADR-007 §9's remaining quantity axis) — no accepted document defines a concrete typed shape for this yet; inventing one risks exactly the guessed-taxonomy problem `ResourceDimension` deliberately avoids.
+- **`ResourceReservation`/`ResourceConsumption` as separate types** — a single `ResourceClaim` + `ResourceQuantity.amount_kind` (estimate/bound/reservation/actual/correction, taken verbatim from ADR-007 §9) already expresses the full declared-vs-accounting-fact distinction without inventing near-duplicate wrapper types "for symmetry" (task's own §7 warning).
+
+**Design decisions with citations:**
+- `ResourceDimension` is an opaque validated-text identifier, not a closed enum of compute/memory/network/tokens/...: ADR-007 §3/§14 explicitly states no resource quantum is selected and that dimension parameters come from "their accountable authority." An enum would have silently invented that authority's answer.
+- `ResourceQuantity.magnitude` uses `Decimal` (nonnegative, finite — NaN/Infinity/bool-as-int all rejected), avoiding float ambiguity; `unit`/`unit_version` follow the same opaque-text-plus-reused-`Version` pattern already established for M2's `PolicyRef`.
+- `ResourceClaim` binds to exactly **one** resource dimension (one `ResourceQuantity`), not a bundle: ADR-007 §9.1's "multi-dimension bound" requirement means dispatch later assembles a *collection* of per-dimension claims, not that one claim record should merge dimensions.
+- `ResourceClaim` binds to the logical operation via Kernel's `OperationRef` only (never `ExecutionId`): ADR-002's R-row foreign-contract-target table lists K/G/O, not E, and even G/O are only a `ports.py` maximum — `values.py` stays Kernel-only per ADR-002 §9's "does not import another owner's values" rule, exactly as already established for `execution.values` (M1) and `governance.values` (M2). This preserves `operation identity ≠ execution identity` structurally, not just by convention.
+
+**Critical invariant preserved structurally:** no field named `available`, `capacity_available`, `reserved`, `is_reserved`, `unlimited`, `authorized`, `approved`, `grant`, `approval` or `policy` exists on any M3 value — proven absent by dedicated tests, not merely asserted in prose. Constructing a `ResourceClaim` with `amount_kind=RESERVATION` or `ACTUAL` still does not mean a reservation succeeded or consumption was authoritatively recorded; that remains a later owner-committed fact under a `ResourcePort` this batch does not define.
+
+Full verification: Core `pytest` 838 passed (was 772 before this batch: +51 unit tests on the new Resource values, +15 architecture boundary tests, +2 sdist/wheel smoke-script additions); `mypy src tests` — no issues in 71 source files; `ruff check`/`ruff format --check` — clean; `legoai.resources.values` at 100% branch coverage, overall coverage unchanged at 95%; architecture tests 168 passed (was 153); package-install tests 5 passed including a fresh wheel build/install with `ResourceQuantity`/`ResourceClaim` constructed and asserted in the smoke script; Document Pack unchanged at 268 passed/64 skipped; zero new runtime dependencies (`Decimal` is stdlib; `git diff --stat HEAD -- pyproject.toml uv.lock` empty); no canonical document or Accepted ADR touched; DocuMind untouched. `src/legoai/execution` and `src/legoai/governance` are unchanged (`git diff --stat` empty for both).
+
+**No ResourcePort, allocation/reservation engine, quota/budget service, capacity discovery, authorization runtime, Plugin admission, Catalog, CapabilityResolver, Coordinator, async supervision, or AI/Model code were introduced.** Gate-2 Batch 4 (M4: identity/tenant/policy runtime realization) was not started.

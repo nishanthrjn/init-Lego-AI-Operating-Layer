@@ -208,6 +208,24 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
+                    if name.startswith("legoai.resources.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.resources"
+                        or target.startswith("legoai.resources.")
+                    ):
+                        # Gate-2 M3 gives resources.values only Kernel: no
+                        # field needs Governance/Execution/Observability
+                        # (ADR-002 SS9.2's R-row maximum is K, G, O for a
+                        # future ports.py; values.py stays Kernel-only, same
+                        # discipline as execution.values/governance.values).
+                        errors.add("resources-owner")
+                    if name.startswith("legoai.resources.") and any(
+                        target == f"legoai.resources.{layer}"
+                        or target.startswith(f"legoai.resources.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
                     if name.startswith("legoai.plugins.") and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
@@ -1083,6 +1101,77 @@ def test_execution_inward_graph() -> None:
     )
 
 
+# --- Gate-2 M3: resources owner boundary -----------------------------------
+
+
+def test_kernel_cannot_import_resources() -> None:
+    assert violations(
+        {
+            "legoai.kernel.errors": "from legoai.resources.values import ResourceDimension"
+        }
+    ) == {"kernel-owner"}
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "application",
+        "reference",
+        "runtime",
+        "governance",
+        "execution",
+        "capabilities",
+        "plugins",
+        "evidence",
+        "observability",
+    ],
+)
+def test_resources_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.resources.values": f"import legoai.{owner}"}) == {
+        "resources-owner"
+    }
+
+
+def test_resources_values_does_not_import_governance_or_execution_values() -> None:
+    # ADR-002 SS9's values.py rule applies here exactly as it did for
+    # execution.values (M1) and governance.values (M2): even though the
+    # R-row's foreign-*contract*-target maximum (SS9.2) includes G, that
+    # maximum is for a future ports.py, not this owner's values module.
+    assert "resources-owner" in violations(
+        {"legoai.resources.values": "from legoai.governance.values import Grant"}
+    )
+    assert "resources-owner" in violations(
+        {"legoai.resources.values": "from legoai.execution.values import ExecutionId"}
+    )
+
+
+def test_execution_and_governance_values_do_not_depend_on_resources() -> None:
+    assert "execution-owner" in violations(
+        {"legoai.execution.values": "from legoai.resources.values import ResourceClaim"}
+    )
+    assert "governance-owner" in violations(
+        {
+            "legoai.governance.values": "from legoai.resources.values import ResourceClaim"
+        }
+    )
+
+
+def test_resources_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.resources.values": "from .ports import check"}
+    )
+
+
+def test_resources_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.resources.__init__": '"""Inert."""',
+            "legoai.resources.values": "from legoai.kernel.versions import Version",
+            "legoai.kernel.versions": "from dataclasses import dataclass",
+        }
+    )
+
+
 def test_plugins_inward_graph() -> None:
     assert not violations(
         {
@@ -1267,6 +1356,7 @@ def test_composition_root_does_not_leak_test_fake() -> None:
         "evidence.values",
         "governance.values",
         "execution.values",
+        "resources.values",
     ],
 )
 def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
@@ -1279,6 +1369,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "evidence.values": "evidence-owner",
         "governance.values": "governance-owner",
         "execution.values": "execution-owner",
+        "resources.values": "resources-owner",
     }
     assert reason_by_owner[owner] in violations(
         {

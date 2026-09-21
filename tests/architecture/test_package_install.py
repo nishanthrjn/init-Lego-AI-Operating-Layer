@@ -168,6 +168,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/runtime/_composition/direct.py",
         "legoai/execution/__init__.py",
         "legoai/execution/values.py",
+        "legoai/resources/__init__.py",
+        "legoai/resources/values.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -227,6 +229,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/integration/application/test_migration_interruption.py",
             "tests/unit/execution/test_values.py",
             "tests/unit/governance/test_authority.py",
+            "tests/unit/resources/test_values.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -279,7 +282,8 @@ import legoai.reference.resolution as resolution
 import legoai.reference.deterministic as deterministic
 import legoai.runtime._composition.direct as composition
 import legoai.execution.values as execution_values
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values):
+import legoai.resources.values as resources_values
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -292,6 +296,11 @@ grant = governance.Grant(governance.GrantId("g1"), grant_principal, grant_princi
 assert grant.expires_at is None
 policy_ref = governance.PolicyRef("issuer", "policy", versions.Version(1, 0, 0))
 assert policy_ref.version == versions.Version(1, 0, 0)
+from decimal import Decimal
+quantity = resources_values.ResourceQuantity(resources_values.ResourceDimension("compute-seconds"), "second", versions.Version(1, 0, 0), resources_values.ResourceAmountKind.BOUND, Decimal("1"))
+resource_operation = references.OperationRef(target, identity.OperationId("res-op"), "smoke")
+claim = resources_values.ResourceClaim(resources_values.ResourceClaimId("c1"), resource_operation, context.TenantContext(identity.TenantId("t")), quantity)
+assert claim.quantity.magnitude == Decimal("1")
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 5
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
