@@ -410,3 +410,21 @@ Gate-1 qualified; Batch 1 (`legoai.execution` values) is canonically authorized 
 ---
 
 **DocuMind status:** `DOCUMIND_EXTRACTION = PAUSED` until the generic Model/Embedding substrate exists (§26). Not inspected further in this task except as the eventual consumer-validation reference named above.
+
+---
+
+## 28. M1 implementation status
+
+```text
+GATE2_M1_COMPLETE = YES
+```
+
+Implemented exactly the planned semantic value layer, no more: `src/legoai/execution/__init__.py` (docstring-only, matching every other owner's initializer convention) and `src/legoai/execution/values.py` defining `ExecutionState` (exact ten canonical states, ADR-015 §2), `ExecutionId`, `SecurityContextRef`, `ExecutionContext`, `ExecutionResult`. No Port, no realization, no Coordinator, no asyncio, no persistence, no Governance/Resources/Plugins/Evidence expansion, zero new runtime dependencies.
+
+**One deviation from the plan's §14/§21 field sketch, discovered during implementation:** `ExecutionContext` does **not** carry `acting_principal`/`originating_requester` (`governance.values.Principal`) fields as originally sketched. ADR-002 §9's `values.py` rule states a values module "does not import another owner's values" — this is stricter than the foreign-*contract*-target table in §9.2 (which applies to `ports.py`, not `values.py`). Embedding `governance.values.Principal` directly in `execution/values.py` would violate that rule. `SecurityContextRef` (already planned) fully absorbs the identity/authority reference role instead, consistent with ADR-005 §10.1's own preference for an owner-issued reference over a raw Principal copy. `tenant_context: TenantContext` (Kernel-owned, not Governance-owned) was kept, satisfying ADR-005 §7 ("Each Execution pins exactly one effective TenantContext") without any cross-owner values import. This is a scope-preserving correction, not scope creep — it removes a field, adds none, and a later Port-layer batch is where Execution and Governance are actually composed together.
+
+Architecture boundary rules were extended (`tests/architecture/test_import_boundaries.py`) to give `legoai.execution.values` the same Kernel-only import ceiling already used for `capabilities`/`plugins`/`observability` (narrower than ADR-002 §9.2's E-row maximum, since no M1 field needs any wider peer); a dedicated test proves `legoai.execution.values` cannot import `legoai.governance.values`. Wheel/sdist file lists and the F8b import-inertness script (`tests/integration/composition/test_import_inertness.py`) were extended to cover the two new production files.
+
+Full verification: Core `pytest` 708 passed (was 634 before this batch: +56 unit tests on `legoai.execution.values`, +12 architecture boundary tests, +6 deadline-type coverage tests added during this batch's own coverage pass); `mypy src tests` — no issues in 67 source files; `ruff check`/`ruff format --check` — clean; `legoai.execution.values` itself at 100% branch coverage, overall unchanged at 94%; architecture tests 153 passed (was 141); package-install tests 5 passed including a fresh wheel build/install with `legoai/execution/__init__.py` and `legoai/execution/values.py` present and importable; Document Pack unchanged at 268 passed/64 skipped; zero new runtime dependencies (`git diff --stat HEAD -- pyproject.toml uv.lock` empty); no canonical document or Accepted ADR touched; DocuMind untouched.
+
+**No Ports, Coordinator, Resolver, Governance expansion, Resources package, Plugin admission, Evidence custody, asyncio, or AI/Model code were introduced.** Gate-2 Batch 2 (governance expansion, per §20's M2) was not started.

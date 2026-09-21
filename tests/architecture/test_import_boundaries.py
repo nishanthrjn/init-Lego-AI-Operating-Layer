@@ -190,6 +190,24 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
+                    if name.startswith("legoai.execution.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.execution"
+                        or target.startswith("legoai.execution.")
+                    ):
+                        # Gate-2 M1 gives execution.values only Kernel: no
+                        # field in this batch needs Governance/Capabilities/
+                        # Resources/Plugins (ADR-002 SS9.2's E-row maximum
+                        # includes those peers, but none is a canonically
+                        # justified M1 field -- see the Gate-2 plan SS14/21).
+                        errors.add("execution-owner")
+                    if name.startswith("legoai.execution.") and any(
+                        target == f"legoai.execution.{layer}"
+                        or target.startswith(f"legoai.execution.{layer}.")
+                        for layer in ("ports", "reference", "runtime")
+                    ):
+                        errors.add("values-layer")
                     if name.startswith("legoai.plugins.") and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
@@ -1012,6 +1030,59 @@ def test_plugins_values_cannot_import_ports_or_spi_via_helper() -> None:
     )
 
 
+# --- Gate-2 M1: execution owner boundary -----------------------------------
+
+
+def test_kernel_cannot_import_execution() -> None:
+    assert violations(
+        {"legoai.kernel.errors": "from legoai.execution.values import ExecutionId"}
+    ) == {"kernel-owner"}
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "application",
+        "reference",
+        "runtime",
+        "governance",
+        "capabilities",
+        "plugins",
+        "evidence",
+    ],
+)
+def test_execution_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.execution.values": f"import legoai.{owner}"}) == {
+        "execution-owner"
+    }
+
+
+def test_execution_values_does_not_import_governance_values() -> None:
+    # ADR-002 SS9's values.py rule: "It does not import another owner's
+    # values" -- even though ADR-002 SS9.2's E-row maximum lists G as an
+    # allowed foreign *contract* target for a future ports.py, values.py
+    # itself may never embed a foreign owner's value (e.g. Principal).
+    assert "execution-owner" in violations(
+        {"legoai.execution.values": "from legoai.governance.values import Principal"}
+    )
+
+
+def test_execution_values_cannot_import_ports_via_helper() -> None:
+    assert "values-layer" in violations(
+        {"legoai.execution.values": "from .ports import check"}
+    )
+
+
+def test_execution_inward_graph() -> None:
+    assert not violations(
+        {
+            "legoai.execution.__init__": '"""Inert."""',
+            "legoai.execution.values": "from legoai.kernel.effects import EffectExtent",
+            "legoai.kernel.effects": "from enum import Enum",
+        }
+    )
+
+
 def test_plugins_inward_graph() -> None:
     assert not violations(
         {
@@ -1195,6 +1266,7 @@ def test_composition_root_does_not_leak_test_fake() -> None:
         "kernel.errors",
         "evidence.values",
         "governance.values",
+        "execution.values",
     ],
 )
 def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
@@ -1206,6 +1278,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "kernel.errors": "kernel-owner",
         "evidence.values": "evidence-owner",
         "governance.values": "governance-owner",
+        "execution.values": "execution-owner",
     }
     assert reason_by_owner[owner] in violations(
         {
