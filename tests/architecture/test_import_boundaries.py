@@ -474,11 +474,15 @@ def test_test_support_configuration_store_is_rejected_as_production_import() -> 
 
 def test_no_database_driver_imported_by_production_source() -> None:
     # sqlite3 is stdlib, so the generic "external" check does not catch it.
-    # F6a is the one authorized realization allowed to use it (stdlib only,
-    # zero new dependencies); every other production module -- including
-    # F5's codec, which is representation-only -- must stay database-free,
-    # and no non-stdlib driver/ORM is ever permitted anywhere.
-    allowed_sqlite3_path = "reference/application/sqlite_store.py"
+    # F6a's store and F6b's recovery inspection are the two authorized
+    # modules allowed to use it (stdlib only, zero new dependencies); every
+    # other production module -- including F5's codec, which is
+    # representation-only -- must stay database-free, and no non-stdlib
+    # driver/ORM is ever permitted anywhere.
+    allowed_sqlite3_paths = {
+        "reference/application/sqlite_store.py",
+        "reference/application/recovery.py",
+    }
     forbidden_everywhere_roots = {
         "psycopg",
         "psycopg2",
@@ -495,7 +499,7 @@ def test_no_database_driver_imported_by_production_source() -> None:
     for path in root.rglob("*.py"):
         relative = str(path.relative_to(root)).replace("\\", "/")
         forbidden_here = set(forbidden_everywhere_roots)
-        if relative != allowed_sqlite3_path:
+        if relative not in allowed_sqlite3_paths:
             forbidden_here.add("sqlite3")
         tree = ast.parse(path.read_text(encoding="utf-8"))
         found: set[str] = set()
@@ -628,5 +632,84 @@ def test_f5_codec_does_not_leak_test_fake() -> None:
     assert "test-import" in violations(
         {
             "legoai.reference.application.codec": "from tests.support.configuration_store import InMemoryConfigurationStore"
+        }
+    )
+
+
+# --- F6b: recovery/qualification boundary ---------------------------------
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.reference.application.recovery import qualify_store",
+            "application-owner",
+        ),
+        (
+            "legoai.evidence.values",
+            "from legoai.reference.application.recovery import qualify_store",
+            "evidence-owner",
+        ),
+        (
+            "legoai.governance.values",
+            "from legoai.reference.application.recovery import qualify_store",
+            "governance-owner",
+        ),
+        (
+            "legoai.kernel.provenance",
+            "from legoai.reference.application.recovery import qualify_store",
+            "kernel-owner",
+        ),
+    ],
+)
+def test_f6b_semantic_packages_do_not_depend_on_recovery(
+    module: str, source: str, reason: str
+) -> None:
+    # Recovery is an inspection/qualification detail of the reference
+    # realization; no canonical value module may import it.
+    assert reason in violations({module: source})
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.reference.application.sqlite_store import SQLiteConfigurationStore",
+        "from legoai.reference.application.codec import decode_publication_result",
+        "from legoai.application.values import OwnerRevision",
+        "from legoai.evidence.values import EvidenceRequirement",
+        "from legoai.kernel.references import ConfigurationRef",
+    ],
+)
+def test_f6b_recovery_may_depend_inward_on_store_codec_and_allowed_values(
+    source: str,
+) -> None:
+    assert "reference-owner" not in violations(
+        {"legoai.reference.application.recovery": source}
+    )
+
+
+def test_f6b_recovery_cannot_import_ports_directly() -> None:
+    # Recovery inspects through the concrete SQLite realization's own public
+    # methods, not the abstract Port -- it never needed to import it, so the
+    # module-suffix exception granted to "_store" modules does not apply here.
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.application.recovery": "from legoai.application.ports import ConfigurationStorePort"
+        }
+    )
+
+
+def test_f6b_recovery_cannot_import_other_reference_owners() -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.application.recovery": "import legoai.reference.governance"}
+    )
+
+
+def test_f6b_recovery_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.application.recovery": "from tests.support.configuration_store import InMemoryConfigurationStore"
         }
     )
