@@ -1,0 +1,64 @@
+Fixtures dir: D:\Work\Projects\implement-DocuMind-into-LegoAI\init-Lego-AI-Operating-Layer\planning\documind\parsing-verification\fixtures
+
+--- SK PlainTextParser: 01_empty_utf8.txt ---
+OK. Length=0
+Repr: ""
+
+--- SK PlainTextParser: 02_ascii.txt ---
+OK. Length=11
+Repr: "Hello world"
+
+--- SK PlainTextParser: 03_unicode_utf8.txt ---
+OK. Length=11
+Repr: "caf\u00E9 \u65E5\u672C\u8A9E \uD83D\uDE00"
+
+--- SK PlainTextParser: 04_multiline.txt ---
+OK. Length=17
+Repr: "line1\nline2\nline3"
+
+--- SK PlainTextParser: 05_leading_trailing_ws.txt ---
+OK. Length=15
+Repr: "  \n  hello  \n  "
+
+--- SK PlainTextParser: 06_markdown_opaque.md ---
+OK. Length=59
+Repr: "# Heading\n\n*emphasis* and a [link](http://example.invalid)\n"
+
+--- SK PlainTextParser: 07_html_opaque.html ---
+OK. Length=51
+Repr: "\u003Chtml\u003E\u003Cbody\u003E\u003Cp\u003EHello \u003Cb\u003Eworld\u003C/b\u003E\u003C/p\u003E\u003C/body\u003E\u003C/html\u003E"
+
+--- SK PlainTextParser: 15_invalid_utf8.txt ---
+OK. Length=9
+Repr: "\u8000\u6F6E\u2074\u6176\u696C\u2064\u7475\u2D66\uFFFD"
+
+--- SK PdfDocumentParser: 08_one_page_text.pdf ---
+OK. Length=26
+Repr: "Hello world from page one."
+
+--- SK PdfDocumentParser: 09_multi_page_text.pdf ---
+OK. Length=90
+Repr: "Page one line A Page one line B\r\n\r\nPage two line A Page two line B\r\n\r\nPage three only line"
+
+--- SK PdfDocumentParser: 10_blank_page_middle.pdf ---
+OK. Length=44
+Repr: "First page has text.\r\n\r\nThird page has text."
+
+--- SK PdfDocumentParser: 11_unicode_pdf.pdf ---
+OK. Length=24
+Repr: "Unicode: caf\u00E9 na\u00EFve \u00FCber"
+
+--- SK PdfDocumentParser: 12_image_only.pdf ---
+OK. Length=0
+Repr: ""
+
+--- SK PdfDocumentParser: 13_malformed_truncated.pdf ---
+THREW: UglyToad.PdfPig.Core.PdfDocumentFormatException: Could not find the startxref within the last 452 characters.
+
+--- SK PdfDocumentParser: 13b_malformed_garbage.pdf ---
+THREW: UglyToad.PdfPig.Core.PdfDocumentFormatException: Could not find the startxref within the last 49 characters.
+
+--- SK PdfDocumentParser: 14_encrypted.pdf ---
+THREW: UglyToad.PdfPig.Exceptions.PdfDocumentEncryptedException: The document was encrypted and none of the provided passwords were the user or owner password.
+
+Done.

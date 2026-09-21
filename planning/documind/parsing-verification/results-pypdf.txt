@@ -1,0 +1,95 @@
+EOF marker not found
+
+======================================================================
+pypdf version = 6.19.0
+======================================================================
+
+======================================================================
+09_multi_page_text.pdf -- valid text PDF
+======================================================================
+num pages: 3
+is_encrypted: False
+page 0: type='str' repr='Page one line A\nPage one line B\n'
+page 1: type='str' repr='Page two line A\nPage two line B\n'
+page 2: type='str' repr='Page three only line\n'
+
+======================================================================
+08_one_page_text.pdf
+======================================================================
+num pages: 1
+page 0 extract_text() repr: 'Hello world from page one.\n'
+
+======================================================================
+10_blank_page_middle.pdf -- blank page behavior
+======================================================================
+num pages: 3
+page 0: repr='First page has text.\n' is_none=False is_empty_str=False
+page 1: repr='' is_none=False is_empty_str=True
+page 2: repr='Third page has text.\n' is_none=False is_empty_str=False
+
+======================================================================
+11_unicode_pdf.pdf -- unicode preservation
+======================================================================
+repr: 'Unicode: café naïve über\n'
+contains 'caf\u00e9'? True
+contains 'na\u00efve'? True
+contains '\u00fcber'? True
+
+======================================================================
+12_image_only.pdf -- image-only, no OCR
+======================================================================
+num pages: 1
+repr: '' is_none: False is_empty: True
+did opening/extraction raise? -> it did not (see above); confirms deterministic
+
+======================================================================
+13_malformed_truncated.pdf
+======================================================================
+PdfReader() construction raised:
+  exception type: pypdf.errors.PdfStreamError
+  mro: ['PdfStreamError', 'PdfReadError', 'PyPdfError', 'Exception', 'BaseException', 'object']
+  message: Stream has ended unexpectedly
+
+======================================================================
+13b_malformed_garbage.pdf
+======================================================================
+PdfReader() construction raised:
+  exception type: pypdf.errors.PdfReadError
+  mro: ['PdfReadError', 'PyPdfError', 'Exception', 'BaseException', 'object']
+  message: startxref not found
+
+======================================================================
+14_encrypted.pdf -- no password supplied
+======================================================================
+PdfReader() construction succeeded without a password.
+is_encrypted: True
+len(reader.pages) raised:
+  exception type: pypdf.errors.FileNotDecryptedError
+  mro: ['FileNotDecryptedError', 'PdfReadError', 'PyPdfError', 'Exception', 'BaseException', 'object']
+  message: File has not been decrypted
+
+======================================================================
+14_encrypted.pdf -- wrong password
+======================================================================
+decrypt() with wrong password returned: 0 (0=fail,1=user,2=owner per pypdf docs)
+page 0 extract_text() after failed decrypt raised:
+  exception type: pypdf.errors.FileNotDecryptedError
+  mro: ['FileNotDecryptedError', 'PdfReadError', 'PyPdfError', 'Exception', 'BaseException', 'object']
+  message: File has not been decrypted
+
+======================================================================
+14_encrypted.pdf -- correct user password
+======================================================================
+decrypt() with correct password returned: 1
+is_encrypted after decrypt: True
+page 0 extract_text() after correct decrypt: 'Hello world from page one.\n'
+
+======================================================================
+API surface used
+======================================================================
+PdfReader(stream: BytesIO) -- constructs from a file-like object, confirmed works with io.BytesIO
+PdfReader.is_encrypted -- bool property, confirmed
+PdfReader.pages -- sequence of PageObject, confirmed len() and indexing work
+PageObject.extract_text() -> str -- confirmed return type is always str, never None, for all fixtures tried
+PdfReader.decrypt(password) -> PasswordType -- confirmed returns an enum-like int; 0 means failed
+Exceptions module: pypdf.errors -> ['DependencyError', 'DeprecationError', 'EmptyFileError', 'EmptyImageDataError', 'FileNotDecryptedError', 'LimitReachedError', 'PageSizeNotDefinedError', 'ParseError', 'PdfReadError', 'PdfReadWarning', 'PdfStreamError', 'PyPdfError', 'STREAM_TRUNCATED_PREMATURELY', 'WrongPasswordError', 'XmpDocumentError']

@@ -1,0 +1,6 @@
+py/.venv/
+py/__pycache__/
+dotnet-sk/Verify/bin/
+dotnet-sk/Verify/obj/
+dotnet-maf/Verify/bin/
+dotnet-maf/Verify/obj/
