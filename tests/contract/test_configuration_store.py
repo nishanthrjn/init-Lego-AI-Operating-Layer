@@ -9,7 +9,10 @@ rather than merely matching the in-memory fake's internal structure
 
 from __future__ import annotations
 
+import tempfile
+import uuid
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 
@@ -33,23 +36,33 @@ from legoai.kernel.references import (
 )
 from legoai.kernel.versions import Version
 from legoai.reference.application.configuration import compose_configuration
+from legoai.reference.application.sqlite_store import SQLiteConfigurationStore
 from tests.support.configuration_store import InMemoryConfigurationStore
 
 VERSION = Version(0, 1, 0)
+
+_SQLITE_CONTRACT_TEMP_DIR = Path(tempfile.mkdtemp(prefix="legoai-f6a-contract-"))
 
 
 def _in_memory_factory() -> ConfigurationStorePort:
     return InMemoryConfigurationStore()
 
 
+def _sqlite_factory() -> ConfigurationStorePort:
+    # Real file-backed SQLite, never ":memory:" -- durability/atomicity
+    # claims require an actual file (F6a task SS32). One fresh database per
+    # test invocation.
+    path = _SQLITE_CONTRACT_TEMP_DIR / f"{uuid.uuid4().hex}.sqlite3"
+    return SQLiteConfigurationStore(path)
+
+
 STORE_FACTORIES: list[Callable[[], ConfigurationStorePort]] = [
     _in_memory_factory,
-    # F6a adds a second factory here (e.g. a SQLite-backed realization) --
-    # every test below must pass unchanged against it.
+    _sqlite_factory,
 ]
 
 
-@pytest.fixture(params=STORE_FACTORIES, ids=["in-memory-fake"])
+@pytest.fixture(params=STORE_FACTORIES, ids=["in-memory-fake", "sqlite"])
 def store(request: pytest.FixtureRequest) -> ConfigurationStorePort:
     factory: Callable[[], ConfigurationStorePort] = request.param
     return factory()
