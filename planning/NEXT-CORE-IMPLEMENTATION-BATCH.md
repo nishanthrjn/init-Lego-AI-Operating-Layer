@@ -682,3 +682,33 @@ Deviations from the F7 task's plan: none of substance.
 **Gate 1 is not complete.** F9's own exit checklist (§18.1) was not evaluated by this batch; F9 additionally requires F8b, which has not started.
 
 **Gate 2 has not been started.** No Execution, ExecutionContext, CapabilityResolver runtime, Plugin admission/activation, authorization enforcement, or resource-claim code exists anywhere in this diff.
+
+---
+
+## 23. F8b — Private Deterministic Composition (implementation status)
+
+```text
+F8b_IMPLEMENTATION = COMPLETE
+```
+
+Implemented exactly the Gate-1 plan §14 file list, nothing beyond: `reference/deterministic.py` (new module, sibling to `reference/declarations.py`/`resolution.py`/`observation.py`) and `runtime/{__init__,_composition/__init__,_composition/direct}.py` (new private package, exactly as the plan's §20 tree names it — nothing exported from `legoai.runtime.__init__` or `legoai.__init__`).
+
+**Private deterministic composition implemented.** `compose_direct` (`runtime/_composition/direct.py`) proves, by ordinary explicit Python construction, that F2 configuration capture (`compose_configuration`), F7 inert declarations and pure compatibility analysis (`analyze_compatibility`), the one F8b deterministic reference function (`normalize_text`), and F8a's safe observation (`ObservationSinkPort`) compose into one coherent typed `CompositionResult` — exactly Gate-1 plan §13's "internal walking skeleton" composition-experiment half. No Execution, ExecutionContext, CapabilityResolver, Plugin admission/activation, authorization enforcement, resource claim, or async supervision was introduced; `compose_direct` is an ordinary synchronous function.
+
+**Deterministic reference fixture.** Bounded ASCII whitespace normalization (`legoai.reference.deterministic.normalize_text`), exactly the fixture Gate-1 plan §13 names: `TRIM` removes only leading/trailing characters found in the caller's `allowed_whitespace`; `COLLAPSE` additionally collapses interior runs to one ASCII space; non-ASCII characters are never inspected or altered; an empty `allowed_whitespace` means pass-through; oversize input relative to `max_input_length` is rejected, never truncated. Pure: no I/O, randomness, wall clock, or mutable global state — proven by a 50-iteration repeatability test and explicit fixed-identity tests (`text_normalization_capability_id`/`_plugin_id`/`_release` never vary across calls, never randomly generated).
+
+**F7 declarations remain exactly as inert as before.** `text_normalization_declaration()` constructs an ordinary `PluginDeclaration`/`CapabilityOffer` — no executable field, no `Binding` type, no callable attached anywhere. The static correspondence between the one known declaration and the one known implementation lives entirely in `compose_direct`'s own code (an equality check against `text_normalization_plugin_id()`/`_release()`), never inside `PluginDeclaration`/`CapabilityOffer` themselves — confirmed by regression tests asserting neither gains a `callable`/`implementation`/`factory` attribute after composition runs.
+
+**Compatibility stays analytical, exactly as F7 established.** `UNIQUE_MATCH` against the known declaration → `COMPOSED`, deterministic function runs exactly once. `NO_MATCH` → `NO_COMPATIBLE_DECLARATION`, deterministic function never called (proven with a spy function asserting zero invocations). `AMBIGUOUS` → `AMBIGUOUS_DECLARATION`, deterministic function never called, and declaration order is proven not to affect the outcome (no first/latest/alphabetical selection exists anywhere in this batch). A `UNIQUE_MATCH` against a real but *unrelated* declaration this module has no implementation for → `FIXTURE_MISMATCH`, also never invoking the function — a case the F7 batch itself could not have needed, since only F8b introduces a real static-correspondence check.
+
+**Observation sink failure contained exactly at the diagnostic boundary.** `_emit_best_effort` wraps only the single `sink.emit(...)` call in `try/except Exception` — nothing else in `compose_direct` is guarded this broadly. Proven directly: composing the identical inputs with `CapturingObservationSink` and with `FailingObservationSink` produces byte-for-byte equal `CompositionResult` values, and the failing-sink path never raises out of `compose_direct`. A private `_NoOpObservationSink` (module-internal, not a public `NullObject` abstraction) is used when no sink is supplied.
+
+**Architecture boundaries**, extending F7/F8a's exact precedent: `reference.deterministic` may depend only on Kernel, `application.values`, `plugins.values`, `capabilities.values` — not on the composition root, SQLite store/recovery, or `reference.observation`. `runtime._composition.*` may depend on the "needed slice" ADR-002 §4.2 authorizes for private runtime composition (Kernel; `application.values`; `capabilities.values`/`plugins.values`; `observability.values`/`.ports`; `reference.declarations`/`resolution`/`deterministic`/`application.configuration`) — but never on `application.ports`, the concrete SQLite/recovery/observation-sink realizations, or any other reference-owner realization; callers inject whichever concrete `ObservationSinkPort` they choose. No F0-F8a/F7 semantic package depends on `runtime._composition`, and no reference module depends on it either (composition is top-level private wiring only, never a dependency target).
+
+Verified before closing this batch: `pytest` 618 passed; `mypy src tests` — no issues in 62 source files; `ruff check`/`ruff format --check` — clean; coverage of every new F8b module is 100% (`reference/deterministic.py`, `runtime/_composition/direct.py`); zero new runtime dependencies; no canonical document changed; no DocuMind file touched; no F0-F8a/F7 file touched (confirmed via `git diff --stat HEAD` against every prior package).
+
+Deviations from the F8b task's plan: none of substance.
+
+**F9 is now unblocked**: F7 and F8b are both complete, and F8a was already complete. F9 itself has not been started — no foundation-exit review, no Gate-2 work, and no claim that Gate 1 is complete exists anywhere in this diff.
+
+**Gate 2 has not been started.** No Execution, ExecutionContext, CapabilityResolver, Plugin admission/activation, authorization enforcement, resource-claim, or async-supervision code exists anywhere in this diff.

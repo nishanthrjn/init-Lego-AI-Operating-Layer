@@ -220,6 +220,57 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.capabilities.values.")
                     ):
                         errors.add("reference-owner")
+                    if name == "legoai.reference.deterministic" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.application.values"
+                        or target.startswith("legoai.application.values.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                    ):
+                        # The one deterministic fixture describes/executes
+                        # its own pure function only -- it must not depend
+                        # on the private composition root, SQLite, recovery,
+                        # the observation sink realization, or any other
+                        # reference-owner realization (F8b task SS42).
+                        errors.add("reference-owner")
+                    if name.startswith("legoai.runtime._composition.") and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.application.values"
+                        or target.startswith("legoai.application.values.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        or target == "legoai.observability.values"
+                        or target.startswith("legoai.observability.values.")
+                        or target == "legoai.observability.ports"
+                        or target.startswith("legoai.observability.ports.")
+                        or target == "legoai.reference.declarations"
+                        or target.startswith("legoai.reference.declarations.")
+                        or target == "legoai.reference.resolution"
+                        or target.startswith("legoai.reference.resolution.")
+                        or target == "legoai.reference.deterministic"
+                        or target.startswith("legoai.reference.deterministic.")
+                        or target == "legoai.reference.application.configuration"
+                        or target.startswith(
+                            "legoai.reference.application.configuration."
+                        )
+                        or target == "legoai.runtime"
+                        or target.startswith("legoai.runtime._composition")
+                    ):
+                        # The private composition root may depend on lower
+                        # reference realizations it actually needs (ADR-002
+                        # SS4.2's "runtime private composition" row: "needed
+                        # slice" of values/Ports plus "selected [reference]
+                        # implementations"), but not on application.ports,
+                        # the SQLite store/recovery realizations, or the
+                        # concrete observation sink (F8b task SS41-42) --
+                        # those remain the caller's own explicit choice.
+                        errors.add("composition-owner")
                 elif root not in sys.stdlib_module_names:
                     errors.add("external")
                 if target in sources:
@@ -1049,4 +1100,130 @@ def test_f7_reference_modules_do_not_leak_test_fake() -> None:
         {
             "legoai.reference.declarations": "from tests.support.configuration_store import InMemoryConfigurationStore"
         }
+    )
+
+
+# --- F8b: private composition root and deterministic fixture boundary -----
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "reference.application.sqlite_store",
+        "reference.application.recovery",
+        "reference.observation",
+    ],
+)
+def test_reference_deterministic_cannot_import_other_reference_realizations(
+    owner: str,
+) -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.deterministic": f"import legoai.{owner}"}
+    )
+
+
+def test_reference_deterministic_cannot_import_composition_root() -> None:
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.deterministic": "from legoai.runtime._composition.direct import compose_direct"
+        }
+    )
+
+
+def test_reference_deterministic_may_depend_on_needed_values() -> None:
+    for source in (
+        "from legoai.application.values import EffectiveConfiguration",
+        "from legoai.capabilities.values import CapabilityId",
+        "from legoai.plugins.values import PluginId",
+        "from legoai.kernel.versions import Version",
+    ):
+        assert "reference-owner" not in violations(
+            {"legoai.reference.deterministic": source}
+        )
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "application.ports",
+        "reference.application.sqlite_store",
+        "reference.application.recovery",
+        "reference.observation",
+    ],
+)
+def test_composition_root_cannot_import_ports_or_concrete_realizations(
+    owner: str,
+) -> None:
+    assert "composition-owner" in violations(
+        {"legoai.runtime._composition.direct": f"import legoai.{owner}"}
+    )
+
+
+def test_composition_root_may_depend_on_needed_reference_and_semantic_pieces() -> None:
+    for source in (
+        "from legoai.application.values import ComposedConfiguration",
+        "from legoai.capabilities.values import CapabilityRequirement",
+        "from legoai.plugins.values import PluginDeclaration",
+        "from legoai.observability.values import Observation",
+        "from legoai.observability.ports import ObservationSinkPort",
+        "from legoai.reference.declarations import normalize_declarations",
+        "from legoai.reference.resolution import analyze_compatibility",
+        "from legoai.reference.deterministic import normalize_text",
+        "from legoai.reference.application.configuration import compose_configuration",
+        "from legoai.kernel.references import ConfigurationRef",
+    ):
+        assert "composition-owner" not in violations(
+            {"legoai.runtime._composition.direct": source}
+        )
+
+
+def test_composition_root_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.runtime._composition.direct": "from tests.support.observation import CapturingObservationSink"
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "application.values",
+        "capabilities.values",
+        "plugins.values",
+        "observability.values",
+        "kernel.errors",
+        "evidence.values",
+        "governance.values",
+    ],
+)
+def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
+    reason_by_owner = {
+        "application.values": "application-owner",
+        "capabilities.values": "capabilities-owner",
+        "plugins.values": "plugins-owner",
+        "observability.values": "observability-owner",
+        "kernel.errors": "kernel-owner",
+        "evidence.values": "evidence-owner",
+        "governance.values": "governance-owner",
+    }
+    assert reason_by_owner[owner] in violations(
+        {
+            f"legoai.{owner}": "from legoai.runtime._composition.direct import compose_direct"
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "legoai.reference.declarations",
+        "legoai.reference.resolution",
+        "legoai.reference.deterministic",
+        "legoai.reference.observation",
+    ],
+)
+def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:
+    assert "reference-owner" in violations(
+        {module: "from legoai.runtime._composition.direct import compose_direct"}
     )

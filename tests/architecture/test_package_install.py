@@ -86,6 +86,10 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.capabilities.values
     import legoai.reference.declarations
     import legoai.reference.resolution
+    import legoai.reference.deterministic
+    import legoai.runtime
+    import legoai.runtime._composition
+    import legoai.runtime._composition.direct
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -104,7 +108,9 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.reference.observation",
     "legoai.plugins", "legoai.plugins.values",
     "legoai.capabilities", "legoai.capabilities.values",
-    "legoai.reference.declarations", "legoai.reference.resolution"
+    "legoai.reference.declarations", "legoai.reference.resolution",
+    "legoai.reference.deterministic",
+    "legoai.runtime", "legoai.runtime._composition", "legoai.runtime._composition.direct"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -156,6 +162,10 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/capabilities/values.py",
         "legoai/reference/declarations.py",
         "legoai/reference/resolution.py",
+        "legoai/reference/deterministic.py",
+        "legoai/runtime/__init__.py",
+        "legoai/runtime/_composition/__init__.py",
+        "legoai/runtime/_composition/direct.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -203,6 +213,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/plugins/test_values.py",
             "tests/unit/reference/test_declarations.py",
             "tests/unit/reference/test_resolution.py",
+            "tests/unit/reference/test_deterministic.py",
+            "tests/integration/composition/test_direct.py",
+            "tests/integration/composition/test_import_inertness.py",
             "tests/__init__.py",
             "tests/contract/test_configuration_store.py",
             "tests/support/__init__.py",
@@ -256,7 +269,9 @@ import legoai.plugins.values as plugins_values
 import legoai.capabilities.values as capabilities_values
 import legoai.reference.declarations as declarations
 import legoai.reference.resolution as resolution
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution):
+import legoai.reference.deterministic as deterministic
+import legoai.runtime._composition.direct as composition
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -318,6 +333,21 @@ analysis = resolution.analyze_compatibility(requirement, (declaration,))
 assert analysis.status is resolution.CompatibilityStatus.UNIQUE_MATCH
 normalized = declarations.normalize_declarations((declaration,))
 assert normalized == (declaration,)
+norm_requirement = capabilities_values.CapabilityRequirement(
+    deterministic.text_normalization_capability_id(),
+    capabilities_values.CapabilityVersionRange(deterministic.text_normalization_release()),
+)
+composition_result = composition.compose_direct(
+    target=target,
+    candidates=(),
+    contract_version=versions.Version(0, 1, 0),
+    interpretation_version=versions.Version(0, 1, 0),
+    text="  smoke   test  ",
+    requirement=norm_requirement,
+    declarations=(deterministic.text_normalization_declaration(),),
+)
+assert composition_result.status is composition.CompositionStatus.COMPOSED
+assert composition_result.normalized_text == "smoke test"
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
