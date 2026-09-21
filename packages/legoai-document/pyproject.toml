@@ -5,9 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "legoai-document"
 version = "0.1.0.dev0"
-description = "Lego AI Document Capability Pack: document.chunking (batch 1)"
+description = "Lego AI Document Capability Pack: document.chunking, document.parsing"
 requires-python = ">=3.14,<3.15"
-dependencies = []
+dependencies = ["pypdf>=6.19.0,<7"]
 
 [dependency-groups]
 dev = [
@@ -43,7 +43,7 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
 
 [tool.coverage.run]
 branch = true
-source = ["legoai_document.chunking"]
+source = ["legoai_document.chunking", "legoai_document.parsing"]
 
 [tool.coverage.report]
 show_missing = true
