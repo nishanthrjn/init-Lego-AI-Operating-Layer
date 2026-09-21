@@ -1,7 +1,7 @@
 # Document Parsing Capability — Implementation Design
 
 **Document:** `planning/documind/DOCUMENT-PARSING-CAPABILITY-DESIGN.md`
-**Status:** PROPOSED — DESIGN LIVE-VERIFIED, PENDING IMPLEMENTATION AUTHORIZATION
+**Status:** AUTHORIZED — IMPLEMENTED (`document.parsing` in `packages/legoai-document/src/legoai_document/parsing/`)
 **This is NOT a canonical LegoAI Core specification.** It defines a single proposed reusable **Document Capability Pack** capability, derived from DocuMind evidence, subordinate to and constrained by (but not amending) `intent.md`, `SPEC.md`, `ARCHITECTURE.md`, `CONTRACTS.md`, and the accepted ADRs.
 **Parent documents:** [`planning/DOCUMIND-EXTRACTION-ASSESSMENT.md`](../DOCUMIND-EXTRACTION-ASSESSMENT.md), [`planning/documind/CHUNKING-CAPABILITY-DESIGN.md`](CHUNKING-CAPABILITY-DESIGN.md) (Batch 1, complete and accepted — consumed here only as a downstream API, not modified)
 **Batch 1 status:** `document.chunking` remains untouched by this document.
@@ -699,3 +699,25 @@ All items the previous design gate listed as blockers are now resolved with live
 - No canonical contradiction — YES (unchanged from the original design gate; nothing in this verification pass touched or contradicted any canonical document, ADR, or Batch 1).
 
 **Residual items that do not block `YES`** (carried forward as ordinary implementation-time considerations, not architectural blockers): complex-layout fidelity (multi-column/table PDFs) is untested; parser-bomb/resource-exhaustion defenses remain explicitly out of scope (§16); a true zero-page PDF and a large-document performance benchmark were not constructed in this pass (§23).
+
+---
+
+## 27. Implementation status (Batch 2 — complete)
+
+**This is not a canonical Core specification change; it records what was built, matching the design above exactly, with no architectural deviation.**
+
+`document.parsing` is implemented at `packages/legoai-document/src/legoai_document/parsing/{__init__.py, values.py, errors.py, api.py}`, alongside Batch 1's `chunking/` in the same distribution. Public surface: `DocumentFormat` (`TEXT`/`MARKDOWN`/`HTML`/`PDF`), `DocumentParsingRequest`, `ParsedPage`, `ParsedDocument` (all frozen/slotted dataclasses), `DocumentParsingError`/`UnsupportedDocumentFormatError`/`MalformedDocumentError`/`EncryptedDocumentError`, `parse_document()`, `flatten_pages()` — exactly the signatures in §18/§18a, no additions, no omissions.
+
+**Dependency:** `pypdf>=6.19.0,<7` added to `[project.dependencies]`; `uv.lock` resolved and pinned to the exact verified `6.19.0`. This is `legoai-document`'s first runtime dependency; confirmed via a wheel build that `Requires-Dist: pypdf<7,>=6.19.0` is the only declared dependency, and via a clean-environment install that exactly two packages (`legoai-document`, `pypdf`) are installed — no `reportlab`/`pillow`/OCR/model-SDK ever entered the production dependency graph.
+
+**Behavior implemented exactly as designed and verified:** strict UTF-8 decoding for `TEXT`/`MARKDOWN`/`HTML` (raising `MalformedDocumentError` chained from `UnicodeDecodeError` on invalid bytes); one `ParsedPage` per physical PDF page including blank/image-only pages (`text == ""`, never omitted); `FileNotDecryptedError` caught before the broader `PdfReadError` (correctly, since it is a subclass) and mapped to `EncryptedDocumentError`; `PdfStreamError`/`PdfReadError` mapped to `MalformedDocumentError`; no blanket `except Exception` anywhere; every raised pack-local exception is chained (`raise ... from exc`) to its underlying `pypdf`/stdlib cause; no `pypdf` type appears in the public API.
+
+**Regression test for the DocuMind defect (§19 of the implementation task):** `test_blank_page_is_preserved_not_omitted` in `tests/unit/parsing/test_parse_pdf.py` uses the same `10_blank_page_middle.pdf` fixture that was live-confirmed (§14, §23 #10) to trip MAF's 20-characters-per-page OCR heuristic, and asserts the deterministic parser succeeds, preserves all three pages including the blank one, and (structurally, since no OCR/model/network dependency exists anywhere in this package) never invokes OCR.
+
+**Test suite:** 41 new tests across `test_parse_text_like.py`, `test_parse_pdf.py`, `test_values_and_invariants.py`, `test_flatten_pages.py` (`tests/unit/parsing/`), reusing the same 16 fixtures from `planning/documind/parsing-verification/fixtures/` copied into `tests/fixtures/parsing/` so the package's test suite is self-contained. `tests/architecture/test_dependency_boundaries.py` was extended (not weakened): the former "zero runtime dependencies" assertion is now an explicit allowlist (`{"pypdf"}`), and `FORBIDDEN_ROOTS`/`ALLOWED_ROOTS` were extended to cover OCR SDKs and fixture-generation-only tooling (`reportlab`, `PIL`) that must never appear in production source. `tests/architecture/test_core_does_not_import_pack.py` required no changes (its scan already covers the whole Core tree).
+
+**Verification results:** 268 passed, 64 skipped (unchanged skip set from Batch 1), 100% statement and branch coverage on both `chunking` and `parsing`; `mypy --strict` clean across 19 source files with zero `# type: ignore` needed for `pypdf`'s own types; `ruff check`/`ruff format --check` clean; LegoAI Core's own 150 tests and its mypy/ruff checks remain unaffected and green.
+
+**Deviations from the approved design:** none of substance — only automatic `ruff format` whitespace reflow.
+
+**Deferred (unchanged from §25/§26):** complex-layout (multi-column/table) fidelity untested; parser-bomb/resource-exhaustion defenses out of scope; zero-page-PDF and large-document performance benchmarks not constructed; a future `document.ocr` capability remains undesigned; DocuMind's confirmed MAF OCR-heuristic defect was recorded (§14, §23 #10; parent assessment) but **not fixed in DocuMind**, per instruction that both DocuMind repositories remain read-only reference oracles.
