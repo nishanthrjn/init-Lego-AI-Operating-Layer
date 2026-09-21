@@ -226,6 +226,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/support/migration_fixture.py",
             "tests/integration/application/test_migration_interruption.py",
             "tests/unit/execution/test_values.py",
+            "tests/unit/governance/test_authority.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -250,6 +251,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     script = """
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from importlib.metadata import version, requires
 import legoai.kernel.identity as identity
@@ -285,6 +287,11 @@ assert result.effective.max_input_length == 4096
 assert versions.Version(0, 1, 0) < versions.Version(0, 2, 0)
 assert context.TenantContext(identity.TenantId("t")).tenant_id == identity.TenantId("t")
 assert governance.Principal(references.PrincipalRef("issuer", identity.PrincipalId("p"))).reference.principal_id == identity.PrincipalId("p")
+grant_principal = governance.Principal(references.PrincipalRef("issuer", identity.PrincipalId("p")))
+grant = governance.Grant(governance.GrantId("g1"), grant_principal, grant_principal, context.TenantContext(identity.TenantId("t")), "action", "scope", False, datetime(2026, 1, 1, tzinfo=timezone.utc), None)
+assert grant.expires_at is None
+policy_ref = governance.PolicyRef("issuer", "policy", versions.Version(1, 0, 0))
+assert policy_ref.version == versions.Version(1, 0, 0)
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 5
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))

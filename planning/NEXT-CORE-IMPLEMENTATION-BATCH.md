@@ -955,3 +955,11 @@ GATE2_M1_COMPLETE = YES
 ```
 
 M1 (`legoai.execution` semantic values: `ExecutionState`, `ExecutionId`, `SecurityContextRef`, `ExecutionContext`, `ExecutionResult`) is implemented — see `planning/GATE-2-IMPLEMENTATION-PLAN.md` §28 for full detail. No Ports, Coordinator, Resolver, runtime orchestration, persistence or asyncio were implemented; no Governance/Resources/Plugins/Evidence expansion occurred; zero new runtime dependencies. Verified: Core pytest 708 passed (was 634), mypy/ruff clean, architecture tests 153 passed (was 141), package-install 5 passed (fresh wheel includes the new package), Document Pack unchanged at 268 passed/64 skipped, canonical documents and DocuMind untouched. **Next Gate-2 prerequisite remains governance expansion** (plan §20's M2: Grant/Policy/Approval values+Ports, ADR-005) — not started, not pre-authorized by this pointer. No milestone history above is rewritten by this entry.
+
+## 29. Gate-2 M2 implementation (pointer)
+
+```text
+GATE2_M2_COMPLETE = YES
+```
+
+M2 (Governance semantic expansion: `GrantId`, `ApprovalId`, `PolicyRef`, `Grant`, `Approval`, added to the existing `legoai.governance.values` module) is implemented — see `planning/GATE-2-IMPLEMENTATION-PLAN.md` §29 for full detail. No `AuthorizationPort`/enforcement/policy evaluator/Grant lookup/Approval consumption was implemented — every new value is a structural record, never a current-validity proof. `legoai.execution` unchanged; no Resources/Plugin admission/Catalog/Resolver/Coordinator/async/AI code introduced; zero new runtime dependencies. Verified: Core pytest 772 passed (was 708), mypy/ruff clean, `legoai.governance.values` at 100% branch coverage (overall 95%, up from 94%), architecture tests unchanged at 153 passed, package-install 5 passed (fresh wheel exercises the new types), Document Pack unchanged at 268 passed/64 skipped, canonical documents and DocuMind untouched. **M3 Resources remains next** — not started, not pre-authorized by this pointer. No milestone history above is rewritten by this entry.
