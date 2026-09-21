@@ -616,3 +616,35 @@ READY_TO_IMPLEMENT_NEXT_GATE1_BATCH = YES
 - Package placement (`observability/{values,ports}.py`, `reference/observation.py`) is exactly the Gate-1 plan's own §20 proposed tree location — no `legoai.observability` global framework, no generic logging vendor.
 - Tests are defined (§20.5 above).
 - No Gate-2 functionality is required or introduced.
+
+---
+
+## 21. F8a — Safe local observation (implementation status)
+
+```text
+F8a_IMPLEMENTATION = COMPLETE
+```
+
+Implemented exactly as scoped in §20.5, nothing beyond: `observability/{__init__,values,ports}.py` (new package) and `reference/observation.py` (new module, sibling to `reference/application/`, not nested under it — matching the Gate-1 plan's own §20 tree, which places `observation.py` directly under `reference/`).
+
+**Safe bounded observation implemented.** `Observation` carries exactly the Gate-1 plan §11 allowlist subset available today: `schema_version` (fixed at 1), `event_code` (open `ObservationEventCode`, mirroring `DutyKind`'s already-established open-vocabulary rationale), `owner`, `correlation_id`/`trace_id`/`causation`/`operation` (reusing existing Kernel identity/reference types, never duplicated), `tenant_id`, `configuration_revision`, `error_category` (reusing Kernel's existing `ErrorCategory`), `safe_cause_reference` (bounded text, only meaningful paired with an `error_category`), `latency_ms`, `size_bytes`. No open attributes bag was added: the plan's own field list is closed and enumerated, not "attributes plus whatever," and no Plugin/Provider/Adapter/Execution/authorization field was invented since none of those types exist yet (F7/Gate-2). No semantic timestamp field exists in `Observation` itself — wall-clock acquisition belongs to the sink's own emission, not the semantic value, consistent with the existing repo-wide "no wall-clock in value constructors" discipline.
+
+**Reference local sink implemented.** `LocalLoggingObservationSink` (`reference/observation.py`) uses stdlib `logging` + `json` only; explicit field-by-field projection (never `repr()`/`vars()`/`asdict()`); one structured JSON line per `Observation` via a named, non-root logger (`legoai.reference.observation` by default, injectable). Import has zero side effects — no `basicConfig()`, no handler attachment, no root-logger mutation — proven by a real subprocess inert-import test plus a module-reload test.
+
+**Security/canary result: PASS.** `SUPER_SECRET_CANARY_VALUE`, `AUTHORIZATION_CANARY`, and `PRIVATE_PAYLOAD_CANARY` cannot reach any `Observation` field at all — the closed dataclass field set makes this a structural guarantee, not caller discipline: attempting `password=`/`prompt=`/`document_content=`/`api_key=`/`secret=`/`authorization_header=`/`private_payload=` on construction raises `TypeError` before any value exists to leak. Unknown-field, oversize (`>256` chars, reusing the existing `_validate` bound), non-finite numeric (`NaN`/`Infinity`/`-Infinity`), and no-nested-structure behavior are all explicitly tested and rejected.
+
+**Failure containment demonstrated.** `FailingObservationSink` (test-only, `tests/support/observation.py`) raises on `emit()`; a dedicated test proves the `Observation` value itself is unaffected and that a different sink still works afterward. No best-effort/swallowing wrapper was introduced — the task's own instruction was not to add one unless the accepted plan calls for it, and it does not; `ObservationSinkPort.emit()` may simply raise, and no code anywhere in this batch or in F0-F6b catches that exception to decide semantic success.
+
+**Architecture boundaries.** `observability.values`/`ports` may depend only on Kernel (narrower than ADR-002 §9.2's Governance-inclusive maximum for the O plane — no field in this batch actually needs Governance, mirroring `evidence`'s own precedent of choosing narrower-than-maximum when nothing yet requires the wider permission). `reference.observation` may depend only on Kernel plus its own `observability.values`/`.ports` — it cannot import `application.ports`, other reference-owner realizations, or leak the test fake. `kernel` cannot import `observability` (confirmed explicitly, mirroring the existing `evidence`/`governance` symmetry checks). No F0-F6b semantic package depends on `reference.observation`.
+
+Verified before closing this batch: `pytest` 430 passed; `mypy src tests` — no issues in 45 source files; `ruff check`/`ruff format --check` — clean; coverage of the new modules is 100% (`observability/values.py`, `observability/ports.py`, `reference/observation.py`); zero new runtime dependencies; no canonical document changed; no DocuMind file touched; no F0-F6b file touched (confirmed via `git diff --stat HEAD` against every prior package).
+
+Deviations from the F8a task's plan: none of substance.
+
+**ADR-013 remains unresolved/Proposed** for production observability (exporters, sampling, retention, distributed trace propagation, metrics backend, central aggregation, operational alerting) — this batch settles none of that and does not attempt to.
+
+**F7 is still outstanding.** No `plugins/`, `capabilities/`, `reference/declarations.py`, or `reference/resolution.py` exists anywhere in this diff.
+
+**F8b remains blocked until F7 is complete** (it needs both F7 and F8a; only F8a is now done). No `reference/deterministic.py` or `runtime/_composition/direct.py` exists anywhere in this diff.
+
+**Gate 1 is not complete.** F9's own exit checklist (§18.1) was not evaluated by this batch.

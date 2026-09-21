@@ -76,6 +76,10 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.reference.application.codec
     import legoai.reference.application.sqlite_store
     import legoai.reference.application.recovery
+    import legoai.observability
+    import legoai.observability.values
+    import legoai.observability.ports
+    import legoai.reference.observation
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -89,7 +93,9 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.reference.application", "legoai.reference.application.configuration",
     "legoai.reference.application.codec",
     "legoai.reference.application.sqlite_store",
-    "legoai.reference.application.recovery"
+    "legoai.reference.application.recovery",
+    "legoai.observability", "legoai.observability.values", "legoai.observability.ports",
+    "legoai.reference.observation"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -131,6 +137,10 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/application/codec.py",
         "legoai/reference/application/sqlite_store.py",
         "legoai/reference/application/recovery.py",
+        "legoai/observability/__init__.py",
+        "legoai/observability/values.py",
+        "legoai/observability/ports.py",
+        "legoai/reference/observation.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -172,10 +182,13 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/application/test_sqlite_store.py",
             "tests/unit/application/test_recovery.py",
             "tests/unit/evidence/test_values.py",
+            "tests/unit/observability/test_values.py",
+            "tests/unit/observability/test_sink.py",
             "tests/__init__.py",
             "tests/contract/test_configuration_store.py",
             "tests/support/__init__.py",
             "tests/support/configuration_store.py",
+            "tests/support/observation.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -217,7 +230,10 @@ import legoai.reference.application.configuration as configuration
 import legoai.reference.application.codec as codec
 import legoai.reference.application.sqlite_store as sqlite_store
 import legoai.reference.application.recovery as recovery
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery):
+import legoai.observability.values as observability_values
+import legoai.observability.ports as observability_ports
+import legoai.reference.observation as observation
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -261,6 +277,12 @@ report = recovery.qualify_store(Path.cwd() / "smoke.sqlite3")
 assert report.status is recovery.RecoveryStatus.QUALIFIED
 assert report.integrity_check == "ok"
 assert len(report.scopes) == 1
+obs = observability_values.Observation(
+    1, observability_values.ObservationEventCode("smoke.event"), "smoke-owner"
+)
+sink = observation.LocalLoggingObservationSink()
+sink.emit(obs)
+assert isinstance(sink, observability_ports.ObservationSinkPort)
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
