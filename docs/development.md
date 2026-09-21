@@ -1,8 +1,8 @@
 # Foundation developer workflow
 
 This is an identity/package foundation, not an executable Lego AI runtime.
-It implements Gate-1 F0/F1 under ADR-001–005/008. No F2 composition,
-persistence, authority engine or executable runtime exists.
+It implements Gate-1 F0/F1 and F2 pure configuration composition under
+ADR-001–005/008. No persistence, authority engine or executable runtime exists.
 
 ## Environment and dependencies
 
@@ -14,7 +14,7 @@ installer commands themselves are outside the verification recorded here.
 
 The packaging-only version is `0.1.0.dev0`. Runtime dependencies: **zero**.
 Direct development/build requirements are Hatchling 1.32.3, editables 0.5,
-pytest 9.1.1, mypy 2.3.1 and Ruff 0.16.8. `editables` is Hatchling's required
+pytest 9.1.1, mypy 2.3.1, Ruff 0.16.8 and coverage.py 7.16.1. `editables` is Hatchling's required
 editable-build helper, explicitly installed because build isolation is disabled.
 It is not a runtime dependency of the built wheel.
 
@@ -38,6 +38,8 @@ ordinary checking uses `--locked` and does not update dependencies.
 uv sync --locked --group dev --no-install-project
 uv sync --locked --group dev --no-build-isolation
 uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync coverage run --branch -m pytest
+uv run --locked --no-sync coverage report
 uv run --locked --no-sync python -m mypy src tests
 uv run --locked --no-sync ruff check .
 uv run --locked --no-sync ruff format --check .
@@ -63,9 +65,9 @@ commands are executed by the test; no `sys.path` edits are used. Repeat that che
 uv run --locked --no-sync python -m pytest tests/architecture/test_package_install.py
 ```
 
-Wheel runtime content is the three inert initializers, six Kernel modules,
-`governance/values.py` and `py.typed`, plus packaging metadata. The sdist includes
-the five test files and this guide so source verification can be reproduced;
+Wheel runtime content is six inert initializers, six Kernel modules,
+Governance/Application values, reference Application configuration and `py.typed`,
+plus packaging metadata. The sdist includes the six test files and this guide so source verification can be reproduced;
 tests are not wheel runtime content. It also contains Hatchling's included
 `.gitignore`. No caches, planning documents, database or credentials belong in
 either artifact. Build outputs and generated test bytecode remain ignored.
@@ -92,7 +94,7 @@ mutation; no in-process security isolation is claimed.
 Tests derive from F0/F1 and ADR-002: validation/immutability/nominal distinction,
 strict typing in both directions, import policy negative graphs, inert imports
 and installed artifacts. Invalid typing examples are generated only in temporary
-directories and checked for two F0 and six F1 expected mypy argument diagnostics.
+directories and checked for two F0, six F1 and three F2 expected mypy argument diagnostics.
 
 The static checker parses source without executing synthetic fixtures. It checks
 Kernel and Governance value boundaries, non-stdlib imports, test imports,
@@ -105,7 +107,7 @@ The inert-import subprocess preloads stdlib dependencies, disables bytecode
 writes, rejects non-code file access/write and network/process/database audit
 events, and guards thread startup, environment reads and logging configuration.
 It checks remaining threads/log handlers/modules and an unchanged temporary
-directory. This observes all F0/F1 module imports; it is not a hostile-code sandbox.
+directory. This observes all F0/F1/F2 module imports; it is not a hostile-code sandbox.
 
 Local `noqa: B010` markers permit `setattr` in immutability tests to exercise runtime
 rejection without inserting a deliberately invalid assignment into strict typing.
@@ -213,3 +215,73 @@ validation/coercion, dependency direction, synthetic fixture paths and packaged
 content. F1 is a representation foundation, not security isolation or operational
 Conformance evidence. Prereleases, delegation and waiting/deadline behavior remain
 explicitly unsupported until their consuming contracts require them.
+
+## F2 pure configuration fixture
+
+`application.values` owns the frozen records and closed fixture vocabulary.
+`reference.application.configuration` exposes only `capture_candidate` and
+`compose_configuration` for programmatic preparation. There is no normalizer
+execution, owner Port, I/O, publication, activation or authority decision.
+
+The fixture contract and composition interpretation are separately identified by
+`Version(0, 1, 0)`; other versions are rejected, without package-version inference.
+
+| Field | Exact input / meaning | Contract default | Tenant replacement |
+| --- | --- | --- | --- |
+| `max_input_length` | Built-in integer, 1–65536 Unicode code points; bool rejected | 4096 | Forbidden |
+| `normalization_mode` | Exact `trim` or `collapse`; future behavior trims edges, or additionally collapses recognized runs to ASCII space | `collapse` | Allowed by shape |
+| `allowed_whitespace` | Built-in list/tuple of at most six distinct one-character ASCII whitespace strings; captured as an ordered tuple | space, tab, LF, CR, VT, FF | Whole field only |
+
+Non-ASCII characters are preserved by this fixture's intended behavior; F2 does
+not execute it. Collection order is retained in the configuration contract;
+duplicates and unsupported characters fail. Empty collections mean recognize no
+whitespace. Missing keys inherit; explicit null and empty strings are invalid.
+No zero/unbounded input length, implicit deletion or truthiness fallback exists.
+Bounds protect this implementation; they are not platform resource entitlements.
+
+Capture accepts a built-in dictionary of these three optional keys and copies
+its list/tuple content once. Custom containers, nested arbitrary structures,
+unknown fields, extension areas and credential-shaped keys are rejected. Input
+objects must remain stable during synchronous capture; subsequent caller mutation
+cannot affect the result. No concurrent multi-source snapshot guarantee is made.
+
+SourceProvenance records an explicit claimed owner, source ID, opaque source
+revision, contract version and interpretation version. CapturedCandidate adds
+the exact F1 ConfigurationRef target, SourceLayer and NormalizationPatch. Source
+identity strings use the F1 local bound and are omitted from repr; values are
+never echoed in validation errors. Arbitrary secrets hidden in provenance text
+cannot be detected automatically; provenance is neither trust nor Evidence custody.
+
+Composition requires an explicit target and immutable tuple of at most two
+captured sources. Contract-owned defaults are retained as their own source record;
+callers cannot replace them. The single normalization section permits one base
+and one optional tenant override, ordered by role regardless of arrival order.
+Wrong owner/tenant/Application/instance, duplicate writers and protected overrides
+fail. No append, union or recursive merge occurs. Realization/deployment settings
+are not needed by this fixture and have no accepted fields or override role;
+future support must preserve ADR-003's disjoint section rule. Extensions and
+SecretRef likewise await actual consumers. No OperationContext is needed here.
+
+ComposedConfiguration retains `.target`, `.effective` and immutable `.sources`
+(including lower-layer captured values and default provenance). EffectiveConfiguration
+equality includes fixture values and both interpretation versions; source IDs
+remain separate. Equal effective values can therefore have different provenance
+records. Nothing receives an OwnerRevision or ConfigurationRevisionRef. Retained
+in-memory inputs support inspection, not durable historical lookup or publication.
+
+F2 verification on 2026-09-21: **150 tests passed**, including F0/F1 regressions,
+scope/override failures, whole-field replacement, input mutation, source/key order,
+environment changes, inert imports, negative typing and isolated wheel use.
+Strict mypy passed **21 modules**; Ruff check/format and wheel/sdist builds passed.
+Branch reporting covers the two F2 source packages: **173 statements, 106 branches,
+none missing**. This is exercised-path evidence, not proof of correctness or
+Conformance; no arbitrary percentage threshold or exclusions were introduced.
+
+Coverage was added using `uv add --dev --bounds exact coverage --no-build-isolation`.
+The installed uv does not support `uv add --exact`; its help specifies `--bounds exact`.
+Lock review found only coverage.py 7.16.1 added, from PyPI with artifact hashes and
+no added transitive dependencies: six direct development/build dependencies,
+twelve transitive dependencies, zero runtime dependencies. This inventory is not
+a vulnerability or publisher-security approval. The final same-assistant review
+found no persistence, revision minting, governance engine, Plugin activation or
+canonical/planning changes. `git diff --check` passed. F3/F4 were not started.
