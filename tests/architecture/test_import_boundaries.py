@@ -101,6 +101,19 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.governance.values.")
                         or target == "legoai.evidence.values"
                         or target.startswith("legoai.evidence.values.")
+                        # ADR-002 SS7: "Adapter implementation" is its own
+                        # permission row (K and its implemented Port). Only
+                        # the actual Port realization module(s) -- named by
+                        # the "_store" suffix convention -- may import the
+                        # Port they implement; F5's codec (representation
+                        # only, no realization) deliberately still cannot.
+                        or (
+                            name.endswith("_store")
+                            and (
+                                target == "legoai.application.ports"
+                                or target.startswith("legoai.application.ports.")
+                            )
+                        )
                     ):
                         errors.add("reference-owner")
                     if name.startswith("legoai.kernel.") and not (
@@ -460,33 +473,42 @@ def test_test_support_configuration_store_is_rejected_as_production_import() -> 
 
 
 def test_no_database_driver_imported_by_production_source() -> None:
-    # sqlite3 is stdlib, so the generic "external" check does not catch it --
-    # F4/F5 introduce no real persistence yet (that is F6a's scope), so no
-    # production module may import it or any other database driver.
-    forbidden_db_roots = {
-        "sqlite3",
+    # sqlite3 is stdlib, so the generic "external" check does not catch it.
+    # F6a is the one authorized realization allowed to use it (stdlib only,
+    # zero new dependencies); every other production module -- including
+    # F5's codec, which is representation-only -- must stay database-free,
+    # and no non-stdlib driver/ORM is ever permitted anywhere.
+    allowed_sqlite3_path = "reference/application/sqlite_store.py"
+    forbidden_everywhere_roots = {
         "psycopg",
         "psycopg2",
         "asyncpg",
         "sqlalchemy",
         "pymongo",
         "redis",
+        "aiosqlite",
+        "peewee",
+        "dataset",
     }
     root = Path(__file__).resolve().parents[2] / "src" / "legoai"
     offenders: dict[str, set[str]] = {}
     for path in root.rglob("*.py"):
+        relative = str(path.relative_to(root)).replace("\\", "/")
+        forbidden_here = set(forbidden_everywhere_roots)
+        if relative != allowed_sqlite3_path:
+            forbidden_here.add("sqlite3")
         tree = ast.parse(path.read_text(encoding="utf-8"))
         found: set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
-                found |= {
-                    alias.name.split(".")[0] for alias in node.names
-                } & forbidden_db_roots
+                found |= {alias.name.split(".")[0] for alias in node.names} & (
+                    forbidden_here
+                )
             elif isinstance(node, ast.ImportFrom) and node.module:
-                if node.module.split(".")[0] in forbidden_db_roots:
+                if node.module.split(".")[0] in forbidden_here:
                     found.add(node.module.split(".")[0])
         if found:
-            offenders[str(path.relative_to(root))] = found
+            offenders[relative] = found
     assert offenders == {}
 
 

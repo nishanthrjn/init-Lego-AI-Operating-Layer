@@ -388,3 +388,37 @@ Verified before closing this batch: `pytest` 290 passed; `mypy src tests` — no
 Deviations from the F5 task's plan: none of substance. One real decode bug was caught and fixed during implementation (not a scope change): `decode_owner_head`/`decode_published_revision` initially forwarded the full envelope dict — including `record_kind`/`record_schema_version` — into the narrower nested `_decode_owner_revision`/`_decode_configuration_revision_ref` helpers, which then rejected those two keys as "unknown fields" under their own closed-field check; fixed by passing a trimmed inner dict.
 
 **F6a has not been started.** No SQLite connection, SQL, DDL, transaction, or migration-runner code exists anywhere in this diff.
+
+---
+
+## 18. F6a — SQLite realization of ConfigurationStorePort
+
+```text
+F6a_IMPLEMENTATION = COMPLETE
+```
+
+One new production module, `src/legoai/reference/application/sqlite_store.py` (`SQLiteConfigurationStore`), implements the existing F4 `ConfigurationStorePort` unchanged, using stdlib `sqlite3` only. Neither the Port (`application/ports.py`) nor the F5 codecs (`reference/application/codec.py`) were modified — both are byte-for-byte identical to the committed F5 state, confirmed via `git diff --stat HEAD`.
+
+**Physical schema** (LOCAL-PERSISTENCE-REALIZATION.md §7.2, narrowed to what this Port actually needs): `store_metadata` (singleton physical schema-version marker), `config_revision` (immutable historical content, `record_json`), `config_head` (mutable H → R pointer, FK to `config_revision`), `config_result` (retained operation outcome, `descriptor_json`/`result_json`), `config_duty` (outstanding duties, `duty_json`). All STRICT tables with explicit `NOT NULL`/`PRIMARY KEY`/`UNIQUE`/`CHECK`/`FOREIGN KEY` constraints. H and R are never the same column: `head_revision` vs. `revision_id`/`published_head_revision`, matching F5's own field-naming discipline.
+
+**Four distinct version concepts kept apart** (this batch's own §9): the SQL `store_metadata.schema_version` (physical table shape, currently 1, checked at every open — `UnsupportedPhysicalSchemaVersionError` fails closed on mismatch, no migration attempted since only one physical version exists); F5's `RecordSchemaVersion` (unchanged, inside each JSON payload); `OwnerRevision` H; `ConfigurationRevisionRef` R.
+
+**PRAGMAs applied** on every connection, exactly as LOCAL-PERSISTENCE-REALIZATION.md §4.1 selects: `foreign_keys=ON`, `journal_mode=DELETE`, `synchronous=EXTRA`, `busy_timeout=0` (fail-fast, no hidden retry). `autocommit=True` with explicit `BEGIN IMMEDIATE`/`COMMIT`/`ROLLBACK` per §4.1's own transaction-control note.
+
+**Connection ownership**: one fresh connection per Port method call (§5's selected model), opened/configured/closed every time — no ambient/global connection held by the store instance.
+
+**Transactionality**: `publish()` is the only mutation; it opens one `BEGIN IMMEDIATE` transaction, does the idempotent-replay lookup and the expected-revision comparison inside that same transaction (no read-then-later-write TOCTOU window), and inserts the new revision/head/result/duty rows before one `COMMIT`. A real injected mid-transaction failure test (`test_failure_during_commit_leaves_no_partial_mutation`) proves no partial owner-local state becomes visible.
+
+**Reused, not duplicated**: the existing `tests/contract/test_configuration_store.py` `STORE_FACTORIES` list gained one factory (`_sqlite_factory`, real file-backed temp databases, never `:memory:`); all 17 existing contract tests now run parametrized against both the in-memory fake and `SQLiteConfigurationStore` **unchanged** — same assertions, same fixtures, no SQLite-specific rewriting of contract expectations.
+
+**F6a-specific tests** (`tests/unit/application/test_sqlite_store.py`, 18 tests): schema initialization (fresh + idempotent reopen), unsupported physical schema version, restart/file-reopen durability, historical-revision immutability across a later publish, transaction rollback under injected failure, foreign-key and uniqueness constraint enforcement, corrupt-payload handling (revision and result rows) surfacing `codec.RepresentationError` unchanged, missing-historical-revision `UnknownRevisionError` (reused, not redefined), real two-connection concurrent-writer contention (fail-fast `StorageUnavailableError`, no retry engine), two writers expecting the same head (exactly one commits), no-fallback-to-the-fake proof, connect-failure translation, and wrong-subject-type rejection.
+
+**Architecture boundaries extended**, not loosened generally: the `reference-owner` rule now allows importing `legoai.application.ports` *only* for modules named with the `_store` suffix (the actual Port-realization convention) — F5's codec remains unable to import it, proven by the pre-existing `test_f5_reference_codec_cannot_import_ports_or_other_reference_owners`. The database-driver ban (`test_no_database_driver_imported_by_production_source`) now names exactly one authorized exception path (`reference/application/sqlite_store.py`) for stdlib `sqlite3`; every other production module, and every non-stdlib driver/ORM everywhere, remains forbidden.
+
+Verified before closing this batch: `pytest` 325 passed; `mypy src tests` — no issues in 36 source files; `ruff check`/`ruff format --check` — clean; coverage 92% overall (`sqlite_store.py` 88% — remaining gaps are repetitive `except sqlite3.Error` defensive-translation branches structurally identical to the one already proven via failure injection, plus one "impossible under BEGIN IMMEDIATE" defensive guard); zero new runtime dependencies (`pyproject.toml`/`uv.lock` untouched); no canonical document changed; no DocuMind file touched; F4 Port/values and F5 codec confirmed byte-for-byte unchanged.
+
+Deviations from the F6a task's plan: none of substance. One documented scope decision, consistent with (not a departure from) the reused F4 contract suite's own behavior: `publish()` recognizes a resubmitted operation by operation-identity lookup alone (matching `InMemoryConfigurationStore` exactly), not by decoding and comparing the full semantic descriptor for equivalence — the accepted contract-test suite does not exercise the differing-descriptor-under-same-operation-id case, so this SQLite realization intentionally mirrors the fake's existing, already-accepted behavior rather than inventing stricter semantics unilaterally.
+
+**Residual risks**: full ADR-004 §17 qualification layers (real disk/VFS/flush guarantees, abrupt-process-kill barriers, `PRAGMA integrity_check`/`foreign_key_check` startup verification) remain unexercised — this batch proves owner-local transactional atomicity and durability-across-reopen on the current host/filesystem, not a qualified machine-durability guarantee. That gap is explicitly out of F6a's scope per the task's own §46 and belongs to later qualification work, not F6b.
+
+**F6b has not been started.** No recovery orchestration, restart supervisor, `PRAGMA integrity_check`/`foreign_key_check` startup scan, or reconciliation workflow exists anywhere in this diff — this batch's restart test only proves records survive reopening a file, exactly the bounded durability smoke test the task's own §31 authorizes, not recovery.
