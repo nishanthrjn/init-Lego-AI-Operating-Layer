@@ -362,3 +362,29 @@ Verified before closing this batch: `pytest` 228 passed; `mypy src tests` — no
 Deviations from this document's original plan: none of substance. The Port was designed here with `current_revision()` collapsing H and R into one method; that was caught and split into `current_head()`/`current_published()` before the fake or contract tests were written, matching §7's own H/R distinction — not a scope change, a correction during implementation.
 
 **F5 has not been started.** This document's own sequencing (§3) still names F5 (versioned codecs/migration) as the next candidate; nothing in this batch's diff touches serialization, migration, SQLite, or any Gate-2 package.
+
+---
+
+## 17. F5 — persistence representation, codecs, and migration semantics
+
+```text
+F5_IMPLEMENTATION = COMPLETE
+```
+
+F5 prepares F6a's SQLite realization without implementing SQLite. It adds exactly one new production module, `src/legoai/reference/application/codec.py`, at the location ADR-002 §7.2 already names for the Application Composition owner's realization — no new package group, no new canonical value.
+
+**Representation format.** `LOCAL-PERSISTENCE-REALIZATION.md` §10 already selects stdlib JSON as UTF-8 TEXT record envelopes with an explicit closed field set; F5 implements exactly that, not pickle/marshal/Python-object serialization. `codec.dumps`/`codec.loads` provide the strict text layer (sorted-key canonical rendering; duplicate-object-key rejection at every nesting level; non-finite-number rejection; bounded byte-size and nesting-depth preflight) required by that same section.
+
+**Representation version model.** A new `RecordSchemaVersion` type (private to this module's concern, not exported to Kernel) tracks only the durable JSON envelope shape per record kind — kept fully distinct from `Version` (domain contract/interpretation), `OwnerRevision` (H), and `ConfigurationRevisionRef` (R). H and R are never serialized under one ambiguous `revision` field: the codec uses `head_revision` and `configuration_revision_id` respectively. Every record kind starts at schema version 1 today; no synthetic prior version was fabricated to exercise migration machinery that has no real predecessor yet (Gate-1's own anti-overengineering stance, and this batch's own §17 instruction). Each `decode_*` function is the seam a real future transition extends — it currently accepts only version 1 and fails closed (`UnsupportedRepresentationVersionError`) on anything else, including a *future* unsupported version, never reinterpreting it as current.
+
+**Records supported** (naming LOCAL-PERSISTENCE-REALIZATION.md §7.2's table rows): owner head (H), published revision pointer (R), historical revision content (`ComposedConfiguration`), the retained publication descriptor (`ConfigurationPublicationOperation`), the publication result (`ConfigurationPublicationResult`), and the outstanding source-submission duty (`ConfigurationSourceSubmissionDuty`, with its nested `EvidenceRequirement`). No generic universal record envelope and no per-value `to_dict`/`to_json` methods were added to canonical values — all encode/decode logic lives in this one reference-boundary module.
+
+**Failure model.** A small three-class exception surface (`MalformedRepresentationError`, `UnsupportedRepresentationVersionError`, `InvalidRepresentationError`, all under one `RepresentationError` base) replaces raw `json`/parser exceptions at the durable-storage contract. Missing/unknown/wrong-typed fields, unknown enum values, and semantically-invalid decoded values (re-raised from the domain constructors' own `__post_init__` guards) all fail closed — never defaulted, never reinterpreted as current/latest.
+
+**F6a handoff.** A future SQLite Adapter calls `encode_*`/`decode_*` (structured dict) or `dumps`/`loads` (JSON text) directly against the `record_json`/`descriptor_json`/`result_json`/`duty_json` TEXT columns LOCAL-PERSISTENCE-REALIZATION.md §7.2 names; F5 opens no connection, executes no SQL, and orchestrates no recovery. Round-trip and corruption/version-failure tests in `tests/unit/application/test_codec.py` are the exact contract F6a's own storage tests must not weaken.
+
+Verified before closing this batch: `pytest` 290 passed; `mypy src tests` — no issues in 34 source files; `ruff check`/`ruff format --check` — clean; zero new runtime dependencies (`pyproject.toml`/`uv.lock` untouched); no canonical document changed; no DocuMind file touched; no F4 semantic file (`application/values.py`, `application/ports.py`, `kernel/provenance.py`, `evidence/values.py`, `tests/support/configuration_store.py`) touched; no SQLite, Gate-2, or AI/Model code introduced anywhere in the diff.
+
+Deviations from the F5 task's plan: none of substance. One real decode bug was caught and fixed during implementation (not a scope change): `decode_owner_head`/`decode_published_revision` initially forwarded the full envelope dict — including `record_kind`/`record_schema_version` — into the narrower nested `_decode_owner_revision`/`_decode_configuration_revision_ref` helpers, which then rejected those two keys as "unknown fields" under their own closed-field check; fixed by passing a trimmed inner dict.
+
+**F6a has not been started.** No SQLite connection, SQL, DDL, transaction, or migration-runner code exists anywhere in this diff.

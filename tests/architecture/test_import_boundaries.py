@@ -92,6 +92,15 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.application.values.")
                         or target == "legoai.reference.application"
                         or target.startswith("legoai.reference.application.")
+                        # ADR-002 SS9.2/SS7: a reference realization gets the
+                        # same allowed-peer permissions as its owner's row --
+                        # F5's codec constructs Principal/EvidenceRequirement
+                        # instances, mirroring application-owner's own F4
+                        # widening to G (governance) and O (evidence) above.
+                        or target == "legoai.governance.values"
+                        or target.startswith("legoai.governance.values.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
                     ):
                         errors.add("reference-owner")
                     if name.startswith("legoai.kernel.") and not (
@@ -523,3 +532,79 @@ def test_no_documind_or_document_pack_import_by_core() -> None:
             if roots & {"legoai_document", "documind"}:
                 offenders.append(str(path.relative_to(root)))
     assert offenders == []
+
+
+# --- F5: reference-persistence codec boundary -----------------------------
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.values",
+            "from legoai.reference.application.codec import encode_owner_head",
+            "application-owner",
+        ),
+        (
+            "legoai.evidence.values",
+            "from legoai.reference.application.codec import encode_owner_head",
+            "evidence-owner",
+        ),
+        (
+            "legoai.governance.values",
+            "from legoai.reference.application.codec import encode_owner_head",
+            "governance-owner",
+        ),
+        (
+            "legoai.kernel.provenance",
+            "from legoai.reference.application.codec import encode_owner_head",
+            "kernel-owner",
+        ),
+    ],
+)
+def test_f5_semantic_packages_do_not_depend_on_reference_codec(
+    module: str, source: str, reason: str
+) -> None:
+    # F5's codec is an implementation detail of the Application Composition
+    # owner's *reference realization*; no canonical value module may import
+    # it, in either direction of the values/reference layering (ADR-002 SS7).
+    assert reason in violations({module: source})
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.application.values import OwnerRevision",
+        "from legoai.governance.values import Principal",
+        "from legoai.evidence.values import EvidenceRequirement",
+        "from legoai.kernel.references import ConfigurationRef",
+    ],
+)
+def test_f5_reference_codec_may_depend_inward_on_allowed_peer_values(
+    source: str,
+) -> None:
+    # Mirrors the owner's own allowed-peer widening (ADR-002 SS9.2): a
+    # reference realization gets the same foreign-value permissions as the
+    # owner it realizes.
+    assert "reference-owner" not in violations(
+        {"legoai.reference.application.codec": source}
+    )
+
+
+def test_f5_reference_codec_cannot_import_ports_or_other_reference_owners() -> None:
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.application.codec": "from legoai.application.ports import ConfigurationStorePort"
+        }
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.application.codec": "import legoai.reference.governance"}
+    )
+
+
+def test_f5_codec_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.application.codec": "from tests.support.configuration_store import InMemoryConfigurationStore"
+        }
+    )
