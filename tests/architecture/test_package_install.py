@@ -75,6 +75,7 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.reference.application.configuration
     import legoai.reference.application.codec
     import legoai.reference.application.sqlite_store
+    import legoai.reference.application.recovery
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -87,7 +88,8 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.reference",
     "legoai.reference.application", "legoai.reference.application.configuration",
     "legoai.reference.application.codec",
-    "legoai.reference.application.sqlite_store"
+    "legoai.reference.application.sqlite_store",
+    "legoai.reference.application.recovery"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -128,6 +130,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/application/configuration.py",
         "legoai/reference/application/codec.py",
         "legoai/reference/application/sqlite_store.py",
+        "legoai/reference/application/recovery.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -167,6 +170,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/application/test_operation_result.py",
             "tests/unit/application/test_codec.py",
             "tests/unit/application/test_sqlite_store.py",
+            "tests/unit/application/test_recovery.py",
             "tests/unit/evidence/test_values.py",
             "tests/__init__.py",
             "tests/contract/test_configuration_store.py",
@@ -212,7 +216,8 @@ import legoai.application.ports as ports
 import legoai.reference.application.configuration as configuration
 import legoai.reference.application.codec as codec
 import legoai.reference.application.sqlite_store as sqlite_store
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store):
+import legoai.reference.application.recovery as recovery
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -252,6 +257,10 @@ op = application.ConfigurationPublicationOperation(
 published = store.publish(op)
 assert published.stage.value == "committed"
 assert store.current_head(target) == published.resulting_revision
+report = recovery.qualify_store(Path.cwd() / "smoke.sqlite3")
+assert report.status is recovery.RecoveryStatus.QUALIFIED
+assert report.integrity_check == "ok"
+assert len(report.scopes) == 1
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
