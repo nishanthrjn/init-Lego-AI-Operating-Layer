@@ -40,7 +40,7 @@ def test_cross_kind_typing(tmp_path: Path) -> None:
 def test_inert_import(tmp_path: Path) -> None:
     # Preload stdlib dependencies; then observe only our package import interval.
     script = """
-import dataclasses, logging, threading, socket, os, sys
+import dataclasses, datetime, logging, threading, socket, os, sys
 from unittest.mock import patch
 handlers = tuple(logging.getLogger().handlers)
 threads = tuple(threading.enumerate())
@@ -69,6 +69,8 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.governance.values
     import legoai.application.values
     import legoai.reference.application.configuration
+    import legoai.application.ports
+    import legoai.evidence.values
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -76,7 +78,8 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.kernel.versions", "legoai.kernel.context", "legoai.kernel.errors",
     "legoai.kernel.effects", "legoai.governance", "legoai.governance.values",
     "legoai.application", "legoai.application.values", "legoai.reference",
-    "legoai.reference.application", "legoai.reference.application.configuration"
+    "legoai.reference.application", "legoai.reference.application.configuration",
+    "legoai.application.ports", "legoai.evidence", "legoai.evidence.values"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -111,6 +114,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/__init__.py",
         "legoai/reference/application/__init__.py",
         "legoai/reference/application/configuration.py",
+        "legoai/application/ports.py",
+        "legoai/evidence/__init__.py",
+        "legoai/evidence/values.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -146,6 +152,11 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/kernel/test_foundation.py",
             "tests/unit/governance/test_context.py",
             "tests/unit/application/test_configuration.py",
+            "tests/__init__.py",
+            "tests/support/__init__.py",
+            "tests/support/configuration_store.py",
+            "tests/contracts/conftest.py",
+            "tests/contracts/test_configuration_store.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -181,11 +192,15 @@ import legoai.kernel.effects as effects
 import legoai.governance.values as governance
 import legoai.application.values as application
 import legoai.reference.application.configuration as configuration
-for module in (references, context, versions, errors, effects, governance, application, configuration):
+import legoai.application.ports as ports
+import legoai.evidence.values as evidence
+for module in (references, context, versions, errors, effects, governance, application, configuration, ports, evidence):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
 assert result.effective.max_input_length == 4096
+assert ports.HeadQuery(target).subject == target
+assert evidence.RequirementRef(target.application.scope, "required", versions.Version(0, 1, 0)).scope == target.application.scope
 assert versions.Version(0, 1, 0) < versions.Version(0, 2, 0)
 assert context.TenantContext(identity.TenantId("t")).tenant_id == identity.TenantId("t")
 assert governance.Principal(references.PrincipalRef("issuer", identity.PrincipalId("p"))).reference.principal_id == identity.PrincipalId("p")
@@ -267,5 +282,31 @@ def test_f2_static_misuse(tmp_path: Path) -> None:
         errors,
         ("SourceLayer", "ConfigurationRef", "tuple[CapturedCandidate, ...]"),
         strict=True,
+    ):
+        assert "[arg-type]" in error and f'expected "{expected}"' in error
+
+
+def test_f4_static_misuse(tmp_path: Path) -> None:
+    fixture = tmp_path / "f4_misuse.py"
+    fixture.write_text(
+        "from legoai.application.ports import ConfigurationHead, DutyRef, HeadQuery\n"
+        "from legoai.kernel.references import ConfigurationRef, ConfigurationRevisionRef\n"
+        "from legoai.kernel.identity import TenantId\n"
+        "from legoai.evidence.values import RequirementRef\n"
+        "def misuse(subject: ConfigurationRef, revision: ConfigurationRevisionRef, requirement: RequirementRef) -> None:\n"
+        "    ConfigurationHead(revision, revision)\n"
+        "    DutyRef(subject, requirement)\n"
+        "    HeadQuery(TenantId('tenant'))\n",
+        encoding="utf-8",
+    )
+    result = run(
+        [sys.executable, "-m", "mypy", "--strict", "--no-incremental", str(fixture)],
+        tmp_path,
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    errors = [line for line in result.stdout.splitlines() if ": error:" in line]
+    assert len(errors) == 3, result.stdout
+    for error, expected in zip(
+        errors, ("OwnerRevision", "ObligationId", "ConfigurationRef"), strict=True
     ):
         assert "[arg-type]" in error and f'expected "{expected}"' in error

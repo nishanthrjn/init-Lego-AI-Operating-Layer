@@ -1,8 +1,9 @@
 # Foundation developer workflow
 
 This is an identity/package foundation, not an executable Lego AI runtime.
-It implements Gate-1 F0/F1 and F2 pure configuration composition under
-ADR-001–005/008. No persistence, authority engine or executable runtime exists.
+It implements Gate-1 F0/F1, F2 pure configuration composition and F4 owner
+contracts under the accepted ADRs. No durable persistence, authority engine or
+executable runtime exists.
 
 ## Environment and dependencies
 
@@ -65,9 +66,10 @@ commands are executed by the test; no `sys.path` edits are used. Repeat that che
 uv run --locked --no-sync python -m pytest tests/architecture/test_package_install.py
 ```
 
-Wheel runtime content is six inert initializers, six Kernel modules,
-Governance/Application values, reference Application configuration and `py.typed`,
-plus packaging metadata. The sdist includes the six test files and this guide so source verification can be reproduced;
+Wheel runtime content includes inert initializers, Kernel modules,
+Governance/Application/Evidence values, Application ports, reference Application
+configuration and `py.typed`, plus packaging metadata. The sdist includes tests,
+the test-only store and this guide so source verification can be reproduced;
 tests are not wheel runtime content. It also contains Hatchling's included
 `.gitignore`. No caches, planning documents, database or credentials belong in
 either artifact. Build outputs and generated test bytecode remain ignored.
@@ -94,7 +96,7 @@ mutation; no in-process security isolation is claimed.
 Tests derive from F0/F1 and ADR-002: validation/immutability/nominal distinction,
 strict typing in both directions, import policy negative graphs, inert imports
 and installed artifacts. Invalid typing examples are generated only in temporary
-directories and checked for two F0, six F1 and three F2 expected mypy argument diagnostics.
+directories and checked for two F0, six F1, three F2 and three F4 expected mypy argument diagnostics.
 
 The static checker parses source without executing synthetic fixtures. It checks
 Kernel and Governance value boundaries, non-stdlib imports, test imports,
@@ -107,7 +109,7 @@ The inert-import subprocess preloads stdlib dependencies, disables bytecode
 writes, rejects non-code file access/write and network/process/database audit
 events, and guards thread startup, environment reads and logging configuration.
 It checks remaining threads/log handlers/modules and an unchanged temporary
-directory. This observes all F0/F1/F2 module imports; it is not a hostile-code sandbox.
+directory. This observes all F0/F1/F2/F4 module imports; it is not a hostile-code sandbox.
 
 Local `noqa: B010` markers permit `setattr` in immutability tests to exercise runtime
 rejection without inserting a deliberately invalid assignment into strict typing.
@@ -285,3 +287,59 @@ twelve transitive dependencies, zero runtime dependencies. This inventory is not
 a vulnerability or publisher-security approval. The final same-assistant review
 found no persistence, revision minting, governance engine, Plugin activation or
 canonical/planning changes. `git diff --check` passed. F3/F4 were not started.
+
+## F4 configuration-owner contract
+
+`application.ports.ConfigurationOwnerStore` is an internal synchronous Protocol:
+`publish`, `get_head`, `get_revision`, `get_operation_result`, `list_obligations`.
+Application ports compose permitted Governance/Evidence leaf values; Application
+values and Kernel do not depend on those owner contracts. Evidence contains only
+pinned requirement/guarantee values, with explicit UTC due/retention bounds.
+
+Publication meaning includes the exact subject, effective configuration and
+provenance, requester, original expected absence/head, duty plan and contract/
+equivalence versions. Request, trace, correlation and observation changes do not
+change meaning. Causation is retained attribution, not a new publication input;
+this non-delegated administrative profile carries no causal authority. Original
+context remains historical. Changed requester or provenance conflicts even if
+settings are equal. Equivalent retained operations are checked before stale-head
+preconditions. The first head is 1; immutable configuration revisions remain
+separate from scoped OwnerRevision equality guards.
+
+Commands/results are frozen, slotted and validated. Constructor TypeError and
+ValueError are local programming/input failures. Semantic store failures use
+ErrorDetail with NONE or UNKNOWN extent, without automatic retry policy. A
+successful result has COMPLETED local-owner extent and an owner-commit
+acknowledgment field, not an Execution lifecycle state. Current access checks
+remain the operating owner's responsibility, including historical disclosure.
+
+Coverage distinguishes intact, non-restored store-lifetime absence from UNKNOWN;
+no bare missing result proves eternal absence. Exact historical reads retain
+original interpretation and never substitute latest. Unknown outcomes require
+reconciliation by a future operating owner, not automatic retransmission.
+
+One publication can carry zero or one pending source duty with 1–8 distinct
+requirements (a local bounded profile). Duty identity and positive obligation
+revision are separate from owner/configuration revisions. Responsible Principal,
+reconciliation authority, pinned requirements and explicit time bounds remain in
+the retained source plan. There is no Evidence receipt, custody, repair or closure.
+Queries return at most 128 entries using scoped keyset continuation bound to store,
+tenant/owner, status, query version and optional exact subject. Quiescent scans
+have no omissions/duplicates; live changes/restart require a fresh scan.
+
+`tests/support/configuration_store.py` implements only a single-threaded semantic
+fake, staging head/history/result/duty maps before one state swap. Shared vectors
+consume a `ConfigurationOwnerStore` factory, without inspecting fake internals or
+assuming its deterministic allocation format. The fake is excluded from the
+wheel; test package initializers permit ordinary test-support imports. There is
+no disk durability, SQLite, lock, crash, migration or restart qualification.
+
+F4 verification: 176 tests pass, including F0–F2 regressions, semantic vectors,
+constructor negative paths, cursor integrity, architecture negatives, inert
+imports, static misuse and isolated fresh-wheel installation. Coverage includes
+Application, Evidence, reference composition and test support: 97% combined
+statement/branch coverage (552 statements, 240 branches). Remaining unexercised
+paths are defensive malformed-record/context/scope checks and the fake's signed
+64-bit head-exhaustion guard; no crash/durability coverage is implied. Strict
+mypy checks 29 files. Dependency selections and runtime dependency count are
+unchanged. No accepted canonical/planning artifact is modified.

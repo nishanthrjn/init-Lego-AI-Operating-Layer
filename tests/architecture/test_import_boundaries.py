@@ -64,19 +64,42 @@ def violations(sources: dict[str, str]) -> set[str]:
                 if root in {"tests", "test_support"}:
                     errors.add("test-import")
                 elif root == "legoai":
-                    if name.startswith("legoai.application.") and not (
-                        target == "legoai.kernel"
-                        or target.startswith("legoai.kernel.")
-                        or target == "legoai.application"
-                        or target.startswith("legoai.application.")
+                    if (
+                        name.startswith("legoai.application.")
+                        and name != "legoai.application.ports"
+                        and not (
+                            target == "legoai.kernel"
+                            or target.startswith("legoai.kernel.")
+                            or target == "legoai.application"
+                            or target.startswith("legoai.application.")
+                        )
                     ):
                         errors.add("application-owner")
-                    if name.startswith("legoai.application.") and any(
-                        target == f"legoai.application.{layer}"
-                        or target.startswith(f"legoai.application.{layer}.")
-                        for layer in ("ports", "reference", "runtime")
+                    if (
+                        name.startswith("legoai.application.")
+                        and name != "legoai.application.ports"
+                        and any(
+                            target == f"legoai.application.{layer}"
+                            or target.startswith(f"legoai.application.{layer}.")
+                            for layer in ("ports", "reference", "runtime")
+                        )
                     ):
                         errors.add("values-layer")
+                    if name == "legoai.application.ports" and not any(
+                        target == allowed or target.startswith(allowed + ".")
+                        for allowed in (
+                            "legoai.kernel",
+                            "legoai.application.values",
+                            "legoai.evidence.values",
+                            "legoai.governance.values",
+                        )
+                    ):
+                        errors.add("application-port")
+                    if name.startswith("legoai.evidence.") and not any(
+                        target == allowed or target.startswith(allowed + ".")
+                        for allowed in ("legoai.kernel", "legoai.evidence.values")
+                    ):
+                        errors.add("evidence-owner")
                     if name.startswith("legoai.reference.application.") and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
@@ -321,3 +344,58 @@ def test_f2_pure_module_dependencies() -> None:
                 )
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in {"open", "print", "input"}
+
+
+@pytest.mark.parametrize(
+    ("module", "source", "reason"),
+    [
+        (
+            "legoai.application.ports",
+            "import tests.support.configuration_store",
+            "test-import",
+        ),
+        (
+            "legoai.application.ports",
+            "import legoai.reference.application.configuration",
+            "application-port",
+        ),
+        (
+            "legoai.application.values",
+            "import legoai.evidence.values",
+            "application-owner",
+        ),
+        (
+            "legoai.evidence.values",
+            "import legoai.application.values",
+            "evidence-owner",
+        ),
+        ("legoai.evidence.values", "import legoai.governance.values", "evidence-owner"),
+        ("legoai.kernel.identity", "import legoai.evidence.values", "kernel-owner"),
+    ],
+)
+def test_f4_boundaries(module: str, source: str, reason: str) -> None:
+    assert reason in violations({module: source})
+
+
+def test_f4_inward_graph_and_no_persistence() -> None:
+    assert not violations(
+        {
+            "legoai.application.ports": "from legoai.evidence.values import SourceRequirement\nfrom legoai.governance.values import OperationContext\nfrom legoai.application.values import ComposedConfiguration",
+            "legoai.evidence.values": "from legoai.kernel.references import ReferenceScope",
+        }
+    )
+    root = Path(__file__).resolve().parents[2]
+    files = (
+        list((root / "src").rglob("*.py"))
+        + list((root / "tests/support").rglob("*.py"))
+        + list((root / "tests/contracts").rglob("*.py"))
+    )
+    for path in files:
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                assert not {alias.name.split(".")[0] for alias in node.names} & {
+                    "sqlite3",
+                    "json",
+                }
+            if isinstance(node, ast.ImportFrom):
+                assert (node.module or "").split(".")[0] not in {"sqlite3", "json"}

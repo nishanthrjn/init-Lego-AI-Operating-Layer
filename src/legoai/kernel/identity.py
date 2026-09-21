@@ -84,3 +84,13 @@ class TraceId:
 
     def __post_init__(self) -> None:
         _validate(self.value)
+
+
+@dataclass(frozen=True, slots=True)
+class ObligationId:
+    """Opaque obligation identity, not an Evidence receipt or Task identity."""
+
+    value: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        _validate(self.value)

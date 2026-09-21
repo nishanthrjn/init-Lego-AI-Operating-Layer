@@ -43,7 +43,7 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
 
 [tool.coverage.run]
 branch = true
-source = ["legoai.application", "legoai.reference.application"]
+source = ["legoai.application", "legoai.reference.application", "legoai.evidence", "tests.support"]
 
 [tool.coverage.report]
 show_missing = true
