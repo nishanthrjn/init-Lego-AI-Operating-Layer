@@ -5,9 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "legoai-document"
 version = "0.1.0.dev0"
-description = "Lego AI Document Capability Pack: document.chunking, document.parsing"
+description = "Lego AI Document Capability Pack: document.chunking, document.parsing, document.embedding, document.retrieval, document.rerank, document.ingestion, document.answering"
 requires-python = ">=3.14,<3.15"
-dependencies = ["pypdf>=6.19.0,<7"]
+dependencies = ["pypdf>=6.19.0,<7", "legoai-reference"]
+
+[tool.uv.sources]
+legoai-reference = { path = "../..", editable = true }
 
 [dependency-groups]
 dev = [
@@ -43,7 +46,15 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
 
 [tool.coverage.run]
 branch = true
-source = ["legoai_document.chunking", "legoai_document.parsing"]
+source = [
+    "legoai_document.chunking",
+    "legoai_document.parsing",
+    "legoai_document.embedding",
+    "legoai_document.retrieval",
+    "legoai_document.rerank",
+    "legoai_document.ingestion",
+    "legoai_document.answering",
+]
 
 [tool.coverage.report]
 show_missing = true

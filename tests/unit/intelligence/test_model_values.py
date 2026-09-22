@@ -95,7 +95,10 @@ def test_embedding_request_empty_batch_is_valid() -> None:
 
 def test_embedding_result_enforces_uniform_positive_dimension() -> None:
     result = EmbeddingResult(
-        ((1.0, 2.0), (3.0, 4.0)), 2, ModelId("nomic-embed-text"), ProviderId("ollama-local")
+        ((1.0, 2.0), (3.0, 4.0)),
+        2,
+        ModelId("nomic-embed-text"),
+        ProviderId("ollama-local"),
     )
     assert result.dimension == 2
 
