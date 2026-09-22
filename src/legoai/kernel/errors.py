@@ -23,6 +23,15 @@ class ErrorCategory(Enum):
     # this enum incrementally for their own first real consumers).
     AUTHORIZATION_DENIED = "AuthorizationDenied"
     POLICY_VIOLATION = "PolicyViolation"
+    # Gate-2 M10: ADR-015 SS16 names these among the "existing canonical
+    # categories" a supervised Coordinator maps known causes onto.
+    # DEADLINE_EXCEEDED and EXECUTION_FAILURE did not previously exist
+    # because no earlier batch was a genuine consumer; M10's deadline
+    # enforcement and unexpected-internal-fault mapping are their first real
+    # consumers (mirroring how M4 grew this enum for its own first
+    # consumer, above).
+    DEADLINE_EXCEEDED = "DeadlineExceeded"
+    EXECUTION_FAILURE = "ExecutionFailure"
 
 
 class Recoverability(Enum):

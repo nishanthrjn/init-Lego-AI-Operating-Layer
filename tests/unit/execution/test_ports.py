@@ -15,10 +15,20 @@ from legoai.capabilities.ports import CatalogEntry
 from legoai.capabilities.values import CapabilityId, CapabilityOffer
 from legoai.evidence.ports import EvidenceId
 from legoai.execution.ports import (
+    CoordinationOutcome,
+    CoordinationRequest,
+    CoordinationResult,
     DispatchDecision,
     DispatchOutcome,
     DispatchPermit,
     DispatchRequest,
+    SecurityContextResolutionPort,
+)
+from legoai.execution.values import (
+    ExecutionContext,
+    ExecutionId,
+    ExecutionState,
+    SecurityContextRef,
 )
 from legoai.governance.ports import (
     AuthorizationDecision,
@@ -30,6 +40,7 @@ from legoai.kernel.context import TenantContext
 from legoai.kernel.errors import ErrorCategory
 from legoai.kernel.identity import (
     ApplicationId,
+    CorrelationId,
     OperationId,
     PrincipalId,
     TenantId,
@@ -121,6 +132,30 @@ def _permit(*, tenant: str = "tenant") -> DispatchPermit:
         1,
         _allowed_decision(tenant=tenant),
         _EPOCH,
+    )
+
+
+def _execution_context(
+    *, tenant: str = "tenant", deadline: datetime | None = None
+) -> ExecutionContext:
+    return ExecutionContext(
+        ExecutionId("exec-1"),
+        _operation(tenant),
+        TenantContext(TenantId(tenant)),
+        SecurityContextRef("issuer", "ref-1"),
+        CorrelationId("corr-1"),
+        None,
+        deadline,
+        None,
+    )
+
+
+def _coordination_request(
+    *, tenant: str = "tenant", deadline: datetime | None = None
+) -> CoordinationRequest:
+    return CoordinationRequest(
+        _execution_context(tenant=tenant, deadline=deadline),
+        _catalog_entry(tenant=tenant),
     )
 
 
@@ -377,3 +412,214 @@ def test_dispatch_decision_does_not_claim_future_validity() -> None:
         hasattr(decision, attr)
         for attr in ("valid_forever", "permanent", "still_valid")
     )
+
+
+# --- Gate-2 M10: CoordinationRequest ---------------------------------------------
+
+
+def test_coordination_request_valid_construction() -> None:
+    request = _coordination_request()
+    assert request.required_evidence_ids == ()
+    assert request == replace(request)
+
+
+def test_coordination_request_tenant_mismatch_rejected() -> None:
+    with pytest.raises(ValueError, match="tenant mismatch"):
+        CoordinationRequest(
+            _execution_context(tenant="tenant-a"), _catalog_entry(tenant="tenant-b")
+        )
+
+
+@pytest.mark.parametrize("field_name", ["context", "resolved_entry"])
+def test_coordination_request_required_fields_reject_wrong_type(
+    field_name: str,
+) -> None:
+    request = _coordination_request()
+    invalid_inputs: tuple[object, ...] = ("raw", True, [], {}, 1, lambda: None, None)
+    for invalid in invalid_inputs:
+        with pytest.raises(TypeError):
+            cast(Callable[..., object], replace)(request, **{field_name: invalid})
+
+
+def test_coordination_request_rejects_wrong_type_evidence_ids() -> None:
+    with pytest.raises(TypeError, match="immutable"):
+        replace(
+            _coordination_request(),
+            required_evidence_ids=cast("tuple[EvidenceId, ...]", [EvidenceId("e1")]),
+        )
+
+
+def test_coordination_request_immutable() -> None:
+    request = _coordination_request()
+    with pytest.raises(FrozenInstanceError):
+        setattr(request, "resolved_entry", _catalog_entry())  # noqa: B010
+
+
+# --- Gate-2 M10: CoordinationOutcome / CoordinationResult ------------------------
+
+
+def test_coordination_outcome_exact_three_members() -> None:
+    assert {member.value for member in CoordinationOutcome} == {
+        "ready",
+        "rejected",
+        "cancelled",
+    }
+
+
+def test_coordination_result_ready_requires_running_and_permit() -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.READY,
+        ExecutionState.RUNNING,
+        _permit(),
+        None,
+    )
+    assert result.permit is not None
+
+    with pytest.raises(ValueError, match="requires ExecutionState.RUNNING"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.READY,
+            ExecutionState.ADMITTED,
+            _permit(),
+            None,
+        )
+    with pytest.raises(ValueError, match="requires a permit"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.READY,
+            ExecutionState.RUNNING,
+            None,
+            None,
+        )
+    with pytest.raises(ValueError, match="must not carry a category"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.READY,
+            ExecutionState.RUNNING,
+            _permit(),
+            ErrorCategory.AUTHORIZATION_DENIED,
+        )
+
+
+def test_coordination_result_rejected_requires_category_and_no_permit() -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.REJECTED,
+        ExecutionState.REJECTED,
+        None,
+        ErrorCategory.DEADLINE_EXCEEDED,
+    )
+    assert result.category is ErrorCategory.DEADLINE_EXCEEDED
+
+    with pytest.raises(ValueError, match="requires ExecutionState.REJECTED"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.REJECTED,
+            ExecutionState.CANCELLED,
+            None,
+            ErrorCategory.DEADLINE_EXCEEDED,
+        )
+    with pytest.raises(ValueError, match="requires a category"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.REJECTED,
+            ExecutionState.REJECTED,
+            None,
+            None,
+        )
+    with pytest.raises(ValueError, match="must not carry a permit"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.REJECTED,
+            ExecutionState.REJECTED,
+            _permit(),
+            ErrorCategory.DEADLINE_EXCEEDED,
+        )
+
+
+def test_coordination_result_cancelled_carries_neither_permit_nor_category() -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.CANCELLED,
+        ExecutionState.CANCELLED,
+        None,
+        None,
+    )
+    assert result.permit is None
+    assert result.category is None
+
+    with pytest.raises(ValueError, match="requires ExecutionState.CANCELLED"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.CANCELLED,
+            ExecutionState.REJECTED,
+            None,
+            None,
+        )
+    with pytest.raises(ValueError, match="must not carry a permit"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.CANCELLED,
+            ExecutionState.CANCELLED,
+            _permit(),
+            None,
+        )
+    with pytest.raises(ValueError, match="must not carry a category"):
+        CoordinationResult(
+            ExecutionId("exec-1"),
+            CoordinationOutcome.CANCELLED,
+            ExecutionState.CANCELLED,
+            None,
+            ErrorCategory.DEADLINE_EXCEEDED,
+        )
+
+
+@pytest.mark.parametrize(
+    "field_name", ["execution_id", "outcome", "state", "permit", "category"]
+)
+def test_coordination_result_rejects_wrong_type(field_name: str) -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.REJECTED,
+        ExecutionState.REJECTED,
+        None,
+        ErrorCategory.DEADLINE_EXCEEDED,
+    )
+    with pytest.raises(TypeError):
+        cast(Callable[..., object], replace)(result, **{field_name: "not-valid"})
+
+
+def test_coordination_result_has_no_executable_field() -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.READY,
+        ExecutionState.RUNNING,
+        _permit(),
+        None,
+    )
+    names = {f.name for f in fields(CoordinationResult)}
+    assert names.isdisjoint(FORBIDDEN_RUNTIME_FIELDS)
+    for method_name in ("invoke", "execute", "dispatch", "call_provider", "activate"):
+        assert not hasattr(result, method_name)
+
+
+def test_coordination_result_immutable() -> None:
+    result = CoordinationResult(
+        ExecutionId("exec-1"),
+        CoordinationOutcome.CANCELLED,
+        ExecutionState.CANCELLED,
+        None,
+        None,
+    )
+    with pytest.raises(FrozenInstanceError):
+        setattr(result, "outcome", CoordinationOutcome.READY)  # noqa: B010
+
+
+# --- Gate-2 M10: SecurityContextResolutionPort -----------------------------------
+
+
+def test_security_context_resolution_port_resolve_is_async() -> None:
+    import inspect
+
+    assert inspect.iscoroutinefunction(SecurityContextResolutionPort.resolve)

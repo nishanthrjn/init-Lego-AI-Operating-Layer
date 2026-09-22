@@ -51,11 +51,18 @@ from typing import Protocol
 
 from legoai.capabilities.ports import CatalogEntry
 from legoai.evidence.ports import EvidenceId
+from legoai.execution.values import (
+    ExecutionContext,
+    ExecutionId,
+    ExecutionState,
+    SecurityContextRef,
+)
 from legoai.governance.ports import (
     AuthorizationDecision,
     AuthorizationOutcome,
     SecurityContext,
 )
+from legoai.kernel.context import TenantContext
 from legoai.kernel.errors import ErrorCategory
 from legoai.kernel.references import OperationRef
 
@@ -195,3 +202,144 @@ class DispatchArbiterPort(Protocol):
     def arbitrate(
         self, request: DispatchRequest, *, evaluated_at: datetime
     ) -> DispatchDecision: ...
+
+
+class ExecutionTransitionError(ValueError):
+    """An attempted `ExecutionState` transition is not permitted from the
+    current state (SPEC SS5.1's exact canonical Execution lifecycle text).
+    Not itself a dispatch/authorization failure category -- a caller/
+    Coordinator precondition violation, mirroring
+    `legoai.plugins.ports.LifecycleTransitionError`'s role for ADR-006's
+    Plugin lifecycle (Gate-2 M5).
+    """
+
+
+class SecurityContextResolutionPort(Protocol):
+    """Gate-2 M10: the seam that bridges M1's opaque `SecurityContextRef`
+    (carried on `ExecutionContext`) to the concrete `SecurityContext` M9's
+    `DispatchArbiterPort` requires. `ExecutionContext` deliberately holds
+    only a reference (module docstring of `legoai.execution.values`); a
+    Coordinator realizing supervised orchestration is the first genuine
+    consumer that must resolve it to call M9's `arbitrate`.
+
+    Returns `None` when the reference cannot currently be resolved (unknown
+    reference, unavailable dependency) -- mirroring the None-on-unknown
+    convention used throughout M4/M6/M8 -- never a fabricated
+    `SecurityContext`. This is declared `async` because resolution is a
+    genuine I/O-shaped seam (ADR-015 SS4's structured-supervision model);
+    no semantic value constructor anywhere in this codebase is itself made
+    async.
+    """
+
+    async def resolve(
+        self, ref: SecurityContextRef, tenant_context: TenantContext
+    ) -> SecurityContext | None: ...
+
+
+class CoordinationOutcome(Enum):
+    """Gate-2 M10's own outcome vocabulary -- deliberately not a reuse of
+    `ExecutionResult`'s terminal states. The Coordinator's unit of work is
+    "reach the invocation-ready boundary or stop safely before it", never
+    the eventual governed capability effect (that is M11's
+    `ExecutionResult`, not this batch's). Exactly three members: this batch
+    never produces `FAILED` (SPEC SS5.1 defines no `admitted -> failed`
+    edge; the Coordinator never reaches `running` for its own internal
+    faults -- see `CoordinationResult`'s docstring) or `SUCCEEDED` (no
+    capability effect is ever performed here).
+    """
+
+    READY = "ready"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+
+
+@dataclass(frozen=True, slots=True)
+class CoordinationRequest:
+    """Bundles exactly what `ExecutionCoordinator.coordinate` needs: the
+    immutable M1 `ExecutionContext` to admit/supervise, the already-resolved
+    M6 `CatalogEntry` an earlier M7 `CapabilityResolution` identified (same
+    contract-layer reasoning as M9's `DispatchRequest.resolved_entry` --
+    see that type's docstring), and any M8 evidence identifiers the
+    eventual dispatch gate must confirm.
+    """
+
+    context: ExecutionContext
+    resolved_entry: CatalogEntry
+    required_evidence_ids: tuple[EvidenceId, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if type(self.context) is not ExecutionContext:
+            raise TypeError("coordination request requires ExecutionContext")
+        if type(self.resolved_entry) is not CatalogEntry:
+            raise TypeError("coordination request requires CatalogEntry")
+        if type(self.required_evidence_ids) is not tuple or any(
+            type(evidence_id) is not EvidenceId
+            for evidence_id in self.required_evidence_ids
+        ):
+            raise TypeError(
+                "coordination request required_evidence_ids must be an "
+                "immutable tuple of EvidenceId"
+            )
+        if self.resolved_entry.tenant_context != self.context.tenant_context:
+            raise ValueError("coordination request tenant mismatch")
+
+
+@dataclass(frozen=True, slots=True)
+class CoordinationResult:
+    """Immutable, point-in-time Coordinator outcome -- never the eventual
+    governed `ExecutionResult` (M1), which only M11's actual capability
+    effect can produce. `state` is restricted to exactly the three
+    `ExecutionState` members this batch's Coordinator can ever reach:
+    `RUNNING` (permit obtained; handed off, invocation-ready -- M10's job is
+    done, M11's has not started), `REJECTED` (never began; SPEC SS5.1's
+    `admitted -> rejected` edge), or `CANCELLED` (caller-requested stop
+    before any work began; SPEC SS5.1's `admitted -> cancelled` edge, taken
+    directly with no `cancelling` intermediate, exactly as SS5.1 requires
+    only for running/waiting/suspended work that already began).
+
+    `permit` is present if and only if `outcome is READY`; `category` is
+    present if and only if `outcome is REJECTED`. `CANCELLED` carries
+    neither -- a caller-requested stop is not a dispatch/policy failure
+    category.
+    """
+
+    execution_id: ExecutionId
+    outcome: CoordinationOutcome
+    state: ExecutionState
+    permit: DispatchPermit | None
+    category: ErrorCategory | None
+
+    def __post_init__(self) -> None:
+        if type(self.execution_id) is not ExecutionId:
+            raise TypeError("coordination result requires ExecutionId")
+        if type(self.outcome) is not CoordinationOutcome:
+            raise TypeError("coordination result requires CoordinationOutcome")
+        if type(self.state) is not ExecutionState:
+            raise TypeError("coordination result requires ExecutionState")
+        if self.permit is not None and type(self.permit) is not DispatchPermit:
+            raise TypeError("coordination result permit must be DispatchPermit or None")
+        if self.category is not None and type(self.category) is not ErrorCategory:
+            raise TypeError(
+                "coordination result category must be ErrorCategory or None"
+            )
+        if self.outcome is CoordinationOutcome.READY:
+            if self.state is not ExecutionState.RUNNING:
+                raise ValueError("ready outcome requires ExecutionState.RUNNING")
+            if self.permit is None:
+                raise ValueError("ready outcome requires a permit")
+            if self.category is not None:
+                raise ValueError("ready outcome must not carry a category")
+        elif self.outcome is CoordinationOutcome.REJECTED:
+            if self.state is not ExecutionState.REJECTED:
+                raise ValueError("rejected outcome requires ExecutionState.REJECTED")
+            if self.permit is not None:
+                raise ValueError("rejected outcome must not carry a permit")
+            if self.category is None:
+                raise ValueError("rejected outcome requires a category")
+        else:
+            if self.state is not ExecutionState.CANCELLED:
+                raise ValueError("cancelled outcome requires ExecutionState.CANCELLED")
+            if self.permit is not None:
+                raise ValueError("cancelled outcome must not carry a permit")
+            if self.category is not None:
+                raise ValueError("cancelled outcome must not carry a category")
