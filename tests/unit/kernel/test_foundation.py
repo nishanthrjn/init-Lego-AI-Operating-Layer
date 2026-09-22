@@ -179,6 +179,8 @@ def test_effect_error_recovery_independence() -> None:
         "DependencyFailure",
         "AuthorizationDenied",
         "PolicyViolation",
+        "DeadlineExceeded",
+        "ExecutionFailure",
     }
     for category in ErrorCategory:
         for recovery in Recoverability:

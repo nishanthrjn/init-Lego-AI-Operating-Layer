@@ -1886,9 +1886,101 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "legoai.reference.plugins",
         "legoai.reference.catalog",
         "legoai.reference.evidence",
+        "legoai.reference.execution",
     ],
 )
 def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:
     assert "reference-owner" in violations(
         {module: "from legoai.runtime._composition.direct import compose_direct"}
     )
+
+
+# --- Gate-2 M10: Coordinator/asyncio confinement ----------------------------
+
+
+def test_asyncio_confined_to_authorized_reference_execution_module() -> None:
+    """ADR-015's structured-concurrency substrate belongs to exactly one
+    reference module. No Kernel, values, Port or other reference/runtime
+    module may import `asyncio` -- Coordinator/supervision behavior never
+    leaks into semantic values or other owners' Port contracts.
+    """
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    asyncio_importers = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import) and any(
+                alias.name.split(".")[0] == "asyncio" for alias in node.names
+            ):
+                asyncio_importers.append(path)
+            if (
+                isinstance(node, ast.ImportFrom)
+                and (node.module or "").split(".")[0] == "asyncio"
+            ):
+                asyncio_importers.append(path)
+    module_names = {
+        "legoai." + ".".join(path.relative_to(root).with_suffix("").parts)
+        for path in asyncio_importers
+    }
+    assert module_names == {"legoai.reference.execution"}
+
+
+def test_execution_values_does_not_import_reference_execution() -> None:
+    # Reverse-dependency check: M1's immutable semantic values must never
+    # depend on M10's Coordinator (or any reference realization) -- the
+    # dependency direction is strictly reference -> values, never the
+    # reverse.
+    assert "execution-owner" in violations(
+        {
+            "legoai.execution.values": (
+                "from legoai.reference.execution import ExecutionCoordinator"
+            )
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "owner",
+    [
+        "governance.values",
+        "capabilities.values",
+        "evidence.values",
+        "plugins.values",
+    ],
+)
+def test_m1_through_m9_semantic_values_do_not_import_coordinator(owner: str) -> None:
+    reason_by_owner = {
+        "governance.values": "governance-owner",
+        "capabilities.values": "capabilities-owner",
+        "evidence.values": "evidence-owner",
+        "plugins.values": "plugins-owner",
+    }
+    assert reason_by_owner[owner] in violations(
+        {
+            f"legoai.{owner}": (
+                "from legoai.reference.execution import ExecutionCoordinator"
+            )
+        }
+    )
+
+
+def test_composition_root_does_not_import_coordinator_or_asyncio() -> None:
+    # `legoai.runtime._composition` must not become a service locator that
+    # assembles/hides the Coordinator behind a generic lookup, and must not
+    # itself acquire asyncio/supervision behavior -- ADR-015 SS2 places the
+    # Coordinator's own reference realization under `legoai.reference.
+    # execution`, never under the composition root.
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai" / "runtime"
+    for path in root.rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                assert not any(
+                    alias.name.split(".")[0] in {"asyncio", "threading"}
+                    for alias in node.names
+                ), path
+            if isinstance(node, ast.ImportFrom):
+                module_root = (node.module or "").split(".")[0]
+                assert module_root not in {"asyncio", "threading"}, path
+        assert "reference.execution" not in source, path

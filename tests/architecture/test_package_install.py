@@ -252,6 +252,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_evidence.py",
             "tests/unit/execution/test_ports.py",
             "tests/unit/reference/test_execution.py",
+            "tests/unit/reference/test_coordinator.py",
+            "tests/support/execution.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -366,8 +368,23 @@ dispatch_decision = arbiter.arbitrate(dispatch_request, evaluated_at=datetime(20
 assert dispatch_decision.outcome is execution_ports.DispatchOutcome.PERMITTED
 assert dispatch_decision.permit is not None
 assert dispatch_decision.permit.resolved_entry == catalog_entry
+import asyncio
+class _FixedResolver:
+    async def resolve(self, ref, tenant_context):
+        return security_context
+execution_context = execution_values.ExecutionContext(
+    execution_values.ExecutionId("exec-1"), resource_operation, context.TenantContext(identity.TenantId("t")),
+    execution_values.SecurityContextRef("issuer", "ref-1"), identity.CorrelationId("corr-1"), None, None, None,
+)
+coordination_request = execution_ports.CoordinationRequest(execution_context, catalog_entry)
+coordinator = reference_execution.ExecutionCoordinator(_FixedResolver(), arbiter)
+coordination_result = asyncio.run(coordinator.coordinate(coordination_request))
+assert coordination_result.outcome is execution_ports.CoordinationOutcome.READY
+assert coordination_result.state is execution_values.ExecutionState.RUNNING
+assert coordination_result.permit is not None
+assert coordination_result.permit.resolved_entry == catalog_entry
 assert len(effects.EffectExtent) == 4
-assert len(errors.ErrorCategory) == 7
+assert len(errors.ErrorCategory) == 9
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
 assert identity.TenantId("abc").value == "abc"
 assert identity.PrincipalId("abc").value == "abc"
