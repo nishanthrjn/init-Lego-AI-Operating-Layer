@@ -93,23 +93,21 @@ implementation "structurally impossible" without a genuine governed
 cryptographic proof, matching every prior Gate-2 batch's trusted-host
 framing).
 
-**Permit replay is still deferred, not silently invented.** Neither method
-adds a `consumed` flag to `DispatchPermit` or any new mutable replay-tracking
-Port. Calling `invoke_governed` twice with the *same* already-`SUCCEEDED`
-`CoordinationResult` fails structurally (the second call's `_require_running`
-check finds `SUCCEEDED`, not `RUNNING`) -- but nothing today prevents two
-*concurrent* `invoke_governed` calls for the same still-`RUNNING`
-`execution_id` from both passing that check before either commits its
-terminal transition, both then calling the capability closure. Because this
-batch's one capability (`normalize_text`) is pure with no external effect,
-a concurrent double-invocation has no observable side effect beyond a
-second identical computation whose result is discarded (the second
-`_transition` call fails once the first has already committed a terminal
-state) -- this residual risk is bounded/inert for this specific fixture. A
-persisted operation ledger (ADR-008) or an exclusive per-execution lock
-would be needed before any *effectful* capability could safely reuse this
-same boundary; that is explicitly out of scope here, not solved by
-inventing ad-hoc mutable state on an immutable value.
+**Permit replay remains deferred at the `DispatchPermit` level, but the
+concurrent-double-invocation gap this Coordinator itself owned is closed.**
+Neither `settle` nor `invoke_governed` adds a `consumed` flag to the
+immutable `DispatchPermit`, and no new mutable replay-tracking Port exists
+-- but `invoke_governed` now claims `execution_id` atomically
+(`claim_invocation`) before ever calling the capability closure, under the
+same `asyncio.Lock` already used for every other state mutation. Two
+concurrent `invoke_governed` calls for the same `execution_id` can no
+longer both reach the closure: exactly one wins the claim, the other fails
+structurally before any call. This was originally deferred in M11 (see
+`planning/GATE-2-EXIT-REVIEW.md` G2-EXIT-42/43, which named it as the
+trigger for the first effectful capability) and is now closed in the v0.1
+batch that introduces one, per `claim_invocation`'s own docstring for the
+exact guarantee this provides and does not provide (it is not exactly-once
+across network failure).
 
 **One documented cancellation limitation.** `invoke_governed` awaits exactly
 once (`asyncio.sleep(0)`) *before* calling the capability closure, giving a
@@ -409,6 +407,7 @@ class ExecutionCoordinator:
         self._arbiter = arbiter
         self._clock = clock
         self._states: dict[ExecutionId, ExecutionState] = {}
+        self._claimed: set[ExecutionId] = set()
         self._lock = asyncio.Lock()
 
     async def current_state(self, execution_id: ExecutionId) -> ExecutionState | None:
@@ -440,6 +439,15 @@ class ExecutionCoordinator:
         instance did not itself carry to `RUNNING` is rejected before the
         closure is ever called -- not merely after, when `_transition`'s own
         (otherwise sufficient) validation would catch it too late.
+
+        This check alone does **not** close a concurrent-double-invocation
+        race (two callers can both observe `RUNNING` before either commits a
+        terminal transition) -- see `claim_invocation`, which
+        `invoke_governed` uses instead for exactly that reason. `settle`
+        keeps using this weaker check because it is also called directly for
+        a candidate that was *never invoked* (an implementation-mismatch
+        decision made without calling `claim_invocation` at all), where no
+        claim exists to re-check.
         """
         async with self._lock:
             current = self._states.get(execution_id)
@@ -447,6 +455,62 @@ class ExecutionCoordinator:
                 raise ExecutionTransitionError(
                     f"{execution_id.value} is not RUNNING under this Coordinator"
                 )
+
+    async def claim_invocation(self, execution_id: ExecutionId) -> None:
+        """Gate-2 v0.1 (release blocker per `planning/GATE-2-EXIT-REVIEW.md`
+        G2-EXIT-42/43): the atomic replacement for `_require_running` at the
+        one point that actually gates a capability closure call.
+
+        `_require_running` alone left a real gap: it is a read-only check,
+        so two concurrent callers holding the same `RUNNING`
+        `CoordinationResult` could both pass it before either committed a
+        terminal `_transition` -- inert for M11's own pure fixture (a
+        duplicate computation with no external effect), but unacceptable
+        the instant any *effectful* capability (a real provider call) uses
+        this same boundary. This closes that gap with one atomic
+        check-and-claim under the same `asyncio.Lock` already used for every
+        other state mutation -- no new synchronization primitive, no change
+        to the immutable `DispatchPermit`, no new canonical `ExecutionState`.
+
+        Exactly one of two concurrent callers for the same `execution_id`
+        wins; the loser raises `ExecutionTransitionError` *before* the
+        capability closure is ever called. A second call after the first
+        has already completed (successfully or not) also loses, since the
+        claim is never released -- this Coordinator instance permits at
+        most one invocation attempt per `execution_id`, ever.
+
+        **Exact guarantee, stated precisely:** one accepted governed
+        dispatch/`RUNNING` state admits at most one invocation *attempt*
+        through this Coordinator instance. This is not exactly-once across
+        network failure -- if a provider request is sent but its response is
+        lost, this mechanism cannot know whether the provider actually
+        executed it; that uncertainty is `EffectExtent.UNKNOWN`'s job, not a
+        retry inside the claimed invocation. Retrying is a new, separately
+        authorized governed dispatch (a new `coordinate()` call, a new
+        `ExecutionId`), never an automatic resend here.
+
+        Public (not `_`-prefixed) because v0.1's effectful Model invocation
+        wiring (`legoai.runtime._composition.model_governed`) calls this
+        directly -- it does not reuse `invoke_governed` (whose result type,
+        `GovernedInvocationResult`, is deliberately typed to M11's own pure
+        `str` fixture output and is not widened speculatively for a second,
+        differently-shaped capability); that composition module calls
+        `claim_invocation`, then its own async provider closure, then
+        `settle`, exactly mirroring `invoke_governed`'s own internal shape
+        without needing a generic result wrapper this Coordinator would
+        otherwise have to invent.
+        """
+        async with self._lock:
+            if execution_id in self._claimed:
+                raise ExecutionTransitionError(
+                    f"{execution_id.value} invocation already claimed"
+                )
+            current = self._states.get(execution_id)
+            if current is not ExecutionState.RUNNING:
+                raise ExecutionTransitionError(
+                    f"{execution_id.value} is not RUNNING under this Coordinator"
+                )
+            self._claimed.add(execution_id)
 
     async def settle(
         self,
@@ -483,20 +547,25 @@ class ExecutionCoordinator:
     async def invoke_governed(
         self, result: CoordinationResult, implementation: Callable[[], str]
     ) -> GovernedInvocationResult:
-        """Gate-2 M11: call the trusted deterministic implementation exactly
-        once and map its outcome to canonical Execution semantics. See this
-        module's docstring for why `implementation` is a pre-bound
+        """Gate-2 M11/v0.1: call the trusted implementation at most once per
+        `execution_id` and map its outcome to canonical Execution semantics.
+        See this module's docstring for why `implementation` is a pre-bound
         zero-argument closure rather than a typed input/configuration pair,
-        the structural READY/RUNNING enforcement, the documented
-        cancellation limitation, and the residual concurrent-double-
-        invocation risk this method does not solve.
+        and the documented cancellation limitation.
+
+        Uses `claim_invocation` (not the weaker `_require_running`): two
+        concurrent calls for the same `execution_id` can no longer both
+        reach `implementation` -- exactly one wins the claim, the other
+        raises `ExecutionTransitionError` before any closure call. See
+        `claim_invocation`'s own docstring for the exact guarantee this
+        provides and does not provide.
         """
         if type(result) is not CoordinationResult:
             raise TypeError("invoke_governed requires CoordinationResult")
         if result.outcome is not CoordinationOutcome.READY:
             raise ValueError("invoke_governed requires a READY CoordinationResult")
         execution_id = result.execution_id
-        await self._require_running(execution_id)
+        await self.claim_invocation(execution_id)
 
         try:
             await asyncio.sleep(0)

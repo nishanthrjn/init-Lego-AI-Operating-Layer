@@ -425,6 +425,64 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # the observation sink realization, or any other
                         # reference-owner realization (F8b task SS42).
                         errors.add("reference-owner")
+                    if name == "legoai.intelligence.model.values" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.intelligence.model.values"
+                        or target.startswith("legoai.intelligence.model.values.")
+                    ):
+                        # v0.1 gives intelligence.model.values only Kernel:
+                        # no field in this minimal slice (ModelId/ProviderId/
+                        # ChatMessage/ChatRequest/ChatResult/EmbeddingRequest/
+                        # EmbeddingResult) needs Governance/Capabilities/
+                        # Resources/Plugins, even though ADR-002 SS9.2's I-row
+                        # maximum (K, C, M, A, G, R, O, X) would separately
+                        # permit those for a future ports.py-level need.
+                        errors.add("intelligence-owner")
+                    if name == "legoai.intelligence.model.ports" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.intelligence.model.values"
+                        or target.startswith("legoai.intelligence.model.values.")
+                    ):
+                        # ModelPort's two operations and its three effect-
+                        # phase exceptions need only this owner's own values
+                        # and Kernel -- no Governance/Capabilities dependency
+                        # is canonically justified at the Port-contract level
+                        # itself (SS9.2's I-row maximum excludes E/Execution
+                        # regardless: current authority, dispatch, and
+                        # Coordinator attribution are composed *around* a
+                        # ModelPort call by an outer permitted consumer).
+                        errors.add("intelligence-owner")
+                    if name.startswith("legoai.intelligence.") and any(
+                        target == f"legoai.intelligence.{layer}"
+                        or target.startswith(f"legoai.intelligence.{layer}.")
+                        for layer in ("reference", "runtime")
+                    ):
+                        errors.add("values-layer")
+                    if name == "legoai.reference.model" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.intelligence.model.values"
+                        or target.startswith("legoai.intelligence.model.values.")
+                        or target == "legoai.intelligence.model.ports"
+                        or target.startswith("legoai.intelligence.model.ports.")
+                        # ADR-002 SS9.2's I-row maximum includes C (Capabilities)
+                        # and X (Plugins); this reference realization is the
+                        # first real consumer of both, needed only to declare
+                        # its own fixed Plugin/Capability identity functions
+                        # for Catalog publication (mirrors
+                        # legoai.reference.deterministic's identical pattern).
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                    ):
+                        # v0.1's reference realization gets the same
+                        # allowed-peer permissions as its owner's row
+                        # (ADR-002 SS9.2/SS7); it never imports another
+                        # reference-owner realization or the composition root.
+                        errors.add("reference-owner")
                     if name.startswith("legoai.runtime._composition.") and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
@@ -466,6 +524,18 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.execution.values.")
                         or target == "legoai.reference.execution"
                         or target.startswith("legoai.reference.execution.")
+                        # v0.1: the composition root wires ModelPort-based
+                        # governed invocation the same way it wired M11's
+                        # pure fixture -- `legoai.intelligence.model.{values,
+                        # ports}` and its own reference realization
+                        # `legoai.reference.model` (the Ollama Adapter) are
+                        # needed for exactly the same wiring reason.
+                        or target == "legoai.intelligence.model.values"
+                        or target.startswith("legoai.intelligence.model.values.")
+                        or target == "legoai.intelligence.model.ports"
+                        or target.startswith("legoai.intelligence.model.ports.")
+                        or target == "legoai.reference.model"
+                        or target.startswith("legoai.reference.model.")
                         or target == "legoai.runtime"
                         or target.startswith("legoai.runtime._composition")
                     ):
@@ -1905,6 +1975,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "legoai.reference.catalog",
         "legoai.reference.evidence",
         "legoai.reference.execution",
+        "legoai.reference.model",
     ],
 )
 def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:
@@ -1917,10 +1988,14 @@ def test_reference_modules_do_not_depend_on_composition_root(module: str) -> Non
 
 
 def test_asyncio_confined_to_authorized_reference_execution_module() -> None:
-    """ADR-015's structured-concurrency substrate belongs to exactly one
-    reference module. No Kernel, values, Port or other reference/runtime
-    module may import `asyncio` -- Coordinator/supervision behavior never
-    leaks into semantic values or other owners' Port contracts.
+    """ADR-015's structured-concurrency substrate belongs to exactly the
+    Coordinator (`legoai.reference.execution`) plus, as of v0.1, the one
+    Adapter that bridges a genuinely blocking network call into it
+    (`legoai.reference.model`, via `asyncio.to_thread` -- see that module's
+    own docstring: the smallest possible bridge, never a general worker
+    pool). No Kernel, values, Port or other reference/runtime module may
+    import `asyncio` -- Coordinator/supervision behavior never leaks into
+    semantic values or other owners' Port contracts.
     """
     root = Path(__file__).resolve().parents[2] / "src" / "legoai"
     asyncio_importers = []
@@ -1940,7 +2015,7 @@ def test_asyncio_confined_to_authorized_reference_execution_module() -> None:
         "legoai." + ".".join(path.relative_to(root).with_suffix("").parts)
         for path in asyncio_importers
     }
-    assert module_names == {"legoai.reference.execution"}
+    assert module_names == {"legoai.reference.execution", "legoai.reference.model"}
 
 
 def test_execution_values_does_not_import_reference_execution() -> None:
@@ -1982,6 +2057,19 @@ def test_m1_through_m9_semantic_values_do_not_import_coordinator(owner: str) -> 
     )
 
 
+def test_intelligence_model_values_does_not_import_reference_model() -> None:
+    # Same reverse-dependency check as M1's execution.values: this owner's
+    # immutable semantic values must never depend on its own reference
+    # realization (the Ollama Adapter) or any composition wiring.
+    assert "intelligence-owner" in violations(
+        {
+            "legoai.intelligence.model.values": (
+                "from legoai.reference.model import OllamaModelAdapter"
+            )
+        }
+    )
+
+
 def test_composition_root_never_imports_asyncio_or_threading() -> None:
     # `legoai.runtime._composition` may (Gate-2 M11) wire the Coordinator's
     # own already-async methods by explicit construction/`await` -- that
@@ -2005,21 +2093,25 @@ def test_composition_root_never_imports_asyncio_or_threading() -> None:
                 assert module_root not in {"asyncio", "threading"}, path
 
 
-def test_composition_root_does_not_hide_coordinator_behind_generic_lookup() -> None:
-    # Gate-2 M11's `governed.py` legitimately imports `ExecutionCoordinator`
-    # by name to wire one explicit, statically-known capability
-    # correspondence (never a `dict[CapabilityId, Callable]`, registry or
-    # service-locator pattern) -- this proves no such generic lookup
-    # structure, and no dynamic-loading primitive, was introduced instead.
-    # AST-based (not substring) so this module's own prose explaining what
-    # it deliberately does *not* do cannot trip the check.
+@pytest.mark.parametrize("filename", ["governed.py", "model_governed.py"])
+def test_composition_root_does_not_hide_coordinator_behind_generic_lookup(
+    filename: str,
+) -> None:
+    # Gate-2 M11's `governed.py` and v0.1's `model_governed.py` legitimately
+    # import `ExecutionCoordinator`/`OllamaModelAdapter` by name to wire an
+    # explicit, statically-known capability correspondence (never a
+    # `dict[CapabilityId, Callable]`, registry or service-locator pattern)
+    # -- this proves no such generic lookup structure, and no
+    # dynamic-loading primitive, was introduced instead. AST-based (not
+    # substring) so either module's own prose explaining what it
+    # deliberately does *not* do cannot trip the check.
     path = (
         Path(__file__).resolve().parents[2]
         / "src"
         / "legoai"
         / "runtime"
         / "_composition"
-        / "governed.py"
+        / filename
     )
     tree = ast.parse(path.read_text(encoding="utf-8"))
     forbidden_names = {

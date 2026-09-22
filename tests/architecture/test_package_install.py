@@ -181,6 +181,12 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/execution/ports.py",
         "legoai/reference/execution.py",
         "legoai/runtime/_composition/governed.py",
+        "legoai/intelligence/__init__.py",
+        "legoai/intelligence/model/__init__.py",
+        "legoai/intelligence/model/values.py",
+        "legoai/intelligence/model/ports.py",
+        "legoai/reference/model.py",
+        "legoai/runtime/_composition/model_governed.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -257,6 +263,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_coordinator.py",
             "tests/support/execution.py",
             "tests/integration/composition/test_governed_direct.py",
+            "tests/unit/intelligence/test_model_values.py",
+            "tests/unit/reference/test_model.py",
+            "tests/integration/composition/test_model_governed.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -410,6 +419,40 @@ governed_result = asyncio.run(governed.invoke_governed_text_normalization(real_c
 assert governed_result.execution_result.final_state is execution_values.ExecutionState.SUCCEEDED
 assert governed_result.execution_result.effect is effects.EffectExtent.COMPLETED
 assert governed_result.output == "hello world"
+import legoai.intelligence.model.values as model_values
+import legoai.intelligence.model.ports as model_ports
+import legoai.reference.model as reference_model
+import legoai.runtime._composition.model_governed as model_governed
+ollama_declaration = reference_model.ollama_declaration()
+ollama_discovered = reference_plugins.inspect(ollama_declaration)
+ollama_validation = reference_plugins.validate(ollama_discovered, ollama_declaration, evaluated_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+ollama_record = reference_plugins.admit(ollama_validation, context.TenantContext(identity.TenantId("t")), plugins_ports.PluginAdmissionId("a-ollama"), established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+ollama_active = reference_plugins.activate(reference_plugins.initialize(ollama_record, established_at=datetime(2026, 1, 1, tzinfo=timezone.utc)), established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+ollama_entry = catalog.publish(ollama_active, ollama_declaration, ollama_declaration.offers[0], established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+ollama_grant = governance.Grant(governance.GrantId("g-ollama"), grant_principal, grant_principal, context.TenantContext(identity.TenantId("t")), "action", reference_model.ollama_chat_capability_id().value, False, datetime(2026, 1, 1, tzinfo=timezone.utc), None)
+ollama_security_context = governance_ports.SecurityContext(grant_principal, context.TenantContext(identity.TenantId("t")), resource_operation, "action", reference_model.ollama_chat_capability_id().value, ollama_grant, None, policy_ref, datetime(2026, 1, 1, tzinfo=timezone.utc))
+class _OllamaResolver:
+    async def resolve(self, ref, tenant_context):
+        return ollama_security_context
+ollama_execution_context = execution_values.ExecutionContext(
+    execution_values.ExecutionId("exec-ollama"), resource_operation, context.TenantContext(identity.TenantId("t")),
+    execution_values.SecurityContextRef("issuer", "ref-ollama"), identity.CorrelationId("corr-ollama"), None, None, None,
+)
+ollama_coord_request = execution_ports.CoordinationRequest(ollama_execution_context, ollama_entry)
+ollama_coordinator = reference_execution.ExecutionCoordinator(_OllamaResolver(), arbiter)
+ollama_coordination = asyncio.run(ollama_coordinator.coordinate(ollama_coord_request))
+assert ollama_coordination.outcome is execution_ports.CoordinationOutcome.READY
+class _FakeModelPort:
+    async def chat(self, request):
+        return model_values.ChatResult("fake answer", model_values.ModelId("fake-model"), model_values.ProviderId("fake-provider"), None)
+    async def embed(self, request):
+        return model_values.EmbeddingResult(((1.0,),), 1, model_values.ModelId("fake-model"), model_values.ProviderId("fake-provider"))
+chat_request = model_values.ChatRequest((model_values.ChatMessage(model_values.ChatRole.USER, "hi"),))
+model_execution_result, model_chat_result = asyncio.run(
+    model_governed.invoke_governed_chat(ollama_coordinator, ollama_coordination, chat_request, _FakeModelPort())
+)
+assert model_execution_result.final_state is execution_values.ExecutionState.SUCCEEDED
+assert model_chat_result.content == "fake answer"
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 9
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
