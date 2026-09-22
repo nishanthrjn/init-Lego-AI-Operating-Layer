@@ -35,7 +35,8 @@ The new [`legoai-engineering`](packages/legoai-engineering/) pack is a separate
 first foundation milestone: pure inspection of supplied repository text with an
 intake example. M1 local validation is complete, as recorded in the forward plan.
 M2 adds a bounded read-only local workspace adapter and an example reusing M1;
-M2 local validation is pending. Governed runtime publication, Git, code execution
+M2 local validation is complete for its documented trusted local scope.
+Governed runtime publication, Git, code execution
 and engineering Agents remain unimplemented.
 
 ## Quickstart: the DocuMind CLI

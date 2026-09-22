@@ -7,7 +7,8 @@ M1 implementation and local validation are complete. The first local run passed
 tests, typing, lint and the example; the returned formatter recheck passed after
 the two formatting-only corrections recorded below. The milestone is closed.
 M2's bounded local acquisition subset is now implemented under the maintainer's
-separate M2 instruction; local validation is pending (see M2 record below).
+separate M2 instruction; local validation is complete for its documented trusted
+local Windows scope (see M2 closure below). M3 remains unstarted.
 Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
@@ -265,8 +266,8 @@ remains unstarted; the milestone stop boundary is preserved.
 
 ## M2 implementation record — bounded repository workspace
 
-**M1 complete. M2 implementation complete / local validation pending.
-M3 not started. ENGINEERING_M2_COMPLETE = NO.**
+**M1 complete. M2 implementation and local validation complete for its declared
+scope. M3 not started. ENGINEERING_M2_COMPLETE = YES.**
 
 The maintainer's M2 request narrows the next Phase C increment to read-only
 local workspace acquisition, explicitly excluding Git and Agent implementation.
@@ -364,3 +365,81 @@ Windows skips the POSIX FIFO case; other platforms skip Windows junctions.
 Missing Windows symlink privilege may produce an explicit skip, which leaves
 symlink qualification pending until a permitted local run succeeds. Review the
 complete output and every skip before claiming M2 complete. Do not start M3.
+
+### M2 first returned local validation
+
+User-supplied Windows output records successful locked sync, **86 passed and
+2 skipped in 2.25s**, including successful Windows junction and package/build/
+clean-install cases. The example printed `pyproject.toml:9:1`; `git diff --check`
+reported no issues. No internal validation was executed.
+
+Failure classification and corrections:
+
+- **TEST DEFECT:** mypy correctly rejected the deliberately invalid list passed
+  to `dataclasses.replace` in the tuple-validation negative test. Added a scoped
+  `# type: ignore[arg-type]`, preserving the runtime rejection assertion. The
+  earlier static-review removal of that ignore was incorrect for this toolchain.
+- **TEST/EXAMPLE STYLE DEFECT:** applied the two reported Ruff UP012 corrections
+  (literal UTF-8 encode defaults) and two exact formatting changes. No production
+  adapter or domain behavior changed.
+- **ENVIRONMENT LIMITATION:** Windows lacked symlink-creation privilege; the
+  symlink escape test skipped. This remains a release-blocking evidence gap
+  pending a local run with symlink permission, not grounds to weaken the test.
+- **EXPECTED PLATFORM SKIP:** POSIX FIFO test is inapplicable on Windows.
+- **NON-BLOCKING ENVIRONMENT WARNING:** uv ignored the active root environment
+  and used the package environment as intended. No configuration change required.
+
+Remaining validation: mypy, Ruff lint/format, and the single symlink escape test
+in a permitted local session. The functional suite/build/example need not be
+repeated for these behavior-preserving test/style corrections. M2 remains pending;
+M3 remains unstarted and `ENGINEERING_M2_COMPLETE = NO`.
+
+### M2 second returned local validation
+
+The user reports mypy clean over 14 source files, Ruff lint clean, and
+14 files already formatted. Those corrected checks are closed. The targeted
+symlink escape test again skipped in 0.08s because Windows symlink-creation
+privilege was unavailable. Classification remains ENVIRONMENT LIMITATION;
+no production or test change is warranted. The boundary assertion did not run.
+
+Only that targeted test remains: run in a Windows session permitted to create
+symlinks (Developer Mode, the assigned privilege, or an administrator process,
+per Python's os.symlink documentation). Require a passing result, not a skip.
+No full-suite, package, example, typing or lint rerun is needed at this point.
+M2 remains validation-pending; M3 remains unstarted.
+
+### M2 closure — returned symlink escape result
+
+The user supplied a subsequent targeted Windows run:
+`test_symlink_file_directory_and_root_escape`: **1 passed in 0.05s**.
+This closes the symlink-creation privilege evidence gap without weakening the
+test or modifying production behavior. Earlier skipped attempts remain historical
+environment findings; they are not security passes.
+
+Combined evidence consists of the initial **86 passed, 2 skipped** full suite
+(including Windows junction, architecture and wheel/sdist/clean installation),
+the corrected mypy result (14 files, no issues), Ruff lint and format results
+(14 files formatted), correct example output `pyproject.toml:9:1`, the initial
+clean whitespace check, and this separately passing symlink case. There was no
+combined full-suite rerun. POSIX FIFO remains an expected platform exclusion;
+no non-Windows qualification is claimed. M1 regression cases were included in
+the initial passing suite. No internal test execution occurred.
+
+Files created by M2: `repository/errors.py`, `repository/workspace.py`,
+`repository/ports.py`, `repository/local.py` under the engineering source tree;
+`examples/workspace_intake.py`; `tests/test_workspace.py`.
+Files modified: root and engineering READMEs, this forward plan, engineering
+`tests/test_architecture.py` and `tests/test_package_install.py`. Subsequent fixes
+affected only the new test/example and validation records. Existing M1 production
+source, Core, canonical documents, ADRs, package metadata and lockfile are unchanged.
+
+M2 is complete for synchronous, bounded, read-only acquisition in a trusted,
+stable local filesystem namespace. Root-relative containment is not a hostile
+mutation sandbox, and the adapter is not a governed invocation facade. All README
+limits and residual risks remain. New runtime dependencies: zero. ADR-016's
+capability-first additive package strategy is preserved.
+
+`ENGINEERING_M2_COMPLETE = YES`. Next work is a separately scoped M3 decision
+within the remaining Phase C work (governed integration/Git inspection, respecting
+ADR-014 before supported authoring); none is authorized or implemented by this
+closure. Stop here.
