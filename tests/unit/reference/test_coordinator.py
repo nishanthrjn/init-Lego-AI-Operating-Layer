@@ -691,6 +691,44 @@ def test_invoke_governed_second_call_on_already_settled_result_fails_structurall
     asyncio.run(scenario())
 
 
+def test_concurrent_invoke_governed_for_same_execution_id_at_most_one_reaches_closure() -> (
+    None
+):
+    """v0.1 release-blocker regression (planning/GATE-2-EXIT-REVIEW.md
+    G2-EXIT-42/43): two concurrent `invoke_governed` calls for the exact
+    same `RUNNING` `CoordinationResult` must not both reach the capability
+    closure. Uses `asyncio.gather` plus the Coordinator's own internal
+    `asyncio.Lock`-guarded claim -- no sleep-based orchestration.
+    """
+
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "normalized"
+
+        outcomes = await asyncio.gather(
+            coordinator.invoke_governed(result, implementation),
+            coordinator.invoke_governed(result, implementation),
+            return_exceptions=True,
+        )
+
+        assert calls == 1
+        successes = [o for o in outcomes if not isinstance(o, BaseException)]
+        failures = [o for o in outcomes if isinstance(o, ExecutionTransitionError)]
+        assert len(successes) == 1
+        assert len(failures) == 1
+        assert successes[0].execution_result.final_state is ExecutionState.SUCCEEDED
+
+    asyncio.run(scenario())
+
+
+
+
 def test_invoke_governed_cancellation_before_closure_marks_cancelled() -> None:
     async def scenario() -> None:
         env = _Environment()
