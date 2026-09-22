@@ -3,6 +3,7 @@
 **Document:** `intent.md`
 **Project:** Lego AI Operating Layer
 **Version:** 1.0
+**Current amendment:** [IA-001 — Python-first reusable component delivery](intent-amendments/IA-001.md), accepted 2026-09-22 under maintainer direction. Read this historical 1.0 text with IA-001 for current implementation delivery policy; canonical semantics remain language-neutral.
 **Status:** ACCEPTED — FOUNDATIONAL
 **Stability:** Architectural Constitution
 **Purpose:** Product Intent, Architectural Principles, Engineering North Star, and Boundary for All Future Specifications and Implementations

@@ -1,6 +1,15 @@
 # LegoAI
 
-LegoAI is a governed runtime for composing AI capabilities. Every capability
+LegoAI is a Python-first platform and reusable component ecosystem for composing
+governed AI applications. Reusable Python capabilities and the governed runtime
+are its implementation foundation; providers, frameworks and protocols integrate
+through optional adapters. See the [current intent amendment](intent-amendments/IA-001.md)
+and [forward roadmap](planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md).
+Production-grade operation across the target catalog is the destination;
+[v0.1 qualification](planning/V0.1-RELEASE-READINESS.md) covers the documented
+local DocuMind scope. Agents, Workflows, Teams and ForgeAI remain planned.
+
+Every governed capability
 invocation -- including calls to an external Model provider -- passes through
 a Catalog, capability resolution, current authorization, and a dispatch
 arbiter before any provider is ever invoked. See [intent.md](intent.md) and
@@ -21,6 +30,12 @@ quickstart, not a restatement of that authority.
   governed AI application: a CLI that ingests documents and answers
   questions over them, using `legoai-document`'s capabilities composed
   through `legoai`'s governed runtime and a local Ollama instance.
+
+The new [`legoai-engineering`](packages/legoai-engineering/) pack is a separate
+first foundation milestone: pure inspection of supplied repository text with an
+intake example. M1 local validation is complete, as recorded in the forward plan.
+It does not yet expose governed
+live repository access, Git, code execution or engineering Agents.
 
 ## Quickstart: the DocuMind CLI
 
