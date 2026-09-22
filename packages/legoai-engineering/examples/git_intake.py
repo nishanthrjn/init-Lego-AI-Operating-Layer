@@ -36,7 +36,7 @@ def main() -> None:
         parser.exit(1, f"Git inspection failed: {error.reason.value}\n")
     except WorkspaceError as error:
         parser.exit(1, f"Workspace inspection failed: {error.reason.value}\n")
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         parser.exit(1, "Invalid local Git configuration\n")
     print(f"head: {state.head.kind.value}")
     print(f"branch: {state.head.branch or '-'}")

@@ -302,7 +302,7 @@ def test_public_value_invariants() -> None:
         RepositoryPath("a"), GitChange.UNCHANGED, GitChange.UNCHANGED, True
     )
     with pytest.raises(FrozenInstanceError):
-        setattr(entry, "untracked", False)
+        entry.untracked = False  # type: ignore[misc]
     with pytest.raises(ValueError):
         GitRepositoryState(GitHead(GitHeadKind.UNBORN, "main", None), (entry, entry))
 

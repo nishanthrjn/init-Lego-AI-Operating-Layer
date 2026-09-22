@@ -105,7 +105,8 @@ def import_violations(source: str, module: str = "") -> set[str]:
             if (
                 isinstance(node.func.value, ast.Name)
                 and node.func.value.id == "os"
-                and node.func.attr not in (
+                and node.func.attr
+                not in (
                     {"read", "set_blocking"}
                     if module == "git._process"
                     else {"fstat", "scandir"}
@@ -285,6 +286,7 @@ def test_git_process_and_public_surface_are_closed() -> None:
             assert all(isinstance(item, ast.Constant) for item in argument.elts)
             first = argument.elts[0]
             assert isinstance(first, ast.Constant)
+            assert isinstance(first.value, str)
             commands.append(first.value)
     assert sorted(commands) == ["ls-files", "status"]
     for file in ("ports.py", "local.py"):
