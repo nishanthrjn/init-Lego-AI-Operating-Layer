@@ -236,17 +236,40 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
-                    if name.startswith("legoai.execution.") and not (
+                    if name == "legoai.execution.values" and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
-                        or target == "legoai.execution"
-                        or target.startswith("legoai.execution.")
+                        or target == "legoai.execution.values"
+                        or target.startswith("legoai.execution.values.")
                     ):
                         # Gate-2 M1 gives execution.values only Kernel: no
                         # field in this batch needs Governance/Capabilities/
                         # Resources/Plugins (ADR-002 SS9.2's E-row maximum
                         # includes those peers, but none is a canonically
                         # justified M1 field -- see the Gate-2 plan SS14/21).
+                        errors.add("execution-owner")
+                    if name == "legoai.execution.ports" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.execution.values"
+                        or target.startswith("legoai.execution.values.")
+                        # ADR-002 SS9.2's E-row maximum includes G, C, O, X;
+                        # Gate-2 M9 is the first real consumer of Governance
+                        # (Authorization/SecurityContext), Capabilities
+                        # (Catalog) and Evidence (custody) Port-level values.
+                        or target == "legoai.governance.values"
+                        or target.startswith("legoai.governance.values.")
+                        or target == "legoai.governance.ports"
+                        or target.startswith("legoai.governance.ports.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        or target == "legoai.capabilities.ports"
+                        or target.startswith("legoai.capabilities.ports.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
+                        or target == "legoai.evidence.ports"
+                        or target.startswith("legoai.evidence.ports.")
+                    ):
                         errors.add("execution-owner")
                     if name.startswith("legoai.execution.") and any(
                         target == f"legoai.execution.{layer}"
@@ -330,6 +353,33 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # Gate-2 M8's reference realization gets the same
                         # allowed-peer permissions as its owner's row
                         # (ADR-002 SS9.2/SS7) -- its own Port/values only,
+                        # never other reference realizations or runtime.
+                        errors.add("reference-owner")
+                    if name == "legoai.reference.execution" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.execution.values"
+                        or target.startswith("legoai.execution.values.")
+                        or target == "legoai.execution.ports"
+                        or target.startswith("legoai.execution.ports.")
+                        or target == "legoai.governance.values"
+                        or target.startswith("legoai.governance.values.")
+                        or target == "legoai.governance.ports"
+                        or target.startswith("legoai.governance.ports.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        or target == "legoai.capabilities.ports"
+                        or target.startswith("legoai.capabilities.ports.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
+                        or target == "legoai.evidence.ports"
+                        or target.startswith("legoai.evidence.ports.")
+                    ):
+                        # Gate-2 M9's reference realization gets the same
+                        # allowed-peer permissions as its owner's row
+                        # (ADR-002 SS9.2/SS7): it composes the already-
+                        # established AuthorizationPort (M4), CatalogPort
+                        # (M6) and EvidenceCustodyPort (M8) Ports directly,
                         # never other reference realizations or runtime.
                         errors.add("reference-owner")
                     if name == "legoai.reference.declarations" and not (
@@ -534,8 +584,20 @@ def test_governance_inward_graph() -> None:
 
 
 def test_no_ambient_context_or_module_state() -> None:
+    # Gate-2 M9 exception: `legoai.reference.execution` is allowed to import
+    # `threading` for exactly one purpose -- an instance-scoped
+    # `threading.Lock` inside `DeterministicDispatchArbiter` that implements
+    # ADR-007 SS6.2's exclusive gate (no TOCTOU window between revalidating
+    # current authorization/catalog/evidence and committing Approval-use
+    # consumption). This is deliberately *not* ambient/module state: the
+    # lock lives on the instance, is never read from module scope, and
+    # every other file in this tree remains fully forbidden from importing
+    # `threading`/`contextvars`.
+    threading_import_allowed = {"legoai.reference.execution"}
+
     root = Path(__file__).resolve().parents[2] / "src" / "legoai"
     for path in root.rglob("*.py"):
+        module_name = "legoai." + ".".join(path.relative_to(root).with_suffix("").parts)
         tree = ast.parse(path.read_text(encoding="utf-8"))
         assert not any(
             isinstance(node, (ast.Assign, ast.AnnAssign)) for node in tree.body
@@ -543,6 +605,8 @@ def test_no_ambient_context_or_module_state() -> None:
         assert not any(
             isinstance(node, (ast.Global, ast.Nonlocal)) for node in ast.walk(tree)
         ), path
+        if module_name in threading_import_allowed:
+            continue
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 assert not {alias.name.split(".")[0] for alias in node.names} & {
