@@ -53,6 +53,97 @@ module-level supervisor, and no second `threading` exception beyond M9's
 already-narrow one (`ExecutionCoordinator`'s own internal record uses
 `asyncio.Lock`, not `threading.Lock`, per ADR-015 SS15's async-local
 synchronization guidance).
+
+Gate-2 M11: `ExecutionCoordinator.settle`/`invoke_governed` (below) are the
+first real governed-capability-invocation boundary. Both are deliberately
+**capability-agnostic**: this module never imports `legoai.application`
+(`EffectiveConfiguration`) or `legoai.reference.deterministic`
+(`normalize_text`) -- ADR-002 SS9.2's E-row foreign-target maximum for
+`legoai.execution`/`legoai.reference.execution` is exactly "K, C, T, I, M,
+A(rtifacts), G, R, O, X, V" and does not include Application, and SS9's
+"no reference owner implementation imports another reference owner
+implementation" rule separately forbids importing
+`legoai.reference.deterministic` from here regardless. `invoke_governed`
+therefore accepts a pre-bound zero-argument closure (`Callable[[], str]`)
+rather than a typed capability input/configuration pair; the caller
+(`legoai.runtime._composition`, the sole location ADR-002 SS9.2 permits to
+import across both `legoai.application` and every `legoai.reference.*`
+module for wiring) is responsible for binding that closure to the exact
+resolved capability's actual typed input, for checking that the resolved
+`CatalogEntry` corresponds to a known trusted implementation before ever
+calling `invoke_governed`, and for constructing the fixture-specific
+`GovernedInvocationResult.output`.
+
+**Trusted-host scope only.** This is a statically known, host-trusted
+deterministic implementation invoked by explicit, private composition
+wiring -- never dynamic Plugin/provider execution, never
+`eval`/`exec`/`importlib`-based loading from Catalog/Plugin declaration
+data. ADR-012 (Plugin isolation/sandboxing) remains entirely unresolved;
+nothing here claims process isolation or contains untrusted code.
+
+**Structural invocation-readiness enforcement.** `settle`/`invoke_governed`
+both require `result.outcome is CoordinationOutcome.READY` *and* that this
+exact `ExecutionCoordinator` instance's own internal record currently shows
+`RUNNING` for `result.execution_id` -- checked *before* the capability
+closure is ever called. A `CoordinationResult` manufactured by hand, or
+produced by a different `ExecutionCoordinator` instance, fails this check
+and the closure is never invoked (this is what makes reaching the
+implementation "structurally impossible" without a genuine governed
+`coordinate()` call having already reached `READY`; it is not a
+cryptographic proof, matching every prior Gate-2 batch's trusted-host
+framing).
+
+**Permit replay is still deferred, not silently invented.** Neither method
+adds a `consumed` flag to `DispatchPermit` or any new mutable replay-tracking
+Port. Calling `invoke_governed` twice with the *same* already-`SUCCEEDED`
+`CoordinationResult` fails structurally (the second call's `_require_running`
+check finds `SUCCEEDED`, not `RUNNING`) -- but nothing today prevents two
+*concurrent* `invoke_governed` calls for the same still-`RUNNING`
+`execution_id` from both passing that check before either commits its
+terminal transition, both then calling the capability closure. Because this
+batch's one capability (`normalize_text`) is pure with no external effect,
+a concurrent double-invocation has no observable side effect beyond a
+second identical computation whose result is discarded (the second
+`_transition` call fails once the first has already committed a terminal
+state) -- this residual risk is bounded/inert for this specific fixture. A
+persisted operation ledger (ADR-008) or an exclusive per-execution lock
+would be needed before any *effectful* capability could safely reuse this
+same boundary; that is explicitly out of scope here, not solved by
+inventing ad-hoc mutable state on an immutable value.
+
+**One documented cancellation limitation.** `invoke_governed` awaits exactly
+once (`asyncio.sleep(0)`) *before* calling the capability closure, giving a
+caller-requested cancellation exactly one real chance to be observed and
+recorded as `CANCELLED` with no invocation. After that checkpoint, the
+capability closure runs as plain synchronous Python with no further await
+inside it -- CPython cannot preempt arbitrary synchronous code, so a
+cancellation delivered while the closure is "running" is, in truth, only
+ever observed *after* that closure has already returned (at
+`invoke_governed`'s own next-and-final await). This is a documented,
+honest limitation of wrapping non-awaiting synchronous code, not a defect:
+no code here pretends cancellation can interrupt `normalize_text` mid-call.
+
+**No mandatory Evidence custody of the `ExecutionResult` was added.**
+ADR-009 SS5: "Mandatory evidence derives from accepted contracts and
+applicable entitled Policy/control requirements... Unknown applicability is
+not 'not required'" -- but equally, no such requirement is *invented*
+speculatively. No accepted `EvidenceRequirement` exists anywhere in this
+codebase for this capability's own execution outcome (F8b never declared
+one), so there is nothing this batch is obligated to custody. Pre-effect
+evidence remains exactly M9's already-existing `required_evidence_ids`
+mechanism (unused by this fixture); `legoai.evidence.ports`'s subject union
+is deliberately not widened to `ExecutionId`/`ExecutionResult` here, since
+no genuine consumer of that subject type exists yet -- the same
+anti-speculation discipline M8 itself already applied to its own subject
+union.
+
+**ResourceClaim remains fully out of scope.** `normalize_text`'s
+declaration carries no resource requirement (M3's `ResourceClaim` stays
+purely declarative, M9's own deferral), so this first governed slice
+proceeds with no `ResourcePort` and no resource-claim check of any kind.
+Completing this one zero-resource deterministic slice does not establish
+that any future resource-bearing capability is governed -- that remains
+unqualified, explicitly out-of-scope future work.
 """
 
 import asyncio
@@ -72,15 +163,17 @@ from legoai.execution.ports import (
     DispatchPermit,
     DispatchRequest,
     ExecutionTransitionError,
+    GovernedInvocationResult,
     SecurityContextResolutionPort,
 )
-from legoai.execution.values import ExecutionId, ExecutionState
+from legoai.execution.values import ExecutionId, ExecutionResult, ExecutionState
 from legoai.governance.ports import (
     ApprovalConsumptionPort,
     AuthorizationOutcome,
     AuthorizationPort,
 )
-from legoai.kernel.errors import ErrorCategory
+from legoai.kernel.effects import EffectExtent
+from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.references import OperationRef
 
 
@@ -339,6 +432,103 @@ class ExecutionCoordinator:
                     f"{current.value} cannot transition to {target.value}"
                 )
             self._states[execution_id] = target
+
+    async def _require_running(self, execution_id: ExecutionId) -> None:
+        """Gate-2 M11: the pre-invocation structural check. Read-only (never
+        commits a transition itself) and performed *before* any capability
+        closure runs, so a `CoordinationResult` this exact Coordinator
+        instance did not itself carry to `RUNNING` is rejected before the
+        closure is ever called -- not merely after, when `_transition`'s own
+        (otherwise sufficient) validation would catch it too late.
+        """
+        async with self._lock:
+            current = self._states.get(execution_id)
+            if current is not ExecutionState.RUNNING:
+                raise ExecutionTransitionError(
+                    f"{execution_id.value} is not RUNNING under this Coordinator"
+                )
+
+    async def settle(
+        self,
+        result: CoordinationResult,
+        *,
+        final_state: ExecutionState,
+        effect: EffectExtent,
+        error: ErrorDetail | None,
+    ) -> ExecutionResult:
+        """Gate-2 M11: the only seam through which a `RUNNING` Execution this
+        Coordinator itself produced may reach a terminal state. Capability-
+        agnostic -- it knows nothing about what ran or how; a composition
+        caller that has already decided (without invoking anything) that the
+        resolved candidate does not match its one known trusted
+        implementation calls this directly with `final_state=FAILED` to
+        record that outcome. `invoke_governed` (below) calls this too, after
+        actually invoking.
+
+        `final_state=CANCELLED` takes SPEC SS5.1's required two-step
+        `running -> cancelling -> cancelled` path; `SUCCEEDED`/`FAILED` are
+        both valid single-step edges directly from `running`.
+        """
+        if type(result) is not CoordinationResult:
+            raise TypeError("settle requires CoordinationResult")
+        if result.outcome is not CoordinationOutcome.READY:
+            raise ValueError("settle requires a READY CoordinationResult")
+        execution_id = result.execution_id
+        await self._require_running(execution_id)
+        if final_state is ExecutionState.CANCELLED:
+            await self._transition(execution_id, ExecutionState.CANCELLING)
+        await self._transition(execution_id, final_state)
+        return ExecutionResult(execution_id, final_state, effect, error)
+
+    async def invoke_governed(
+        self, result: CoordinationResult, implementation: Callable[[], str]
+    ) -> GovernedInvocationResult:
+        """Gate-2 M11: call the trusted deterministic implementation exactly
+        once and map its outcome to canonical Execution semantics. See this
+        module's docstring for why `implementation` is a pre-bound
+        zero-argument closure rather than a typed input/configuration pair,
+        the structural READY/RUNNING enforcement, the documented
+        cancellation limitation, and the residual concurrent-double-
+        invocation risk this method does not solve.
+        """
+        if type(result) is not CoordinationResult:
+            raise TypeError("invoke_governed requires CoordinationResult")
+        if result.outcome is not CoordinationOutcome.READY:
+            raise ValueError("invoke_governed requires a READY CoordinationResult")
+        execution_id = result.execution_id
+        await self._require_running(execution_id)
+
+        try:
+            await asyncio.sleep(0)
+        except asyncio.CancelledError:
+            await self.settle(
+                result,
+                final_state=ExecutionState.CANCELLED,
+                effect=EffectExtent.NONE,
+                error=None,
+            )
+            raise
+
+        try:
+            output = implementation()
+        except Exception:  # noqa: BLE001 -- mapped explicitly below, never swallowed
+            execution_result = await self.settle(
+                result,
+                final_state=ExecutionState.FAILED,
+                effect=EffectExtent.NONE,
+                error=ErrorDetail(
+                    ErrorCategory.EXECUTION_FAILURE, Recoverability.TERMINAL, ()
+                ),
+            )
+            return GovernedInvocationResult(execution_result, None)
+
+        execution_result = await self.settle(
+            result,
+            final_state=ExecutionState.SUCCEEDED,
+            effect=EffectExtent.COMPLETED,
+            error=None,
+        )
+        return GovernedInvocationResult(execution_result, output)
 
     async def coordinate(self, request: CoordinationRequest) -> CoordinationResult:
         """Admit, supervise and (if and only if M9 permits) hand off one

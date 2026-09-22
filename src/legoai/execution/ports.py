@@ -54,6 +54,7 @@ from legoai.evidence.ports import EvidenceId
 from legoai.execution.values import (
     ExecutionContext,
     ExecutionId,
+    ExecutionResult,
     ExecutionState,
     SecurityContextRef,
 )
@@ -343,3 +344,37 @@ class CoordinationResult:
                 raise ValueError("cancelled outcome must not carry a permit")
             if self.category is not None:
                 raise ValueError("cancelled outcome must not carry a category")
+
+
+@dataclass(frozen=True, slots=True)
+class GovernedInvocationResult:
+    """Gate-2 M11: the immutable bundle a governed capability invocation
+    produces -- M1's own canonical `ExecutionResult` (the terminal lifecycle
+    fact), plus this fixture's typed output. Never a generic payload bag:
+    `output` is exactly `str | None`, the deterministic text-normalization
+    capability's actual output type, present if and only if
+    `execution_result.final_state is ExecutionState.SUCCEEDED`. A later
+    batch introducing a second, differently-typed capability needs its own
+    specific result type; this one is not widened speculatively.
+
+    Carries no Evidence reference: no accepted `EvidenceRequirement` exists
+    for this capability's own outcome (see `legoai.reference.execution`
+    module docstring), so there is nothing to reference yet.
+    """
+
+    execution_result: ExecutionResult
+    output: str | None
+
+    def __post_init__(self) -> None:
+        if type(self.execution_result) is not ExecutionResult:
+            raise TypeError("governed invocation result requires ExecutionResult")
+        if self.output is not None and type(self.output) is not str:
+            raise TypeError("governed invocation result output must be str or None")
+        if self.execution_result.final_state is ExecutionState.SUCCEEDED:
+            if self.output is None:
+                raise ValueError("succeeded governed invocation requires output")
+        elif self.output is not None:
+            raise ValueError(
+                f"{self.execution_result.final_state.value} governed invocation "
+                "must not carry output"
+            )

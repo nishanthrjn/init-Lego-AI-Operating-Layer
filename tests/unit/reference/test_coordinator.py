@@ -16,6 +16,7 @@ from legoai.capabilities.values import CapabilityId, CapabilityOffer
 from legoai.execution.ports import (
     CoordinationOutcome,
     CoordinationRequest,
+    CoordinationResult,
     ExecutionTransitionError,
     SecurityContextResolutionPort,
 )
@@ -34,7 +35,8 @@ from legoai.governance.values import (
 )
 from legoai.governance.values import Grant, GrantId, PolicyRef, Principal
 from legoai.kernel.context import TenantContext
-from legoai.kernel.errors import ErrorCategory
+from legoai.kernel.effects import EffectExtent
+from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.identity import (
     ApplicationId,
     CorrelationId,
@@ -520,3 +522,292 @@ def test_construction_requires_no_running_event_loop() -> None:
     resolver = ImmediateSecurityContextResolver(None)
     coordinator = ExecutionCoordinator(resolver, env.arbiter)
     assert coordinator is not None
+
+
+# --- Gate-2 M11: invoke_governed / settle -------------------------------------------
+
+
+async def _ready(
+    env: _Environment, *, execution_id: str = "exec-1"
+) -> tuple[ExecutionCoordinator, CoordinationResult]:
+    grant = _grant(grantee=env.grantee)
+    resolver = ImmediateSecurityContextResolver(env.security_context(grant=grant))
+    coordinator = env.coordinator(resolver)
+    result = await coordinator.coordinate(
+        env.coordination_request(execution_id=execution_id)
+    )
+    assert result.outcome is CoordinationOutcome.READY
+    return coordinator, result
+
+
+def test_invoke_governed_success_calls_closure_exactly_once() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "normalized"
+
+        outcome = await coordinator.invoke_governed(result, implementation)
+
+        assert calls == 1
+        assert outcome.output == "normalized"
+        assert outcome.execution_result.final_state is ExecutionState.SUCCEEDED
+        assert outcome.execution_result.effect is EffectExtent.COMPLETED
+        assert outcome.execution_result.error is None
+        assert await coordinator.current_state(result.execution_id) is (
+            ExecutionState.SUCCEEDED
+        )
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_closure_failure_maps_to_failed_execution_failure() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            raise ValueError("boom")
+
+        outcome = await coordinator.invoke_governed(result, implementation)
+
+        assert calls == 1
+        assert outcome.output is None
+        assert outcome.execution_result.final_state is ExecutionState.FAILED
+        assert outcome.execution_result.effect is EffectExtent.NONE
+        assert outcome.execution_result.error is not None
+        assert (
+            outcome.execution_result.error.category is ErrorCategory.EXECUTION_FAILURE
+        )
+        assert await coordinator.current_state(result.execution_id) is (
+            ExecutionState.FAILED
+        )
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_rejects_non_ready_result() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        resolver = ImmediateSecurityContextResolver(env.security_context(grant=None))
+        coordinator = env.coordinator(resolver)
+        rejected = await coordinator.coordinate(env.coordination_request())
+        assert rejected.outcome is CoordinationOutcome.REJECTED
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "unreachable"
+
+        with pytest.raises(ValueError, match="READY"):
+            await coordinator.invoke_governed(rejected, implementation)
+
+        assert calls == 0
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_rejects_wrong_type_argument() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, _result = await _ready(env)
+
+        with pytest.raises(TypeError, match="CoordinationResult"):
+            await coordinator.invoke_governed(object(), lambda: "x")  # type: ignore[arg-type]
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_rejects_hand_built_result_not_produced_by_this_coordinator() -> (
+    None
+):
+    """Structural enforcement (task's own requirement): a `CoordinationResult`
+    that looks valid (READY, real permit shape) but was never actually
+    carried to RUNNING by *this* Coordinator instance must be rejected
+    before the capability closure is ever called -- proving direct
+    invocation without a genuine governed `coordinate()` call is impossible.
+    """
+
+    async def scenario() -> None:
+        env = _Environment()
+        # A different Coordinator instance produces a genuine READY result...
+        other_coordinator, result = await _ready(env, execution_id="exec-elsewhere")
+        # ...but we invoke against a *fresh* Coordinator that never ran
+        # coordinate() for this execution_id at all.
+        fresh_resolver = ImmediateSecurityContextResolver(None)
+        fresh_coordinator = env.coordinator(fresh_resolver)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "unreachable"
+
+        with pytest.raises(ExecutionTransitionError):
+            await fresh_coordinator.invoke_governed(result, implementation)
+
+        assert calls == 0
+        # The genuine coordinator that actually produced this result is
+        # unaffected and can still invoke it correctly.
+        outcome = await other_coordinator.invoke_governed(result, implementation)
+        assert calls == 1
+        assert outcome.output == "unreachable"
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_second_call_on_already_settled_result_fails_structurally() -> (
+    None
+):
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "normalized"
+
+        first = await coordinator.invoke_governed(result, implementation)
+        assert first.execution_result.final_state is ExecutionState.SUCCEEDED
+        assert calls == 1
+
+        with pytest.raises(ExecutionTransitionError):
+            await coordinator.invoke_governed(result, implementation)
+
+        # The already-succeeded execution_id cannot be re-invoked: the
+        # structural pre-check fails before the closure runs a second time.
+        assert calls == 1
+
+    asyncio.run(scenario())
+
+
+def test_invoke_governed_cancellation_before_closure_marks_cancelled() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        calls = 0
+
+        def implementation() -> str:
+            nonlocal calls
+            calls += 1
+            return "unreachable"
+
+        async def run_and_cancel_immediately() -> None:
+            task = asyncio.ensure_future(
+                coordinator.invoke_governed(result, implementation)
+            )
+            # Let the task actually start and reach its own internal
+            # `asyncio.sleep(0)` checkpoint before cancelling it there --
+            # cancelling before the task ever runs at all would leave the
+            # internal record untouched (documented in the module docstring:
+            # nothing runs, nothing to record).
+            await asyncio.sleep(0)
+            task.cancel()
+            await task
+
+        with pytest.raises(asyncio.CancelledError):
+            await run_and_cancel_immediately()
+
+        assert calls == 0
+        assert await coordinator.current_state(result.execution_id) is (
+            ExecutionState.CANCELLED
+        )
+
+    asyncio.run(scenario())
+
+
+def test_settle_records_failed_without_invoking_anything() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+
+        execution_result = await coordinator.settle(
+            result,
+            final_state=ExecutionState.FAILED,
+            effect=EffectExtent.NONE,
+            error=ErrorDetail(
+                ErrorCategory.DEPENDENCY_FAILURE, Recoverability.TERMINAL, ()
+            ),
+        )
+
+        assert execution_result.final_state is ExecutionState.FAILED
+        assert execution_result.effect is EffectExtent.NONE
+        assert execution_result.error is not None
+        assert execution_result.error.category is ErrorCategory.DEPENDENCY_FAILURE
+        assert await coordinator.current_state(result.execution_id) is (
+            ExecutionState.FAILED
+        )
+
+    asyncio.run(scenario())
+
+
+def test_settle_cancelled_takes_two_step_cancelling_path() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, result = await _ready(env)
+        observed: list[ExecutionState] = []
+        original_transition = coordinator._transition
+
+        async def spying_transition(
+            execution_id: ExecutionId, target: ExecutionState
+        ) -> None:
+            observed.append(target)
+            await original_transition(execution_id, target)
+
+        coordinator._transition = spying_transition  # type: ignore[method-assign]
+
+        execution_result = await coordinator.settle(
+            result,
+            final_state=ExecutionState.CANCELLED,
+            effect=EffectExtent.NONE,
+            error=None,
+        )
+
+        assert execution_result.final_state is ExecutionState.CANCELLED
+        assert observed == [ExecutionState.CANCELLING, ExecutionState.CANCELLED]
+
+    asyncio.run(scenario())
+
+
+def test_settle_rejects_wrong_type_argument() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        coordinator, _result = await _ready(env)
+
+        with pytest.raises(TypeError, match="CoordinationResult"):
+            await coordinator.settle(
+                object(),  # type: ignore[arg-type]
+                final_state=ExecutionState.FAILED,
+                effect=EffectExtent.NONE,
+                error=None,
+            )
+
+    asyncio.run(scenario())
+
+
+def test_settle_rejects_non_ready_result() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        resolver = ImmediateSecurityContextResolver(env.security_context(grant=None))
+        coordinator = env.coordinator(resolver)
+        rejected = await coordinator.coordinate(env.coordination_request())
+
+        with pytest.raises(ValueError, match="READY"):
+            await coordinator.settle(
+                rejected,
+                final_state=ExecutionState.FAILED,
+                effect=EffectExtent.NONE,
+                error=None,
+            )
+
+    asyncio.run(scenario())
