@@ -238,3 +238,21 @@ class AuthorizationPort(Protocol):
     """
 
     def evaluate(self, context: SecurityContext) -> AuthorizationDecision: ...
+
+
+class ApprovalConsumptionPort(Protocol):
+    """Gate-2 M9: the exclusive-gate consumption seam ADR-007 SS10 requires
+    ("check current eligibility -> commit consumption -> permit dispatch").
+    Deliberately separate from the read-only `ApprovalUsePort` (M4): that
+    Port answers "what is the current use count" for evaluation purposes and
+    is never mutated to also commit state, per this batch's own instruction
+    not to casually change an existing Port's contract. `consume` commits
+    exactly one additional use; the caller (the dispatch arbiter) must have
+    already checked `current_use_state(...).uses_recorded < approval.max_uses`
+    under the same exclusive gate before calling it -- this Port does not
+    re-derive eligibility, only records the commit.
+    """
+
+    def current_use_state(self, approval: Approval) -> ApprovalUseState | None: ...
+
+    def consume(self, approval: Approval) -> ApprovalUseState: ...

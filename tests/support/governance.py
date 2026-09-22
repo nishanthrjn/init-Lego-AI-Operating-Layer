@@ -52,6 +52,16 @@ class InMemoryApprovalUseFake:
             return None
         return ApprovalUseState(approval.approval_id, self._uses[approval.approval_id])
 
+    def consume(self, approval: Approval) -> ApprovalUseState:
+        """Gate-2 M9: commit exactly one additional use. The caller (the
+        dispatch arbiter, under its own exclusive lock) is responsible for
+        having already checked eligibility -- this fake does not re-derive
+        it, matching `ApprovalConsumptionPort`'s documented contract.
+        """
+        current = self._uses.get(approval.approval_id, 0)
+        self._uses[approval.approval_id] = current + 1
+        return ApprovalUseState(approval.approval_id, current + 1)
+
 
 class InMemoryPolicyCurrencyFake:
     """Explicit superseded/unknown sets, keyed by the exact `PolicyRef`
