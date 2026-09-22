@@ -1,5 +1,11 @@
 # Next Core Implementation Batch
 
+> Current forward pointer (2026-09-22): v0.1 qualification is recorded in
+> [V0.1-RELEASE-READINESS.md](V0.1-RELEASE-READINESS.md). Subsequent work follows
+> [the Python-first plan](PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md), under IA-001
+> and ADR-016. The batch and milestone records below are retained as history;
+> their original next-task instructions do not override that forward plan.
+
 **Document:** `planning/NEXT-CORE-IMPLEMENTATION-BATCH.md`
 **Status:** PROPOSED — IMPLEMENTATION BATCH
 **Authority chain respected:** intent.md → SPEC.md → ARCHITECTURE.md → CONTRACTS.md → PLUGIN-SPEC.md → SECURITY.md → EVALUATION.md → CONFORMANCE.md → Accepted ADRs (001-011, 015) → `planning/IMPLEMENTATION-READINESS.md` (**ACCEPTED — IMPLEMENTATION READINESS PLAN**, confirmed directly, 2026-09-20 — defines the four Gates cited in §2) → `planning/GATE-1-FOUNDATION-IMPLEMENTATION.md` (PROPOSED — FOR IMPLEMENTATION REVIEW, but its F0-F2 prescriptions are already implemented and verified — see §1) → `planning/runtime/LOCAL-PERSISTENCE-REALIZATION.md` (ACCEPTED) → this document.

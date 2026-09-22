@@ -7,6 +7,31 @@
 
 ## 1. Authority and purpose
 
+### Current direction addendum — 2026-09-22
+
+[IA-001](../intent-amendments/IA-001.md) amends implementation delivery priority
+under intent §55 while preserving canonical semantic neutrality.
+[ADR-016](ADR-016.md) is Accepted under the maintainer's explicit Python-first
+direction and first-milestone instruction. It extends ADR-001's initial runtime
+choice to ongoing reusable component delivery and preserves ADR-002's boundaries.
+
+**Current register:** 15 allocated ADRs: 13 Accepted, two Proposed (012/013).
+ADR-014 remains intentionally unallocated. Current totals: P0 = 3, P1 = 8,
+P2 = 2, P3 = 2, P4 = 0; A = 3, B = 9, C = 2, D = 1, E = 0.
+Counts, source-start observations and next-step instructions in the original
+planning record below describe its prior scope; this addendum is the current
+register/forward pointer and does not retroactively alter those review findings.
+
+| ADR | Decision | Class / priority / type | Dependencies | Status / evidence |
+|---|---|---|---|---|
+| [ADR-016](ADR-016.md) | Python-first reusable AI component platform | A / P0 for strategic increment / 2 | Intent 1.0 + IA-001, ADR-001/002 and retained governance decisions | Accepted; repository impact, alternative/burden and alignment review. M1 local validation complete; results recorded in the forward plan. |
+
+The next work follows the [forward plan](../planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md),
+not the historical §18 instruction. ADR-016 neither allocates ADR-014 nor accepts
+ADR-012/013. The original 14-decision backlog and its proof obligations follow.
+
+### Original planning record
+
 This index identifies unresolved **reference implementation choices**, not new canonical requirements. The eight accepted governing documents were reviewed in authority order. No language, framework, database, broker, vendor, deployment platform, public protocol, or isolation technology is selected. Repository inspection found the governing Markdown documents and no existing implementation or language decision to preserve.
 
 An ADR MUST choose between viable mechanisms that realize the accepted semantics. It MUST NOT restate SPEC as a new decision, reopen logical Architecture, introduce hidden requirements, or become a shopping list or implementation task. Concrete examples and evidence may be implementation-specific; the resulting mechanism MUST remain replaceable without rewriting canonical contracts.
