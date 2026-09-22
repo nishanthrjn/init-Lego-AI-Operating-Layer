@@ -6,7 +6,9 @@ including ADR-016. This replaces forward sequencing, not v0.1 history.
 M1 implementation and local validation are complete. The first local run passed
 tests, typing, lint and the example; the returned formatter recheck passed after
 the two formatting-only corrections recorded below. The milestone is closed.
-All later phases are planned, not implemented or independently authorized.
+M2's bounded local acquisition subset is now implemented under the maintainer's
+separate M2 instruction; local validation is pending (see M2 record below).
+Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
 
@@ -260,3 +262,105 @@ M1 is complete for bounded supplied-text inspection and its intake example.
 This does not establish governed live repository access, sandbox isolation,
 Agent/Workflow/Team support or general production conformance. Phase C/M2
 remains unstarted; the milestone stop boundary is preserved.
+
+## M2 implementation record — bounded repository workspace
+
+**M1 complete. M2 implementation complete / local validation pending.
+M3 not started. ENGINEERING_M2_COMPLETE = NO.**
+
+The maintainer's M2 request narrows the next Phase C increment to read-only
+local workspace acquisition, explicitly excluding Git and Agent implementation.
+This record supersedes the historical M1 closure's M2-unstarted pointer only.
+It does not mark all Phase C governance/Git/public-authoring work complete.
+
+### Contract and dependency review
+
+Reviewed intent/IA-001, SPEC identity/security/independent-use rules, logical
+Architecture and Contracts, Security, ADR-002/005/007/008/016, ADR index,
+the impact assessment and prior forward/batch pointers, plus M1 source/tests.
+Existing M1 `RepositoryText` is the read result and `InspectionRequest`/
+`inspect_text` remain the analyzer. No duplicate Snapshot, Artifact, Agent,
+Skill or canonical identity was introduced.
+
+The replaceable `RepositoryWorkspacePort` has only `list_entries` and `read_text`.
+`RepositoryPath`, `WorkspacePolicy`, `WorkspaceEntry` and `WorkspaceEntryKind`
+are immutable acquisition-domain values. `LocalWorkspaceRoot` is host-local
+configuration and `LocalRepositoryWorkspace` its synchronous reference adapter.
+`WorkspaceError` has a closed failure enum; boundary violations have a distinct
+subclass. This is a concrete I/O substitution boundary for the intake consumer,
+not a speculative collection of future workspace providers.
+
+Dependency direction: workspace values reuse M1 labels; Port references values;
+local adapter implements that shape; example chooses and composes the adapter.
+Only the local module imports filesystem machinery. Core, providers, frameworks,
+applications, Git and shell are absent from pack runtime dependencies. Existing
+M1 implementation and tests remain; architecture/package tests were extended for
+the actual new modules. No runtime dependency, tool version, lockfile, Core code,
+canonical document or ADR changed. ADR-016's additive pack strategy is preserved.
+
+### Supported scope and stop boundaries
+
+Explicit absolute local root, portable relative result paths, nonrecursive
+bounded directory listing, strict bounded UTF-8 reads and explicit failures.
+No write, mutation, execution, network access or automatic retry. Exclusions
+are a small explicit name tuple rather than a Git-ignore engine. Listing fails
+on scan/depth overflow rather than returning an arbitrary partial directory.
+The [engineering README](../packages/legoai-engineering/README.md) defines exact
+limits, errors, example and boundary assumptions.
+
+Reject traversal, rooted/drive/UNC/device/ADS syntax, Windows filename aliases,
+symlinks and observed reparse points (including junctions), multiply-linked files,
+cross-device targets and special files. Recheck root identity; compare open-file
+identity before reading and recheck ordinary mutations. A stable trusted local
+directory/mount namespace is a supported-scope precondition, not something
+these portable checks can enforce against an attacker. Hostile concurrent path
+replacement, same-device bind mounts, unqualified filesystem/filter drivers,
+network filesystems and sandbox isolation are not claimed. Finite reads/scans
+do not imply hard OS-call timeout/cancellation guarantees.
+
+The Port is an acquisition adapter, not an admitted governed invocation facade.
+ADR-005/007 enforcement before disclosure, tenant binding, resource/evidence
+admission and ADR-014-supported authoring remain requirements for future runtime
+integration. The local operator example does not substitute path possession for
+that authority. No new approval-token or authorization framework is invented.
+
+### Static review and validation handoff
+
+Same-assistant static review inspected imports, mutable state, public types,
+path validation before I/O, root revalidation, bounded stream/scan lifetime,
+UTF-8/M1 compatibility, safe error messages and cause retention. Corrected a
+missing test return annotation, a needless type-ignore and a Windows-only
+typing hazard in the POSIX FIFO test. Added a root-replacement regression and
+explicit read-only-open/static process checks. This review is not independent
+assurance or runtime security proof; no tests, builds, typechecks or linters
+were executed internally.
+
+Tests now cover explicit/missing/file roots, UTF-8/CRLF/BOM/empty text, nested
+paths, missing/directory targets, traversal and Windows aliases, byte/character
+ceilings, decode/NUL failure, order/hidden-file/exclusion behavior, bounded scans
+and depth, file/root replacement, error causality, symlink and hardlink escape,
+Windows junction escape, and POSIX special files. Architecture tests include
+inert imports and negative filesystem/process dependency fixtures. Packaging
+tests build wheel/sdist, assert new module inventories, install offline into a
+fresh environment and exercise both M1 and real M2 outside the checkout.
+
+Run locally from repository root:
+
+```powershell
+Push-Location packages/legoai-engineering
+uv sync --locked
+uv run pytest -q
+uv run mypy src tests examples
+uv run ruff check src tests examples
+uv run ruff format --check src tests examples
+uv run python examples/workspace_intake.py "$((Get-Location).Path)"
+Pop-Location
+git diff --check
+```
+
+Expected: applicable tests pass, mypy no issues, Ruff lint/format clean,
+example prints `pyproject.toml:9:1`. Build/install checks are included in pytest.
+Windows skips the POSIX FIFO case; other platforms skip Windows junctions.
+Missing Windows symlink privilege may produce an explicit skip, which leaves
+symlink qualification pending until a permitted local run succeeds. Review the
+complete output and every skip before claiming M2 complete. Do not start M3.
