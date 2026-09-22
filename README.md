@@ -36,9 +36,10 @@ first foundation milestone: pure inspection of supplied repository text with an
 intake example. M1 local validation is complete, as recorded in the forward plan.
 M2 adds a bounded read-only local workspace adapter and an example reusing M1;
 M2 local validation is complete for its documented trusted local scope.
-M3 adds typed read-only Git observation; implementation is complete and local
-validation is pending. Governed runtime publication, Git mutation, code execution
-and engineering Agents remain unimplemented. M4 is unstarted.
+M3 adds typed read-only Git observation and is locally validated. M4 adds bounded
+text changesets with digest preconditions; implementation and local validation
+are complete for the documented trusted local scope. Governed runtime publication, Git mutation, code execution
+and engineering Agents remain unimplemented. M5 is unstarted.
 
 ## Quickstart: the DocuMind CLI
 
