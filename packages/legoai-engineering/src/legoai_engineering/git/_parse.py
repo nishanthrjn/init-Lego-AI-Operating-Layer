@@ -54,8 +54,7 @@ def parse_status(data: bytes, max_entries: int) -> GitRepositoryState:
                 if fields[2] != "N..." or "160000" in fields[3:6]:
                     raise GitError(GitFailure.UNSUPPORTED)
                 if any(
-                    mode not in {"000000", "100644", "100755"}
-                    for mode in fields[3:6]
+                    mode not in {"000000", "100644", "100755"} for mode in fields[3:6]
                 ):
                     raise GitError(GitFailure.UNSUPPORTED)
                 if any(
