@@ -302,16 +302,31 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.plugins.ports.")
                     ):
                         errors.add("reference-owner")
-                    if name in (
-                        "legoai.reference.declarations",
-                        "legoai.reference.resolution",
-                    ) and not (
+                    if name == "legoai.reference.declarations" and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.plugins.values"
                         or target.startswith("legoai.plugins.values.")
                         or target == "legoai.capabilities.values"
                         or target.startswith("legoai.capabilities.values.")
+                    ):
+                        errors.add("reference-owner")
+                    if name == "legoai.reference.resolution" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        # ADR-002 line ~176 assigns "Resolution snapshots/
+                        # closure/results" to this same module; Gate-2 M7
+                        # extends F7's pure compatibility analysis with
+                        # runtime resolution over published Catalog state,
+                        # so this module (only) also needs the C-row's
+                        # Catalog Port operation-result values (never the
+                        # `legoai.reference.catalog` realization itself).
+                        or target == "legoai.capabilities.ports"
+                        or target.startswith("legoai.capabilities.ports.")
                     ):
                         errors.add("reference-owner")
                     if name == "legoai.reference.deterministic" and not (
@@ -1492,6 +1507,62 @@ def test_f7_reference_modules_do_not_leak_test_fake() -> None:
         {
             "legoai.reference.declarations": "from tests.support.configuration_store import InMemoryConfigurationStore"
         }
+    )
+
+
+# --- Gate-2 M7: runtime resolution (legoai.reference.resolution) widening --
+
+
+def test_reference_resolution_may_depend_on_capabilities_ports() -> None:
+    assert "reference-owner" not in violations(
+        {
+            "legoai.reference.resolution": "from legoai.capabilities.ports import CatalogEntry"
+        }
+    )
+
+
+def test_reference_declarations_does_not_gain_capabilities_ports_widening() -> None:
+    # Only legoai.reference.resolution (the M7 runtime resolver) is widened;
+    # legoai.reference.declarations has no M7 consumer and keeps F7's
+    # original, narrower permission set.
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.declarations": "from legoai.capabilities.ports import CatalogEntry"
+        }
+    )
+
+
+def test_reference_resolution_cannot_import_catalog_realization() -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.resolution": "import legoai.reference.catalog"}
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.resolution": "from legoai.reference.catalog import InMemoryCatalog"
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "legoai.execution.values",
+        "legoai.governance.values",
+        "legoai.resources.values",
+        "legoai.plugins.values",
+        "legoai.capabilities.values",
+    ],
+)
+def test_semantic_values_do_not_depend_on_runtime_resolution(module: str) -> None:
+    reason_by_module = {
+        "legoai.execution.values": "execution-owner",
+        "legoai.governance.values": "governance-owner",
+        "legoai.resources.values": "resources-owner",
+        "legoai.plugins.values": "plugins-owner",
+        "legoai.capabilities.values": "capabilities-owner",
+    }
+    assert reason_by_module[module] in violations(
+        {module: "from legoai.reference.resolution import resolve"}
     )
 
 

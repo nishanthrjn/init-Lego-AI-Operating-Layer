@@ -106,8 +106,8 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.reference.application.recovery",
     "legoai.observability", "legoai.observability.values", "legoai.observability.ports",
     "legoai.reference.observation",
-    "legoai.plugins", "legoai.plugins.values",
-    "legoai.capabilities", "legoai.capabilities.values",
+    "legoai.plugins", "legoai.plugins.values", "legoai.plugins.ports",
+    "legoai.capabilities", "legoai.capabilities.values", "legoai.capabilities.ports",
     "legoai.reference.declarations", "legoai.reference.resolution",
     "legoai.reference.deterministic",
     "legoai.runtime", "legoai.runtime._composition", "legoai.runtime._composition.direct"
@@ -243,6 +243,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_plugins.py",
             "tests/unit/capabilities/test_ports.py",
             "tests/contract/test_catalog.py",
+            "tests/unit/reference/test_capability_resolution.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -338,6 +339,10 @@ active_record = plugins_ports.PluginLifecycleRecord(plugins_ports.PluginAdmissio
 catalog = reference_catalog.InMemoryCatalog()
 catalog_entry = catalog.publish(active_record, active_declaration, active_declaration.offers[0], established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
 assert catalog_entry in catalog.snapshot(context.TenantContext(identity.TenantId("t"))).entries
+requirement = capabilities_values.CapabilityRequirement(capabilities_values.CapabilityId("text-normalize"), capabilities_values.CapabilityVersionRange(versions.Version(1, 0, 0)))
+capability_resolution = resolution.resolve(requirement, catalog.snapshot(context.TenantContext(identity.TenantId("t"))), resolved_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+assert capability_resolution.status is resolution.ResolutionStatus.RESOLVED
+assert capability_resolution.candidates == (catalog_entry,)
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 7
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
