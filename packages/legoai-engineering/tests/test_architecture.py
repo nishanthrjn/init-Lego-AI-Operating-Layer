@@ -9,12 +9,26 @@ from pathlib import Path
 import pytest
 
 
-def import_violations(source: str) -> set[str]:
-    """Closed imports for this pure subset, including type-only imports."""
+def import_violations(source: str, module: str = "") -> set[str]:
+    """Closed per-module imports; only the local adapter may perform file I/O."""
     allowed = {
         "dataclasses",
         "legoai_engineering.repository.values",
     }
+    additions = {
+        "errors": {"enum"},
+        "workspace": {"enum", "legoai_engineering.repository.errors"},
+        "ports": {"typing", "legoai_engineering.repository.workspace"},
+        "local": {
+            "os",
+            "stat",
+            "sys",
+            "pathlib",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.workspace",
+        },
+    }
+    allowed.update(additions.get(module, set()))
     errors: set[str] = set()
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
@@ -26,6 +40,36 @@ def import_violations(source: str) -> set[str]:
                 errors.add(node.module or "relative")
             if any(alias.name == "*" for alias in node.names):
                 errors.add("star")
+            if node.module == "os":
+                errors.add("os-from-import")
+        elif isinstance(node, ast.Attribute) and node.attr in {
+            "system",
+            "popen",
+            "spawnl",
+            "execv",
+            "write_text",
+            "write_bytes",
+            "unlink",
+            "rename",
+            "mkdir",
+            "cwd",
+            "getcwd",
+        }:
+            errors.add(node.attr)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr == "open" and (
+                not node.args
+                or not isinstance(node.args[0], ast.Constant)
+                or node.args[0].value != "rb"
+                or node.keywords
+            ):
+                errors.add("non-readonly-open")
+            if (
+                isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "os"
+                and node.func.attr not in {"fstat", "scandir"}
+            ):
+                errors.add("unsupported-os-call")
         elif isinstance(node, ast.Name) and node.id in {
             "__import__",
             "open",
@@ -37,11 +81,11 @@ def import_violations(source: str) -> set[str]:
     return errors
 
 
-def test_pure_source_and_inert_initializers() -> None:
+def test_source_boundaries_and_inert_initializers() -> None:
     root = Path(__file__).resolve().parents[1]
     for path in (root / "src").rglob("*.py"):
         source = path.read_text(encoding="utf-8")
-        assert not import_violations(source), path
+        assert not import_violations(source, path.stem), path
         if path.name == "__init__.py":
             assert all(
                 isinstance(node, ast.Expr)
@@ -70,6 +114,29 @@ def test_pure_source_and_inert_initializers() -> None:
 )
 def test_forbidden_dependencies_are_detected(source: str) -> None:
     assert import_violations(source)
+    assert import_violations(source, "local")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import os\nos.system('bad')",
+        "from os import system",
+        "Path.cwd()",
+        "path.write_text('bad')",
+        "import legoai_engineering.repository.local",
+    ],
+)
+def test_no_io_leak_into_values_or_ports(source: str) -> None:
+    for module in ("values", "workspace", "ports"):
+        assert import_violations(source, module)
+
+
+@pytest.mark.parametrize(
+    "source", ["path.open('wb')", "os.remove('a')", "os.system('bad')"]
+)
+def test_local_adapter_cannot_write_or_launch_processes(source: str) -> None:
+    assert import_violations(source, "local")
 
 
 def test_core_does_not_import_engineering_pack() -> None:
@@ -89,7 +156,7 @@ def test_core_does_not_import_engineering_pack() -> None:
 
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
-import dataclasses, os, sys, threading, logging
+import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing
 from unittest.mock import patch
 threads = tuple(threading.enumerate())
 handlers = tuple(logging.getLogger().handlers)
@@ -112,6 +179,10 @@ with (
 ):
     from legoai_engineering.repository.api import inspect_text
     from legoai_engineering.repository.values import InspectionRequest, RepositoryText
+    import legoai_engineering.repository.errors
+    import legoai_engineering.repository.workspace
+    import legoai_engineering.repository.ports
+    import legoai_engineering.repository.local
     assert inspect_text(InspectionRequest((RepositoryText('a', 'x'),), 'x', 1)).matches
 assert tuple(threading.enumerate()) == threads
 assert tuple(logging.getLogger().handlers) == handlers
