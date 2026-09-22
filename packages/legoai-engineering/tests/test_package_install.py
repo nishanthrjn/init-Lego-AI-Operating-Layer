@@ -36,6 +36,14 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/repository/workspace.py",
         "legoai_engineering/repository/ports.py",
         "legoai_engineering/repository/local.py",
+        "legoai_engineering/git/__init__.py",
+        "legoai_engineering/git/values.py",
+        "legoai_engineering/git/errors.py",
+        "legoai_engineering/git/ports.py",
+        "legoai_engineering/git/local.py",
+        "legoai_engineering/git/_config.py",
+        "legoai_engineering/git/_parse.py",
+        "legoai_engineering/git/_process.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -53,6 +61,8 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert {f"src/{name}" for name in expected} <= paths
         assert "examples/repository_intake.py" in paths
         assert "examples/workspace_intake.py" in paths
+        assert "examples/git_intake.py" in paths
+        assert "tests/test_git.py" in paths
         assert "tests/test_repository.py" in paths
     environment = tmp_path / "installed"
     venv.EnvBuilder(with_pip=False).create(environment)
@@ -91,6 +101,42 @@ workspace: RepositoryWorkspacePort = LocalRepositoryWorkspace(
 )
 assert workspace.list_entries(None)[0].path.value == 'sample.txt'
 assert workspace.read_text(RepositoryPath('sample.txt')).text == 'hello'
+import shutil
+from legoai_engineering.git.local import GitReadPolicy, LocalGitExecutable, LocalGitRepository
+from legoai_engineering.git.ports import GitRepositoryPort
+from legoai_engineering.git.errors import GitError, GitFailure
+git = shutil.which('git')
+assert git is not None, 'M3 qualification requires Git'
+port: GitRepositoryPort = LocalGitRepository(
+    LocalWorkspaceRoot(root), LocalGitExecutable(Path(git)),
+    GitReadPolicy(5, 4096, 10, 128),
+)
+try:
+    port.inspect()
+except GitError as error:
+    assert error.reason is GitFailure.NOT_REPOSITORY
+else:
+    raise AssertionError('non-repository accepted')
+import os, subprocess
+fixture = root / 'git-fixture'
+fixture.mkdir()
+environment = {
+    'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': os.devnull,
+    'GIT_CONFIG_SYSTEM': os.devnull,
+}
+if os.name == 'nt':
+    environment['SystemRoot'] = os.environ['SystemRoot']
+subprocess.run(
+    [git, 'init', '--initial-branch=main', '--template='],
+    cwd=fixture, env=environment, check=True, capture_output=True, timeout=15,
+)
+port = LocalGitRepository(
+    LocalWorkspaceRoot(fixture), LocalGitExecutable(Path(git)),
+    GitReadPolicy(5, 4096, 10, 128),
+)
+from legoai_engineering.git.values import GitHeadKind
+state = port.inspect()
+assert state.head.kind is GitHeadKind.UNBORN and state.entries == ()
 """
     workspace_root = tmp_path / "workspace"
     workspace_root.mkdir()

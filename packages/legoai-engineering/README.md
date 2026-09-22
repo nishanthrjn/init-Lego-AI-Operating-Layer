@@ -7,7 +7,8 @@ capability or acquire live repository data.
 
 M2 adds a bounded local workspace adapter below. Its implementation and local
 validation are complete for the documented supported scope. M1 remains closed
-and its code is unchanged. M3 remains unstarted.
+and its code is unchanged. M3 implementation is complete; local validation is
+pending. M4 is unstarted. Earlier M2 closure notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
 consumer. It searches explicitly supplied project metadata and produces match
@@ -72,7 +73,8 @@ matching/order/truncation, bounds/type errors/immutability, no implicit I/O,
 dependency direction and consumer integration. The package test builds wheel
 and sdist, checks the wheel inventory/typing marker/dependencies, installs the
 wheel offline into a new venv, and exercises the API outside the checkout with
-isolated Python. No network, Ollama or system Git is needed by the tests.
+isolated Python. M1/M2 need no network, Ollama or system Git. M3's expanded
+suite requires installed Git; see its qualification section below.
 
 Build tools are pinned to the repository's existing versions. The first local
 `uv sync` generated this pack's lockfile; dependency inventory review found five
@@ -233,3 +235,188 @@ not a claimed combined full-suite rerun. No internal validation was executed.
 `ENGINEERING_M2_COMPLETE = YES` for the scope documented above. Broader runtime
 governance, hostile concurrent mutation containment and non-Windows qualification
 are not established by these results. M3 remains unstarted.
+
+## M3 — deterministic Git read capability
+
+**Implementation complete — local validation pending.** No M3 test, build,
+typecheck, lint, formatter or integration command has been run internally.
+M1 and M2 remain complete; M4 is unstarted. `ENGINEERING_M3_COMPLETE = NO`
+until the maintainer's local evidence qualifies this scope.
+
+`git.ports.GitRepositoryPort.inspect()` returns one immutable
+`git.values.GitRepositoryState(head, entries)`. This narrow Port lets consumers
+request a semantic observation without knowing subprocess arguments or importing
+the local implementation. It does not mirror the Git command catalogue.
+
+| Value | Meaning |
+|---|---|
+| `GitHeadKind` | ATTACHED, DETACHED or UNBORN |
+| `GitHead(kind, branch, commit)` | Branch is absent only when detached; commit is absent only when unborn. Branch is bounded textual data, never an instruction |
+| `GitCommitId(value)` | Opaque nonzero lowercase hexadecimal string of 1–128 characters; no SHA-1-only length assumption or promise to identify the hashing algorithm |
+| `GitChange` | UNCHANGED, MODIFIED, ADDED, DELETED, TYPE_CHANGED |
+| `GitStatusEntry(path, index, worktree, untracked)` | Reuses M2 RepositoryPath; index and worktree changes remain separate. Untracked entries have unchanged columns and `untracked=True` |
+| `GitRepositoryState` | Exact GitHead plus unique Unicode-lexically sorted tuple of at most 4096 status entries; empty tuple means no reported changes under this Git configuration |
+
+Public values are frozen/slotted with exact runtime type checks. A successful
+result is complete for the supported operation; bounds never silently truncate.
+Unchanged tracked files are absent from status. Ignored files are not untracked
+results. Rename detection is disabled, so a staged rename appears as deletion
+and addition. Diffs, a public tracked-file inventory, commit metadata/history,
+conflict modelling and all mutation operations are deferred.
+
+### Local composition and execution
+
+`git.local.LocalGitRepository(root, executable, policy)` takes M2
+`LocalWorkspaceRoot`, immutable `LocalGitExecutable(absolute_native_path)`, and
+immutable `GitReadPolicy(timeout_seconds, max_output_bytes, max_status_entries,
+max_scan_entries)`. Imports and construction perform no repository I/O, executable
+discovery or process launch. Each explicit inspect call binds an M2 workspace.
+The application selects a trusted installed native Git executable; Windows
+batch/command scripts are rejected. The example discovers Git at composition
+time using `shutil.which`, never within capability semantics.
+
+Use a maintained Git installation supporting `--no-lazy-fetch`, porcelain v2
+and SHA-256 repositories. Unsupported executable/options produce COMMAND failure;
+there is no unsafe fallback. Python remains CPython 3.14 as specified by the pack.
+
+After admission, only these fixed read commands run:
+
+1. `ls-files --stage -z`, privately validating index paths/modes/stages.
+2. `status --porcelain=v2 --branch --no-ahead-behind --untracked-files=all
+   --ignore-submodules=all --no-renames -z`.
+
+The index check rejects indexed symlinks, gitlinks and unmerged stages before
+status. Submodule inspection is also disabled defensively. Both invocations bind
+explicit `--git-dir`, `--work-tree` and cwd; they never search a parent repository.
+The helper is private, accepts a closed command enum, and uses a sequence of
+arguments with `shell=False` and stdin disconnected. Filenames and branch names
+never become command arguments. No generic process/shell Port is introduced.
+
+Semantically this is **read-only repository observation**; its implementation
+performs local OS/process effects and is not pure. Optional Git locks/index
+refresh writes, lazy fetching, replacement objects, auto maintenance, helpers,
+pagers, prompts and network protocols are disabled or excluded by admission.
+There are no mutation commands or retries. Observational OS access-time changes
+are possible. Tests compare file inventories, bytes and modification times
+before and after HEAD/status inspection; their results remain pending.
+
+### Admission, configuration and security boundary
+
+The supported repository is an ordinary non-bare root with a local `.git`
+directory, standard refs/index, and regular files in a **trusted, stable local
+filesystem namespace**. M2 is used unchanged to check all entries, including
+ignored worktree entries and Git metadata. This admission walk does not infer
+Git status or parse ignore rules. Its purpose is to reject links/reparse points,
+multiple hardlinks, cross-device targets, special files and unsupported names
+before Git can access them. Git supplies the status semantics.
+
+Consequently large workspaces, ignored environments containing links, or any
+entry outside M2's portable path grammar can fail admission. There is no silent
+skip. Index paths are checked too, including currently deleted files. UTF-8
+decoding is strict; unsupported control-character paths fail with M2's boundary
+error rather than a replacement pathname. Spaces, Unicode, leading dashes and
+portable shell-looking filenames are data and are covered by tests.
+
+Gitfiles/linked worktrees are recognized and rejected without following their
+external metadata. Bare layouts and nested repositories are rejected. There is
+no recursive Git discovery. Alternates, shallow/partial repositories, linked
+worktree metadata and submodules are unsupported. Conflicts fail explicitly
+without returning a partial successful status. A branch literally named
+`(detached)` is rejected because of porcelain's sentinel spelling.
+
+Local configuration is read through M2 and admitted by a deliberately narrow
+grammar before invoking Git: simple section/key/value lines, comments on their
+own lines, common core filesystem booleans, repository format 0/1, autocrlf,
+SHA-1/SHA-256 object format, user name/email and inert remote URL/fetch and branch
+remote/merge values. Unknown settings, includes/includeIf, escapes/continuations,
+quoted values, inline comments, filter commands, fsmonitor, worktree overrides,
+sparse/reftable and other extensions are rejected. This is an admission subset,
+not a general replacement for Git's config parser; do not change a real repository's
+config just to bypass a rejection. Global/system configuration and attributes/
+excludes files are disabled. Repository `.gitignore` and `.git/info/exclude`
+still determine ignored paths. Inherited Git, tracing, credentials, HOME, PATH and
+loader settings are not forwarded; only Windows SystemRoot is retained where needed.
+
+This is not an OS sandbox, hostile concurrent-mutation boundary, integrity check
+of an arbitrary Git binary or descendant-process supervisor. Trust the installed
+Git program and host loader, workspace/metadata and stable namespace. No atomic
+snapshot is promised between the two commands. Do not deploy this adapter under
+stronger adversarial isolation claims. Future governed invocation/disclosure must
+enforce ADR-005/007 and runtime resource/evidence obligations before acquisition;
+the Port and root objects themselves confer no authorization. ADR-014 remains
+unresolved for a supported authoring facade. No canonical document/ADR changes
+are needed for this additive ADR-016 reference adapter.
+
+### Bounds and failures
+
+Each policy limit is a required exact int, rejecting bool/coercion. Timeout is
+1–60 seconds **per Git invocation**. Stdout and stderr are each bounded to
+1–1,048,576 bytes, with one extra byte to detect overflow. Status count is 1–4096;
+whole admission/index entry count is 1–65,536. M2 additionally bounds each directory
+to 4096 entries and depth to 32; an admission listing may observe that bounded
+batch before detecting the aggregate limit. Config/HEAD reads use M2's 262144-byte
+and 65536-character ceilings. All byte/count errors fail without partial results.
+
+Private capture polls nonblocking pipes, retains bounded buffers, and closes both
+pipes on success/failure. Timeout/overflow kills the direct child and reaps it,
+with a separate five-second cleanup wait. There are no reader threads or output
+temporary files. Synchronous M2 checks, process creation and OS kill calls do not
+have a hard wall-clock interruption guarantee; the timeout is not an end-to-end
+inspect deadline or process-tree sandbox. No external cancellation API is claimed.
+
+`git.errors.GitError.reason` uses `GitFailure`: UNAVAILABLE, NOT_REPOSITORY,
+INVALID_REPOSITORY, UNSUPPORTED, COMMAND, TIMEOUT, OUTPUT_LIMIT, ENTRY_LIMIT,
+DECODE, FORMAT or IO. Missing executable is checked distinctly from a non-Git root.
+Missing/wrong required metadata gives INVALID_REPOSITORY; other Git-reported
+corruption/nonzero exits give COMMAND, never a false NOT_REPOSITORY. Unexpected
+stderr also fails COMMAND, so warnings cannot silently qualify an observation.
+COMMAND errors retain a typed `returncode` (including zero for diagnostic output).
+M2 WorkspaceError/WorkspaceBoundaryError remain distinct and propagate unchanged.
+Top-level messages exclude stderr, environment and paths; chained OS/decoding
+causes are trusted diagnostics and may contain paths/bytes. No raw stderr is
+attached to an exception. Invalid caller types/bounds raise TypeError/ValueError.
+
+Protocol references: Git's [porcelain v2 contract](https://git-scm.com/docs/git-status#_porcelain_format_version_2),
+[execution/environment controls](https://git-scm.com/docs/git), and Python's
+[nonblocking pipe support](https://docs.python.org/3.14/library/os.html#os.set_blocking).
+
+### M3 local qualification
+
+Run from the repository root:
+
+```powershell
+Push-Location packages/legoai-engineering
+uv sync --locked
+git --version
+uv run pytest -q
+uv run mypy src tests examples
+uv run ruff check src tests examples
+uv run ruff format --check src tests examples
+uv run python examples/git_intake.py "$((Get-Location).Path)"
+Pop-Location
+git diff --check
+```
+
+The last example intentionally supplies the package directory, which is not a
+Git root. Expected stable output: `repository: absent at supplied root`. It must
+not discover the enclosing checkout. For HEAD/status display, pass the absolute
+path of an existing repository satisfying the admission contract; output lists
+head kind, branch/commit (or `-`), change count and sorted status entries. The
+example never creates or deletes a repository. Pytest also exercises it against
+an unborn temporary repository with exact expected semantic output.
+
+Git is required for qualification; missing Git fails the integration fixture,
+not a successful skip. Tests initialize/commit only temporary repositories with
+isolated configuration and local identities. They cover initial/attached/detached
+HEAD, SHA-256, staged/unstaged/deleted/untracked/ignored state, rename-as-delete/add,
+hostile portable names, roots with spaces, unsupported layouts/configs, corruption,
+environment isolation, byte/count limits, real-child timeout/cleanup, inert imports,
+closed commands/dependencies and M1/M2 regressions. The existing packaging test
+builds wheel and sdist, checks all M3 modules/examples, installs the wheel offline
+into a fresh environment and exercises an actual temporary Git observation there.
+
+Expected: pytest passes (review M2's documented platform skips), clean mypy/Ruff/
+format checks, expected example output, and no output from `git diff --check`.
+Wheel/sdist/install success is not claimed until local results return. New runtime
+dependencies: **zero**. Package metadata, pinned tools and lockfile are unchanged.
+Return the full output, including warnings/skips. M4 remains unstarted.

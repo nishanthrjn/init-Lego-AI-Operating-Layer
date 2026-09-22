@@ -8,7 +8,8 @@ tests, typing, lint and the example; the returned formatter recheck passed after
 the two formatting-only corrections recorded below. The milestone is closed.
 M2's bounded local acquisition subset is now implemented under the maintainer's
 separate M2 instruction; local validation is complete for its documented trusted
-local Windows scope (see M2 closure below). M3 remains unstarted.
+local Windows scope (see M2 closure below). M3 implementation is complete;
+local validation is pending under the separate M3 instruction. M4 is unstarted.
 Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
@@ -443,3 +444,43 @@ capability-first additive package strategy is preserved.
 within the remaining Phase C work (governed integration/Git inspection, respecting
 ADR-014 before supported authoring); none is authorized or implemented by this
 closure. Stop here.
+
+## M3 implementation handoff — local validation pending
+
+The maintainer separately authorized deterministic read-only Git observation.
+Current status: **M1 complete; M2 complete; M3 implementation complete — local
+validation pending; M4 unstarted. ENGINEERING_M3_COMPLETE = NO.** Earlier M1/M2
+records above retain the scope and evidence at their respective closure dates.
+
+Added an independent `legoai_engineering.git` semantic layer: immutable HEAD,
+commit identity, index/worktree status values and a one-method GitRepositoryPort.
+LocalGitRepository binds an explicit M2 root plus trusted Git executable and
+finite policy. It admits a deliberately narrow ordinary local repository/config
+subset, checks the index with fixed `ls-files`, then reads porcelain-v2 status.
+Shell execution, arbitrary command arguments, Git mutation, network, diffs,
+rename detection and conflict modelling are absent. Unsupported states fail
+explicitly. The unchanged M2 checks enforce the trusted stable namespace scope;
+this is not hostile-mutation isolation or an admitted governed runtime facade.
+
+Implementation files added: `git/__init__.py`, `git/values.py`, `git/ports.py`,
+`git/errors.py`, `git/local.py`, `git/_config.py`, `git/_parse.py`,
+`git/_process.py`; `examples/git_intake.py`; `tests/test_git.py` in the engineering
+pack. Updated its architecture/inert-import and wheel/sdist/offline-install tests,
+both READMEs and this forward plan. M1/M2 production modules, Core, Document Pack,
+DocuMind, canonical specifications/ADRs, package metadata and lockfile are unchanged.
+No new runtime dependency or foundational architectural decision was introduced.
+
+Static review covers strict immutable contracts, dependency direction, fixed
+read commands, noninteractive environment isolation, config/helper admission,
+path/layout restrictions, dual bounded nonblocking pipe capture, child cleanup,
+timeout/error behavior, package inventory and local test coverage. Applicable
+verification is deferred to the maintainer as explicitly required. No test,
+build, install, lint, formatter or typecheck was executed internally.
+
+Use the complete PowerShell command sequence and expected results in the
+[M3 qualification instructions](../packages/legoai-engineering/README.md#m3-local-qualification).
+Pytest includes actual temporary Git repositories and artifact build/fresh offline
+installation. Review every failure, warning and skip before qualification; classify
+code, test, environment, toolchain/dependency or configuration defects first.
+No packaging/typing/test success is claimed now. Stop for local evidence; do not
+start mutation, process-execution, sandbox or Agent work. M4 remains unstarted.
