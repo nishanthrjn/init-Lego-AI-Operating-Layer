@@ -176,6 +176,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/plugins.py",
         "legoai/capabilities/ports.py",
         "legoai/reference/catalog.py",
+        "legoai/evidence/ports.py",
+        "legoai/reference/evidence.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -244,6 +246,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/capabilities/test_ports.py",
             "tests/contract/test_catalog.py",
             "tests/unit/reference/test_capability_resolution.py",
+            "tests/unit/evidence/test_ports.py",
+            "tests/unit/reference/test_evidence.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -303,7 +307,9 @@ import legoai.plugins.ports as plugins_ports
 import legoai.reference.plugins as reference_plugins
 import legoai.capabilities.ports as capabilities_ports
 import legoai.reference.catalog as reference_catalog
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values, governance_ports, reference_governance, plugins_ports, reference_plugins, capabilities_ports, reference_catalog):
+import legoai.evidence.ports as evidence_ports
+import legoai.reference.evidence as reference_evidence
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values, governance_ports, reference_governance, plugins_ports, reference_plugins, capabilities_ports, reference_catalog, evidence_ports, reference_evidence):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -343,6 +349,11 @@ requirement = capabilities_values.CapabilityRequirement(capabilities_values.Capa
 capability_resolution = resolution.resolve(requirement, catalog.snapshot(context.TenantContext(identity.TenantId("t"))), resolved_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
 assert capability_resolution.status is resolution.ResolutionStatus.RESOLVED
 assert capability_resolution.candidates == (catalog_entry,)
+custody = reference_evidence.InMemoryEvidenceCustody()
+config_revision_ref = references.ConfigurationRevisionRef(target, "r1", versions.Version(0, 1, 0))
+evidence_record = evidence_ports.EvidenceRecord(evidence_ports.EvidenceId("ev1"), config_revision_ref, grant_principal, context.TenantContext(identity.TenantId("t")), "source submitted", datetime(2026, 1, 1, tzinfo=timezone.utc))
+custody.record(evidence_record)
+assert custody.read(evidence_ports.EvidenceId("ev1"), context.TenantContext(identity.TenantId("t"))) == evidence_record
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 7
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))

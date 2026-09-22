@@ -133,15 +133,32 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime")
                     ):
                         errors.add("values-layer")
-                    if name.startswith("legoai.evidence.") and not (
+                    if name == "legoai.evidence.values" and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
-                        or target == "legoai.evidence"
-                        or target.startswith("legoai.evidence.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
                     ):
                         # F4 gives evidence.values only Kernel, deliberately
                         # stricter than ADR-002's G-inclusive maximum for O,
                         # matching the Gate-1 plan's own narrower F4 scope.
+                        errors.add("evidence-owner")
+                    if name == "legoai.evidence.ports" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
+                        # ADR-002 SS9.2: O-row's allowed-foreign row includes
+                        # G (Governance); Gate-2 M8 is the first real
+                        # consumer (evidence attributable to a Principal
+                        # issuer and, per the M6 capabilities.ports ->
+                        # plugins.ports precedent, to a foreign owner's
+                        # Port-level operation-result value).
+                        or target == "legoai.governance.values"
+                        or target.startswith("legoai.governance.values.")
+                        or target == "legoai.governance.ports"
+                        or target.startswith("legoai.governance.ports.")
+                    ):
                         errors.add("evidence-owner")
                     if name.startswith("legoai.evidence.") and any(
                         target == f"legoai.evidence.{layer}"
@@ -301,6 +318,19 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target == "legoai.plugins.ports"
                         or target.startswith("legoai.plugins.ports.")
                     ):
+                        errors.add("reference-owner")
+                    if name == "legoai.reference.evidence" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.evidence.values"
+                        or target.startswith("legoai.evidence.values.")
+                        or target == "legoai.evidence.ports"
+                        or target.startswith("legoai.evidence.ports.")
+                    ):
+                        # Gate-2 M8's reference realization gets the same
+                        # allowed-peer permissions as its owner's row
+                        # (ADR-002 SS9.2/SS7) -- its own Port/values only,
+                        # never other reference realizations or runtime.
                         errors.add("reference-owner")
                     if name == "legoai.reference.declarations" and not (
                         target == "legoai.kernel"
@@ -647,6 +677,102 @@ def test_kernel_cannot_import_evidence() -> None:
             "legoai.kernel.provenance": "from legoai.evidence.values import EvidenceRequirement"
         }
     ) == {"kernel-owner"}
+
+
+# --- Gate-2 M8: evidence.ports (custody) and reference.evidence boundaries -
+
+
+@pytest.mark.parametrize("owner", ["application", "runtime", "execution", "resources"])
+def test_evidence_ports_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.evidence.ports": f"import legoai.{owner}"}) == {
+        "evidence-owner"
+    }
+
+
+def test_evidence_ports_may_depend_on_own_values_and_governance() -> None:
+    assert "evidence-owner" not in violations(
+        {
+            "legoai.evidence.ports": "from legoai.evidence.values import EvidenceRequirement"
+        }
+    )
+    assert "evidence-owner" not in violations(
+        {"legoai.evidence.ports": "from legoai.governance.values import Principal"}
+    )
+    assert "evidence-owner" not in violations(
+        {
+            "legoai.evidence.ports": "from legoai.governance.ports import AuthorizationDecision"
+        }
+    )
+
+
+def test_evidence_values_does_not_gain_governance_widening() -> None:
+    # Only legoai.evidence.ports (the M8 custody layer) is widened to
+    # Governance; legoai.evidence.values keeps F4's original, narrower
+    # Kernel-only permission set.
+    assert "evidence-owner" in violations(
+        {"legoai.evidence.values": "from legoai.governance.values import Principal"}
+    )
+
+
+def test_reference_evidence_may_depend_on_own_port_values_and_governance() -> None:
+    assert "reference-owner" not in violations(
+        {
+            "legoai.reference.evidence": "from legoai.evidence.ports import EvidenceRecord"
+        }
+    )
+    assert "reference-owner" not in violations(
+        {
+            "legoai.reference.evidence": "from legoai.evidence.values import EvidenceRequirement"
+        }
+    )
+
+
+def test_reference_evidence_cannot_import_other_reference_realizations() -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.evidence": "import legoai.reference.governance"}
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.evidence": "import legoai.reference.catalog"}
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.evidence": "from legoai.observability.values import Observation"
+        }
+    )
+
+
+def test_reference_evidence_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.evidence": "from tests.support.governance import InMemoryGrantStateFake"
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "legoai.execution.values",
+        "legoai.governance.values",
+        "legoai.resources.values",
+        "legoai.plugins.values",
+        "legoai.capabilities.values",
+    ],
+)
+def test_semantic_values_do_not_depend_on_evidence_custody(module: str) -> None:
+    reason_by_module = {
+        "legoai.execution.values": "execution-owner",
+        "legoai.governance.values": "governance-owner",
+        "legoai.resources.values": "resources-owner",
+        "legoai.plugins.values": "plugins-owner",
+        "legoai.capabilities.values": "capabilities-owner",
+    }
+    assert reason_by_module[module] in violations(
+        {module: "from legoai.evidence.ports import EvidenceRecord"}
+    )
+    assert reason_by_module[module] in violations(
+        {module: "from legoai.reference.evidence import InMemoryEvidenceCustody"}
+    )
 
 
 @pytest.mark.parametrize(
@@ -1661,6 +1787,7 @@ def test_composition_root_does_not_leak_test_fake() -> None:
         "execution.values",
         "resources.values",
         "capabilities.ports",
+        "evidence.ports",
     ],
 )
 def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
@@ -1675,6 +1802,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "execution.values": "execution-owner",
         "resources.values": "resources-owner",
         "capabilities.ports": "capabilities-owner",
+        "evidence.ports": "evidence-owner",
     }
     assert reason_by_owner[owner] in violations(
         {
@@ -1693,6 +1821,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "legoai.reference.governance",
         "legoai.reference.plugins",
         "legoai.reference.catalog",
+        "legoai.reference.evidence",
     ],
 )
 def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:
