@@ -137,7 +137,7 @@ def test_read_failures(tmp_path: Path, policy: WorkspacePolicy) -> None:
         (b"\xff", WorkspaceFailure.DECODE),
         (b"a\x00b", WorkspaceFailure.BINARY),
         (b"x" * 4097, WorkspaceFailure.LIMIT),
-        ("é".encode("utf-8") * 1025, WorkspaceFailure.LIMIT),
+        ("é".encode() * 1025, WorkspaceFailure.LIMIT),
     ):
         (tmp_path / "file").write_bytes(content)
         with pytest.raises(WorkspaceError) as failure:
@@ -147,7 +147,7 @@ def test_read_failures(tmp_path: Path, policy: WorkspacePolicy) -> None:
 
 
 def test_exact_byte_and_character_bounds(tmp_path: Path) -> None:
-    (tmp_path / "file").write_bytes("éé".encode("utf-8"))
+    (tmp_path / "file").write_bytes("éé".encode())
     policy = WorkspacePolicy(4, 2, 1, 1, ())
     assert adapter(tmp_path, policy).read_text(RepositoryPath("file")).text == "éé"
     with pytest.raises(WorkspaceError) as limit:
@@ -191,7 +191,9 @@ def test_scan_and_depth_limits_fail_without_partial_results(
 ) -> None:
     (tmp_path / ".git").mkdir()
     (tmp_path / "a").write_bytes(b"x")
-    assert len(adapter(tmp_path, replace(policy, max_entries=2)).list_entries(None)) == 1
+    assert (
+        len(adapter(tmp_path, replace(policy, max_entries=2)).list_entries(None)) == 1
+    )
     with pytest.raises(WorkspaceError) as limit:
         adapter(tmp_path, replace(policy, max_entries=1)).list_entries(None)
     assert_reason(limit, WorkspaceFailure.LIMIT)
@@ -347,7 +349,7 @@ def test_values_types_and_immutability(tmp_path: Path, policy: WorkspacePolicy) 
     with pytest.raises(ValueError):
         replace(policy, max_read_bytes=0)
     with pytest.raises(TypeError):
-        replace(policy, excluded_names=[])
+        replace(policy, excluded_names=[])  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         replace(policy, excluded_names=(".git", ".GIT"))
     with pytest.raises(ValueError):

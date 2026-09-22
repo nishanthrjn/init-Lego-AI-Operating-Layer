@@ -5,8 +5,9 @@ M1 implementation and local validation complete: 44 tests, typing, lint,
 formatting and the example passed. M1 does not publish a governed `repo.inspect`
 capability or acquire live repository data.
 
-M2 adds a bounded local workspace adapter below. Its implementation is complete;
-local validation is pending. M1 remains closed and its code is unchanged.
+M2 adds a bounded local workspace adapter below. Its implementation and local
+validation are complete for the documented supported scope. M1 remains closed
+and its code is unchanged. M3 remains unstarted.
 
 The [repository intake example](examples/repository_intake.py) is its first
 consumer. It searches explicitly supplied project metadata and produces match
@@ -216,3 +217,19 @@ if it does, symlink qualification remains pending until a permitted local run
 supplies evidence (for example with Developer Mode enabled). Skips do not prove
 security behavior. Return all test output, including skip reasons. M2 is not
 complete until applicable local evidence has been reviewed; M3 remains unstarted.
+
+### M2 local validation closure
+
+User-supplied Windows results: initial suite **86 passed, 2 skipped**, including
+Windows junction, architecture and wheel/sdist/clean-install checks; example
+`pyproject.toml:9:1`; no whitespace issues from `git diff --check`. After
+behavior-preserving test/example corrections, mypy passed over 14 source files,
+Ruff lint passed and Ruff reported 14 files already formatted. The previously
+privilege-blocked symlink escape test subsequently **passed in 0.05s** in a
+separate Windows session. The remaining initial skip is the POSIX-only FIFO
+case, inapplicable to this Windows qualification. These are separate local runs,
+not a claimed combined full-suite rerun. No internal validation was executed.
+
+`ENGINEERING_M2_COMPLETE = YES` for the scope documented above. Broader runtime
+governance, hostile concurrent mutation containment and non-Windows qualification
+are not established by these results. M3 remains unstarted.

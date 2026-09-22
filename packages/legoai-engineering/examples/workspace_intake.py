@@ -33,7 +33,9 @@ def inspect_project(workspace: RepositoryWorkspacePort) -> InspectionResult:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", type=Path, help="explicit absolute local workspace root")
+    parser.add_argument(
+        "root", type=Path, help="explicit absolute local workspace root"
+    )
     arguments = parser.parse_args()
     policy = WorkspacePolicy(
         max_read_bytes=262_144,
