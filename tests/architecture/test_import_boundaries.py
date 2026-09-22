@@ -257,6 +257,19 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("ports", "reference", "runtime", "spi")
                     ):
                         errors.add("values-layer")
+                    if name == "legoai.reference.plugins" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.plugins.ports"
+                        or target.startswith("legoai.plugins.ports.")
+                    ):
+                        # Gate-2 M5's reference realization gets the same
+                        # allowed-peer permissions as its owner's row
+                        # (ADR-002 SS9.2/SS7) -- its own Port/values only,
+                        # never other reference realizations or runtime.
+                        errors.add("reference-owner")
                     if name in (
                         "legoai.reference.declarations",
                         "legoai.reference.resolution",
@@ -1037,6 +1050,43 @@ def test_reference_governance_does_not_leak_test_fake() -> None:
     )
 
 
+# --- Gate-2 M5: reference.plugins (lifecycle) boundary ----------------------
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.plugins.values import PluginDeclaration",
+        "from legoai.plugins.ports import PluginLifecycleRecord",
+        "from legoai.kernel.context import TenantContext",
+    ],
+)
+def test_reference_plugins_may_depend_on_its_own_port_and_values(source: str) -> None:
+    assert "reference-owner" not in violations({"legoai.reference.plugins": source})
+
+
+def test_reference_plugins_cannot_import_other_reference_realizations() -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.plugins": "import legoai.reference.governance"}
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.plugins": "from legoai.governance.values import Grant"}
+    )
+    assert "reference-owner" in violations(
+        {
+            "legoai.reference.plugins": "from legoai.capabilities.values import CapabilityId"
+        }
+    )
+
+
+def test_reference_plugins_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.plugins": "from tests.support.governance import InMemoryGrantStateFake"
+        }
+    )
+
+
 # --- F7: capabilities/plugins owner boundaries and reference analysis -----
 
 
@@ -1440,6 +1490,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "legoai.reference.deterministic",
         "legoai.reference.observation",
         "legoai.reference.governance",
+        "legoai.reference.plugins",
     ],
 )
 def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:

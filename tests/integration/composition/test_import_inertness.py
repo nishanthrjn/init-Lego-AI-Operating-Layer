@@ -34,6 +34,8 @@ with patch.object(logging, "basicConfig", denied):
     import legoai.resources.values
     import legoai.governance.ports
     import legoai.reference.governance
+    import legoai.plugins.ports
+    import legoai.reference.plugins
 assert tuple(logging.getLogger().handlers) == handlers
 """
     result = subprocess.run(
