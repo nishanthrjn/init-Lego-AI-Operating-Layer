@@ -174,6 +174,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/governance.py",
         "legoai/plugins/ports.py",
         "legoai/reference/plugins.py",
+        "legoai/capabilities/ports.py",
+        "legoai/reference/catalog.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -239,6 +241,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/support/governance.py",
             "tests/unit/plugins/test_ports.py",
             "tests/unit/reference/test_plugins.py",
+            "tests/unit/capabilities/test_ports.py",
+            "tests/contract/test_catalog.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -296,7 +300,9 @@ import legoai.governance.ports as governance_ports
 import legoai.reference.governance as reference_governance
 import legoai.plugins.ports as plugins_ports
 import legoai.reference.plugins as reference_plugins
-for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values, governance_ports, reference_governance, plugins_ports, reference_plugins):
+import legoai.capabilities.ports as capabilities_ports
+import legoai.reference.catalog as reference_catalog
+for module in (references, context, versions, errors, effects, provenance, governance, evidence, application, ports, configuration, codec, sqlite_store, recovery, observability_values, observability_ports, observation, plugins_values, capabilities_values, declarations, resolution, deterministic, composition, execution_values, resources_values, governance_ports, reference_governance, plugins_ports, reference_plugins, capabilities_ports, reference_catalog):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix))
 target = references.ConfigurationRef(references.ApplicationRef(references.ReferenceScope("owner", identity.TenantId("t")), identity.ApplicationId("app")), "fixture")
 result = configuration.compose_configuration(target, (), contract_version=versions.Version(0, 1, 0), interpretation_version=versions.Version(0, 1, 0))
@@ -327,6 +333,11 @@ discovered_ref = reference_plugins.inspect(plugin_declaration)
 validation_result = reference_plugins.validate(discovered_ref, plugin_declaration, evaluated_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
 lifecycle_record = reference_plugins.admit(validation_result, context.TenantContext(identity.TenantId("t")), plugins_ports.PluginAdmissionId("a1"), established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
 assert lifecycle_record.state is plugins_ports.PluginLifecycleState.VALIDATED
+active_declaration = plugins_values.PluginDeclaration(plugins_values.PluginId("legoai", "fixture-2"), versions.Version(0, 1, 0), (capabilities_values.CapabilityOffer(capabilities_values.CapabilityId("text-normalize"), versions.Version(1, 0, 0)),), ())
+active_record = plugins_ports.PluginLifecycleRecord(plugins_ports.PluginAdmissionId("a2"), active_declaration.plugin_id, active_declaration.release, context.TenantContext(identity.TenantId("t")), plugins_ports.PluginLifecycleState.ACTIVE, 1, datetime(2026, 1, 1, tzinfo=timezone.utc))
+catalog = reference_catalog.InMemoryCatalog()
+catalog_entry = catalog.publish(active_record, active_declaration, active_declaration.offers[0], established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+assert catalog_entry in catalog.snapshot(context.TenantContext(identity.TenantId("t"))).entries
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 7
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
