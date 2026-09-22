@@ -187,15 +187,31 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # (ADR-002 SS9.2/SS7) -- its own Port/values only,
                         # never other reference realizations or runtime.
                         errors.add("reference-owner")
-                    if name.startswith("legoai.capabilities.") and not (
+                    if name == "legoai.capabilities.values" and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
-                        or target == "legoai.capabilities"
-                        or target.startswith("legoai.capabilities.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
                     ):
-                        # F7 gives capabilities only Kernel, narrower than
-                        # ADR-002 SS9.2's G/R/O/X maximum for the C plane --
-                        # no field in this batch needs any of those peers.
+                        # F7 gives capabilities.values only Kernel, narrower
+                        # than ADR-002 SS9.2's G/R/O/X maximum for the C
+                        # plane -- no field in that batch needs any peer.
+                        errors.add("capabilities-owner")
+                    if name == "legoai.capabilities.ports" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        # ADR-002 SS9.2: Capabilities' (C) allowed-foreign
+                        # row includes X (Plugins); Gate-2 M6 is the first
+                        # real consumer, only this one peer is widened, and
+                        # only for ports.py (operation request/result
+                        # definitions may embed a foreign owner's value).
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.plugins.ports"
+                        or target.startswith("legoai.plugins.ports.")
+                    ):
                         errors.add("capabilities-owner")
                     if name.startswith("legoai.capabilities.") and any(
                         target == f"legoai.capabilities.{layer}"
@@ -269,6 +285,22 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # allowed-peer permissions as its owner's row
                         # (ADR-002 SS9.2/SS7) -- its own Port/values only,
                         # never other reference realizations or runtime.
+                        errors.add("reference-owner")
+                    if name == "legoai.reference.catalog" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.capabilities.values"
+                        or target.startswith("legoai.capabilities.values.")
+                        or target == "legoai.capabilities.ports"
+                        or target.startswith("legoai.capabilities.ports.")
+                        # ADR-002 SS9.2's C-row maximum includes X (Plugins);
+                        # Gate-2 M6's realization is the first real
+                        # consumer of Plugin lifecycle/declaration facts.
+                        or target == "legoai.plugins.values"
+                        or target.startswith("legoai.plugins.values.")
+                        or target == "legoai.plugins.ports"
+                        or target.startswith("legoai.plugins.ports.")
+                    ):
                         errors.add("reference-owner")
                     if name in (
                         "legoai.reference.declarations",
@@ -1130,6 +1162,102 @@ def test_capabilities_inward_graph() -> None:
     )
 
 
+# --- Gate-2 M6: capabilities.ports (Catalog) and reference.catalog boundaries -
+
+
+@pytest.mark.parametrize("owner", ["application", "runtime", "governance", "evidence"])
+def test_capabilities_ports_owner_boundary(owner: str) -> None:
+    assert violations({"legoai.capabilities.ports": f"import legoai.{owner}"}) == {
+        "capabilities-owner"
+    }
+
+
+def test_capabilities_ports_may_depend_on_own_values_and_plugins() -> None:
+    assert "capabilities-owner" not in violations(
+        {
+            "legoai.capabilities.ports": "from legoai.capabilities.values import CapabilityOffer"
+        }
+    )
+    assert "capabilities-owner" not in violations(
+        {"legoai.capabilities.ports": "from legoai.plugins.values import PluginId"}
+    )
+    assert "capabilities-owner" not in violations(
+        {
+            "legoai.capabilities.ports": "from legoai.plugins.ports import PluginLifecycleRecord"
+        }
+    )
+
+
+def test_capabilities_ports_cannot_import_execution_or_resources() -> None:
+    assert "capabilities-owner" in violations(
+        {"legoai.capabilities.ports": "from legoai.execution.values import ExecutionId"}
+    )
+    assert "capabilities-owner" in violations(
+        {
+            "legoai.capabilities.ports": "from legoai.resources.values import ResourceClaim"
+        }
+    )
+
+
+def test_reference_catalog_may_depend_on_own_port_values_and_plugins() -> None:
+    assert "reference-owner" not in violations(
+        {
+            "legoai.reference.catalog": "from legoai.capabilities.ports import CatalogEntry"
+        }
+    )
+    assert "reference-owner" not in violations(
+        {
+            "legoai.reference.catalog": "from legoai.plugins.ports import PluginLifecycleRecord"
+        }
+    )
+
+
+def test_reference_catalog_cannot_import_other_reference_realizations() -> None:
+    assert "reference-owner" in violations(
+        {"legoai.reference.catalog": "import legoai.reference.governance"}
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.catalog": "import legoai.reference.plugins"}
+    )
+    assert "reference-owner" in violations(
+        {"legoai.reference.catalog": "from legoai.governance.values import Grant"}
+    )
+
+
+def test_reference_catalog_does_not_leak_test_fake() -> None:
+    assert "test-import" in violations(
+        {
+            "legoai.reference.catalog": "from tests.support.governance import InMemoryGrantStateFake"
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "legoai.execution.values",
+        "legoai.governance.values",
+        "legoai.resources.values",
+        "legoai.plugins.values",
+        "legoai.capabilities.values",
+    ],
+)
+def test_semantic_values_do_not_depend_on_catalog(module: str) -> None:
+    reason_by_module = {
+        "legoai.execution.values": "execution-owner",
+        "legoai.governance.values": "governance-owner",
+        "legoai.resources.values": "resources-owner",
+        "legoai.plugins.values": "plugins-owner",
+        "legoai.capabilities.values": "capabilities-owner",
+    }
+    assert reason_by_module[module] in violations(
+        {module: "from legoai.capabilities.ports import CatalogEntry"}
+    )
+    assert reason_by_module[module] in violations(
+        {module: "from legoai.reference.catalog import InMemoryCatalog"}
+    )
+
+
 @pytest.mark.parametrize("owner", ["application", "reference", "runtime", "evidence"])
 def test_plugins_owner_boundary(owner: str) -> None:
     assert violations({"legoai.plugins.values": f"import legoai.{owner}"}) == {
@@ -1461,6 +1589,7 @@ def test_composition_root_does_not_leak_test_fake() -> None:
         "governance.values",
         "execution.values",
         "resources.values",
+        "capabilities.ports",
     ],
 )
 def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
@@ -1474,6 +1603,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "governance.values": "governance-owner",
         "execution.values": "execution-owner",
         "resources.values": "resources-owner",
+        "capabilities.ports": "capabilities-owner",
     }
     assert reason_by_owner[owner] in violations(
         {
@@ -1491,6 +1621,7 @@ def test_no_semantic_package_depends_on_composition_root(owner: str) -> None:
         "legoai.reference.observation",
         "legoai.reference.governance",
         "legoai.reference.plugins",
+        "legoai.reference.catalog",
     ],
 )
 def test_reference_modules_do_not_depend_on_composition_root(module: str) -> None:
