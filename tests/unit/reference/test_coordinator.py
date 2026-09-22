@@ -727,8 +727,6 @@ def test_concurrent_invoke_governed_for_same_execution_id_at_most_one_reaches_cl
     asyncio.run(scenario())
 
 
-
-
 def test_invoke_governed_cancellation_before_closure_marks_cancelled() -> None:
     async def scenario() -> None:
         env = _Environment()

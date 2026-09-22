@@ -20,6 +20,7 @@ from dataclasses import dataclass
 
 from legoai.governance.ports import (
     ApprovalUsePort,
+    ApprovalUseState,
     AuthorizationDecision,
     AuthorizationOutcome,
     GrantStatePort,
@@ -28,7 +29,7 @@ from legoai.governance.ports import (
     RevocationStatus,
     SecurityContext,
 )
-from legoai.governance.values import Approval, Grant
+from legoai.governance.values import Approval, ApprovalId, Grant, GrantId, PolicyRef
 from legoai.kernel.errors import ErrorCategory
 
 
@@ -139,3 +140,73 @@ class DeterministicAuthorizationEvaluator:
             context.approval.approval_id if context.approval is not None else None,
             context.policy_ref,
         )
+
+
+class InMemoryGrantRegistry:
+    """LegoAI v0.1: the minimal production `GrantStatePort` realization no
+    prior Gate-2 batch shipped -- only test fakes existed
+    (`tests/support/governance.py`), which are not part of the installed
+    package and therefore unusable by a real application. Any application
+    composing the governed runtime needs *some* realization of this Port;
+    this one is generic Core infrastructure (task's own "reuse before
+    invention" principle), not DocuMind-specific, and is added here rather
+    than duplicated inside the DocuMind application.
+
+    Process-lifetime only: revocations recorded here do not survive
+    restart. This mirrors `InMemoryCatalog`/`InMemoryEvidenceCustody`'s own
+    already-accepted scope exactly -- no new persistence claim is made.
+    """
+
+    def __init__(self) -> None:
+        self._revoked: set[GrantId] = set()
+
+    def revoke(self, grant_id: GrantId) -> None:
+        self._revoked.add(grant_id)
+
+    def current_revocation_status(self, grant: Grant) -> RevocationStatus:
+        if grant.grant_id in self._revoked:
+            return RevocationStatus.REVOKED
+        return RevocationStatus.ACTIVE
+
+
+class InMemoryApprovalRegistry:
+    """LegoAI v0.1: the minimal production realization of both
+    `ApprovalUsePort` (read) and `ApprovalConsumptionPort` (commit) --
+    process-lifetime in-memory use counts, mirroring
+    `InMemoryGrantRegistry`'s own scope exactly. `consume` trusts the
+    caller (the dispatch arbiter, under its own exclusive gate) to have
+    already checked eligibility, per `ApprovalConsumptionPort`'s own
+    documented contract.
+    """
+
+    def __init__(self) -> None:
+        self._uses: dict[ApprovalId, int] = {}
+
+    def current_use_state(self, approval: Approval) -> ApprovalUseState | None:
+        return ApprovalUseState(
+            approval.approval_id, self._uses.get(approval.approval_id, 0)
+        )
+
+    def consume(self, approval: Approval) -> ApprovalUseState:
+        current = self._uses.get(approval.approval_id, 0)
+        self._uses[approval.approval_id] = current + 1
+        return ApprovalUseState(approval.approval_id, current + 1)
+
+
+class InMemoryPolicyRegistry:
+    """LegoAI v0.1: the minimal production `PolicyCurrencyPort`
+    realization. Every `PolicyRef` not explicitly marked superseded is
+    reported current -- an intentionally permissive default appropriate for
+    a single-operator local example, never claimed as a substitute for a
+    real Policy Decision realization."""
+
+    def __init__(self) -> None:
+        self._superseded: set[PolicyRef] = set()
+
+    def supersede(self, policy_ref: PolicyRef) -> None:
+        self._superseded.add(policy_ref)
+
+    def current_status(self, policy_ref: PolicyRef) -> PolicyCurrencyStatus:
+        if policy_ref in self._superseded:
+            return PolicyCurrencyStatus.SUPERSEDED
+        return PolicyCurrencyStatus.CURRENT

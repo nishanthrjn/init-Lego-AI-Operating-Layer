@@ -164,12 +164,19 @@ from legoai.execution.ports import (
     GovernedInvocationResult,
     SecurityContextResolutionPort,
 )
-from legoai.execution.values import ExecutionId, ExecutionResult, ExecutionState
+from legoai.execution.values import (
+    ExecutionId,
+    ExecutionResult,
+    ExecutionState,
+    SecurityContextRef,
+)
 from legoai.governance.ports import (
     ApprovalConsumptionPort,
     AuthorizationOutcome,
     AuthorizationPort,
+    SecurityContext,
 )
+from legoai.kernel.context import TenantContext
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.references import OperationRef
@@ -718,3 +725,39 @@ class ExecutionCoordinator:
             None,
             category,
         )
+
+
+class StaticSecurityContextRegistry:
+    """LegoAI v0.1: the minimal production `SecurityContextResolutionPort`
+    realization no prior Gate-2 batch shipped -- only test fakes existed
+    (`tests/support/execution.py`'s `ImmediateSecurityContextResolver` and
+    friends), which are not part of the installed package. A real
+    application's composition root (the first is the DocuMind CLI) must be
+    able to establish a `SecurityContext` for an operation it already
+    knows about *before* dispatch and hand the Coordinator only the opaque
+    `SecurityContextRef` `ExecutionContext` carries -- exactly the seam
+    this Port exists to bridge (see `legoai.execution.ports`'s own
+    docstring).
+
+    `register` binds an opaque `(issuer, reference)` key to an already-
+    established `SecurityContext`; `resolve` returns it only when the
+    caller's `tenant_context` also matches, mirroring every other
+    reference realization's fail-closed-on-mismatch convention -- it never
+    fabricates or widens a `SecurityContext` to fit an unexpected tenant.
+    Process-lifetime only, exactly like `InMemoryCatalog`/
+    `InMemoryEvidenceCustody`; no new persistence claim is made.
+    """
+
+    def __init__(self) -> None:
+        self._contexts: dict[tuple[str, str], SecurityContext] = {}
+
+    def register(self, ref: SecurityContextRef, context: SecurityContext) -> None:
+        self._contexts[(ref.issuer, ref.reference)] = context
+
+    async def resolve(
+        self, ref: SecurityContextRef, tenant_context: TenantContext
+    ) -> SecurityContext | None:
+        context = self._contexts.get((ref.issuer, ref.reference))
+        if context is None or context.tenant_context != tenant_context:
+            return None
+        return context

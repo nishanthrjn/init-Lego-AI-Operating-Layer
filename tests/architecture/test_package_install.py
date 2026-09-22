@@ -265,6 +265,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/integration/composition/test_governed_direct.py",
             "tests/unit/intelligence/test_model_values.py",
             "tests/unit/reference/test_model.py",
+            "tests/unit/reference/test_governance_registries.py",
+            "tests/unit/reference/test_static_security_context_registry.py",
             "tests/integration/composition/test_model_governed.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
