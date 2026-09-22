@@ -27,6 +27,34 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.errors",
             "legoai_engineering.repository.workspace",
         },
+        "git.errors": {"enum"},
+        "git.values": {"enum", "legoai_engineering.repository.workspace"},
+        "git.ports": {"typing", "legoai_engineering.git.values"},
+        "git._config": {"legoai_engineering.git.errors"},
+        "git._parse": {
+            "legoai_engineering.git.errors",
+            "legoai_engineering.git.values",
+            "legoai_engineering.repository.workspace",
+        },
+        "git._process": {
+            "os",
+            "subprocess",
+            "time",
+            "enum",
+            "pathlib",
+            "legoai_engineering.git.errors",
+        },
+        "git.local": {
+            "os",
+            "pathlib",
+            "legoai_engineering.git._config",
+            "legoai_engineering.git._parse",
+            "legoai_engineering.git._process",
+            "legoai_engineering.git.errors",
+            "legoai_engineering.git.values",
+            "legoai_engineering.repository.local",
+            "legoai_engineering.repository.workspace",
+        },
     }
     allowed.update(additions.get(module, set()))
     errors: set[str] = set()
@@ -57,6 +85,16 @@ def import_violations(source: str, module: str = "") -> set[str]:
         }:
             errors.add(node.attr)
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if (
+                isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "subprocess"
+            ):
+                if module != "git._process" or node.func.attr != "Popen":
+                    errors.add("unsupported-process-call")
+                keywords = {item.arg: item.value for item in node.keywords}
+                shell = keywords.get("shell")
+                if not isinstance(shell, ast.Constant) or shell.value is not False:
+                    errors.add("shell-must-be-false")
             if node.func.attr == "open" and (
                 not node.args
                 or not isinstance(node.args[0], ast.Constant)
@@ -67,7 +105,11 @@ def import_violations(source: str, module: str = "") -> set[str]:
             if (
                 isinstance(node.func.value, ast.Name)
                 and node.func.value.id == "os"
-                and node.func.attr not in {"fstat", "scandir"}
+                and node.func.attr not in (
+                    {"read", "set_blocking"}
+                    if module == "git._process"
+                    else {"fstat", "scandir"}
+                )
             ):
                 errors.add("unsupported-os-call")
         elif isinstance(node, ast.Name) and node.id in {
@@ -85,7 +127,8 @@ def test_source_boundaries_and_inert_initializers() -> None:
     root = Path(__file__).resolve().parents[1]
     for path in (root / "src").rglob("*.py"):
         source = path.read_text(encoding="utf-8")
-        assert not import_violations(source, path.stem), path
+        module = "git." + path.stem if path.parent.name == "git" else path.stem
+        assert not import_violations(source, module), path
         if path.name == "__init__.py":
             assert all(
                 isinstance(node, ast.Expr)
@@ -128,7 +171,7 @@ def test_forbidden_dependencies_are_detected(source: str) -> None:
     ],
 )
 def test_no_io_leak_into_values_or_ports(source: str) -> None:
-    for module in ("values", "workspace", "ports"):
+    for module in ("values", "workspace", "ports", "git.values", "git.ports"):
         assert import_violations(source, module)
 
 
@@ -157,6 +200,7 @@ def test_core_does_not_import_engineering_pack() -> None:
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
 import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing
+import subprocess, time
 from unittest.mock import patch
 threads = tuple(threading.enumerate())
 handlers = tuple(logging.getLogger().handlers)
@@ -183,6 +227,17 @@ with (
     import legoai_engineering.repository.workspace
     import legoai_engineering.repository.ports
     import legoai_engineering.repository.local
+    import legoai_engineering.git.values
+    import legoai_engineering.git.ports
+    from legoai_engineering.git.local import (
+        LocalGitRepository, LocalGitExecutable, GitReadPolicy,
+    )
+    from legoai_engineering.repository.local import LocalWorkspaceRoot
+    LocalGitRepository(
+        LocalWorkspaceRoot(pathlib.Path(sys.executable).parent),
+        LocalGitExecutable(pathlib.Path(sys.executable)),
+        GitReadPolicy(1, 128, 10, 10),
+    )
     assert inspect_text(InspectionRequest((RepositoryText('a', 'x'),), 'x', 1)).matches
 assert tuple(threading.enumerate()) == threads
 assert tuple(logging.getLogger().handlers) == handlers
@@ -211,3 +266,36 @@ def test_intake_consumer(tmp_path: Path) -> None:
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.strip() == "pyproject.toml:2:1"
+
+
+def test_git_process_and_public_surface_are_closed() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "legoai_engineering" / "git"
+    tree = ast.parse((root / "_process.py").read_text(encoding="utf-8"))
+    commands = []
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "args"
+            and node.func.attr == "extend"
+        ):
+            argument = node.args[0]
+            assert isinstance(argument, ast.List)
+            assert all(isinstance(item, ast.Constant) for item in argument.elts)
+            first = argument.elts[0]
+            assert isinstance(first, ast.Constant)
+            commands.append(first.value)
+    assert sorted(commands) == ["ls-files", "status"]
+    for file in ("ports.py", "local.py"):
+        tree = ast.parse((root / file).read_text(encoding="utf-8"))
+        public = {
+            node.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+        }
+        assert public == {"inspect"}
+    assert import_violations("subprocess.Popen(args, shell=True)", "git._process")
+    assert import_violations("subprocess.Popen(args)", "git._process")
+    assert import_violations("subprocess.run(args, shell=False)", "git._process")
+    assert import_violations("import legoai_engineering.git.local", "git.values")
