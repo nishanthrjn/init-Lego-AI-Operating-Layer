@@ -27,6 +27,29 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.errors",
             "legoai_engineering.repository.workspace",
         },
+        "mutation": {
+            "hashlib",
+            "enum",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.workspace",
+        },
+        "mutation_ports": {"typing", "legoai_engineering.repository.mutation"},
+        "mutation_errors": {
+            "enum",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.workspace",
+        },
+        "mutation_local": {
+            "os",
+            "stat",
+            "tempfile",
+            "pathlib",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.local",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.mutation_errors",
+            "legoai_engineering.repository.workspace",
+        },
         "git.errors": {"enum"},
         "git.values": {"enum", "legoai_engineering.repository.workspace"},
         "git.ports": {"typing", "legoai_engineering.git.values"},
@@ -83,7 +106,8 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "cwd",
             "getcwd",
         }:
-            errors.add(node.attr)
+            if not (module == "mutation_local" and node.attr == "unlink"):
+                errors.add(node.attr)
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             if (
                 isinstance(node.func.value, ast.Name)
@@ -109,7 +133,11 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 not in (
                     {"read", "set_blocking"}
                     if module == "git._process"
-                    else {"fstat", "scandir"}
+                    else (
+                        {"fstat", "fdopen", "close", "chmod", "link", "replace"}
+                        if module == "mutation_local"
+                        else {"fstat", "scandir"}
+                    )
                 )
             ):
                 errors.add("unsupported-os-call")
@@ -201,7 +229,7 @@ def test_core_does_not_import_engineering_pack() -> None:
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
 import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing
-import subprocess, time
+import subprocess, time, tempfile, hashlib
 from unittest.mock import patch
 threads = tuple(threading.enumerate())
 handlers = tuple(logging.getLogger().handlers)
@@ -234,6 +262,19 @@ with (
         LocalGitRepository, LocalGitExecutable, GitReadPolicy,
     )
     from legoai_engineering.repository.local import LocalWorkspaceRoot
+    from legoai_engineering.repository.mutation import (
+        FileChange, FileChangeKind, RepositoryChangeSet,
+    )
+    from legoai_engineering.repository.mutation_local import LocalRepositoryMutation
+    import legoai_engineering.repository.mutation_ports
+    from legoai_engineering.repository.workspace import RepositoryPath, WorkspacePolicy
+    LocalRepositoryMutation(
+        LocalWorkspaceRoot(pathlib.Path(sys.executable).parent),
+        WorkspacePolicy(128, 128, 10, 3, ()),
+    )
+    RepositoryChangeSet((FileChange(
+        RepositoryPath('a'), FileChangeKind.CREATE, None, 'x'
+    ),))
     LocalGitRepository(
         LocalWorkspaceRoot(pathlib.Path(sys.executable).parent),
         LocalGitExecutable(pathlib.Path(sys.executable)),
@@ -301,3 +342,34 @@ def test_git_process_and_public_surface_are_closed() -> None:
     assert import_violations("subprocess.Popen(args)", "git._process")
     assert import_violations("subprocess.run(args, shell=False)", "git._process")
     assert import_violations("import legoai_engineering.git.local", "git.values")
+
+
+def test_mutation_boundaries_and_public_surface() -> None:
+    root = (
+        Path(__file__).resolve().parents[1]
+        / "src"
+        / "legoai_engineering"
+        / "repository"
+    )
+    for name in ("mutation", "mutation_ports", "mutation_errors", "mutation_local"):
+        assert import_violations("import subprocess", name)
+        assert import_violations("import legoai_engineering.git.local", name)
+        assert import_violations("import legoai.reference.execution", name)
+        assert import_violations("import openai", name)
+        assert import_violations("import forgeai", name)
+    for name in ("mutation", "mutation_ports", "mutation_errors"):
+        assert import_violations("import legoai_engineering.repository.local", name)
+        assert import_violations("os.replace(a, b)", name)
+    for name in ("mutation_ports", "mutation_local"):
+        tree = ast.parse((root / (name + ".py")).read_text(encoding="utf-8"))
+        public = [
+            item
+            for item in ast.walk(tree)
+            if isinstance(item, ast.FunctionDef) and not item.name.startswith("_")
+        ]
+        assert [item.name for item in public] == ["apply"]
+        method = public[0]
+        assert [arg.arg for arg in method.args.args] == ["self", "changeset"]
+        annotation = method.args.args[1].annotation
+        assert annotation is not None
+        assert ast.unparse(annotation) == "RepositoryChangeSet"

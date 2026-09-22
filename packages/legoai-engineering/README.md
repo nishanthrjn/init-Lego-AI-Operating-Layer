@@ -7,8 +7,10 @@ capability or acquire live repository data.
 
 M2 adds a bounded local workspace adapter below. Its implementation and local
 validation are complete for the documented supported scope. M1 remains closed
-and its code is unchanged. M3 implementation is complete; local validation is
-pending. M4 is unstarted. Earlier M2 closure notes below retain their chronology.
+and its code is unchanged. M3 is complete based on the maintainer's local evidence.
+M4 implementation and local validation are complete for the documented supported
+scope. M5 is unstarted.
+Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
 consumer. It searches explicitly supplied project metadata and produces match
@@ -420,3 +422,215 @@ format checks, expected example output, and no output from `git diff --check`.
 Wheel/sdist/install success is not claimed until local results return. New runtime
 dependencies: **zero**. Package metadata, pinned tools and lockfile are unchanged.
 Return the full output, including warnings/skips. M4 remains unstarted.
+
+### M3 local qualification closure
+
+The maintainer's M4 instruction reports **129 passed, 1 expected Windows skip**,
+clean mypy/Ruff, 24 files formatted, successful wheel/sdist/fresh-install checks,
+passing example and clean `git diff --check`. This is user-reported qualification,
+not internal execution or broader platform assurance. M1–M3 are complete within
+their documented scope. `ENGINEERING_M3_COMPLETE = YES`.
+
+## M4 — bounded repository text mutation
+
+**Implementation and local validation complete.** M1–M3 production code is
+unchanged; M5 is unstarted. The separate `repository.mutation_ports.RepositoryMutationPort`
+exposes only `apply(RepositoryChangeSet) -> RepositoryMutationResult`. The existing
+RepositoryWorkspacePort remains read-only. No Git, subprocess, shell, Agent,
+Model, framework, Core dependency or public raw host-path write API is introduced.
+
+### Changes and preconditions
+
+Import values from `repository.mutation`:
+
+| Value | Contract |
+|---|---|
+| `ContentDigest(value)` | Exact lowercase 64-character SHA-256 hex; integrity/version precondition, not signature, trust or authorization |
+| `digest_text(text)` | Pure hash of bounded, strictly encoded UTF-8 bytes; same bytes as M2 read then UTF-8 re-encode, with no newline normalization |
+| `FileChangeKind` | CREATE, UPDATE, DELETE |
+| `FileChange(path, kind, expected, text)` | Exact M2 RepositoryPath; CREATE has no digest and requires text; UPDATE requires digest and text; DELETE requires digest and no payload |
+| `RepositoryChangeSet(changes)` | Exact tuple of 1–128 FileChange values, preserving declared order; aggregate encoded payload at most 1,048,576 bytes |
+| `FileChangeResult(path, kind, before, after)` | Confirmed operation with absent before digest for CREATE and absent after digest for DELETE |
+| `RepositoryMutationResult(applied)` | Immutable tuple in request order; full tuple on success, confirmed prefix inside a failure |
+
+All public values are frozen/slotted and validate without I/O. Duplicate targets,
+case-fold aliases and ancestor/descendant target pairs are rejected rather than
+reordered. Case-fold rejection is deliberately conservative even on case-sensitive
+filesystems. No global changeset ID, arbitrary metadata, approval boolean or
+dry-run mode is introduced. Construction validates data; it does not establish
+filesystem preconditions or authorization.
+
+CREATE requires the target to be absent. UPDATE and DELETE require an existing
+regular text file whose exact-byte digest matches the proposal. Missing targets,
+existing create targets and stale digests are semantic conflicts. Parent directories
+must already exist. Directories, links/reparse points, multiply linked files,
+special files and files without the owner-write mode bit are rejected. There is
+no rename, public mkdir/chmod, recursive delete, binary editing or unified-diff
+parser. Changesets may update a file to identical bytes; that is still an applied
+replacement, not an idempotency guarantee.
+
+### Local implementation and bounds
+
+`repository.mutation_local.LocalRepositoryMutation(LocalWorkspaceRoot, WorkspacePolicy)`
+is inert at construction. On apply, it binds M2 LocalRepositoryWorkspace and
+reuses the repository owner's existing private path/identity checks and public
+bounded `read_text`; M2's path grammar, device/link restrictions and errors are
+unchanged. Private reuse is confined to the same repository owner. Future adapters
+implement the semantic mutation Port without receiving these filesystem helpers.
+
+The existing policy's `max_read_bytes` and `max_text_chars` bound both old and new
+content; there is no second conflicting per-file limit. Its depth and exclusion
+rules apply to all targets. Fixed value ceilings remain 65536 code points per
+payload and 1 MiB across payloads. Strict UTF-8 encodability and NUL rejection
+are checked before preparation, including isolated-surrogate failures. LF/CRLF
+are preserved exactly. No BOM is added; an explicitly supplied U+FEFF is preserved
+as caller content. Read-back digesting therefore handles existing BOMs exactly.
+
+There is no recursive workspace scan. Administrative checks use seven fixed
+names per ancestor, with at most 128 native path components; policy `max_entries`
+remains a read-listing budget and is not a changeset count. Memory and temporary
+payload bytes are bounded by the changeset. Synchronous filesystem calls can block;
+there is no hard deadline or cancellation API and no automatic retries.
+
+### Protected paths and host scope
+
+Any case-insensitive `.git` component is rejected during pure validation, including
+the `.git` file itself. Apply also rejects roots/ancestors inside `.git`, gitfile
+layouts without following their pointers, and administrative directories identified
+by HEAD plus objects/refs/config/commondir/gitdir markers. This protects ordinary
+Git directories, recognizable bare/custom administrative roots and their descendants.
+Fixed-name ancestor lstat probes may inspect metadata outside the root; they do not
+enumerate those directories, read their contents or modify them. Git never runs.
+
+The trusted host must provision a normal workspace and must not bind concealed,
+malformed or arbitrarily repurposed Git administration as editable source. This
+is not a complete Git-layout discovery API. Worktree/gitfile layouts are unsupported
+and fail closed. Conservative marker checks may reject a nongit directory with
+the same reserved marker combination. `.venv` and other environment paths are
+protected when named in the supplied WorkspacePolicy; the example excludes `.git`
+and `.venv`. Other explicitly requested hidden files are allowed.
+
+Qualification remains **trusted, stable local filesystem namespace**, including
+file contents and parent metadata during apply. Preconditions catch stale proposals
+and some observed changes; they do not eliminate the digest-check-to-write race.
+There is no hostile concurrent-mutation isolation, cross-process lock, OS sandbox,
+network-filesystem support or atomic snapshot. Root identity is bound per apply
+and rechecked through M2. Concurrent use against the same workspace is unsupported.
+
+### Application phases and failure semantics
+
+1. Validate all targets, content limits, existing parents and digest/absence
+   preconditions. Failure here changes no target and creates no temporary file.
+2. Recheck each write target, then prepare its bounded content in an exclusive
+   same-directory temporary file. Flush and close all prepared streams.
+3. Recheck every precondition again. Apply in declared order, rechecking each
+   target immediately before its final syscall.
+4. Clean up remaining temporary files, checking root/parent and file identity.
+
+UPDATE uses `os.replace` of a completed same-directory temporary file, preserving
+ordinary mode bits. CREATE publishes a prepared file with `os.link`, which fails
+if its destination already exists, then removes the temporary name. Thus CREATE
+requires local hardlink support; unsupported filesystems fail without fallback to
+blind overwrite. This temporary internal link is not permission to mutate existing
+multiply linked user files. DELETE unlinks only a preconditioned regular file.
+Temporary names are internally generated `.legoai-*.tmp`; no caller chooses them.
+Temporary-name path headroom is checked before preparation.
+
+Successful per-file publication does **not** provide an atomic multi-file commit.
+There is no rollback, journal, fsync durability or power-loss guarantee. Failure
+during final I/O may leave a completed prefix. CREATE begins with restrictive
+temporary-file permissions; UPDATE preserves ordinary mode bits but replacement
+does not promise preservation of ACLs, ownership, extended attributes, alternate
+streams, timestamps or file identity. Workspaces requiring that metadata preservation
+are outside this subset. Explicit chmod/move capability is not exposed.
+
+Python documents [exclusive temporary creation](https://docs.python.org/3.14/library/tempfile.html#tempfile.mkstemp)
+and [replacement behavior](https://docs.python.org/3.14/library/os.html#os.replace);
+filesystem and OS qualification still govern actual guarantees.
+
+`repository.mutation_errors.MutationConflict` carries a relative path and
+MutationConflictReason (EXISTS, MISSING, STALE). M2 WorkspaceError and
+WorkspaceBoundaryError propagate for preflight safety/content failures; invalid
+request types/combinations raise TypeError/ValueError. After preparation begins,
+ordinary failures raise `MutationApplyError` containing:
+
+- `completed`: confirmed applied prefix, possibly empty or the entire changeset;
+- `uncertain`: the target of an attempted final syscall without confirmed return,
+  or None when no such syscall is in question;
+- `temporary_paths`: bounded relative paths whose cleanup was not confirmed.
+
+Original failure and cleanup errors remain chained (ExceptionGroup if needed).
+Top-level messages/reprs do not include content or absolute paths. Raw causes
+may contain sensitive diagnostics and belong only in trusted operator channels.
+Cleanup failure is never silently discarded. A completed create may retain a
+second temporary hardlink if cleanup fails; reconcile that state before further
+mutation. No automated retry/compensation occurs. Process termination, asynchronous
+interrupts or host crashes can prevent a result and leave uncertain effects or
+temporary files; no recovery proof is claimed by this in-memory report.
+
+### Governance and validation handoff
+
+**M4 capability ≠ authorization.** This is a reference mutation mechanism, not an
+admitted autonomous-Agent facade. Future runtime composition must bind current
+Principal/tenant authority, resource/evidence obligations and governed dispatch
+before effects under ADR-005/007/008. A digest or constructed changeset grants
+no permission. No canonical state/error vocabulary, durable retry scheme or ADR
+is created. This is additive ADR-016 capability work; M5 remains unstarted.
+
+The [M4 example](examples/mutation_intake.py) creates a disposable workspace,
+creates initial text through the mutation Port, reads it through M2, applies a
+digest-preconditioned update and cleans up the temporary directory. It never edits
+the checkout or user files and requires no Git commands.
+
+From the repository root:
+
+```powershell
+Push-Location packages/legoai-engineering
+uv sync --locked
+git --version
+uv run pytest -q
+uv run mypy src tests examples
+uv run ruff check src tests examples
+uv run ruff format --check src tests examples
+uv run python examples/mutation_intake.py
+Pop-Location
+git diff --check
+```
+
+Expected example output:
+
+```text
+update: greeting.txt
+hello LegoAI
+```
+
+Pytest includes M1–M3 regressions, real temporary Git integration for unstaged
+create/update/delete without index mutation, preflight conflicts, exact bytes,
+path/metadata/link protection, bounds, partial I/O, late conflicts and cleanup
+failures. Architecture/import-inertness and wheel/sdist/fresh offline installation
+tests include M4. All applicable tests must pass, mypy/Ruff/format must be clean,
+and `git diff --check` must produce no whitespace errors. Explain all skips/warnings.
+If the new symlink test skips for Windows privilege, rerun in a permitted session:
+
+```powershell
+Push-Location packages/legoai-engineering
+uv run pytest -q tests/test_mutation.py::test_symlink_target_parent_and_root_escape
+Pop-Location
+```
+
+Windows junction protection has a separate test and must pass on Windows. Its
+non-Windows skip and M2's Windows-inapplicable FIFO skip are intentional. No M4
+test/build/install/typecheck/lint/format command was run internally. Zero runtime
+dependencies added; package metadata and lockfile unchanged.
+`ENGINEERING_M4_COMPLETE = YES` for the documented supported scope. M5 unstarted.
+
+Maintainer validation: 174 tests passed; the sole skip was the POSIX special-file
+boundary on Windows. Mypy passed for 30 source files, Ruff lint passed, and the
+mutation example produced the expected output. Ruff's format check identified
+one formatting defect in `tests/test_architecture.py`; its exact suggested
+change was applied. The maintainer's format recheck passed: 30 files already
+formatted. `git diff --check` reported only LF-to-CRLF conversion warnings and
+no whitespace errors. Packaging validation is included in the passing pytest
+suite. M1–M3 regressions passed; the sole skip was unrelated to M4, so Windows
+symlink and junction checks passed. M4 is complete within its documented trusted,
+stable local namespace qualification; M5 is unstarted.

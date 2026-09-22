@@ -8,8 +8,9 @@ tests, typing, lint and the example; the returned formatter recheck passed after
 the two formatting-only corrections recorded below. The milestone is closed.
 M2's bounded local acquisition subset is now implemented under the maintainer's
 separate M2 instruction; local validation is complete for its documented trusted
-local Windows scope (see M2 closure below). M3 implementation is complete;
-local validation is pending under the separate M3 instruction. M4 is unstarted.
+local Windows scope (see M2 closure below). M3 is complete based on the maintainer's
+reported local evidence. M4 implementation and local validation are complete
+for the documented trusted local scope. M5 is unstarted.
 Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
@@ -484,3 +485,63 @@ installation. Review every failure, warning and skip before qualification; class
 code, test, environment, toolchain/dependency or configuration defects first.
 No packaging/typing/test success is claimed now. Stop for local evidence; do not
 start mutation, process-execution, sandbox or Agent work. M4 remains unstarted.
+
+## M3 closure and M4 implementation handoff
+
+The maintainer's separate M4 instruction supplies M3 local qualification:
+129 passed, one expected Windows skip, clean mypy/Ruff, 24 files formatted,
+wheel/sdist/fresh-install validation passed, example passed, and clean
+`git diff --check`. This is user-reported evidence for the documented scope;
+`ENGINEERING_M3_COMPLETE = YES`. Earlier handoff entries remain historical.
+
+Current state: **M1 complete; M2 complete; M3 complete; M4 complete for its
+documented scope; M5 unstarted. ENGINEERING_M4_COMPLETE = YES.**
+
+M4 adds immutable CREATE/UPDATE/DELETE changesets, exact UTF-8 SHA-256 content
+preconditions, a separate mutation Port and one inertly constructed local adapter.
+The adapter reuses M2 containment/read mechanisms and WorkspacePolicy. All
+preconditions are checked before temporary preparation and again before apply.
+Changes preserve request order. Single-file publication uses same-directory
+prepared files; partial final-I/O failure reports confirmed changes, an uncertain
+target and unconfirmed cleanup paths. No multi-file/crash transaction, automatic
+retry, Git command, generic write helper or authorization grant is claimed.
+
+Design boundaries follow ADR-016's additive capability direction and preserve
+ADR-005/007/008 future governance/effect obligations. Git administration, gitfile
+layouts and recognizable bare/custom metadata ancestors fail closed. Trusted
+stable local namespace remains the qualification; hostile mutation, sandboxing,
+metadata/ACL preservation and concealed malformed Git layouts are unsupported.
+Ordinary file mode preservation is private replacement behavior, not a chmod API.
+
+Created under the engineering pack: `repository/mutation.py`,
+`repository/mutation_ports.py`, `repository/mutation_errors.py`,
+`repository/mutation_local.py`, `tests/test_mutation.py`,
+`examples/mutation_intake.py`. Updated architecture/inert-import and package-install
+tests, pack/root READMEs and this plan. M1–M3 production, Core, Document Pack,
+DocuMind, canonical documents/ADRs, package metadata and lockfile remain unchanged.
+Runtime dependencies added: zero. No new foundational decision or ADR was needed.
+
+Static review addressed typed request/result invariants, protected paths,
+precondition ordering, private M2 reuse, cleanup failures, exact encoding,
+partial/uncertain effects, package inventory and test coverage. Tests cover
+temporary-workspace CRUD, stale/no-write cases, UTF-8/limits, path/link protection,
+partial application and cleanup, and unstaged M3 integration against temporary
+Git fixtures. Pytest retains wheel/sdist/fresh offline installation coverage.
+
+No test/build/install/lint/format/typecheck was run internally, as required by
+the maintainer. Use the exact commands and targeted Windows symlink rerun in
+the [M4 documentation](../packages/legoai-engineering/README.md#m4--bounded-repository-text-mutation).
+Expected example: `update: greeting.txt` followed by `hello LegoAI`. Review every
+warning/skip and classify failures before corrections. Stop for local evidence;
+M5, Git mutation, execution/sandbox and Agent work remain unstarted.
+
+M4 maintainer validation returned 174 passed and one expected Windows skip for
+the POSIX special-file boundary. Mypy (30 source files), Ruff lint, and the
+mutation example passed. The sole formatter defect in `test_architecture.py`
+was corrected using Ruff's suggested layout. The maintainer's recheck passed:
+30 files already formatted; `git diff --check` reported conversion warnings only,
+with no whitespace errors. Packaging and M1–M3 regression checks are included in
+the passing suite. Windows symlink and junction checks passed; the sole skip
+was the POSIX special-file boundary. No validation commands were run internally.
+`ENGINEERING_M4_COMPLETE = YES` for the documented trusted, stable local namespace
+scope; M5 remains unstarted.

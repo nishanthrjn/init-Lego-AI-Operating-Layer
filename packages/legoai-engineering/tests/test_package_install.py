@@ -36,6 +36,10 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/repository/workspace.py",
         "legoai_engineering/repository/ports.py",
         "legoai_engineering/repository/local.py",
+        "legoai_engineering/repository/mutation.py",
+        "legoai_engineering/repository/mutation_ports.py",
+        "legoai_engineering/repository/mutation_errors.py",
+        "legoai_engineering/repository/mutation_local.py",
         "legoai_engineering/git/__init__.py",
         "legoai_engineering/git/values.py",
         "legoai_engineering/git/errors.py",
@@ -62,6 +66,8 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/repository_intake.py" in paths
         assert "examples/workspace_intake.py" in paths
         assert "examples/git_intake.py" in paths
+        assert "examples/mutation_intake.py" in paths
+        assert "tests/test_mutation.py" in paths
         assert "tests/test_git.py" in paths
         assert "tests/test_repository.py" in paths
     environment = tmp_path / "installed"
@@ -137,6 +143,19 @@ port = LocalGitRepository(
 from legoai_engineering.git.values import GitHeadKind
 state = port.inspect()
 assert state.head.kind is GitHeadKind.UNBORN and state.entries == ()
+from legoai_engineering.repository.mutation import (
+    FileChange, FileChangeKind, RepositoryChangeSet, digest_text,
+)
+from legoai_engineering.repository.mutation_local import LocalRepositoryMutation
+from legoai_engineering.repository.mutation_ports import RepositoryMutationPort
+writer: RepositoryMutationPort = LocalRepositoryMutation(
+    LocalWorkspaceRoot(root), WorkspacePolicy(128, 128, 128, 8, ('.git',)),
+)
+result = writer.apply(RepositoryChangeSet((FileChange(
+    RepositoryPath('sample.txt'), FileChangeKind.UPDATE, digest_text('hello'), 'updated',
+),)))
+assert result.applied[0].after == digest_text('updated')
+assert workspace.read_text(RepositoryPath('sample.txt')).text == 'updated'
 """
     workspace_root = tmp_path / "workspace"
     workspace_root.mkdir()
