@@ -448,6 +448,24 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith(
                             "legoai.reference.application.configuration."
                         )
+                        # Gate-2 M11: the composition root is the sole
+                        # location ADR-002 SS9.2 permits to import across
+                        # both `legoai.application` and every
+                        # `legoai.reference.*` module for wiring -- it is
+                        # the first real consumer of `legoai.capabilities.
+                        # ports` (CatalogEntry), `legoai.execution.ports`/
+                        # `.values` and `legoai.reference.execution`
+                        # (ExecutionCoordinator) needed to bind the one known
+                        # trusted deterministic implementation to a governed
+                        # invocation.
+                        or target == "legoai.capabilities.ports"
+                        or target.startswith("legoai.capabilities.ports.")
+                        or target == "legoai.execution.ports"
+                        or target.startswith("legoai.execution.ports.")
+                        or target == "legoai.execution.values"
+                        or target.startswith("legoai.execution.values.")
+                        or target == "legoai.reference.execution"
+                        or target.startswith("legoai.reference.execution.")
                         or target == "legoai.runtime"
                         or target.startswith("legoai.runtime._composition")
                     ):
@@ -1964,16 +1982,18 @@ def test_m1_through_m9_semantic_values_do_not_import_coordinator(owner: str) -> 
     )
 
 
-def test_composition_root_does_not_import_coordinator_or_asyncio() -> None:
-    # `legoai.runtime._composition` must not become a service locator that
-    # assembles/hides the Coordinator behind a generic lookup, and must not
-    # itself acquire asyncio/supervision behavior -- ADR-015 SS2 places the
-    # Coordinator's own reference realization under `legoai.reference.
-    # execution`, never under the composition root.
+def test_composition_root_never_imports_asyncio_or_threading() -> None:
+    # `legoai.runtime._composition` may (Gate-2 M11) wire the Coordinator's
+    # own already-async methods by explicit construction/`await` -- that
+    # requires no `asyncio` import of its own, since `await`/`async def` are
+    # language keywords, not names from the `asyncio` module. It must never
+    # itself acquire supervision/threading behavior directly: ADR-015 SS2
+    # places all structured-concurrency substrate under `legoai.reference.
+    # execution` only (proven confined there by
+    # `test_asyncio_confined_to_authorized_reference_execution_module`).
     root = Path(__file__).resolve().parents[2] / "src" / "legoai" / "runtime"
     for path in root.rglob("*.py"):
-        source = path.read_text(encoding="utf-8")
-        tree = ast.parse(source)
+        tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 assert not any(
@@ -1983,4 +2003,42 @@ def test_composition_root_does_not_import_coordinator_or_asyncio() -> None:
             if isinstance(node, ast.ImportFrom):
                 module_root = (node.module or "").split(".")[0]
                 assert module_root not in {"asyncio", "threading"}, path
-        assert "reference.execution" not in source, path
+
+
+def test_composition_root_does_not_hide_coordinator_behind_generic_lookup() -> None:
+    # Gate-2 M11's `governed.py` legitimately imports `ExecutionCoordinator`
+    # by name to wire one explicit, statically-known capability
+    # correspondence (never a `dict[CapabilityId, Callable]`, registry or
+    # service-locator pattern) -- this proves no such generic lookup
+    # structure, and no dynamic-loading primitive, was introduced instead.
+    # AST-based (not substring) so this module's own prose explaining what
+    # it deliberately does *not* do cannot trip the check.
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "legoai"
+        / "runtime"
+        / "_composition"
+        / "governed.py"
+    )
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    forbidden_names = {
+        "ProviderRegistry",
+        "ServiceLocator",
+        "ImplementationRegistry",
+        "eval",
+        "exec",
+        "compile",
+        "__import__",
+    }
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            assert node.name not in forbidden_names, node.name
+        if isinstance(node, ast.Name):
+            assert node.id not in forbidden_names, node.id
+        if isinstance(node, ast.Attribute):
+            assert node.attr not in forbidden_names, node.attr
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            module = getattr(node, "module", None) or ""
+            assert "importlib" not in module, module
+            assert not any("importlib" in alias.name for alias in node.names), path

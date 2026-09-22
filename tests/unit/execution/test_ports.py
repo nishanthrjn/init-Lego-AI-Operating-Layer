@@ -22,11 +22,13 @@ from legoai.execution.ports import (
     DispatchOutcome,
     DispatchPermit,
     DispatchRequest,
+    GovernedInvocationResult,
     SecurityContextResolutionPort,
 )
 from legoai.execution.values import (
     ExecutionContext,
     ExecutionId,
+    ExecutionResult,
     ExecutionState,
     SecurityContextRef,
 )
@@ -37,7 +39,8 @@ from legoai.governance.ports import (
 )
 from legoai.governance.values import PolicyRef, Principal
 from legoai.kernel.context import TenantContext
-from legoai.kernel.errors import ErrorCategory
+from legoai.kernel.effects import EffectExtent
+from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.identity import (
     ApplicationId,
     CorrelationId,
@@ -623,3 +626,53 @@ def test_security_context_resolution_port_resolve_is_async() -> None:
     import inspect
 
     assert inspect.iscoroutinefunction(SecurityContextResolutionPort.resolve)
+
+
+# --- Gate-2 M11: GovernedInvocationResult ----------------------------------------
+
+
+def _succeeded_execution_result() -> ExecutionResult:
+    return ExecutionResult(
+        ExecutionId("exec-1"), ExecutionState.SUCCEEDED, EffectExtent.COMPLETED, None
+    )
+
+
+def _failed_execution_result() -> ExecutionResult:
+    return ExecutionResult(
+        ExecutionId("exec-1"),
+        ExecutionState.FAILED,
+        EffectExtent.NONE,
+        ErrorDetail(ErrorCategory.EXECUTION_FAILURE, Recoverability.TERMINAL, ()),
+    )
+
+
+def test_governed_invocation_result_succeeded_requires_output() -> None:
+    result = GovernedInvocationResult(_succeeded_execution_result(), "normalized")
+    assert result.output == "normalized"
+
+    with pytest.raises(ValueError, match="requires output"):
+        GovernedInvocationResult(_succeeded_execution_result(), None)
+
+
+def test_governed_invocation_result_non_succeeded_rejects_output() -> None:
+    result = GovernedInvocationResult(_failed_execution_result(), None)
+    assert result.output is None
+
+    with pytest.raises(ValueError, match="must not carry output"):
+        GovernedInvocationResult(_failed_execution_result(), "unexpected")
+
+
+def test_governed_invocation_result_rejects_wrong_type_execution_result() -> None:
+    with pytest.raises(TypeError, match="requires ExecutionResult"):
+        GovernedInvocationResult(object(), None)  # type: ignore[arg-type]
+
+
+def test_governed_invocation_result_rejects_wrong_type_output() -> None:
+    with pytest.raises(TypeError, match="output must be str or None"):
+        GovernedInvocationResult(_succeeded_execution_result(), 12345)  # type: ignore[arg-type]
+
+
+def test_governed_invocation_result_immutable() -> None:
+    result = GovernedInvocationResult(_succeeded_execution_result(), "normalized")
+    with pytest.raises(FrozenInstanceError):
+        setattr(result, "output", "changed")  # noqa: B010

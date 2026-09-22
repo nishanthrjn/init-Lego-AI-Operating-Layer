@@ -180,6 +180,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/evidence.py",
         "legoai/execution/ports.py",
         "legoai/reference/execution.py",
+        "legoai/runtime/_composition/governed.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -210,6 +211,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             ".python-version",
             "PKG-INFO",
             ".gitignore",
+            "LICENSE",
             "docs/development.md",
             "tests/unit/kernel/test_identity.py",
             "tests/unit/kernel/test_foundation.py",
@@ -254,6 +256,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_execution.py",
             "tests/unit/reference/test_coordinator.py",
             "tests/support/execution.py",
+            "tests/integration/composition/test_governed_direct.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
         }
@@ -383,6 +386,30 @@ assert coordination_result.outcome is execution_ports.CoordinationOutcome.READY
 assert coordination_result.state is execution_values.ExecutionState.RUNNING
 assert coordination_result.permit is not None
 assert coordination_result.permit.resolved_entry == catalog_entry
+import legoai.runtime._composition.governed as governed
+real_declaration = deterministic.text_normalization_declaration()
+real_discovered = reference_plugins.inspect(real_declaration)
+real_validation = reference_plugins.validate(real_discovered, real_declaration, evaluated_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+real_record = reference_plugins.admit(real_validation, context.TenantContext(identity.TenantId("t")), plugins_ports.PluginAdmissionId("a-real"), established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+real_active = reference_plugins.activate(reference_plugins.initialize(real_record, established_at=datetime(2026, 1, 1, tzinfo=timezone.utc)), established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+real_entry = catalog.publish(real_active, real_declaration, real_declaration.offers[0], established_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+real_grant = governance.Grant(governance.GrantId("g-real"), grant_principal, grant_principal, context.TenantContext(identity.TenantId("t")), "action", deterministic.text_normalization_capability_id().value, False, datetime(2026, 1, 1, tzinfo=timezone.utc), None)
+real_security_context = governance_ports.SecurityContext(grant_principal, context.TenantContext(identity.TenantId("t")), resource_operation, "action", deterministic.text_normalization_capability_id().value, real_grant, None, policy_ref, datetime(2026, 1, 1, tzinfo=timezone.utc))
+class _RealResolver:
+    async def resolve(self, ref, tenant_context):
+        return real_security_context
+real_execution_context = execution_values.ExecutionContext(
+    execution_values.ExecutionId("exec-real"), resource_operation, context.TenantContext(identity.TenantId("t")),
+    execution_values.SecurityContextRef("issuer", "ref-real"), identity.CorrelationId("corr-real"), None, None, None,
+)
+real_request = execution_ports.CoordinationRequest(real_execution_context, real_entry)
+real_coordinator = reference_execution.ExecutionCoordinator(_RealResolver(), arbiter)
+real_coordination = asyncio.run(real_coordinator.coordinate(real_request))
+assert real_coordination.outcome is execution_ports.CoordinationOutcome.READY
+governed_result = asyncio.run(governed.invoke_governed_text_normalization(real_coordinator, real_coordination, "  hello   world  ", result.effective))
+assert governed_result.execution_result.final_state is execution_values.ExecutionState.SUCCEEDED
+assert governed_result.execution_result.effect is effects.EffectExtent.COMPLETED
+assert governed_result.output == "hello world"
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 9
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
