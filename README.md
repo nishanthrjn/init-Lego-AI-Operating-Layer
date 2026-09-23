@@ -38,8 +38,11 @@ M2 adds a bounded read-only local workspace adapter and an example reusing M1;
 M2 local validation is complete for its documented trusted local scope.
 M3 adds typed read-only Git observation and is locally validated. M4 adds bounded
 text changesets with digest preconditions; implementation and local validation
-are complete for the documented trusted local scope. Governed runtime publication, Git mutation, code execution
-and engineering Agents remain unimplemented. M5 is unstarted.
+are complete for the documented trusted local scope. M5 adds typed pytest,
+Ruff check/format-check and mypy operations; implementation and local validation
+are complete for the documented scope. These execute trusted local code without isolation.
+Governed runtime publication, Git mutation and engineering Agents remain
+unimplemented. M6 sandbox work is unstarted.
 
 ## Quickstart: the DocuMind CLI
 

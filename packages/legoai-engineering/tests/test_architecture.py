@@ -78,6 +78,26 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.local",
             "legoai_engineering.repository.workspace",
         },
+        "checks.values": {"enum", "legoai_engineering.repository.workspace"},
+        "checks.errors": {"enum"},
+        "checks.ports": {"typing", "legoai_engineering.checks.values"},
+        "checks._process": {
+            "os",
+            "subprocess",
+            "time",
+            "pathlib",
+            "legoai_engineering.checks.errors",
+            "legoai_engineering.checks.values",
+        },
+        "checks.local": {
+            "os",
+            "pathlib",
+            "legoai_engineering.checks._process",
+            "legoai_engineering.checks.values",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.local",
+            "legoai_engineering.repository.workspace",
+        },
     }
     allowed.update(additions.get(module, set()))
     errors: set[str] = set()
@@ -113,7 +133,10 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 isinstance(node.func.value, ast.Name)
                 and node.func.value.id == "subprocess"
             ):
-                if module != "git._process" or node.func.attr != "Popen":
+                if (
+                    module not in {"git._process", "checks._process"}
+                    or node.func.attr != "Popen"
+                ):
                     errors.add("unsupported-process-call")
                 keywords = {item.arg: item.value for item in node.keywords}
                 shell = keywords.get("shell")
@@ -132,7 +155,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 and node.func.attr
                 not in (
                     {"read", "set_blocking"}
-                    if module == "git._process"
+                    if module in {"git._process", "checks._process"}
                     else (
                         {"fstat", "fdopen", "close", "chmod", "link", "replace"}
                         if module == "mutation_local"
@@ -156,7 +179,11 @@ def test_source_boundaries_and_inert_initializers() -> None:
     root = Path(__file__).resolve().parents[1]
     for path in (root / "src").rglob("*.py"):
         source = path.read_text(encoding="utf-8")
-        module = "git." + path.stem if path.parent.name == "git" else path.stem
+        module = (
+            path.parent.name + "." + path.stem
+            if path.parent.name in {"git", "checks"}
+            else path.stem
+        )
         assert not import_violations(source, module), path
         if path.name == "__init__.py":
             assert all(
@@ -280,6 +307,17 @@ with (
         LocalGitExecutable(pathlib.Path(sys.executable)),
         GitReadPolicy(1, 128, 10, 10),
     )
+    from legoai_engineering.checks.local import LocalCheckTools, LocalEngineeringChecks
+    from legoai_engineering.checks.values import CheckKind, CheckPolicy, CheckRequest
+    import legoai_engineering.checks.ports
+    suffix = '.exe' if os.name == 'nt' else ''
+    base = pathlib.Path(sys.executable).parent
+    LocalEngineeringChecks(
+        LocalWorkspaceRoot(base),
+        LocalCheckTools(*(base / (name + suffix) for name in ('pytest', 'ruff', 'mypy'))),
+        CheckPolicy(),
+    )
+    CheckRequest(CheckKind.PYTEST, (RepositoryPath('tests'),))
     assert inspect_text(InspectionRequest((RepositoryText('a', 'x'),), 'x', 1)).matches
 assert tuple(threading.enumerate()) == threads
 assert tuple(logging.getLogger().handlers) == handlers
@@ -373,3 +411,33 @@ def test_mutation_boundaries_and_public_surface() -> None:
         annotation = method.args.args[1].annotation
         assert annotation is not None
         assert ast.unparse(annotation) == "RepositoryChangeSet"
+
+
+def test_check_surface_is_semantic_and_process_use_is_private() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "legoai_engineering"
+    for name in ("ports", "local"):
+        tree = ast.parse((root / "checks" / (name + ".py")).read_text("utf-8"))
+        public = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+        ]
+        assert [node.name for node in public] == ["check"]
+        assert [arg.arg for arg in public[0].args.args] == ["self", "request"]
+        annotation = public[0].args.args[1].annotation
+        assert annotation is not None
+        assert ast.unparse(annotation) == "CheckRequest"
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text("utf-8"))
+        for node in ast.walk(tree):
+            if path.parent.name != "checks" and isinstance(node, ast.ImportFrom):
+                assert not (node.module or "").startswith("legoai_engineering.checks")
+            if isinstance(node, ast.arg):
+                assert node.arg not in {"extra_args", "command_string"}
+    for name in ("checks.local", "checks.values", "checks.ports"):
+        assert import_violations("import subprocess", name)
+        assert import_violations("import legoai.reference.execution", name)
+        assert import_violations("import openai", name)
+    assert import_violations("subprocess.Popen(args, shell=True)", "checks._process")
+    assert import_violations("subprocess.Popen(args)", "checks._process")
+    assert import_violations("os.system('bad')", "checks._process")
