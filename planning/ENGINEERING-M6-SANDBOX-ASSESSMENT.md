@@ -1,7 +1,10 @@
 # Engineering M6 — sandbox strategy assessment
 
 Date: 2026-09-23. Status: Linux backend and pinned Python image confirmed by
-maintainer; threat-scope gate unresolved; implementation and qualification pending.
+maintainer. Scope gate resolved by the maintainer's subsequent 2026-09-23 decision;
+implementation complete, local qualification pending. The assessment below retains
+the original decision history; its unresolved-gate statements are superseded by
+[the scoped implementation record](ENGINEERING-M6-IMPLEMENTATION.md).
 Authority: the maintainer's current M6-only instruction, IA-001 and ADR-016,
 subject to existing security, execution and package ownership contracts.
 M1–M5 remain qualified within their recorded scopes. This record does not
@@ -227,6 +230,7 @@ not be represented as proof of no effects.
    and then hand off exact local tests and prerequisite commands. No mocked-only
    qualification and no M1–M5 regression waiver.
 
-No production code or test was changed during this assessment. M6 implementation
-is pending; `ENGINEERING_M6_COMPLETE = NO`. M6.5 model routing and M7 Agent work
+No production code or test was changed during the original assessment. Subsequent
+implementation is recorded separately; `ENGINEERING_M6_COMPLETE = NO` until local
+qualification succeeds. M6.5 model routing and M7 Agent work
 remain unstarted. The broader roadmap's M6.5-before-Agents ordering is retained.

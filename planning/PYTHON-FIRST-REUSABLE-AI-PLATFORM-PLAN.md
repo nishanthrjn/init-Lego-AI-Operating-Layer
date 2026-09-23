@@ -11,11 +11,12 @@ separate M2 instruction; local validation is complete for its documented trusted
 local Windows scope (see M2 closure below). M3 is complete based on the maintainer's
 reported local evidence. M4 implementation and local validation are complete
 for the documented trusted local scope. M5 implementation and local validation
-are complete for the documented trusted-local Windows scope. M6 strategy
-assessment has started; implementation and qualification remain pending. See
-[M6 sandbox assessment](ENGINEERING-M6-SANDBOX-ASSESSMENT.md). M6.5 and M7 are
+are complete for the documented trusted-local Windows scope. M6 engineering
+workload isolation implementation is complete; local qualification is pending. See
+[M6 implementation and scope](ENGINEERING-M6-IMPLEMENTATION.md) and the
+[qualification handoff](../packages/legoai-engineering/README.md#m6-engineering-workload-isolation). M6.5 and M7 are
 unstarted.
-Remaining Phase C work and all later phases remain planned and unstarted.
+Other remaining Phase C and later work remains planned and unstarted.
 
 ## A. Corrected product direction
 
@@ -133,7 +134,7 @@ No release/version bump follows automatically from completing a row.
 | A | Impact, IA-001, ADR-016, forward pointers | Rewriting v0.1 | Clause alignment and preserved historical records | No lower-level override of intent | M1 |
 | B / M1 | Bounded supplied repository text values, literal inspection, intake example | Host read/write, Git, shell, registration, Agent | Contract/limit/order/failure tests, strict typing, inert imports, wheel/sdist + clean install | Pack has no application/Core-private dependency; no I/O | Local output review, then C |
 | C | Governed read-only repository/filesystem/Git inspection | Writes, execution, agents | Denial prevents I/O; path escape/reparse/concurrent mutation tests; bounded output and cancellation; application integration | ADR-005–009/015; resolve ADR-014 before supported facade | D |
-| D | Bounded sandbox/test/lint/typecheck and guarded patch capabilities | Unrestricted host shell/deploy | Injection, escape, timeout, cancellation, orphan/resource, partial-write, revision/conflict and structured tool-result tests | Decide ADR-012 for hostile-code scope; process ≠ sandbox; no implicit retries | E |
+| D | Bounded sandbox/test/lint/typecheck and guarded patch capabilities | Unrestricted host shell/deploy | Injection, escape, timeout, cancellation, orphan/resource, partial-write, revision/conflict and structured tool-result tests | Engineering workload isolation requires an explicit threat model and locally qualified boundary before repository-controlled/generated code is treated as isolated. ADR-012 remains separately required for hostile/untrusted Plugin admission or expanded Plugin threat scope; process ≠ sandbox; no implicit retries | E |
 | E | Minimal Agent foundation for identified analysis/review tasks | Universal memory/agent framework | Typed outputs, step/budget/deadline limits, denied tools, malformed model output and cancellation cases | Canonical Agent ≠ Model/Role; external enforcement | F |
 | F | Repository analyst, coding and independent reviewer compositions | Full team autonomy | Representative task fixtures; deterministic validators; separate quality evaluation by authorized consumer | No framework/provider classes in definitions | G |
 | G | Workflow foundation for those bounded tasks | Distributed scheduler | Branch/join/loop exhaustion, failure, approval wait/revocation, recovery/effect tests | State owned by Workflow, lifetime by accepted Execution mechanisms | H |

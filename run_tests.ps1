@@ -9,36 +9,17 @@ if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 Set-Location $PSScriptRoot
 
 Push-Location packages/legoai-engineering
-
-Write-Host "Running uv sync..." -ForegroundColor Cyan
 uv sync --locked
 
-Write-Host "Checking git version..." -ForegroundColor Cyan
-git --version
+docker --context desktop-linux version
+docker context inspect desktop-linux --format '{{.Endpoints.docker.Host}}'
+docker --context desktop-linux image inspect 'python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56' --format '{{.Os}}/{{.Architecture}}'
 
-Write-Host "Checking tool versions..." -ForegroundColor Cyan
-uv run pytest --version
-uv run ruff --version
-uv run mypy --version
-
-Write-Host "Running pytest..." -ForegroundColor Cyan
 uv run pytest -q
-
-Write-Host "Running mypy..." -ForegroundColor Cyan
 uv run mypy src tests examples
-
-Write-Host "Running ruff check..." -ForegroundColor Cyan
 uv run ruff check src tests examples
-
-Write-Host "Running ruff format..." -ForegroundColor Cyan
 uv run ruff format --check src tests examples
-
-Write-Host "Running check_intake.py..." -ForegroundColor Cyan
-uv run python examples/check_intake.py
+uv run python examples/sandbox_intake.py
 
 Pop-Location
-
-Write-Host "Checking git diff..." -ForegroundColor Cyan
 git diff --check
-
-Write-Host "All tests completed!" -ForegroundColor Green

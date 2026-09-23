@@ -825,3 +825,157 @@ conversion warnings and no whitespace errors. The sole pytest skip was unrelated
 to M5; Windows symlink and junction checks passed. This evidence qualifies the
 documented trusted-local Windows scope, not POSIX or untrusted-code isolation.
 `ENGINEERING_M5_COMPLETE = YES`; M6 remains unstarted.
+
+## M6 engineering workload isolation
+
+**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+
+The statements above record earlier milestone history. M6 now adds
+`sandbox.values` (`SandboxRequest`, `SandboxPolicy`, `SandboxArtifact`,
+`SandboxResult`), `sandbox.ports.SandboxExecutionPort` and `CancellationSignal`,
+`sandbox.errors.SandboxError`/`SandboxFailure`, and the separate
+`sandbox.docker.DockerSandbox`/`DockerSandboxConfig` adapter. Runtime dependencies
+remain empty. Imports and constructors are inert.
+
+Engineering workload isolation **≠ Plugin isolation**. M6 covers bounded
+repository-controlled/generated Python workloads using normal OS APIs, spawning
+descendants, modifying sandbox files, emitting malformed output and attempting
+filesystem/network escape. Protected assets are the source checkout, other host
+files, host environment secrets and Docker control endpoint. The trusted
+enforcement base is the host adapter/interpreter, operator-selected pinned image,
+Docker daemon/Desktop backend, container runtime and Linux kernel. Those trusted
+components are outside M6 protection.
+
+Explicit exclusions: **kernel/runtime exploits; compromised Docker daemon;
+compromised host administrator; compromised reference image; hostile co-located
+Plugins; cross-tenant isolation; side-channel resistance; production multi-tenant
+sandbox service guarantees**. No hostile/untrusted Plugin admission or general
+hostile-code execution across LegoAI is qualified. ADR-012 remains **Proposed**.
+
+### Inputs, execution and artifacts
+
+The request contains one Python script (1–65,536 UTF-8 bytes), at most 64 explicit
+M1 `RepositoryText` inputs (262,144 bytes each; 1 MiB total), and at most 16 explicit
+M2 `RepositoryPath` artifact selections. Paths have at most 32 components
+(255 UTF-8 bytes per component). Reuse `RepositoryWorkspacePort.read_text`
+for controlled acquisition; no recursive copy or atomic cross-file snapshot is
+provided. M2's stable namespace limitations remain. Exclusions reject `.git`,
+`.venv`, common credential/cache directories and the reserved internal script
+name. Path exclusions cannot detect secrets embedded in ordinary text: selection
+and disclosure authorization remain the caller's responsibility.
+
+No source checkout, home, cache, credential directory, Docker socket or arbitrary
+host file is mounted. Bounded bytes are sent over stdin into a private Docker
+tmpfs volume. The script becomes workload PID 1. A separate, trusted collector
+container holds a read-only mount to retain that volume after workload exit.
+After Docker confirms workload termination, the collector opens only selected
+paths, rejecting ancestor/leaf symlinks, hardlinks, directories and special files.
+It does not import workspace code. Content returns as bounded bytes, never host
+archive extraction. All results are untrusted data, not canonical Artifacts or
+Evidence. Applying a future change still requires M4 preconditions and external
+governance; M5 pytest/Ruff/mypy semantics are unchanged and not yet composed here.
+
+The synchronous Port fits this blocking, bounded first consumer without adding
+an async runtime. `execute(request, cancellation)` accepts a caller-owned
+`threading.Event`-compatible signal. Polling detects cancellation and performs
+container-wide cleanup. `KeyboardInterrupt` also unwinds through cleanup, then
+propagates if cleanup succeeds. Async task cancellation does not automatically
+cancel a call running in another thread; callers must set the signal and await
+completion. Forced interpreter termination, host crash and unrecoverable daemon
+loss cannot guarantee cleanup. No automatic retries occur.
+
+### Fixed reference profile and pending proof
+
+Every protection below is **implemented, local evidence pending**. Tests exist;
+their presence is not qualification.
+
+| Boundary | Implemented control / qualification test |
+| --- | --- |
+| Host/source filesystem | No host mounts; explicit inputs; real host canary and source-write attempts, source byte preservation |
+| Secrets | Host CLI retains only `SystemRoot`/`WINDIR` plus private `TEMP`/`TMP`; empty Docker config; workload environment fixed to `PATH`, `LANG`, `HOME=/nonexistent`, `TMPDIR=/tmp`; synthetic secret test |
+| Network/control endpoint | `network=none`, no published ports/socket, private PID/cgroup/IPC namespaces; loopback-only interfaces and unreachable non-loopback connection test |
+| Privilege | UID/GID 65534, all capabilities dropped, no-new-privileges, default seccomp required; effective capability/UID checks |
+| Writes | Read-only image root; private `/work` tmpfs volume 32 MiB/4,096 inodes, `/tmp` 8 MiB/1,024 inodes, `/dev/shm` 8 MiB; Docker's private device files remain available; root write rejection and workspace ENOSPC tests |
+| CPU | One CPU quota per container; cgroup quota/period checked locally, no performance or scheduling fairness claim |
+| Memory | 128 MiB per container, swap disabled; cgroup settings plus real workload OOM test; two-container overhead is explicit |
+| Processes | 32 PIDs per container; real bounded process creation reaches EAGAIN; workload namespace exit and forced removal contain descendants |
+| Lifetime | Default 60 seconds, configurable 1–300 seconds across preparation/execution/collection; cleanup has a separate 60-second budget; native process creation cannot be preempted by polling |
+| Output | Default 256 KiB each stdout/stderr, up to 1 MiB; overflow fails and removes sandbox; transport adds 16 bytes for the trusted preparation prefix |
+| Artifacts | Default 256 KiB each/1 MiB total, ceilings 1 MiB each/4 MiB total; count/path/byte validation, link/special-file rejection, stopped writers, bounded protocol parsing |
+| Cleanup | Generated names, remove workload then collector then volume; verify absence, no broad prune; success/nonzero/error/timeout/cancel fixtures and fault-injected control loss |
+
+The collector has its own fixed resource profile; this is per-execution
+confinement, not aggregate host resource admission. Docker/runtime overhead and
+concurrent calls are not globally budgeted. No production host starvation or
+multi-tenant guarantee follows. Input preparation errors are distinguished using
+a fixed prefix emitted before untrusted script execution. Completed nonzero
+exits remain `SandboxResult`; a Docker-observed OOM becomes `RESOURCE_LIMIT`.
+Other nonzero exits are not guessed to be resource failures. PID/storage denial
+can be caught by the workload and need not produce a special exit classification.
+
+Unavailable runtime/image, unsupported controls, preparation/control failure,
+timeout, cancellation, output overflow, unsafe artifacts and cleanup uncertainty
+have distinct typed reasons. Diagnostic exception chains are for trusted operators
+and may contain host paths; do not serialize them to Agents. A cleanup failure
+carries generated `recovery_ids` for operator inspection. Lost creation
+acknowledgement remains uncertain even after an empty listing, because delayed
+daemon creation cannot be ruled out. No error claims rollback or no effects.
+
+### Local validation required
+
+Reference: Windows CPython 3.14 and Docker Desktop **Linux**, context
+`desktop-linux`, platform `linux/amd64`, cgroup v2 and seccomp. The adapter fixes
+the local named pipe `npipe:////./pipe/dockerDesktopLinuxEngine` instead of loading
+ambient context/proxy/credential configuration. Verify that context endpoint
+below; another endpoint is unsupported by this first adapter. The operator binds
+an absolute `docker.exe` path. The request cannot select executables, image,
+mounts, environment dictionaries, shell strings or runtime flags.
+
+The already prepared immutable environment is:
+
+```text
+python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56
+```
+
+No image pull or installation is performed by sandbox execution. Run from the
+repository root; each failing native command stops this handoff:
+
+```powershell
+Push-Location packages/legoai-engineering
+try {
+    uv sync --locked
+    if ($LASTEXITCODE -ne 0) { throw 'uv sync failed' }
+    docker --context desktop-linux version
+    if ($LASTEXITCODE -ne 0) { throw 'Docker unavailable' }
+    docker context inspect desktop-linux --format '{{.Endpoints.docker.Host}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Docker context unavailable' }
+    docker --context desktop-linux image inspect 'python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56' --format '{{.Os}}/{{.Architecture}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Pinned image unavailable' }
+    uv run pytest -q
+    if ($LASTEXITCODE -ne 0) { throw 'pytest failed' }
+    uv run mypy src tests examples
+    if ($LASTEXITCODE -ne 0) { throw 'mypy failed' }
+    uv run ruff check src tests examples
+    if ($LASTEXITCODE -ne 0) { throw 'Ruff lint failed' }
+    uv run ruff format --check src tests examples
+    if ($LASTEXITCODE -ne 0) { throw 'Ruff formatting failed' }
+    uv run python examples/sandbox_intake.py
+    if ($LASTEXITCODE -ne 0) { throw 'Sandbox example failed' }
+} finally {
+    Pop-Location
+}
+git diff --check
+if ($LASTEXITCODE -ne 0) { throw 'Whitespace check failed' }
+```
+
+Expected: real Docker sandbox tests and M1–M5 regressions pass; package/wheel and
+inert-import checks pass; mypy/Ruff clean. Example prints `hello isolated LegoAI`
+then `source unchanged; synthetic host secret absent`. No M6 test may skip on
+the reference Windows host; missing Docker/image fails explicitly. Existing
+POSIX-only special-file tests may skip on Windows; existing symlink tests require
+the previously established Windows privilege. Non-Windows M6 skips do not
+qualify another backend. Retain complete output, including skips and warnings.
+
+No test/build/install/Docker qualification/lint/formatter/typechecker was run by
+the implementing assistant. **ENGINEERING_M6_COMPLETE = NO** until local evidence
+qualifies these controls. M1–M5 retain their prior scope; M6.5 and M7 are unstarted.
