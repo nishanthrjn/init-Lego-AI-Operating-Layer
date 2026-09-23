@@ -10,7 +10,8 @@ validation are complete for the documented supported scope. M1 remains closed
 and its code is unchanged. M3 is complete based on the maintainer's local evidence.
 M4 implementation and local validation are complete for the documented supported
 scope. M5 implementation and local validation are complete for the documented
-trusted-local scope. M6 is unstarted.
+trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
+Linux workload scope documented below. M6.5 and M7 remain unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -828,7 +829,7 @@ documented trusted-local Windows scope, not POSIX or untrusted-code isolation.
 
 ## M6 engineering workload isolation
 
-**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+**IMPLEMENTATION AND SCOPED LOCAL VALIDATION COMPLETE**
 
 The statements above record earlier milestone history. M6 now adds
 `sandbox.values` (`SandboxRequest`, `SandboxPolicy`, `SandboxArtifact`,
@@ -884,10 +885,12 @@ cancel a call running in another thread; callers must set the signal and await
 completion. Forced interpreter termination, host crash and unrecoverable daemon
 loss cannot guarantee cleanup. No automatic retries occur.
 
-### Fixed reference profile and pending proof
+### Fixed reference profile and local qualification
 
-Every protection below is **implemented, local evidence pending**. Tests exist;
-their presence is not qualification.
+The maintainer's local run passed the real-backend tests for the controls below.
+Cleanup/control-loss exceptions also have fault-injection coverage; no real
+daemon-failure drill is claimed. Qualification is limited to this reference
+environment and declared threat scope, not universal protection.
 
 | Boundary | Implemented control / qualification test |
 | --- | --- |
@@ -977,5 +980,11 @@ the previously established Windows privilege. Non-Windows M6 skips do not
 qualify another backend. Retain complete output, including skips and warnings.
 
 No test/build/install/Docker qualification/lint/formatter/typechecker was run by
-the implementing assistant. **ENGINEERING_M6_COMPLETE = NO** until local evidence
-qualifies these controls. M1–M5 retain their prior scope; M6.5 and M7 are unstarted.
+the implementing assistant. The maintainer reported **265 passed, 1 expected
+POSIX-only skip**, mypy clean for **48 source files**, and a successful sandbox
+example. Final Ruff rechecks reported **All checks passed!** and **48 files already
+formatted**. The diff check showed only LF-to-CRLF conversion warnings, with no
+whitespace errors. Only import-order/formatting edits followed the passing tests.
+**ENGINEERING_M6_COMPLETE = YES** for the declared reference scope. M1–M5 retain
+their prior scope; M6.5 and M7 are unstarted. See the
+[completion report](../../planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).

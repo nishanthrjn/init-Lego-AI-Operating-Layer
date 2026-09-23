@@ -160,7 +160,8 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 and node.func.value.id == "subprocess"
             ):
                 if (
-                    module not in {"git._process", "checks._process", "sandbox._process"}
+                    module
+                    not in {"git._process", "checks._process", "sandbox._process"}
                     or node.func.attr != "Popen"
                 ):
                     errors.add("unsupported-process-call")
