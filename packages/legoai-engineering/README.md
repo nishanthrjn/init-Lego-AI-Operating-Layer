@@ -9,7 +9,8 @@ M2 adds a bounded local workspace adapter below. Its implementation and local
 validation are complete for the documented supported scope. M1 remains closed
 and its code is unchanged. M3 is complete based on the maintainer's local evidence.
 M4 implementation and local validation are complete for the documented supported
-scope. M5 is unstarted.
+scope. M5 implementation and local validation are complete for the documented
+trusted-local scope. M6 is unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -634,3 +635,193 @@ no whitespace errors. Packaging validation is included in the passing pytest
 suite. M1–M3 regressions passed; the sole skip was unrelated to M4, so Windows
 symlink and junction checks passed. M4 is complete within its documented trusted,
 stable local namespace qualification; M5 is unstarted.
+
+## M5 — known engineering checks
+
+**IMPLEMENTATION AND LOCAL VALIDATION COMPLETE.** Earlier handoff and
+closure entries are historical. M1–M4 remain complete; their production code is
+unchanged. `ENGINEERING_M5_COMPLETE = YES` for the documented scope. M6 is unstarted.
+
+**M5 bounds command selection. It does NOT isolate repository code. M5 is not
+safe execution of untrusted repository code.** Pytest executes repository Python,
+including conftest and explicitly configured plugins; mypy plugins can execute
+Python too. Such code can read/write host files, open network connections, spawn
+children and access process credentials. Only trusted workspaces, configuration,
+installed tools and a trusted, stable local namespace are supported. Directory
+targets and tool configuration/import resolution are not a filesystem sandbox.
+
+### Ownership and public contract
+
+Design A from the M5 instruction is selected: an independent semantic Port and
+local adapter, with governed composition later. ADR-002/016 retain engineering
+semantics outside Core. Existing Core `ExecutionCoordinator` and private
+`runtime._composition.governed`/`model_governed` bind particular admitted
+capabilities; they are not a public engineering invocation facade. M5 neither
+imports these internals nor duplicates admission, authority, dispatch, execution
+state, resource accounting or evidence semantics. ADR-014 remains the supported
+authoring gate; ADR-012 remains the hostile-code isolation gate. No new canonical
+decision or ADR is needed for this scoped reference mechanism.
+
+The public `checks.ports.EngineeringCheckPort.check(CheckRequest) -> CheckResult`
+is realized by `checks.local.LocalEngineeringChecks`. The immutable values in
+`checks.values` are `CheckRequest`, `CheckPolicy`, and `CheckResult`, with enums
+`CheckKind` and `CheckOutcome`. Construction/imports are inert. Requests contain
+only a kind and 1–32 unique `RepositoryPath` targets, preserving declared order.
+No raw executable, shell string, extra arguments, caller environment, arbitrary
+config path, cwd override, node selector or auto-fix mode is exposed. Targets
+reuse M2's 240-character portable path syntax and must be UTF-8 encodable.
+
+`LocalCheckTools(pytest, ruff, mypy)` is **trusted host configuration**, separate
+from requests. Each is an explicit absolute native path to the corresponding
+named executable (`pytest.exe`, `ruff.exe`, `mypy.exe` on Windows; extensionless
+names on POSIX). Windows batch/script launchers are rejected. The host must
+provision authentic tools: the filename is not executable attestation. There is
+no PATH search, version probe, tool import, package-manager invocation, download
+or auto-installation. Missing configuration paths can be constructed inertly;
+invoking the absent tool raises `CheckError(UNAVAILABLE)`.
+
+### Commands, paths and outcomes
+
+| Kind | Fixed command options before `--` and absolute target paths |
+|---|---|
+| `PYTEST` | `pytest -q -o addopts= -p no:cacheprovider` |
+| `RUFF_CHECK` | `ruff check --no-fix --no-fix-only --no-cache` |
+| `RUFF_FORMAT_CHECK` | `ruff format --check --no-cache` |
+| `MYPY` | `mypy --no-incremental --cache-dir <os.devnull>` |
+
+Every target is validated before dispatch using M2's public
+`LocalRepositoryWorkspace.list_entries(parent)`. This checks root identity,
+ancestor/target symlinks and reparse points, regular file/directory type and
+hard links; it retains M2's conservative sibling checks. Each parent listing is
+bounded at 4096 entries, with depth 32 and `.git`/`.venv` exclusions. A forbidden
+sibling or oversized parent directory can reject a check even when its target
+alone is ordinary. All supplied targets must exist. The subprocess cwd is the
+explicit `LocalWorkspaceRoot`; option-like and `@argfile` names become absolute
+path arguments after `--`. No shell or ambient cwd is used.
+
+Tools recursively discover files and dependencies themselves. M2 admission does
+not inspect every descendant, imported module, discovered configuration or
+external path referred to by trusted configuration. It does not prevent races
+after validation. The host must review that namespace and configuration; do not
+interpret these entry-path checks as confinement of the running tool.
+
+| Completed exit | Semantic outcome |
+|---|---|
+| Any supported tool: 0 | `PASSED` |
+| Any supported tool: 1 | `FAILED` (check findings, not launch failure) |
+| Pytest: 2 | `INTERRUPTED`, also used by pytest for collection/import errors |
+| Pytest: 5 | `NO_TESTS` |
+| Other exits, including pytest 3/4 and Ruff/mypy 2 | `ERROR` |
+
+Exact exit codes and bounded raw `stdout`/`stderr` bytes are retained in
+`CheckResult`; `outcome` is derived rather than independently supplied. Diagnostic
+bytes are intentionally not parsed into findings, normalized or silently decoded.
+Trusted consumers may decode with an explicit policy. Output may contain source,
+host paths or secrets; it is excluded from repr and never automatically logged.
+No timestamps, execution IDs, versions or nondeterministic duration fields are
+added. Tool/configuration/environment versions still affect observable output.
+
+See the primary [pytest exit-code contract](https://docs.pytest.org/en/stable/reference/exit-codes.html),
+[Ruff CLI](https://docs.astral.sh/ruff/configuration/),
+[Ruff format-check exits](https://docs.astral.sh/ruff/formatter/), and
+[mypy cache controls](https://mypy.readthedocs.io/en/stable/command_line.html#incremental-mode).
+
+### Process limits and failure behavior
+
+`CheckPolicy` defaults to 60 seconds and 262144 bytes **per stream**. Configurable
+limits are integers in 1–3600 seconds and 1–1048576 bytes; booleans are rejected.
+Private `_process._capture` uses `subprocess.Popen(shell=False)`, argv sequences,
+`DEVNULL` stdin and two nonblocking pipes on CPython 3.14. Incremental dual-pipe
+draining avoids unbounded `communicate()`, reader threads and output spool files.
+An additional byte detects overflow; `OUTPUT_LIMIT` aborts the run rather than
+returning a silently truncated result. A monotonic deadline includes launch and
+pipe draining; pipes retained by descendants cannot cause indefinite draining.
+
+`CheckError` distinguishes `UNAVAILABLE`, `IO`, `TIMEOUT`, `OUTPUT_LIMIT` and
+`CLEANUP`. On failure/interruption the direct child is killed if still running,
+waited for up to five additional seconds, and pipes are closed. Failure to confirm
+cleanup is reported, preserving exception causality. OS process creation and
+filesystem admission cannot be preempted by this synchronous deadline. No strict
+wall-clock bound on an unresponsive operating system is promised.
+
+There is no process-tree kill guarantee, host shutdown supervisor, cooperative
+cancellation token or retry. `KeyboardInterrupt` propagates after cleanup unless
+cleanup itself fails; original context is retained in that case. Descendants can
+survive. A timeout, interruption or nonzero exit cannot prove that repository
+code had no effects; inspect state before deciding on another run. Resource/tenant
+admission, governed cancellation and uncertain-effect accounting remain external.
+
+The child environment retains only `SystemRoot`, `WINDIR`, `PATH`, `TEMP`, `TMP`,
+`TMPDIR`, `HOME`, `USERPROFILE`, `APPDATA`, and `LOCALAPPDATA` when present. It sets
+UTF-8 Python output, disables Python bytecode writes and pytest entry-point plugin
+autoload, and requests no color. Inherited `PYTHONPATH`, `PYTEST_ADDOPTS`, mypy/Ruff
+flags and loader settings are omitted; the global environment is unchanged.
+Retained home/PATH settings and project configuration are trusted inputs, not
+isolated resources. No environment values are included in results or logged.
+
+Ruff fix flags explicitly override project fix settings. Pytest cacheprovider
+and mypy/Ruff caches are disabled, but this does not make project execution
+read-only: tests, conftest, plugins and configuration-enabled reports may write.
+M5 adds no Git staging/commit, M4 bypass helper, shell, framework or Agent/Model
+dependency. Tool availability is a host/dev concern; runtime dependencies remain
+empty. M6 must address stronger isolation before untrusted-code use.
+
+### Local qualification handoff
+
+**Local validation completed by the maintainer; commands retained below.**
+No test/build/install/lint/format/typecheck or M5
+tool execution was run internally. Tests include real pytest pass/fail/no-tests
+and collection errors; real Ruff lint/format-check and mypy success/findings;
+no-fix byte preservation; M4 coexistence; M3 status preservation; missing tools;
+stdin EOF; timeout/direct-child reaping; both output bounds and dual-pipe pressure;
+path, symlink/junction and argv boundaries; architecture and inert imports.
+Wheel/sdist/fresh offline installation tests include M5 and verify import/use
+without pytest, Ruff or mypy libraries installed in the fresh environment.
+
+```powershell
+Push-Location packages/legoai-engineering
+uv sync --locked
+git --version
+uv run pytest --version
+uv run ruff --version
+uv run mypy --version
+uv run pytest -q
+uv run mypy src tests examples
+uv run ruff check src tests examples
+uv run ruff format --check src tests examples
+uv run python examples/check_intake.py
+Pop-Location
+git diff --check
+```
+
+Expected: all applicable M1–M5 tests pass, mypy and Ruff are clean, and the example
+prints `ruff_check: passed`. The example provisions only a temporary tiny project,
+uses the environment's Ruff executable, installs nothing and cleans up afterward.
+The POSIX FIFO test skips on Windows; junction tests skip on non-Windows. POSIX
+qualification is not claimed without local evidence. If symlink privilege causes
+skips on Windows, rerun those checks in a permitted PowerShell session:
+
+```powershell
+Push-Location packages/legoai-engineering
+uv run pytest -q tests/test_workspace.py::test_symlink_file_directory_and_root_escape tests/test_mutation.py::test_symlink_target_parent_and_root_escape tests/test_checks.py::test_symlink_target_parent_and_root_rejected
+Pop-Location
+```
+
+For future validation, retain complete output including warnings/skips and
+classify failures before correction. `ENGINEERING_M5_COMPLETE = YES` for the
+documented trusted-local scope, based on the maintainer evidence below.
+M6, Agent, Workflow, Team and ForgeAI work remain unstarted.
+
+Maintainer validation on 2026-09-23: pytest 9.1.1 reported **215 passed,
+1 expected Windows skip** (the POSIX special-file boundary). Mypy 2.3.1 passed
+for 38 source files; Ruff 0.16.8 lint passed; the example printed
+`ruff_check: passed`. Packaging and real-tool integration checks are included
+in the passing suite. Git 2.54.0.windows.1 reported only LF-to-CRLF conversion
+warnings during the diff check. The remaining failures were formatting defects
+in `checks/local.py` and `tests/test_checks.py`; Ruff's exact suggested changes
+were applied without behavioral changes. The maintainer's final format recheck
+passed: **38 files already formatted**. The diff check reported only LF-to-CRLF
+conversion warnings and no whitespace errors. The sole pytest skip was unrelated
+to M5; Windows symlink and junction checks passed. This evidence qualifies the
+documented trusted-local Windows scope, not POSIX or untrusted-code isolation.
+`ENGINEERING_M5_COMPLETE = YES`; M6 remains unstarted.

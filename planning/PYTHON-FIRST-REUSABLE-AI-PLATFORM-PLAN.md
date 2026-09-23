@@ -10,7 +10,8 @@ M2's bounded local acquisition subset is now implemented under the maintainer's
 separate M2 instruction; local validation is complete for its documented trusted
 local Windows scope (see M2 closure below). M3 is complete based on the maintainer's
 reported local evidence. M4 implementation and local validation are complete
-for the documented trusted local scope. M5 is unstarted.
+for the documented trusted local scope. M5 implementation and local validation
+are complete for the documented trusted-local Windows scope. M6 is unstarted.
 Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
@@ -545,3 +546,65 @@ the passing suite. Windows symlink and junction checks passed; the sole skip
 was the POSIX special-file boundary. No validation commands were run internally.
 `ENGINEERING_M4_COMPLETE = YES` for the documented trusted, stable local namespace
 scope; M5 remains unstarted.
+
+## M5 implementation handoff — known engineering checks
+
+Current state: **M1–M5 complete for their documented scopes;
+M6 unstarted. ENGINEERING_M5_COMPLETE = YES.** Earlier entries retain
+their historical milestone states.
+
+The maintainer's M5 instruction explicitly permits design A: separate reusable
+engineering semantics and a bounded local adapter, with governed runtime
+composition later. Selected under ADR-002/016, preserving Core's ownership of
+admission, authority, dispatch, supervision, effects and evidence. Core's current
+capability-specific private invocation wiring is not a supported authoring API;
+ADR-014 remains open. No Core imports, duplicate runtime or new ADR is introduced.
+
+New `checks` modules: inert initializer, `values`, `errors`, `ports`, `local`,
+private `_process`. Public `EngineeringCheckPort.check` accepts only an immutable
+`CheckRequest` for pytest, Ruff check, Ruff format-check or mypy and 1–32 explicit
+repository targets. `LocalCheckTools` provides trusted host executable paths;
+`CheckPolicy` supplies finite time/output limits. `CheckResult` preserves exact
+exit and byte diagnostics with semantic outcomes. Missing tools and operational
+faults are distinct from completed checks with findings. No dependency added,
+no package/lockfile change, no public arbitrary command/argv/environment API.
+
+M2's public parent-listing API validates targets before any process launch;
+M1–M4 production code stays unchanged. Limits: 60s/256KiB per stream by default,
+at most 3600s/1MiB per stream. Private dual-pipe nonblocking capture, DEVNULL stdin,
+shell=False, finite direct-child cleanup and explicit overflow failures. No
+reader threads, output spool files, retry, installation or network setup. Tool
+flags disable fixes/common caches; filtered environment avoids inherited tool
+overrides and Python search paths. Trusted project configuration still applies.
+
+**This is not safe execution of untrusted repository code.** Pytest/conftest and
+mypy plugins can execute Python and access the host. Target admission is not
+recursive filesystem confinement; configuration/dependency discovery can leave
+the workspace. Descendants may survive timeout, OS launch/I/O can delay deadline
+handling, and failures do not imply no effects. M6/ADR-012 remains the isolation
+boundary. Governed Agent use requires future higher-layer composition.
+
+Added real-tool, output/timeout, path/argv, Windows link, M4/M3 coexistence tests,
+extended architecture/inertness and package-install checks, plus a temporary
+project example. Static review addressed exact exit mapping, no-fix overrides,
+Windows byte preservation, bounded capture and cleanup. This is same-assistant
+review, not independent review or executed verification.
+
+The [M5 local qualification commands](../packages/legoai-engineering/README.md#m5--known-engineering-checks)
+are retained for reproduction. Pytest includes real installed tools and wheel/sdist plus
+fresh offline installation without tool libraries. Expected example output:
+`ruff_check: passed`. No locally runnable validation was performed internally.
+Local evidence is recorded below; M6 and later milestones remain unstarted.
+
+M5 local evidence returned on 2026-09-23: **215 passed, 1 expected Windows skip**
+for the POSIX special-file boundary; mypy clean across 38 files; Ruff lint clean;
+example output correct. The passing pytest suite includes packaging, real-tool
+integration and M1–M4 regressions. Tools: pytest 9.1.1, Ruff 0.16.8, mypy 2.3.1,
+Git 2.54.0.windows.1. The format check identified a source formatting defect in
+`checks/local.py` and test formatting defects in `tests/test_checks.py`.
+Applied the reported formatting changes only. The maintainer's final recheck
+passed: **38 files already formatted**. Git's LF-to-CRLF notices are conversion
+warnings, with no whitespace errors reported. The sole pytest skip was unrelated
+to M5; Windows symlink and junction checks passed. Qualification is limited to
+the documented trusted-local Windows scope; no POSIX or sandbox claim follows.
+`ENGINEERING_M5_COMPLETE = YES`; M6 remains unstarted.

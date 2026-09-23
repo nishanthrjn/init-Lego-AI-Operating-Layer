@@ -48,6 +48,12 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/git/_config.py",
         "legoai_engineering/git/_parse.py",
         "legoai_engineering/git/_process.py",
+        "legoai_engineering/checks/__init__.py",
+        "legoai_engineering/checks/values.py",
+        "legoai_engineering/checks/errors.py",
+        "legoai_engineering/checks/ports.py",
+        "legoai_engineering/checks/local.py",
+        "legoai_engineering/checks/_process.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -67,6 +73,8 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/workspace_intake.py" in paths
         assert "examples/git_intake.py" in paths
         assert "examples/mutation_intake.py" in paths
+        assert "examples/check_intake.py" in paths
+        assert "tests/test_checks.py" in paths
         assert "tests/test_mutation.py" in paths
         assert "tests/test_git.py" in paths
         assert "tests/test_repository.py" in paths
@@ -156,6 +164,25 @@ result = writer.apply(RepositoryChangeSet((FileChange(
 ),)))
 assert result.applied[0].after == digest_text('updated')
 assert workspace.read_text(RepositoryPath('sample.txt')).text == 'updated'
+from legoai_engineering.checks.local import LocalCheckTools, LocalEngineeringChecks
+from legoai_engineering.checks.ports import EngineeringCheckPort
+from legoai_engineering.checks.values import CheckKind, CheckPolicy, CheckRequest
+from legoai_engineering.checks.errors import CheckError, CheckFailure
+import importlib.util
+assert all(importlib.util.find_spec(name) is None for name in ('pytest', 'ruff', 'mypy'))
+base = Path(sys.executable).parent
+suffix = '.exe' if os.name == 'nt' else ''
+checks: EngineeringCheckPort = LocalEngineeringChecks(
+    LocalWorkspaceRoot(root),
+    LocalCheckTools(*(base / (name + suffix) for name in ('pytest', 'ruff', 'mypy'))),
+    CheckPolicy(),
+)
+try:
+    checks.check(CheckRequest(CheckKind.RUFF_CHECK, (RepositoryPath('sample.txt'),)))
+except CheckError as error:
+    assert error.reason is CheckFailure.UNAVAILABLE
+else:
+    raise AssertionError('fresh environment unexpectedly contains Ruff')
 """
     workspace_root = tmp_path / "workspace"
     workspace_root.mkdir()
