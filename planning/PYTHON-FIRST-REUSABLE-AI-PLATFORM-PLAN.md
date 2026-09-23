@@ -11,7 +11,10 @@ separate M2 instruction; local validation is complete for its documented trusted
 local Windows scope (see M2 closure below). M3 is complete based on the maintainer's
 reported local evidence. M4 implementation and local validation are complete
 for the documented trusted local scope. M5 implementation and local validation
-are complete for the documented trusted-local Windows scope. M6 is unstarted.
+are complete for the documented trusted-local Windows scope. M6 strategy
+assessment has started; implementation and qualification remain pending. See
+[M6 sandbox assessment](ENGINEERING-M6-SANDBOX-ASSESSMENT.md). M6.5 and M7 are
+unstarted.
 Remaining Phase C work and all later phases remain planned and unstarted.
 
 ## A. Corrected product direction
