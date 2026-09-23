@@ -98,6 +98,32 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.local",
             "legoai_engineering.repository.workspace",
         },
+        "sandbox.values": {"legoai_engineering.repository.workspace"},
+        "sandbox.errors": {"enum"},
+        "sandbox.ports": {"typing", "legoai_engineering.sandbox.values"},
+        "sandbox._process": {
+            "os",
+            "subprocess",
+            "time",
+            "pathlib",
+            "legoai_engineering.sandbox.errors",
+            "legoai_engineering.sandbox.ports",
+        },
+        "sandbox.docker": {
+            "base64",
+            "json",
+            "os",
+            "tempfile",
+            "time",
+            "uuid",
+            "pathlib",
+            "typing",
+            "legoai_engineering.sandbox._process",
+            "legoai_engineering.sandbox._programs",
+            "legoai_engineering.sandbox.errors",
+            "legoai_engineering.sandbox.ports",
+            "legoai_engineering.sandbox.values",
+        },
     }
     allowed.update(additions.get(module, set()))
     errors: set[str] = set()
@@ -134,7 +160,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 and node.func.value.id == "subprocess"
             ):
                 if (
-                    module not in {"git._process", "checks._process"}
+                    module not in {"git._process", "checks._process", "sandbox._process"}
                     or node.func.attr != "Popen"
                 ):
                     errors.add("unsupported-process-call")
@@ -154,7 +180,9 @@ def import_violations(source: str, module: str = "") -> set[str]:
                 and node.func.value.id == "os"
                 and node.func.attr
                 not in (
-                    {"read", "set_blocking"}
+                    {"read", "write", "set_blocking"}
+                    if module == "sandbox._process"
+                    else {"read", "set_blocking"}
                     if module in {"git._process", "checks._process"}
                     else (
                         {"fstat", "fdopen", "close", "chmod", "link", "replace"}
@@ -181,7 +209,7 @@ def test_source_boundaries_and_inert_initializers() -> None:
         source = path.read_text(encoding="utf-8")
         module = (
             path.parent.name + "." + path.stem
-            if path.parent.name in {"git", "checks"}
+            if path.parent.name in {"git", "checks", "sandbox"}
             else path.stem
         )
         assert not import_violations(source, module), path
@@ -256,7 +284,7 @@ def test_core_does_not_import_engineering_pack() -> None:
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
 import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing
-import subprocess, time, tempfile, hashlib
+import subprocess, time, tempfile, hashlib, uuid, json, base64, binascii
 from unittest.mock import patch
 threads = tuple(threading.enumerate())
 handlers = tuple(logging.getLogger().handlers)
@@ -318,6 +346,11 @@ with (
         CheckPolicy(),
     )
     CheckRequest(CheckKind.PYTEST, (RepositoryPath('tests'),))
+    from legoai_engineering.sandbox.docker import DockerSandbox, DockerSandboxConfig
+    from legoai_engineering.sandbox.values import SandboxPolicy, SandboxRequest
+    import legoai_engineering.sandbox.ports
+    DockerSandbox(DockerSandboxConfig(base / 'docker.exe'), SandboxPolicy())
+    SandboxRequest('print(1)')
     assert inspect_text(InspectionRequest((RepositoryText('a', 'x'),), 'x', 1)).matches
 assert tuple(threading.enumerate()) == threads
 assert tuple(logging.getLogger().handlers) == handlers

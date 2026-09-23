@@ -54,6 +54,13 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/checks/ports.py",
         "legoai_engineering/checks/local.py",
         "legoai_engineering/checks/_process.py",
+        "legoai_engineering/sandbox/__init__.py",
+        "legoai_engineering/sandbox/values.py",
+        "legoai_engineering/sandbox/errors.py",
+        "legoai_engineering/sandbox/ports.py",
+        "legoai_engineering/sandbox/docker.py",
+        "legoai_engineering/sandbox/_process.py",
+        "legoai_engineering/sandbox/_programs.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -74,6 +81,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/git_intake.py" in paths
         assert "examples/mutation_intake.py" in paths
         assert "examples/check_intake.py" in paths
+        assert "examples/sandbox_intake.py" in paths
+        assert "tests/test_sandbox.py" in paths
+        assert "tests/test_sandbox_docker.py" in paths
         assert "tests/test_checks.py" in paths
         assert "tests/test_mutation.py" in paths
         assert "tests/test_git.py" in paths
@@ -100,6 +110,22 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
 import sys
 from pathlib import Path
 import legoai_engineering
+from legoai_engineering.sandbox.docker import DockerSandbox, DockerSandboxConfig
+from legoai_engineering.sandbox.ports import SandboxExecutionPort
+from legoai_engineering.sandbox.values import SandboxRequest, SandboxPolicy
+sandbox: SandboxExecutionPort = DockerSandbox(
+    DockerSandboxConfig(Path(sys.executable).parent / 'docker.exe'), SandboxPolicy()
+)
+assert SandboxRequest('print(1)').files == ()
+from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
+try:
+    sandbox.execute(SandboxRequest('pass'))
+except SandboxError as error:
+    assert error.reason in {
+        SandboxFailure.RUNTIME_UNAVAILABLE, SandboxFailure.UNSUPPORTED,
+    }
+else:
+    raise AssertionError('fresh environment must not contain Docker CLI')
 from legoai_engineering.repository.api import inspect_text
 from legoai_engineering.repository.values import InspectionRequest, RepositoryText
 assert Path(legoai_engineering.__file__).resolve().is_relative_to(Path(sys.prefix))
