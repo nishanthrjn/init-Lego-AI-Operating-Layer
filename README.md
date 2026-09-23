@@ -43,8 +43,8 @@ Ruff check/format-check and mypy operations; implementation and local validation
 are complete for the documented scope. These execute trusted local code without isolation.
 Governed runtime publication, Git mutation and engineering Agents remain
 unimplemented. M6 adds a separate bounded Python sandbox capability targeting
-Docker Desktop Linux. Implementation is complete with local isolation validation
-pending; see the [M6 qualification handoff](packages/legoai-engineering/README.md#m6-engineering-workload-isolation).
+Docker Desktop Linux. Implementation and local qualification are complete for
+the documented bounded workload scope; see the [M6 completion report](planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).
 Engineering workload isolation is distinct from Plugin isolation: ADR-012 remains
 Proposed. M6.5 model routing and M7 Agent foundation remain unstarted.
 

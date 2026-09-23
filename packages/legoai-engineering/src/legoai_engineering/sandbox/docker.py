@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from legoai_engineering.sandbox._process import _Cli, _check
+from legoai_engineering.sandbox._process import _check, _Cli
 from legoai_engineering.sandbox._programs import _COLLECT, _IDLE, _PREPARE
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 from legoai_engineering.sandbox.ports import CancellationSignal
@@ -32,8 +32,7 @@ class DockerSandboxConfig:
 
     executable: Path
     image: str = (
-        "python@sha256:"
-        "82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
+        "python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
     )
 
     def __post_init__(self) -> None:

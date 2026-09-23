@@ -58,8 +58,7 @@ def _paths(paths: tuple[RepositoryPath, ...]) -> None:
         _path(path)
         key = path.value.casefold()
         if key in seen or any(
-            key.startswith(other + "/") or other.startswith(key + "/")
-            for other in seen
+            key.startswith(other + "/") or other.startswith(key + "/") for other in seen
         ):
             raise ValueError("duplicate or overlapping sandbox paths")
         seen.add(key)

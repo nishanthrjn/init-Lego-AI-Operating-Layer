@@ -2,7 +2,7 @@
 
 Date: 2026-09-23. Status: Linux backend and pinned Python image confirmed by
 maintainer. Scope gate resolved by the maintainer's subsequent 2026-09-23 decision;
-implementation complete, local qualification pending. The assessment below retains
+implementation and scoped local qualification complete. The assessment below retains
 the original decision history; its unresolved-gate statements are superseded by
 [the scoped implementation record](ENGINEERING-M6-IMPLEMENTATION.md).
 Authority: the maintainer's current M6-only instruction, IA-001 and ADR-016,
@@ -231,6 +231,6 @@ not be represented as proof of no effects.
    qualification and no M1–M5 regression waiver.
 
 No production code or test was changed during the original assessment. Subsequent
-implementation is recorded separately; `ENGINEERING_M6_COMPLETE = NO` until local
-qualification succeeds. M6.5 model routing and M7 Agent work
+implementation and successful local qualification are recorded separately;
+`ENGINEERING_M6_COMPLETE = YES` for that bounded scope. M6.5 model routing and M7 Agent work
 remain unstarted. The broader roadmap's M6.5-before-Agents ordering is retained.

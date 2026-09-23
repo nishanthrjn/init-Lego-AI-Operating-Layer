@@ -12,7 +12,7 @@ import pytest
 from legoai_engineering.repository.errors import WorkspaceBoundaryError
 from legoai_engineering.repository.values import RepositoryText
 from legoai_engineering.repository.workspace import RepositoryPath
-from legoai_engineering.sandbox._process import _Cli, _check
+from legoai_engineering.sandbox._process import _check, _Cli
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
     DockerSandboxConfig,
@@ -123,7 +123,11 @@ def test_fixed_runtime_profile_has_no_escape_hatch() -> None:
         ):
             assert required in arguments
         for forbidden in (
-            "--privileged", "--cap-add", "--pid", "--publish", "--volume"
+            "--privileged",
+            "--cap-add",
+            "--pid",
+            "--publish",
+            "--volume",
         ):
             assert not any(
                 argument == forbidden or argument.startswith(forbidden + "=")
@@ -134,10 +138,7 @@ def test_fixed_runtime_profile_has_no_escape_hatch() -> None:
         mount = arguments[arguments.index("--mount") + 1]
         assert mount.endswith(",readonly") is readonly
     root = (
-        Path(__file__).resolve().parents[1]
-        / "src"
-        / "legoai_engineering"
-        / "sandbox"
+        Path(__file__).resolve().parents[1] / "src" / "legoai_engineering" / "sandbox"
     )
     for name in ("values", "ports", "errors"):
         tree = ast.parse((root / (name + ".py")).read_text("utf-8"))

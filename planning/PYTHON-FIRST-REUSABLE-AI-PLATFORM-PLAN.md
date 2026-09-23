@@ -12,7 +12,8 @@ local Windows scope (see M2 closure below). M3 is complete based on the maintain
 reported local evidence. M4 implementation and local validation are complete
 for the documented trusted local scope. M5 implementation and local validation
 are complete for the documented trusted-local Windows scope. M6 engineering
-workload isolation implementation is complete; local qualification is pending. See
+workload isolation implementation and local qualification are complete for the
+documented Windows Docker Desktop Linux scope. See
 [M6 implementation and scope](ENGINEERING-M6-IMPLEMENTATION.md) and the
 [qualification handoff](../packages/legoai-engineering/README.md#m6-engineering-workload-isolation). M6.5 and M7 are
 unstarted.
