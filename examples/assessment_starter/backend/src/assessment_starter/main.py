@@ -19,4 +19,4 @@ def create_app(
     return application
 
 
-app = create_app(Settings.from_environment())
+app = create_app(Settings.from_startup())
