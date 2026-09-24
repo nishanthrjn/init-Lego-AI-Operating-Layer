@@ -22,10 +22,17 @@ It does **not** guarantee: reconstruction of the original visual layout, multi-c
 `document.parsing` and `document.chunking` are independently usable and never import each other. A typical caller composes them itself:
 
 ```python
-from legoai_document.parsing import DocumentFormat, DocumentParsingRequest, parse_document, flatten_pages
+from legoai_document.parsing import (
+    DocumentFormat,
+    DocumentParsingRequest,
+    parse_document,
+    flatten_pages,
+)
 from legoai_document.chunking import ChunkingRequest, chunk_text
 
-parsed = parse_document(DocumentParsingRequest(content=pdf_bytes, format=DocumentFormat.PDF))
+parsed = parse_document(
+    DocumentParsingRequest(content=pdf_bytes, format=DocumentFormat.PDF)
+)
 chunks = chunk_text(ChunkingRequest(text=flatten_pages(parsed)))
 ```
 
@@ -62,12 +69,18 @@ for chunk in result.chunks:
 Invalid parameters (`chunk_size <= 0`, `overlap < 0`, or `overlap >= chunk_size`) raise `legoai_document.chunking.ChunkingValidationError` before any computation happens — they are never silently accepted.
 
 ```python
-from legoai_document.parsing import DocumentFormat, DocumentParsingRequest, parse_document
+from legoai_document.parsing import (
+    DocumentFormat,
+    DocumentParsingRequest,
+    parse_document,
+)
 
 with open("report.pdf", "rb") as f:
     content = f.read()
 
-parsed = parse_document(DocumentParsingRequest(content=content, format=DocumentFormat.PDF))
+parsed = parse_document(
+    DocumentParsingRequest(content=content, format=DocumentFormat.PDF)
+)
 
 for page in parsed.pages:
     print(page.index, repr(page.text[:60]))

@@ -6,12 +6,10 @@ verbatim into DOCUMENT-PARSING-CAPABILITY-DESIGN.md as VERIFIED findings.
 from __future__ import annotations
 
 import io
-import traceback
 from pathlib import Path
 
 import pypdf
 from pypdf import PdfReader
-from pypdf.errors import PdfReadError
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 
@@ -74,7 +72,9 @@ print("did opening/extraction raise? -> it did not (see above); confirms determi
 # --- Malformed / truncated ---
 section("13_malformed_truncated.pdf")
 try:
-    reader = PdfReader(io.BytesIO((FIXTURES / "13_malformed_truncated.pdf").read_bytes()))
+    reader = PdfReader(
+        io.BytesIO((FIXTURES / "13_malformed_truncated.pdf").read_bytes())
+    )
     print("PdfReader() did NOT raise; num pages reported:", end=" ")
     try:
         n = len(reader.pages)
@@ -94,7 +94,9 @@ except Exception as e:  # noqa: BLE001
 
 section("13b_malformed_garbage.pdf")
 try:
-    reader = PdfReader(io.BytesIO((FIXTURES / "13b_malformed_garbage.pdf").read_bytes()))
+    reader = PdfReader(
+        io.BytesIO((FIXTURES / "13b_malformed_garbage.pdf").read_bytes())
+    )
     print("PdfReader() did NOT raise; num pages reported:", end=" ")
     try:
         print(len(reader.pages))
@@ -117,7 +119,10 @@ try:
         print("len(reader.pages) succeeded:", n)
         try:
             text = reader.pages[0].extract_text()
-            print("page 0 extract_text() succeeded (UNEXPECTED without password):", repr(text))
+            print(
+                "page 0 extract_text() succeeded (UNEXPECTED without password):",
+                repr(text),
+            )
         except Exception as e:  # noqa: BLE001
             print("page 0 extract_text() raised:")
             show_exception(e)
@@ -132,7 +137,11 @@ section("14_encrypted.pdf -- wrong password")
 reader = PdfReader(io.BytesIO(data))
 try:
     result = reader.decrypt("totally-wrong-password")
-    print("decrypt() with wrong password returned:", result, "(0=fail,1=user,2=owner per pypdf docs)")
+    print(
+        "decrypt() with wrong password returned:",
+        result,
+        "(0=fail,1=user,2=owner per pypdf docs)",
+    )
     try:
         text = reader.pages[0].extract_text()
         print("page 0 extract_text() after failed decrypt:", repr(text))
@@ -153,9 +162,18 @@ print("page 0 extract_text() after correct decrypt:", repr(text))
 
 # --- API surface confirmation for design doc ---
 section("API surface used")
-print("PdfReader(stream: BytesIO) -- constructs from a file-like object, confirmed works with io.BytesIO")
+print(
+    "PdfReader(stream: BytesIO) -- constructs from a file-like object, confirmed works with io.BytesIO"
+)
 print("PdfReader.is_encrypted -- bool property, confirmed")
 print("PdfReader.pages -- sequence of PageObject, confirmed len() and indexing work")
-print("PageObject.extract_text() -> str -- confirmed return type is always str, never None, for all fixtures tried")
-print("PdfReader.decrypt(password) -> PasswordType -- confirmed returns an enum-like int; 0 means failed")
-print("Exceptions module: pypdf.errors ->", [n for n in dir(pypdf.errors) if not n.startswith("_")])
+print(
+    "PageObject.extract_text() -> str -- confirmed return type is always str, never None, for all fixtures tried"
+)
+print(
+    "PdfReader.decrypt(password) -> PasswordType -- confirmed returns an enum-like int; 0 means failed"
+)
+print(
+    "Exceptions module: pypdf.errors ->",
+    [n for n in dir(pypdf.errors) if not n.startswith("_")],
+)

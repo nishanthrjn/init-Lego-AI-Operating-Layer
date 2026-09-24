@@ -35,8 +35,8 @@ def _text_page_pdf(path: Path, pages: list[list[str]]) -> None:
 def _image_only_pdf(path: Path) -> None:
     """A syntactically valid PDF whose only content is a rasterized image
     (no text objects at all) -- simulates a scanned/photographed page."""
-    from reportlab.lib.utils import ImageReader
     from PIL import Image
+    from reportlab.lib.utils import ImageReader
 
     img_path = FIXTURES / "_scratch_raster.png"
     Image.new("RGB", (200, 100), color=(128, 128, 128)).save(img_path)

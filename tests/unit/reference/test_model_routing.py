@@ -143,7 +143,8 @@ def test_configuration_and_decision_validate_exact_types_and_scope() -> None:
         ModelRouteDecision(ModelRequirement("other"), _revision(), (binding,))
     with pytest.raises(TypeError):
         DeterministicModelRouter(_revision(), ()).route(
-            "profile", TenantContext(TenantId("tenant"))  # type: ignore[arg-type]
+            "profile",  # type: ignore[arg-type]
+            TenantContext(TenantId("tenant")),
         )
 
 
