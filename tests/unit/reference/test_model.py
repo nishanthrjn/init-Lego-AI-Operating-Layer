@@ -117,7 +117,7 @@ def test_chat_model_missing_404_is_rejected() -> None:
             404, {"error": 'model "llama3.2" not found, try pulling it first'}
         )
         with patch("urllib.request.urlopen", side_effect=error):
-            with pytest.raises(ModelResponseRejectedError, match="not found"):
+            with pytest.raises(ModelResponseRejectedError, match="HTTP 404"):
                 await _adapter().chat(ChatRequest((ChatMessage(ChatRole.USER, "hi"),)))
 
     asyncio.run(scenario())

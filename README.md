@@ -87,3 +87,5 @@ setup, configuration, and known limitations.
 
 See [docs/development.md](docs/development.md) for running this
 package's own test suite, mypy, and ruff.
+
+See [foundational ports and adapters](docs/ports-and-adapters.md) for existing contracts, offline injection and persistence test support.

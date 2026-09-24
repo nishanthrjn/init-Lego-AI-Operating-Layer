@@ -93,6 +93,7 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.intelligence.model.ports
     import legoai.intelligence.model.routing
     import legoai.reference.model_routing
+    import legoai.reference.model_fake
     import legoai.execution.agent.values
     import legoai.execution.agent.ports
     import legoai.reference.agent
@@ -133,6 +134,7 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.intelligence", "legoai.intelligence.model",
     "legoai.intelligence.model.values", "legoai.intelligence.model.ports",
     "legoai.intelligence.model.routing", "legoai.reference.model_routing",
+    "legoai.reference.model_fake",
     "legoai.execution", "legoai.execution.values", "legoai.execution.agent",
     "legoai.execution.agent.values", "legoai.execution.agent.ports",
     "legoai.reference.agent"
@@ -213,6 +215,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/intelligence/model/routing.py",
         "legoai/reference/model_routing.py",
         "legoai/reference/model.py",
+        "legoai/reference/model_fake.py",
         "legoai/runtime/_composition/model_governed.py",
         "legoai/execution/agent/__init__.py",
         "legoai/execution/agent/values.py",
@@ -254,6 +257,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "docs/model-routing.md",
             "examples/model_routing.py",
             "docs/agent.md",
+            "docs/ports-and-adapters.md",
+            "examples/model_port.py",
+            "tests/unit/reference/test_model_foundation.py",
             "examples/agent.py",
             "tests/unit/execution/test_agent.py",
             "tests/integration/composition/test_agent.py",
@@ -336,6 +342,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from importlib.metadata import version, requires
+import asyncio
+from legoai.reference.model_fake import FixedModel
+from legoai.intelligence.model.values import ChatResult, ChatRequest, ChatMessage, ChatRole, ModelId, ProviderId
+fixture = ChatResult("installed", ModelId("fixture"), ProviderId("offline"), None)
+assert asyncio.run(FixedModel(fixture).chat(ChatRequest((ChatMessage(ChatRole.USER, "test"),)))) == fixture
 import legoai.kernel.identity as identity
 import legoai.kernel.references as references
 import legoai.kernel.context as context
