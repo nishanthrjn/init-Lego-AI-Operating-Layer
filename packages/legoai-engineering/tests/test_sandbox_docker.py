@@ -282,7 +282,7 @@ def test_artifact_aggregate_bound(backend: DockerSandbox) -> None:
 
 def test_cpu_memory_pid_and_storage_controls(backend: DockerSandbox) -> None:
     script = """
-import errno, os, pathlib, subprocess, sys
+import errno, os, pathlib, signal
 root = pathlib.Path('/sys/fs/cgroup')
 assert (root/'memory.max').read_text().strip() == '134217728'
 assert (root/'memory.swap.max').read_text().strip() == '0'
@@ -299,21 +299,34 @@ for path, size, inodes in (('/work', 32*1048576, 4096), ('/tmp', 8*1048576, 1024
 shared = os.statvfs('/dev/shm')
 assert shared.f_blocks * shared.f_frsize == 8*1048576
 children = []
+# Exercise PID exhaustion without starting dozens of independent interpreters
+# whose memory demand can trigger the separate 128 MiB limit first.
 try:
     for _ in range(40):
         try:
-            children.append(subprocess.Popen([sys.executable, '-I', '-B', '-c',
-                                             'import time; time.sleep(30)']))
+            child = os.fork()
         except OSError as error:
             assert error.errno == errno.EAGAIN
+            assert (root/'pids.current').read_text().strip() == '32'
             break
+        if child == 0:
+            # Stay idle with copy-on-write memory until the parent kills us.
+            # Never enter the parent's cleanup or storage assertions.
+            try:
+                while True:
+                    signal.pause()
+            finally:
+                os._exit(0)
+        children.append(child)
     else:
         raise AssertionError('PID limit not enforced')
 finally:
     for child in children:
-        child.kill()
+        os.kill(child, signal.SIGKILL)
     for child in children:
-        child.wait()
+        waited, status = os.waitpid(child, 0)
+        assert waited == child and os.WIFSIGNALED(status)
+        assert os.WTERMSIG(status) == signal.SIGKILL
 assert 1 <= len(children) < 32
 try:
     with open('full', 'wb', buffering=0) as stream:

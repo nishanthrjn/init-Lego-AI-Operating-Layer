@@ -1,6 +1,6 @@
 # M7 — minimal reusable Agent foundation
 
-**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+**M7 COMPLETE — LOCALLY QUALIFIED FOR THE DOCUMENTED ONE-STEP SCOPE**
 
 An Agent is a bounded software Actor using explicit behavior and externally
 governed actions. A Model produces candidate information; a Role describes
@@ -116,10 +116,26 @@ try {
 ```
 
 Docker Desktop must be running with the qualified local image/configuration.
-Do not run the whole Engineering suite. If this passes, record the earlier OOM
-as a non-reproduced regression observation. Otherwise classify from evidence as
-code, test, environment, Docker-runtime or configuration defect; do not attribute
-it automatically to M7. M7 failures additionally may be toolchain/dependency defects.
+Do not run the whole Engineering suite. Classify failures from evidence as code,
+test, environment, Docker-runtime or configuration defects; do not attribute
+them automatically to M7. M7 failures additionally may be toolchain/dependency defects.
 
-M1–M6.5 retain their documented qualification. M7 local evidence is pending;
-`AGENT_M7_COMPLETE = NO`. M8 specialized engineering Agents remain unstarted.
+## Returned qualification evidence
+
+Maintainer logs: M7 focused 53 passed; routing/Model regressions 100 passed;
+Core 1,478 passed including fresh installation; format check 284 files clean;
+git diff --check clean. Prior returned mypy (121 files), Ruff lint, build and
+Agent example passed. No internal execution is claimed.
+
+The first M6 setup failure was an ENVIRONMENT DEFECT (Docker unavailable).
+With Docker available, the OOM reproduced. Source review identified a TEST DEFECT:
+the PID probe started many independent Python interpreters inside the 128 MiB
+memory limit, allowing memory exhaustion to precede PID exhaustion. The probe
+now uses blocked copy-on-write fork children, requires pids.current == 32 at
+EAGAIN, and kills/reaps its children. Existing memory/storage/CPU/PID assertions
+and all M6 production limits remain unchanged. The maintainer's targeted rerun
+passed: 1 passed in 3.33s. The environment failure and corrected test defect are
+closed; M6 qualification remains valid for its documented scope.
+
+All required local qualification evidence has been received.
+`AGENT_M7_COMPLETE = YES`. M8 specialized engineering Agents remain unstarted.
