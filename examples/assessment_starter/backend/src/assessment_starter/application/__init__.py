@@ -1,0 +1,1 @@
+"""Assessment starter reference consumer."""
