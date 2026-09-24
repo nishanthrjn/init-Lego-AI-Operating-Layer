@@ -35,6 +35,9 @@ FRONTEND_FILES = [
     "index.html",
     "src/main.tsx",
     "src/App.tsx",
+    "src/App.test.tsx",
+    "src/test/setup.ts",
+    "vitest.config.ts",
     "src/style.css",
     "package-lock.json",
 ]
@@ -157,6 +160,7 @@ uv run mypy src tests
 uv run ruff check .
 uv run ruff format --check .
 cd ../frontend
+npm test
 npm run build
 npm run lint
 ```

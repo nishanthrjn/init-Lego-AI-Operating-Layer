@@ -27,3 +27,16 @@ TestClient integration. These did not prevent the recorded checks.
 No live model/provider validation, authenticated deployment, visual browser
 interaction test, or Docker qualification is claimed. The example is local and
 offline by design. Dependency downloads require network only during installation.
+
+## Frontend behavior tests — 2026-09-25
+
+Added Vitest and React Testing Library tests with mocked fetch. The maintained
+frontend and a freshly exported standalone frontend each passed all 9 tests,
+TypeScript/production build and ESLint. Exporter regression tests: 9 passed.
+Coverage includes empty input, request shape, loading and duplicate submission,
+answer rendering, HTTP errors, malformed responses, network failure/retry, and
+the configured timeout without a real-time delay. npm audit reported zero
+vulnerabilities. These are DOM component tests, not browser end-to-end tests.
+Existing backend/Core source was unchanged; its prior evidence above is historical.
+The existing ESLint warning and a transitive whatwg-encoding deprecation warning
+remain non-fatal. No existing external assessment project was overwritten.
