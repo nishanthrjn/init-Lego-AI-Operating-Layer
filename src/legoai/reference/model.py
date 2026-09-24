@@ -29,8 +29,8 @@ correct increment for v0.1's synchronous local-Ollama scope).
 **Effect-phase classification, stated once here, not reinvented per call
 site:**
 
-    connection refused / DNS failure / other pre-send error -> ModelPreflightError
-    socket timeout while waiting for a response after the request was sent
+    connection refused / DNS failure -> ModelPreflightError
+    timeout, connection reset, or incomplete response with uncertain send phase
         -> ModelResponseUncertainError (never re-classified as "definitely
            nothing happened" -- ADR-015's own "do not fabricate certainty"
            principle, applied here for the first genuinely uncertain effect
@@ -51,9 +51,12 @@ Python's own low-level exception hierarchy to decide `EffectExtent`.
 from __future__ import annotations
 
 import asyncio
+import http.client
 import json
 import math
+import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -138,8 +141,41 @@ class OllamaModelConfig:
             raise TypeError("Ollama config requires a non-empty chat_model")
         if type(self.embedding_model) is not str or not self.embedding_model:
             raise TypeError("Ollama config requires a non-empty embedding_model")
-        if type(self.timeout_seconds) not in (int, float) or self.timeout_seconds <= 0:
+        if (
+            type(self.timeout_seconds) not in (int, float)
+            or self.timeout_seconds > 1e308
+            or not math.isfinite(self.timeout_seconds)
+            or self.timeout_seconds <= 0
+        ):
             raise TypeError("Ollama config requires a positive timeout_seconds")
+
+        try:
+            self.base_url.encode("ascii")
+            url = urllib.parse.urlsplit(self.base_url)
+            valid_url = (
+                url.scheme in {"http", "https"}
+                and bool(url.hostname)
+                and url.username is None
+                and url.password is None
+                and not url.query
+                and not url.fragment
+                and not any(char.isspace() or ord(char) < 32 for char in self.base_url)
+                and url.port != 0
+            )
+        except ValueError, UnicodeError:
+            valid_url = False
+        if not valid_url:
+            raise TypeError(
+                "Ollama config requires an HTTP(S) URL without credentials, query or fragment"
+            )
+        for name in (self.chat_model, self.embedding_model):
+            try:
+                ModelId(name)
+                name.encode("utf-8")
+            except TypeError, ValueError, UnicodeError:
+                raise TypeError(
+                    "Ollama config requires valid model identities"
+                ) from None
 
 
 class OllamaModelAdapter:
@@ -149,6 +185,8 @@ class OllamaModelAdapter:
     reference realization."""
 
     def __init__(self, config: OllamaModelConfig, provider_id: ProviderId) -> None:
+        if type(config) is not OllamaModelConfig or type(provider_id) is not ProviderId:
+            raise TypeError("adapter requires OllamaModelConfig and ProviderId")
         self._config = config
         self._provider_id = provider_id
 
@@ -214,7 +252,7 @@ class OllamaModelAdapter:
             for raw_component in raw_vector:
                 try:
                     component = float(raw_component)
-                except (TypeError, ValueError) as exc:
+                except (TypeError, ValueError, OverflowError) as exc:
                     raise ModelResponseRejectedError(
                         "Ollama /api/embed returned a non-numeric vector component"
                     ) from exc
@@ -245,31 +283,29 @@ class OllamaModelAdapter:
             ) as response:
                 raw = response.read()
                 status = response.status
-        except TimeoutError as exc:
-            raise ModelResponseUncertainError(
-                f"Ollama request to {path} timed out awaiting a response"
-            ) from exc
+
         except urllib.error.HTTPError as exc:
-            raw = exc.read()
-            status = exc.code
-            return self._reject_on_error_status(path, status, raw)
+            # A status is already known; do not read or disclose an untrusted error body.
+            exc.close()
+            return self._reject_on_error_status(path, exc.code, b"")
         except urllib.error.URLError as exc:
-            if isinstance(exc.reason, TimeoutError):
-                raise ModelResponseUncertainError(
-                    f"Ollama request to {path} timed out awaiting a response"
+            if isinstance(exc.reason, (ConnectionRefusedError, socket.gaierror)):
+                raise ModelPreflightError(
+                    "Model connection could not be established"
                 ) from exc
-            raise ModelPreflightError(
-                f"Ollama request to {path} could not be sent: {exc.reason}"
+            raise ModelResponseUncertainError(
+                "Model transport failed; effects unknown"
             ) from exc
-        except OSError as exc:
-            raise ModelPreflightError(
-                f"Ollama request to {path} could not be sent: {exc}"
+        except (OSError, http.client.HTTPException) as exc:
+            # A read/reset failure can occur after the provider has processed the request.
+            raise ModelResponseUncertainError(
+                "Model transport failed; effects unknown"
             ) from exc
         if status != 200:
             return self._reject_on_error_status(path, status, raw)
         try:
             parsed = json.loads(raw)
-        except json.JSONDecodeError as exc:
+        except (ValueError, UnicodeError, RecursionError) as exc:
             raise ModelResponseRejectedError(
                 f"Ollama response from {path} is not valid JSON"
             ) from exc
@@ -281,15 +317,10 @@ class OllamaModelAdapter:
 
     @staticmethod
     def _reject_on_error_status(path: str, status: int, raw: bytes) -> NoReturn:
-        try:
-            body = json.loads(raw)
-            detail = body.get("error") if isinstance(body, dict) else None
-        except json.JSONDecodeError:
-            detail = None
-        message = f"Ollama request to {path} failed with HTTP {status}"
-        if detail:
-            message = f"{message}: {detail}"
-        raise ModelResponseRejectedError(message)
+        # Never copy a provider error body into public diagnostics.
+        raise ModelResponseRejectedError(
+            f"Ollama request to {path} failed with HTTP {status}"
+        )
 
 
 def _optional_int(value: object) -> int | None:

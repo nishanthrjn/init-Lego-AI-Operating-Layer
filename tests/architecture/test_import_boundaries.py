@@ -476,7 +476,10 @@ def violations(sources: dict[str, str]) -> set[str]:
                         for layer in ("reference", "runtime")
                     ):
                         errors.add("values-layer")
-                    if name == "legoai.reference.model" and not (
+                    if name in {
+                        "legoai.reference.model",
+                        "legoai.reference.model_fake",
+                    } and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.intelligence.model.values"
