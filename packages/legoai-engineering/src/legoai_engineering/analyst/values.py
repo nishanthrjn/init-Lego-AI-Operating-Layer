@@ -6,6 +6,7 @@ from enum import Enum
 from legoai.execution.agent.ports import AgentResult
 from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.execution.values import ExecutionContext
+
 from legoai_engineering.repository.values import RepositoryText
 from legoai_engineering.repository.workspace import RepositoryPath
 
@@ -66,7 +67,9 @@ class RepositoryEvidence:
         if any(type(f) is not RepositoryText for f in self.files):
             raise TypeError("evidence requires RepositoryText")
         _paths(tuple(RepositoryPath(f.path) for f in self.files))
-        if tuple(f.path for f in self.files) != tuple(sorted(f.path for f in self.files)):
+        if tuple(f.path for f in self.files) != tuple(
+            sorted(f.path for f in self.files)
+        ):
             raise ValueError("evidence must be sorted by path")
         total = 0
         for file in self.files:
@@ -193,7 +196,9 @@ class RepositoryAnalysisResult:
             if self.status is RepositoryAnalysisStatus.INSUFFICIENT_EVIDENCE and (
                 not self.analysis.unknowns or self.analysis.findings
             ):
-                raise ValueError("insufficient evidence requires unknowns and no findings")
+                raise ValueError(
+                    "insufficient evidence requires unknowns and no findings"
+                )
             supplied = {f.path for f in self.evidence.files}
             cited = (
                 *self.analysis.relevant_files,

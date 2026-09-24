@@ -65,6 +65,10 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/analyst/values.py",
         "legoai_engineering/analyst/api.py",
         "legoai_engineering/analyst/_composition.py",
+        "legoai_engineering/reviewer/__init__.py",
+        "legoai_engineering/reviewer/definition.py",
+        "legoai_engineering/reviewer/values.py",
+        "legoai_engineering/reviewer/api.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -95,6 +99,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/check_intake.py" in paths
         assert "examples/sandbox_intake.py" in paths
         assert "examples/repository_analyst.py" in paths
+        assert "examples/governed_demo.py" in paths
+        assert "examples/independent_reviewer.py" in paths
+        assert "tests/test_reviewer.py" in paths
         assert "tests/test_analyst.py" in paths
         assert "tests/test_analyst_architecture.py" in paths
         assert "tests/test_sandbox.py" in paths
@@ -240,16 +247,45 @@ else:
     core_wheel = next(core_artifacts.glob("*.whl"))
     run(
         [
-            "uv", "pip", "install", "--python", str(python),
-            "--offline", "--no-deps", str(core_wheel),
+            "uv",
+            "pip",
+            "install",
+            "--python",
+            str(python),
+            "--offline",
+            "--no-deps",
+            str(core_wheel),
         ],
         tmp_path,
     )
     example = tmp_path / "repository_analyst.py"
     example.write_bytes((root / "examples" / "repository_analyst.py").read_bytes())
-    result = run([str(python), "-I", "-B", str(example)], tmp_path)
+    (tmp_path / "governed_demo.py").write_bytes(
+        (root / "examples" / "governed_demo.py").read_bytes()
+    )
+    # Only the copied example directory is added; no checkout or editable Core.
+    runner = (
+        "import runpy, sys; sys.path.insert(0, sys.argv[1]); "
+        "runpy.run_path(sys.argv[2], run_name='__main__')"
+    )
+    result = run(
+        [str(python), "-I", "-B", "-c", runner, str(tmp_path), str(example)], tmp_path
+    )
     assert result.stdout.splitlines() == [
         "succeeded",
         "a.py, b.py",
         "The supplied files define and import greet.",
+    ]
+    reviewer_example = tmp_path / "independent_reviewer.py"
+    reviewer_example.write_bytes(
+        (root / "examples" / "independent_reviewer.py").read_bytes()
+    )
+    result = run(
+        [str(python), "-I", "-B", "-c", runner, str(tmp_path), str(reviewer_example)],
+        tmp_path,
+    )
+    assert result.stdout.splitlines() == [
+        "changes_required",
+        "correctness",
+        "The proposal needs a missing-input policy.",
     ]

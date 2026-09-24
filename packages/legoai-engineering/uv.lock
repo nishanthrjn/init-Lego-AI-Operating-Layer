@@ -113,6 +113,11 @@ name = "legoai-engineering"
 version = "0.1.0.dev0"
 source = { editable = "." }
 
+[package.optional-dependencies]
+analyst = [
+    { name = "legoai-reference" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "editables" },
@@ -123,9 +128,28 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "legoai-reference", marker = "extra == 'analyst'", editable = "../../" }]
+provides-extras = ["analyst"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "editables", specifier = "==0.5" },
+    { name = "hatchling", specifier = "==1.32.3" },
+    { name = "mypy", specifier = "==2.3.1" },
+    { name = "pytest", specifier = "==9.1.1" },
+    { name = "ruff", specifier = "==0.16.8" },
+]
+
+[[package]]
+name = "legoai-reference"
+version = "0.1.0.dev0"
+source = { editable = "../../" }
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = "==7.16.1" },
     { name = "editables", specifier = "==0.5" },
     { name = "hatchling", specifier = "==1.32.3" },
     { name = "mypy", specifier = "==2.3.1" },

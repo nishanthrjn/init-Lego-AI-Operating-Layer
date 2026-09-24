@@ -10,10 +10,12 @@ Production-grade operation across the target catalog is the destination;
 local DocuMind scope. The minimal one-step Agent foundation is locally qualified
 for its documented scope; Workflows, Teams and ForgeAI remain planned.
 
-M8.1 Repository Analyst implementation is complete; local validation is pending.
+M8.1 Repository Analyst is locally qualified for its documented scope.
 It composes authorized bounded file reads with the existing one-step Agent and
 governed Model routing. See the [contract and validation commands](packages/legoai-engineering/README.md#m81--repository-analyst).
-M1–M7 retain their qualified scopes; M8.2–M8.4 remain unstarted.
+M1–M7 retain their qualified scopes. M8.2 Independent Reviewer is locally qualified
+for bounded supplied-text review; M8.3–M8.4 remain unstarted. See the
+[Reviewer contract and local commands](packages/legoai-engineering/README.md#m82--independent-reviewer).
 
 Every governed capability
 invocation -- including calls to an external Model provider -- passes through

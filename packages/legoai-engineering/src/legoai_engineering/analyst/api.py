@@ -10,10 +10,15 @@ from legoai.execution.agent.ports import (
     AgentResult,
     AgentRuntimePort,
 )
-from legoai.execution.agent.values import AgentExecutionStatus, AgentId, AgentOutputContract
+from legoai.execution.agent.values import (
+    AgentExecutionStatus,
+    AgentId,
+    AgentOutputContract,
+)
 from legoai.intelligence.model.routing import ModelRequirement
 from legoai.kernel.context import TenantContext
 from legoai.kernel.versions import Version
+
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,
@@ -129,7 +134,9 @@ class RepositoryAnalyst:
     evidence_reader: RepositoryEvidencePort = field(repr=False)
     agent_runtime: AgentRuntimePort = field(repr=False)
 
-    async def analyze(self, request: RepositoryAnalysisRequest) -> RepositoryAnalysisResult:
+    async def analyze(
+        self, request: RepositoryAnalysisRequest
+    ) -> RepositoryAnalysisResult:
         if type(request) is not RepositoryAnalysisRequest:
             raise TypeError("analyst requires RepositoryAnalysisRequest")
         try:
@@ -186,7 +193,7 @@ class RepositoryAnalyst:
         try:
             status, analysis = _parse(agent.output)
             return RepositoryAnalysisResult(status, evidence, agent, analysis)
-        except (ValueError, TypeError, RecursionError, WorkspaceError):
+        except ValueError, TypeError, RecursionError, WorkspaceError:
             return RepositoryAnalysisResult(
                 RepositoryAnalysisStatus.OUTPUT_INVALID, evidence, agent, None
             )

@@ -16,6 +16,26 @@ def import_violations(source: str, module: str = "") -> set[str]:
         "legoai_engineering.repository.values",
     }
     additions = {
+        "reviewer.definition": {
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.intelligence.model.routing",
+            "legoai.kernel.versions",
+        },
+        "reviewer.values": {
+            "enum",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.execution.values",
+            "legoai_engineering.reviewer.definition",
+        },
+        "reviewer.api": {
+            "json",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai_engineering.reviewer.definition",
+            "legoai_engineering.reviewer.values",
+        },
         "analyst.values": {
             "enum",
             "legoai.execution.agent.ports",
@@ -24,17 +44,27 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.workspace",
         },
         "analyst.api": {
-            "json", "typing", "legoai.execution.agent.ports",
-            "legoai.execution.agent.values", "legoai.intelligence.model.routing",
-            "legoai.kernel.context", "legoai.kernel.versions",
-            "legoai_engineering.analyst.values", "legoai_engineering.repository.workspace",
+            "json",
+            "typing",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.intelligence.model.routing",
+            "legoai.kernel.context",
+            "legoai.kernel.versions",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.repository.workspace",
             "legoai_engineering.repository.errors",
         },
         "analyst._composition": {
-            "collections.abc", "datetime", "legoai.governance.ports",
-            "legoai.kernel.context", "legoai.kernel.references",
-            "legoai_engineering.analyst.values", "legoai_engineering.repository.errors",
-            "legoai_engineering.repository.ports", "legoai_engineering.repository.workspace",
+            "collections.abc",
+            "datetime",
+            "legoai.governance.ports",
+            "legoai.kernel.context",
+            "legoai.kernel.references",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.ports",
+            "legoai_engineering.repository.workspace",
         },
         "errors": {"enum"},
         "workspace": {"enum", "legoai_engineering.repository.errors"},
@@ -230,7 +260,7 @@ def test_source_boundaries_and_inert_initializers() -> None:
         source = path.read_text(encoding="utf-8")
         module = (
             path.parent.name + "." + path.stem
-            if path.parent.name in {"git", "checks", "sandbox", "analyst"}
+            if path.parent.name in {"git", "checks", "sandbox", "analyst", "reviewer"}
             else path.stem
         )
         assert not import_violations(source, module), path
@@ -265,6 +295,32 @@ def test_source_boundaries_and_inert_initializers() -> None:
 )
 def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
     for module in ("analyst.api", "analyst.values", "analyst._composition"):
+        assert import_violations(source, module)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai_engineering.repository.mutation_ports import RepositoryMutationPort",
+        "import legoai_engineering.repository.mutation",
+        "import legoai_engineering.repository.mutation_local",
+        "import legoai_engineering.repository.local",
+        "import legoai_engineering.checks.ports",
+        "import legoai_engineering.sandbox.docker",
+        "import legoai_engineering.git.local",
+        "import legoai.governance.values",
+        "from legoai.intelligence.model.ports import ModelPort",
+        "import legoai.reference.model",
+        "import subprocess",
+        "import os",
+        "import openai",
+        "import langgraph",
+        "open('a.py')",
+        "path.write_text('replacement')",
+    ],
+)
+def test_reviewer_effectful_imports_and_calls_are_forbidden(source: str) -> None:
+    for module in ("reviewer.api", "reviewer.values", "reviewer.definition"):
         assert import_violations(source, module)
 
 

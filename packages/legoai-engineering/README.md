@@ -12,7 +12,8 @@ M4 implementation and local validation are complete for the documented supported
 scope. M5 implementation and local validation are complete for the documented
 trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
 Linux workload scope documented below. M6.5 and M7 are locally qualified in Core.
-M8.1 implementation is complete with local validation pending; M8.2–M8.4 are unstarted.
+M8.1 and M8.2 are locally qualified for their documented scopes;
+M8.3–M8.4 are unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -992,7 +993,7 @@ their prior scope; M6.5 and M7 are unstarted. See the
 
 ## M8.1 — Repository Analyst
 
-**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+**COMPLETE for the documented local scope.**
 
 `analyst.api.RepositoryAnalyst` composes a trusted `RepositoryEvidencePort` with
 the existing M7 `AgentRuntimePort`. `repository_analyst_definition()` returns an
@@ -1107,6 +1108,118 @@ previously established Windows privilege; a skipped Analyst escape test leaves
 that local qualification pending. Retain complete output and classify failures
 as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDENCY DEFECT.
 
-`REPOSITORY_ANALYST_M8_1_COMPLETE = NO` until local evidence is green.
-M1–M7 remain complete for their scopes; M8.2 Reviewer, M8.3 Coding and M8.4
-Test/Validation Agents remain unstarted.
+Maintainer evidence: 153 Core regressions and 284 Engineering tests passed;
+mypy passed for 55 files; Ruff lint/format, wheel/sdist/fresh install and offline
+example passed. Initial Analyst/M2 symlink skips were closed by **2 passed in
+0.16s** in the targeted rerun. Diff check had only line-ending notices. The
+environment mismatch and copy fallback warnings did not prevent installation.
+See the [completion report](../../planning/M8.1-REPOSITORY-ANALYST-PLAN.md#completion-report).
+`REPOSITORY_ANALYST_M8_1_COMPLETE = YES`. M1–M7 retain their qualified scopes.
+
+## M8.2 — Independent Reviewer
+
+**COMPLETE for the documented local supplied-text review scope.**
+
+`reviewer.api.IndependentReviewer` evaluates an explicitly supplied textual
+proposal using existing M7 `AgentRuntimePort`. It has no filesystem, mutation,
+Git, test, lint or sandbox Port. The immutable v1.0.0 definition uses AgentId
+`independent-reviewer` and the existing `engineering-reasoning` profile. No new
+provider, framework, runtime dependency or Core contract is introduced. The
+existing `analyst` extra supplies Core for both Engineering specializations.
+
+`ReviewRequest` carries the producer AgentId, objective, criteria, proposal,
+supporting ReviewMaterial tuple and ExecutionContext. The producer identity must
+differ from the fixed Reviewer identity. A match yields INVALID_SUBMISSION /
+SELF_REVIEW before any Model call. Trusted callers must attest producer identity
+and authorize disclosure of all supplied material to the configured Model.
+Changing the supplied ID is not proof of a different author. This invariant
+establishes definition separation, not separate model weights, principals or
+unbiased reasoning. The existing governed Chat path still controls invocation.
+Request text and Model instructions confer no authority.
+
+| Input/output | Bound |
+|---|---|
+| Objective | Nonblank, 2048 UTF-8 bytes |
+| Criteria | 1–8 nonblank strings, 1024 bytes each; caller order retained |
+| Proposal | Nonblank, 8192 bytes; reserved material ID `proposal` |
+| Supporting material | 0–8 unique items, 4096 bytes each; sorted by ID in prompt |
+| Total material | Proposal plus supporting text <=24576 bytes |
+| Material IDs | 1–64 lowercase ASCII letters/digits/hyphens/underscores; not paths |
+| Serialized input | <=32768 bytes including JSON escaping and criteria |
+| M7 prompt | <=49152 bytes including instructions |
+| Accepted output | <=16384 UTF-8 bytes through M7 |
+| Review summary | Nonblank, <=2048 bytes |
+| Findings, risks, unknowns | Each at most 8 entries; narrative <=1024 bytes per entry |
+| Finding references | 1–8 unique supplied material IDs |
+
+Malformed typed input raises safe TypeError/ValueError before invocation; excessive
+serialized context returns INVALID_SUBMISSION / CONTEXT_BUDGET. Nothing is
+truncated or compressed. One existing M7 call follows deterministic input assembly.
+No-match/ambiguous routing and failed governed invocation produce MODEL_FAILURE.
+Malformed output produces OUTPUT_INVALID, preserving the AgentResult and completed
+or unknown downstream effects. Unexpected composition errors/cancellation propagate;
+the specialization adds no retries, fallback or new I/O timeout mechanism.
+
+`ReviewResult` separates execution status from a `Review` opinion. COMPLETED means
+the bounded schema and references were validated. Opinions are ACCEPT,
+CHANGES_REQUIRED, INSUFFICIENT_EVIDENCE. Each finding carries a closed category
+(correctness, architecture, security, maintainability, testing, performance,
+documentation), severity (info, warning, blocking), message, evidence_refs and
+required_action. A blocking finding requires a nonblank action; nonblocking findings
+carry null. CHANGES_REQUIRED requires a blocker; ACCEPT forbids blockers.
+INSUFFICIENT_EVIDENCE requires unknowns and no blockers. If a known blocker exists,
+report CHANGES_REQUIRED and retain unknowns alongside it. Required actions are
+textual requests, never executable patches or changesets. There is no numeric score.
+
+The JSON schema rejects missing/extra/duplicate fields, invalid enum values,
+contradictory opinions and fabricated structured references. Only membership in
+supplied material is validated. Narrative and any prose filename mentions remain
+unverified Model claims. IDs are not verified repository paths or canonical Evidence.
+Review is not an approval token, mutation authorization or Workflow transition.
+Consumers must apply their own deterministic checks and governance before action.
+
+Payloads are excluded from repr and validation errors; consumers must not log
+request material or retained Model text. Accepted-output bounds do not bound
+provider generation, token count, transport allocation or cost. Those optimizations
+remain deferred. No tools, memory, Workflow, Team, self-correction or voting loop.
+
+### M8.2 local validation
+
+Static source review only was performed internally, as requested. Use the script
+from the repository root:
+
+```powershell
+.\INDEPENDENT_REVIEWER_M8_2_test.ps1
+```
+
+The script contains exact commands for focused M7/M6.5/Model regressions,
+Engineering's full non-Docker suite (including M8.1 and Reviewer governed
+integration), typing, Ruff, both offline examples and diff checking. Packaging
+tests build wheel/sdist, install the pack and Core wheels in a fresh environment,
+then run copied examples and their shared demo helper outside the checkout.
+`examples/governed_demo.py` is example-only wiring; production Core and M8.1
+contracts remain unchanged. Metadata is unchanged; no new lock resolution is needed.
+Use a symlink-capable Windows session to retain existing boundary coverage.
+Only POSIX-only skips are expected on the reference Windows host. No Docker run
+is required. A full Core rerun is unnecessary because Core production did not change.
+
+Reviewer example prints `changes_required`, `correctness`, then
+`The proposal needs a missing-input policy.` Maintainer validation reports
+**153 Core regressions passed** and **333 Engineering tests passed, 5 skipped**.
+Mypy passed for 62 source files; Ruff lint and formatting passed after three files
+were formatted locally. Wheel/sdist/fresh-install coverage passed within the full
+Engineering suite. Both offline examples printed the expected output. The final
+diff check reported only LF-to-CRLF notices.
+
+Four existing symlink tests skipped because the session lacked Windows privilege;
+the fifth skip is the POSIX special-file boundary. These are environment/platform
+limitations, not Reviewer failures. Analyst/M2 symlink checks already passed in
+the earlier elevated rerun (2 passed in 0.16s). M8.2 changes no filesystem boundary
+or Analyst production semantics; unchanged M4/M5 retain prior qualification.
+No repeated elevated run is needed to qualify this supplied-text Reviewer scope.
+The uv environment warning confirms selection of the intended Engineering venv.
+No code, configuration or dependency defect remains in this output.
+
+See the [completion report](../../planning/M8.2-INDEPENDENT-REVIEWER-PLAN.md#completion-report).
+M8.3 Coding and M8.4 Test/Validation Agents remain unstarted.
+`INDEPENDENT_REVIEWER_M8_2_COMPLETE = YES`.
