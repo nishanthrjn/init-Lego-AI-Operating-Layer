@@ -7,8 +7,8 @@ through optional adapters. See the [current intent amendment](intent-amendments/
 and [forward roadmap](planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md).
 Production-grade operation across the target catalog is the destination;
 [v0.1 qualification](planning/V0.1-RELEASE-READINESS.md) covers the documented
-local DocuMind scope. The minimal Agent foundation is implemented pending local
-validation; Workflows, Teams and ForgeAI remain planned.
+local DocuMind scope. The minimal one-step Agent foundation is locally qualified
+for its documented scope; Workflows, Teams and ForgeAI remain planned.
 
 Every governed capability
 invocation -- including calls to an external Model provider -- passes through
@@ -51,7 +51,7 @@ Proposed. [M6.5 model routing](docs/model-routing.md) is implemented and locally
 validated. It maps logical Chat profiles to immutable configured model
 bindings without provider I/O or authorization; actual calls retain governed
 execution. [M7 Agent foundation](docs/agent.md) adds a single governed Chat step
-with bounded accepted output; implementation is complete, local validation pending.
+with bounded accepted output; implementation and local qualification are complete.
 M8 specialized engineering Agents remain unstarted.
 
 ## Quickstart: the DocuMind CLI

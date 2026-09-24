@@ -1,6 +1,6 @@
 # M7 — one-step Agent implementation plan
 
-Status: IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING.
+Status: M7 COMPLETE — locally qualified for the documented one-step scope.
 
 Authority: SPEC Agent and §5.4; ADR-002 §9 and Agent location;
 ADR-015 lifetime limits; ADR-016 composition direction. Contracts belong to
@@ -51,5 +51,10 @@ Decision record: [ADR-017](../adrs/ADR-017.md), Proposed, records the scoped
 composition and accepted-output decision without changing canonical documents.
 Same-assistant static review checked owner direction, replay/error propagation,
 no hidden retry, UTF-8 preallocation bounds and wheel/sdist inventory updates.
-No independent review or executed validation is claimed. Housekeeping remains
-limited to the reviewed prior formatting and the pending targeted M6 observation.
+No independent review or internal execution is claimed. Maintainer evidence:
+53 M7 tests, 100 routing/Model regressions and 1,478 Core tests passed; mypy,
+lint, formatting, build/fresh install, example and whitespace checks passed.
+The corrected targeted M6 resource-control test passed in 3.33s. Housekeeping
+is closed; M6 production code and limits are unchanged. See docs/agent.md for
+the environment/test-defect distinction and qualified limitations.
+AGENT_M7_COMPLETE = YES. M8 remains unstarted.
