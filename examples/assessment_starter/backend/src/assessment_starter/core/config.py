@@ -4,6 +4,7 @@ import math
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from urllib.parse import urlsplit
 
 
@@ -73,3 +74,36 @@ class Settings:
             ollama_base_url=values.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
             model_timeout_seconds=timeout,
         )
+
+    @classmethod
+    def from_startup(
+        cls,
+        env_file: Path | None = None,
+        environment: Mapping[str, str] | None = None,
+    ) -> Settings:
+        """Load backend/.env, then shell overrides; never mutate os.environ."""
+        from dotenv import dotenv_values
+
+        path = (
+            env_file
+            if env_file is not None
+            else Path(__file__).resolve().parents[3] / ".env"
+        )
+        values: dict[str, str] = {}
+        try:
+            with path.open(encoding="utf-8-sig") as stream:
+                parsed = dotenv_values(stream=stream, interpolate=False)
+        except FileNotFoundError:
+            parsed = {}
+        for key, value in parsed.items():
+            if key in {
+                "MODEL_PROVIDER",
+                "OLLAMA_MODEL",
+                "OLLAMA_BASE_URL",
+                "MODEL_TIMEOUT_SECONDS",
+            }:
+                if value is None:
+                    raise ValueError(f"{key} requires a value in .env")
+                values[key] = value
+        values.update(os.environ if environment is None else environment)
+        return cls.from_environment(values)

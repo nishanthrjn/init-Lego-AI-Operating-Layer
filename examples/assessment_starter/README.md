@@ -34,7 +34,7 @@ The backend has its own environment and editable dependency on the repository
 root. No frontend/backend runtime dependencies are added to the LegoAI package.
 Settings and ModelPort are passed explicitly to create_app. The server entry point
 reads validated model settings from environment variables once at startup.
-.env.example documents them; no .env file or secret is loaded automatically.
+Startup loads backend/.env, then applies shell-variable overrides without mutating the process environment.
 
 ## Verify
 
@@ -107,8 +107,7 @@ uv run uvicorn assessment_starter.main:app --host 127.0.0.1 --port 8001
 
 Restart the backend after changing settings. The frontend proxy must use the same
 backend port (currently 8001). To return offline, set `$env:MODEL_PROVIDER = "fixed"`
-and restart. .env.example lists available variables; no .env file is automatically
-loaded. Invalid providers, missing Ollama model names or invalid URLs/timeouts
+and restart. .env.example lists available variables; backend/.env is loaded automatically at startup; shell variables override it. Invalid providers, missing Ollama model names or invalid URLs/timeouts
 fail startup. There is no fallback to the fake when Ollama fails.
 
 The in-repository example uses the existing LegoAI Ollama adapter. Its required
@@ -124,3 +123,5 @@ disabled. Provider failures return a safe HTTP 502 without raw provider text.
 No retry is attempted. The socket timeout is not an overall generation deadline;
 cancelling the waiting coroutine does not stop its underlying blocking worker.
 Authenticated/hosted providers and production authorization remain out of scope.
+
+.env paths are resolved relative to the backend source package, not your terminal directory. Restart after edits. .env files stay excluded from exports and Git; only .env.example is shipped. Clear stale MODEL_PROVIDER shell overrides if the file seems ignored.
