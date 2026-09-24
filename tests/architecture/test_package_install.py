@@ -90,6 +90,22 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.runtime
     import legoai.runtime._composition
     import legoai.runtime._composition.direct
+    import legoai.intelligence.model.ports
+    import legoai.intelligence.model.routing
+    import legoai.reference.model_routing
+    tenant = legoai.kernel.context.TenantContext(legoai.kernel.identity.TenantId("t"))
+    target = legoai.kernel.references.ConfigurationRef(
+        legoai.kernel.references.ApplicationRef(
+            legoai.kernel.references.ReferenceScope("operator", tenant.tenant_id),
+            legoai.kernel.identity.ApplicationId("app")), "models")
+    revision = legoai.kernel.references.ConfigurationRevisionRef(
+        target, "r1", legoai.kernel.versions.Version(1, 0, 0))
+    requirement = legoai.intelligence.model.routing.ModelRequirement("reasoning")
+    binding = legoai.intelligence.model.routing.ModelBinding(
+        "binding", requirement, legoai.intelligence.model.values.ModelId("model"),
+        legoai.intelligence.model.values.ProviderId("provider"))
+    router = legoai.reference.model_routing.DeterministicModelRouter(revision, (binding,))
+    assert router.route(requirement, tenant).selected == binding
 assert tuple(logging.getLogger().handlers) == handlers
 assert tuple(threading.enumerate()) == threads
 assert {name for name in sys.modules if name.startswith("legoai.")} == {
@@ -110,7 +126,10 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.capabilities", "legoai.capabilities.values", "legoai.capabilities.ports",
     "legoai.reference.declarations", "legoai.reference.resolution",
     "legoai.reference.deterministic",
-    "legoai.runtime", "legoai.runtime._composition", "legoai.runtime._composition.direct"
+    "legoai.runtime", "legoai.runtime._composition", "legoai.runtime._composition.direct",
+    "legoai.intelligence", "legoai.intelligence.model",
+    "legoai.intelligence.model.values", "legoai.intelligence.model.ports",
+    "legoai.intelligence.model.routing", "legoai.reference.model_routing"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -185,6 +204,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/intelligence/model/__init__.py",
         "legoai/intelligence/model/values.py",
         "legoai/intelligence/model/ports.py",
+        "legoai/intelligence/model/routing.py",
+        "legoai/reference/model_routing.py",
         "legoai/reference/model.py",
         "legoai/runtime/_composition/model_governed.py",
     }
@@ -219,6 +240,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             ".gitignore",
             "LICENSE",
             "docs/development.md",
+            "docs/model-routing.md",
+            "examples/model_routing.py",
             "tests/unit/kernel/test_identity.py",
             "tests/unit/kernel/test_foundation.py",
             "tests/unit/kernel/test_provenance.py",
@@ -265,11 +288,13 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/integration/composition/test_governed_direct.py",
             "tests/unit/intelligence/test_model_values.py",
             "tests/unit/reference/test_model.py",
+            "tests/unit/reference/test_model_routing.py",
             "tests/unit/reference/test_governance_registries.py",
             "tests/unit/reference/test_static_security_context_registry.py",
             "tests/integration/composition/test_model_governed.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
+            "tests/architecture/test_model_routing.py",
         }
     environment = tmp_path / "installed"
     venv.EnvBuilder(with_pip=False).create(environment)
@@ -455,6 +480,25 @@ model_execution_result, model_chat_result = asyncio.run(
 )
 assert model_execution_result.final_state is execution_values.ExecutionState.SUCCEEDED
 assert model_chat_result.content == "fake answer"
+import legoai.intelligence.model.routing as model_routing
+import legoai.reference.model_routing as reference_routing
+model_revision = references.ConfigurationRevisionRef(target, "models-r1", versions.Version(1, 0, 0))
+model_requirement = model_routing.ModelRequirement("engineering-reasoning")
+model_binding = model_routing.ModelBinding("fake-binding", model_requirement, model_values.ModelId("fake-model"), model_values.ProviderId("fake-provider"))
+router = reference_routing.DeterministicModelRouter(model_revision, (model_binding,))
+route = router.route(model_requirement, context.TenantContext(identity.TenantId("t")))
+assert route.selected == model_binding
+assert route.configuration_revision == model_revision
+assert Path(reference_routing.__file__).is_relative_to(Path(sys.prefix))
+configured = model_governed.ConfiguredModelBinding(model_revision, model_binding, ollama_entry, _FakeModelPort())
+routed_context = execution_values.ExecutionContext(
+    execution_values.ExecutionId("exec-routed"), resource_operation, context.TenantContext(identity.TenantId("t")),
+    execution_values.SecurityContextRef("issuer", "ref-routed"), identity.CorrelationId("corr-routed"), None, None, None,
+)
+routed_coordination = asyncio.run(ollama_coordinator.coordinate(execution_ports.CoordinationRequest(routed_context, ollama_entry)))
+routed_execution, routed_output = asyncio.run(model_governed.invoke_routed_chat(ollama_coordinator, routed_coordination, chat_request, route, configured))
+assert routed_execution.final_state is execution_values.ExecutionState.SUCCEEDED
+assert routed_output.content == "fake answer"
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 9
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
@@ -529,6 +573,18 @@ assert composition_result.normalized_text == "smoke test"
 """
     result = run([str(interpreter), "-I", "-B", "-c", script], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
+
+    # Execute the shipped example with only the fresh wheel installed, outside
+    # the checkout. No source-path fallback or provider service is available.
+    example = tmp_path / "model_routing.py"
+    example.write_bytes((root / "examples" / "model_routing.py").read_bytes())
+    result = run([str(interpreter), "-I", "-B", str(example)], tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.splitlines() == [
+        "engineering-reasoning: resolved",
+        "reasoning-local: demo-provider/demo-model",
+        "configuration: r1",
+    ]
 
 
 def test_f1_static_misuse(tmp_path: Path) -> None:

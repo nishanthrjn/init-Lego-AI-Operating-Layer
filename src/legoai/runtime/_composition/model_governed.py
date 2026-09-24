@@ -10,6 +10,10 @@ separately forbids `legoai.reference.execution` importing `legoai.reference.
 model`. The correspondence check (does the resolved Catalog entry name the
 one known Ollama Adapter?) and the actual `ModelPort` call both belong here.
 
+M6.5 adds explicit routed Chat wiring to an operator-associated Catalog entry
+and adapter. That path accepts the existing Chat capability from any admitted
+Plugin and shares the original Chat invocation claim and phase mapping.
+
 **Effect-phase mapping, the actual point of this module beyond correspondence
 checking:** `ModelPreflightError`/`ModelResponseUncertainError`/
 `ModelResponseRejectedError` (declared by `legoai.intelligence.model.ports`)
@@ -18,7 +22,7 @@ are mapped explicitly to `EffectExtent`/`ErrorCategory`/`Recoverability`, per
 deterministic `failure -> EffectExtent.NONE` rule reused unmodified for a
 network call.
 
-**Replay:** both functions call `coordinator.claim_invocation` (not the
+**Replay:** invocation paths call `coordinator.claim_invocation` (not the
 weaker `_require_running`) before ever calling the `ModelPort`, so two
 concurrent callers for the same `execution_id` cannot both reach the
 provider -- see `ExecutionCoordinator.claim_invocation`'s own docstring for
@@ -26,6 +30,8 @@ the exact guarantee.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 from legoai.capabilities.ports import CatalogEntry
 from legoai.execution.ports import CoordinationOutcome, CoordinationResult
@@ -36,6 +42,7 @@ from legoai.intelligence.model.ports import (
     ModelResponseRejectedError,
     ModelResponseUncertainError,
 )
+from legoai.intelligence.model.routing import ModelBinding, ModelRouteDecision
 from legoai.intelligence.model.values import (
     ChatRequest,
     ChatResult,
@@ -44,6 +51,7 @@ from legoai.intelligence.model.values import (
 )
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
+from legoai.kernel.references import ConfigurationRevisionRef
 from legoai.reference.execution import ExecutionCoordinator
 from legoai.reference.model import (
     ollama_chat_offer,
@@ -134,9 +142,26 @@ async def invoke_governed_chat(
     if not _matches_known_offer(permit.resolved_entry, ollama_chat_offer()):
         return await _settle_mismatch(coordinator, result), None
 
+    return await _invoke_chat(coordinator, result, request, adapter, None)
+
+
+async def _invoke_chat(
+    coordinator: ExecutionCoordinator,
+    result: CoordinationResult,
+    request: ChatRequest,
+    adapter: ModelPort,
+    expected_binding: ModelBinding | None,
+) -> tuple[ExecutionResult, ChatResult | None]:
+    """One shared invocation claim and phase mapping for both composition paths."""
     await coordinator.claim_invocation(result.execution_id)
     try:
         chat_result = await adapter.chat(request)
+        if expected_binding is not None and (
+            type(chat_result) is not ChatResult
+            or chat_result.model_identity != expected_binding.model_id
+            or chat_result.provider_identity != expected_binding.provider_id
+        ):
+            raise ModelResponseRejectedError("response does not match model binding")
     except ModelPreflightError:
         return await _settle_preflight_error(coordinator, result), None
     except ModelResponseUncertainError:
@@ -151,6 +176,77 @@ async def invoke_governed_chat(
         error=None,
     )
     return execution_result, chat_result
+
+
+@dataclass(frozen=True, slots=True)
+class ConfiguredModelBinding:
+    """Private trusted composition association, never a public routing value.
+
+    The operator binds an already configured adapter once. Changing its settings
+    requires a new revision/association; mutating an adapter behind this record is
+    unsupported. This is not attestation of hostile code or provider model weights.
+    The v1 chat offer is the existing provider-independent capability contract;
+    its historical helper name does not require an Ollama Plugin identity here.
+    """
+
+    configuration_revision: ConfigurationRevisionRef
+    binding: ModelBinding
+    entry: CatalogEntry
+    adapter: ModelPort = field(repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if type(self.configuration_revision) is not ConfigurationRevisionRef:
+            raise TypeError("configured model requires ConfigurationRevisionRef")
+        if type(self.binding) is not ModelBinding:
+            raise TypeError("configured model requires ModelBinding")
+        if type(self.entry) is not CatalogEntry:
+            raise TypeError("configured model requires CatalogEntry")
+        scope = self.configuration_revision.configuration.application.scope
+        if self.entry.tenant_context.tenant_id != scope.tenant_id:
+            raise ValueError("configured model tenant mismatch")
+        if self.entry.offer != ollama_chat_offer():
+            raise ValueError("configured model requires the v1 chat capability")
+
+
+async def invoke_routed_chat(
+    coordinator: ExecutionCoordinator,
+    result: CoordinationResult,
+    request: ChatRequest,
+    route: ModelRouteDecision,
+    configured: ConfiguredModelBinding,
+) -> tuple[ExecutionResult, ChatResult | None]:
+    """Match the pinned selection to explicit wiring, then use governed Chat.
+
+    No lookup, adapter construction, retry or fallback occurs. A route is not a
+    permit: only this Coordinator's real READY execution can claim invocation.
+    Current authorization/catalog checks remain the existing dispatch contract,
+    with its documented trusted-process and admission-to-call limitations.
+    """
+    if type(result) is not CoordinationResult:
+        raise TypeError("routed chat requires CoordinationResult")
+    if result.outcome is not CoordinationOutcome.READY:
+        raise ValueError("routed chat requires a READY CoordinationResult")
+    if type(request) is not ChatRequest:
+        raise TypeError("routed chat requires ChatRequest")
+    if type(route) is not ModelRouteDecision:
+        raise TypeError("routed chat requires ModelRouteDecision")
+    if type(configured) is not ConfiguredModelBinding:
+        raise TypeError("routed chat requires ConfiguredModelBinding")
+    permit = result.permit
+    assert permit is not None
+    if (
+        route.selected != configured.binding
+        or route.configuration_revision != configured.configuration_revision
+        or permit.resolved_entry != configured.entry
+        or permit.operation.subject != configured.configuration_revision.configuration
+    ):
+        # A rejected binding must not settle another concurrent caller's already
+        # claimed invocation. Consume the same claim before a no-call failure.
+        await coordinator.claim_invocation(result.execution_id)
+        return await _settle_mismatch(coordinator, result), None
+    return await _invoke_chat(
+        coordinator, result, request, configured.adapter, configured.binding
+    )
 
 
 async def invoke_governed_embedding(
