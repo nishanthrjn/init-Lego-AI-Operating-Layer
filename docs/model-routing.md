@@ -1,6 +1,7 @@
 # Model routing — M6.5
 
-**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+**LOCAL VALIDATION COMPLETE** — user-supplied evidence: 1,425 Core tests,
+two DocuMind tests, mypy/lint/format, build/fresh install and example passed.
 
 Future consumers request a logical Chat profile such as
 `ModelRequirement("engineering-reasoning")`. They do not select provider names
@@ -134,4 +135,4 @@ Engineering/M6 source, dependencies and boundary tests are untouched, so its
 Docker suite is not required. Document Pack source is untouched; DocuMind's
 end-to-end regression covers its integration with the shared Chat path.
 No separate full Document Pack run is required for this change.
-M7 remains unstarted until local results qualify M6.5.
+M7 now consumes these contracts; its separate qualification is recorded in agent.md.

@@ -7,7 +7,8 @@ through optional adapters. See the [current intent amendment](intent-amendments/
 and [forward roadmap](planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md).
 Production-grade operation across the target catalog is the destination;
 [v0.1 qualification](planning/V0.1-RELEASE-READINESS.md) covers the documented
-local DocuMind scope. Agents, Workflows, Teams and ForgeAI remain planned.
+local DocuMind scope. The minimal Agent foundation is implemented pending local
+validation; Workflows, Teams and ForgeAI remain planned.
 
 Every governed capability
 invocation -- including calls to an external Model provider -- passes through
@@ -46,10 +47,12 @@ unimplemented. M6 adds a separate bounded Python sandbox capability targeting
 Docker Desktop Linux. Implementation and local qualification are complete for
 the documented bounded workload scope; see the [M6 completion report](planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).
 Engineering workload isolation is distinct from Plugin isolation: ADR-012 remains
-Proposed. [M6.5 model routing](docs/model-routing.md) is implemented, with local
-validation pending. It maps logical Chat profiles to immutable configured model
+Proposed. [M6.5 model routing](docs/model-routing.md) is implemented and locally
+validated. It maps logical Chat profiles to immutable configured model
 bindings without provider I/O or authorization; actual calls retain governed
-execution. M7 Agent foundation remains unstarted.
+execution. [M7 Agent foundation](docs/agent.md) adds a single governed Chat step
+with bounded accepted output; implementation is complete, local validation pending.
+M8 specialized engineering Agents remain unstarted.
 
 ## Quickstart: the DocuMind CLI
 

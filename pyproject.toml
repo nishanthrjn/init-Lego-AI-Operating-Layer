@@ -24,7 +24,7 @@ dev = [
 packages = ["src/legoai"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/docs/development.md", "/docs/model-routing.md", "/examples/model_routing.py", "/pyproject.toml", "/uv.lock", "/.python-version"]
+include = ["/src", "/tests", "/docs/development.md", "/docs/model-routing.md", "/docs/agent.md", "/examples/model_routing.py", "/examples/agent.py", "/pyproject.toml", "/uv.lock", "/.python-version"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
