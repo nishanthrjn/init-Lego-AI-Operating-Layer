@@ -23,14 +23,15 @@ def _pure_violations(source: str) -> set[str]:
         "legoai.intelligence.model.values",
         "legoai.intelligence.model.routing",
     }
-    for node in tree.body:
+    for statement in tree.body:
         if not isinstance(
-            node, (ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.Expr)
+            statement,
+            (ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.Expr),
         ) or (
-            isinstance(node, ast.Expr)
+            isinstance(statement, ast.Expr)
             and not (
-                isinstance(node.value, ast.Constant)
-                and isinstance(node.value.value, str)
+                isinstance(statement.value, ast.Constant)
+                and isinstance(statement.value.value, str)
             )
         ):
             errors.add("module-state-or-effect")

@@ -230,11 +230,14 @@ Four pack-local exceptions, matching the categories the task brief itself propos
 class DocumentParsingError(ValueError):
     """Base for all document.parsing failures."""
 
+
 class UnsupportedDocumentFormatError(DocumentParsingError):
     """Raised when the declared DocumentFormat has no v1 realization (e.g. an image format)."""
 
+
 class MalformedDocumentError(DocumentParsingError):
     """Raised when declared-format content cannot be parsed as that format."""
+
 
 class EncryptedDocumentError(DocumentParsingError):
     """Raised when a PDF is password-protected/encrypted and cannot be read without one."""
@@ -268,9 +271,7 @@ except FileNotDecryptedError as exc:
         "PDF is encrypted and cannot be read without a valid password"
     ) from exc
 except PdfReadError as exc:  # includes PdfStreamError (subclass)
-    raise MalformedDocumentError(
-        f"PDF could not be parsed: {exc}"
-    ) from exc
+    raise MalformedDocumentError(f"PDF could not be parsed: {exc}") from exc
 ```
 
 For text-family formats:
@@ -279,9 +280,7 @@ For text-family formats:
 try:
     text = request.content.decode("utf-8")  # strict -- see SS "Text decoding semantics"
 except UnicodeDecodeError as exc:
-    raise MalformedDocumentError(
-        "content is not valid UTF-8"
-    ) from exc
+    raise MalformedDocumentError("content is not valid UTF-8") from exc
 ```
 
 `raise ... from exc` (exception chaining, PEP 3134) preserves the original `pypdf`/stdlib exception as `__cause__` for diagnostics, while the public API surface exposes only the four pack-local exception types — no raw `pypdf` exception class is ever part of `document.parsing`'s public contract, per instruction.
@@ -407,6 +406,7 @@ class DocumentFormat(Enum):
     """Closed set of formats document.parsing v1 can realize.
     Resolving a MIME type / extension into one of these is the caller's
     responsibility (SS12) -- this capability trusts the declared value."""
+
     PLAIN_TEXT = "plain_text"
     MARKDOWN = "markdown"
     HTML = "html"
@@ -418,6 +418,7 @@ class DocumentParsingRequest:
     """Immutable input to document.parsing. No filename/document-identity
     field -- see SS11 for why that is a deliberate exclusion, not an
     oversight."""
+
     content: bytes
     format: DocumentFormat
 
@@ -426,6 +427,7 @@ class DocumentParsingRequest:
 class ParsedPage:
     """A single page's extracted text. index is zero-based. A non-paginated
     source (plain text/Markdown/HTML) is represented as exactly one page."""
+
     index: int
     text: str
 
@@ -433,10 +435,12 @@ class ParsedPage:
 @dataclass(frozen=True, slots=True)
 class ParsedDocument:
     """Immutable, page-ordered output of document.parsing."""
+
     pages: tuple[ParsedPage, ...]
 
 
 # legoai_document/parsing/errors.py
+
 
 class DocumentParsingError(ValueError):
     """Base for all document.parsing failures."""
@@ -456,6 +460,7 @@ class EncryptedDocumentError(DocumentParsingError):
 
 
 # legoai_document/parsing/api.py
+
 
 def parse_document(request: DocumentParsingRequest) -> ParsedDocument:
     """Extract page-ordered text from request.content per request.format.
