@@ -2,10 +2,15 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from assessment_starter.api.schemas import AskRequest, AskResponse
 from assessment_starter.application.answer_service import AnswerService
+from assessment_starter.model import (
+    ModelPreflightError,
+    ModelResponseRejectedError,
+    ModelResponseUncertainError,
+)
 
 
 def create_router(service: AnswerService) -> APIRouter:
@@ -23,6 +28,16 @@ def create_router(service: AnswerService) -> APIRouter:
         request: AskRequest,
         answers: Annotated[AnswerService, Depends(provide_service)],
     ) -> AskResponse:
-        return AskResponse(answer=await answers.answer(request.question))
+        try:
+            return AskResponse(answer=await answers.answer(request.question))
+        except (
+            ModelPreflightError,
+            ModelResponseRejectedError,
+            ModelResponseUncertainError,
+        ):
+            raise HTTPException(
+                status_code=502,
+                detail="Model request failed. Check backend model configuration and availability.",
+            ) from None
 
     return router

@@ -100,3 +100,44 @@ def test_export_includes_frontend_behavior_tests(tmp_path: Path) -> None:
     package = json.loads((frontend / "package.json").read_text())
     assert package["scripts"]["test"] == "vitest run"
     assert "vitest" in package["devDependencies"]
+
+
+def test_exported_factory_and_transport_are_independent(tmp_path: Path) -> None:
+    destination = export(tmp_path / "ollama")
+    script = """
+import asyncio, sys
+from unittest.mock import patch
+sys.path.insert(0, sys.argv[1])
+from app.core.config import Settings
+from app.model_factory import make_model
+from app.model import ChatMessage, ChatRequest, ChatRole, ModelResponseUncertainError
+request = ChatRequest((ChatMessage(ChatRole.USER, "hello"),))
+with patch("urllib.request.urlopen", side_effect=AssertionError("no startup I/O")):
+    offline = make_model(Settings())
+    selected = make_model(Settings(model_provider="ollama", ollama_model="installed"))
+assert "offline answer" in asyncio.run(offline.chat(request)).content
+class OversizedResponse:
+    status = 200
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def read(self, size):
+        assert size == 1048577
+        return b"x" * size
+with patch("urllib.request.urlopen", return_value=OversizedResponse()) as transport:
+    try:
+        asyncio.run(selected.chat(request))
+    except ModelResponseUncertainError:
+        pass
+    else:
+        raise AssertionError("Unbounded response accepted")
+    assert transport.call_count == 1
+assert not any(name.startswith("legoai") for name in sys.modules)
+"""
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", script, str(destination / "backend/src")],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

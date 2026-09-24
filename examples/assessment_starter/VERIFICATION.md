@@ -40,3 +40,13 @@ vulnerabilities. These are DOM component tests, not browser end-to-end tests.
 Existing backend/Core source was unchanged; its prior evidence above is historical.
 The existing ESLint warning and a transitive whatwg-encoding deprecation warning
 remain non-fatal. No existing external assessment project was overwritten.
+
+## Configurable models — 2026-09-25
+
+The maintained backend and a fresh standalone export each passed 34 tests,
+strict mypy and Ruff lint/format checks. All 10 exporter tests passed, including
+standalone factory selection with site packages disabled and response-read bounds.
+Ollama serialization, settings validation, connection/timeout/HTTP failures and
+safe API errors were verified using mocked transport. No live Ollama instance
+was contacted and no model was downloaded. Core and frontend source were unchanged.
+The existing Starlette/httpx test-client deprecation warning remains visible.
