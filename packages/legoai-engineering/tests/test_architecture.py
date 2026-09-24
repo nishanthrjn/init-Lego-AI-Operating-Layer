@@ -16,6 +16,26 @@ def import_violations(source: str, module: str = "") -> set[str]:
         "legoai_engineering.repository.values",
     }
     additions = {
+        "analyst.values": {
+            "enum",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.execution.values",
+            "legoai_engineering.repository.workspace",
+        },
+        "analyst.api": {
+            "json", "typing", "legoai.execution.agent.ports",
+            "legoai.execution.agent.values", "legoai.intelligence.model.routing",
+            "legoai.kernel.context", "legoai.kernel.versions",
+            "legoai_engineering.analyst.values", "legoai_engineering.repository.workspace",
+            "legoai_engineering.repository.errors",
+        },
+        "analyst._composition": {
+            "collections.abc", "datetime", "legoai.governance.ports",
+            "legoai.kernel.context", "legoai.kernel.references",
+            "legoai_engineering.analyst.values", "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.ports", "legoai_engineering.repository.workspace",
+        },
         "errors": {"enum"},
         "workspace": {"enum", "legoai_engineering.repository.errors"},
         "ports": {"typing", "legoai_engineering.repository.workspace"},
@@ -210,7 +230,7 @@ def test_source_boundaries_and_inert_initializers() -> None:
         source = path.read_text(encoding="utf-8")
         module = (
             path.parent.name + "." + path.stem
-            if path.parent.name in {"git", "checks", "sandbox"}
+            if path.parent.name in {"git", "checks", "sandbox", "analyst"}
             else path.stem
         )
         assert not import_violations(source, module), path
@@ -223,6 +243,29 @@ def test_source_boundaries_and_inert_initializers() -> None:
             )
     with (root / "pyproject.toml").open("rb") as stream:
         assert tomllib.load(stream)["project"]["dependencies"] == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import legoai_engineering.repository.mutation",
+        "from legoai_engineering.repository.mutation_ports import RepositoryMutationPort",
+        "import legoai_engineering.checks.ports",
+        "import legoai_engineering.sandbox.docker",
+        "import legoai_engineering.git.local",
+        "from legoai_engineering.repository.local import LocalRepositoryWorkspace",
+        "import subprocess",
+        "import os",
+        "import openai",
+        "import langgraph",
+        "from legoai.intelligence.model.ports import ModelPort",
+        "import legoai.reference.model",
+        "import legoai.reference.agent",
+    ],
+)
+def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
+    for module in ("analyst.api", "analyst.values", "analyst._composition"):
+        assert import_violations(source, module)
 
 
 @pytest.mark.parametrize(

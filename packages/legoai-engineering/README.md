@@ -11,7 +11,8 @@ and its code is unchanged. M3 is complete based on the maintainer's local eviden
 M4 implementation and local validation are complete for the documented supported
 scope. M5 implementation and local validation are complete for the documented
 trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
-Linux workload scope documented below. M6.5 and M7 remain unstarted.
+Linux workload scope documented below. M6.5 and M7 are locally qualified in Core.
+M8.1 implementation is complete with local validation pending; M8.2–M8.4 are unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -988,3 +989,124 @@ whitespace errors. Only import-order/formatting edits followed the passing tests
 **ENGINEERING_M6_COMPLETE = YES** for the declared reference scope. M1–M5 retain
 their prior scope; M6.5 and M7 are unstarted. See the
 [completion report](../../planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).
+
+## M8.1 — Repository Analyst
+
+**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+
+`analyst.api.RepositoryAnalyst` composes a trusted `RepositoryEvidencePort` with
+the existing M7 `AgentRuntimePort`. `repository_analyst_definition()` returns an
+immutable version 1.0.0 definition using the M6.5 `engineering-reasoning` profile.
+The [offline example](examples/repository_analyst.py) supplies real routing,
+governed Chat and an in-memory fake ModelPort; it requires no provider service.
+Install the `analyst` extra to add the existing Core distribution. Base M1–M6
+modules retain zero runtime dependencies. Core, Model adapters and M7 are unchanged.
+See [ADR-018](../../adrs/ADR-018.md) for placement and authorization decisions.
+
+The request contains a bounded question, explicit RepositoryPath targets and an
+ExecutionContext. Trusted composition supplies the workspace and model configuration;
+neither the request nor instructions grant permission. `_composition.AuthorizedRepositoryEvidence`
+binds an explicit M2 Port to a workspace ConfigurationRef, an exact path allowlist,
+SecurityContext, AuthorizationPort and clock. It requires the external
+`read-for-model-analysis` action covering reads **and disclosure to the configured
+model**. The operator must associate that authorization with the destination used
+by the injected M7 runtime. There is no destination discovery or permission issuer.
+Current grant/policy is evaluated before each read and before releasing evidence;
+approval-bearing contexts fail closed. This trusted local association is not a
+new published capability or protection from malicious in-process adapters.
+
+| Boundary | Limit and behavior |
+|---|---|
+| Selection | 1–8 explicit distinct paths; no search, listing or Git; lexical path order |
+| Question | Nonblank, at most 2,048 UTF-8 bytes |
+| Evidence | Complete file text, at most 8,192 UTF-8 bytes/file and 24,576 total |
+| Serialized input | Question and file JSON at most 32,768 UTF-8 bytes, including escaping |
+| M7 prompt | At most 49,152 UTF-8 bytes including versioned instructions |
+| Accepted Model output | At most 16,384 UTF-8 bytes, enforced by existing M7 |
+| Analysis | Summary at most 2,048 bytes; at most eight relevant files, findings, risks and unknowns each |
+| Finding | Nonblank text at most 1,024 bytes and 1–8 distinct evidence-member paths |
+| Risk/unknown | Nonblank text at most 1,024 UTF-8 bytes per entry |
+
+No silent truncation or arbitrary partial selection occurs. Acquisition failure
+returns INSUFFICIENT_EVIDENCE with DENIED, UNAVAILABLE, BOUNDARY or BUDGET and no
+Agent invocation. Missing files are not submitted to the model for guessing.
+No-match/ambiguous routing returns MODEL_FAILURE without invoking the Model.
+Model failures preserve the original AgentResult and downstream effects, including
+UNKNOWN. Successful model transport with malformed JSON, duplicate/extra fields,
+invalid sizes or fabricated structured paths returns OUTPUT_INVALID, preserving
+the completed model effect. No retry or fallback occurs.
+
+Successful structured analysis requires exact schema validation. Every finding
+cites supplied files. Relevant files and finding paths must match supplied labels
+exactly; unknown references fail closed. **Only citation membership is validated**:
+all narrative (including filenames mentioned in prose) remains unverified model
+claims, not independently confirmed repository facts. INSUFFICIENT_EVIDENCE from
+the model requires at least one unknown and no findings. Results retain bounded
+evidence and Agent attribution for trusted consumers; do not log those payloads.
+Source content and model narrative are excluded from repr and validation messages.
+
+M2 enforces existing root, exclusion, symlink/reparse and file-size semantics.
+The workspace must satisfy M2's trusted stable-filesystem assumptions; these reads
+are not an atomic snapshot. Synchronous M2 reads add no hard I/O deadline or new
+cancellation mechanism. Unexpected composition errors and cancellation propagate
+without fabricated settlement. File content cannot request further effects: the
+Analyst receives no mutation, Git, check, shell or sandbox capability. This slice
+has no tools, memory, Workflow, Team or executable patch result.
+
+Agent accepted-output size is bounded. Provider generation, tokens, HTTP response
+allocation, transport memory and provider cost are not bounded by this policy.
+Token limits, bounded transport, provider-specific max-token translation and
+generation/resource budgeting remain future Model/runtime work.
+
+### Local validation required
+
+No tests, formatting, typechecking, builds, installs or examples were run internally.
+The new optional dependency requires **local lock regeneration** before locked
+commands; review and include `packages/legoai-engineering/uv.lock` in the change.
+Use PowerShell from the repository root. The wrapper stops on native-command errors.
+
+```powershell
+function Invoke-AnalystCheck([scriptblock] $Action) {
+    & $Action
+    if ($LASTEXITCODE -ne 0) { throw 'Local M8.1 validation failed; classify before continuing' }
+}
+
+# Direct Core dependencies: M7, M6.5 and governed Model integration.
+Invoke-AnalystCheck { uv run --locked --no-sync python -m pytest -p no:cacheprovider -q tests/unit/execution/test_agent.py tests/architecture/test_agent.py tests/integration/composition/test_agent.py tests/unit/reference/test_model_routing.py tests/architecture/test_model_routing.py tests/unit/reference/test_model.py tests/unit/intelligence/test_model_values.py tests/integration/composition/test_model_governed.py }
+
+Push-Location packages/legoai-engineering
+try {
+    Invoke-AnalystCheck { uv lock }
+    Invoke-AnalystCheck { uv sync --locked --extra analyst }
+    # Import ordering and formatting are intentionally handed off locally.
+    Invoke-AnalystCheck { uv run --locked --no-sync ruff check --fix src tests examples }
+    Invoke-AnalystCheck { uv run --locked --no-sync ruff format src tests examples }
+    Invoke-AnalystCheck { uv run --locked --no-sync ruff check src tests examples }
+    Invoke-AnalystCheck { uv run --locked --no-sync ruff format --check src tests examples }
+    Invoke-AnalystCheck { uv run --locked --no-sync mypy src tests examples }
+    $analystTemp = Join-Path ([IO.Path]::GetTempPath()) ('legoai-m81-' + [guid]::NewGuid().ToString('N'))
+    # Includes Analyst units/governed integration, architecture/inertness,
+    # M1/M2 regressions, other non-Docker Engineering tests and wheel/fresh install.
+    Invoke-AnalystCheck { uv run --locked --no-sync python -m pytest -p no:cacheprovider --basetemp $analystTemp -q tests --ignore=tests/test_sandbox_docker.py }
+    Invoke-AnalystCheck { uv run --locked --no-sync python examples/repository_analyst.py }
+} finally {
+    Pop-Location
+}
+Invoke-AnalystCheck { git diff --check }
+```
+
+The packaging test builds wheel/sdist, checks optional dependency metadata, uses
+a fresh environment without Core for the original pack, then installs the Core
+wheel offline and runs the Analyst example outside the checkout. Example output:
+`succeeded`, `a.py, b.py`, `The supplied files define and import greet.`
+Full affected Engineering coverage includes the new tests; it does not rerun real
+Docker because sandbox code is unchanged. Core dependency regressions cover the
+integration boundary; unchanged Document/DocuMind packages need no new run.
+Existing POSIX-only skips on Windows are expected. Symlink coverage requires the
+previously established Windows privilege; a skipped Analyst escape test leaves
+that local qualification pending. Retain complete output and classify failures
+as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDENCY DEFECT.
+
+`REPOSITORY_ANALYST_M8_1_COMPLETE = NO` until local evidence is green.
+M1–M7 remain complete for their scopes; M8.2 Reviewer, M8.3 Coding and M8.4
+Test/Validation Agents remain unstarted.

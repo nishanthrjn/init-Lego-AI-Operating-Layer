@@ -61,6 +61,10 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/sandbox/docker.py",
         "legoai_engineering/sandbox/_process.py",
         "legoai_engineering/sandbox/_programs.py",
+        "legoai_engineering/analyst/__init__.py",
+        "legoai_engineering/analyst/values.py",
+        "legoai_engineering/analyst/api.py",
+        "legoai_engineering/analyst/_composition.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -69,7 +73,15 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
             name for name in wheel.namelist() if name.endswith(".dist-info/METADATA")
         )
         metadata = wheel.read(metadata_path).decode("utf-8")
-        assert "Requires-Dist:" not in metadata
+        requirements = [
+            line for line in metadata.splitlines() if line.startswith("Requires-Dist:")
+        ]
+        assert len(requirements) == 1
+        assert "legoai-reference==0.1.0.dev0" in requirements[0]
+        assert (
+            'extra == "analyst"' in requirements[0]
+            or "extra == 'analyst'" in requirements[0]
+        )
         assert "Requires-Python: >=3.14,<3.15" in metadata or (
             "Requires-Python: <3.15,>=3.14" in metadata
         )
@@ -82,6 +94,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/mutation_intake.py" in paths
         assert "examples/check_intake.py" in paths
         assert "examples/sandbox_intake.py" in paths
+        assert "examples/repository_analyst.py" in paths
+        assert "tests/test_analyst.py" in paths
+        assert "tests/test_analyst_architecture.py" in paths
         assert "tests/test_sandbox.py" in paths
         assert "tests/test_sandbox_docker.py" in paths
         assert "tests/test_checks.py" in paths
@@ -196,6 +211,7 @@ from legoai_engineering.checks.values import CheckKind, CheckPolicy, CheckReques
 from legoai_engineering.checks.errors import CheckError, CheckFailure
 import importlib.util
 assert all(importlib.util.find_spec(name) is None for name in ('pytest', 'ruff', 'mypy'))
+assert importlib.util.find_spec('legoai') is None
 base = Path(sys.executable).parent
 suffix = '.exe' if os.name == 'nt' else ''
 checks: EngineeringCheckPort = LocalEngineeringChecks(
@@ -214,3 +230,26 @@ else:
     workspace_root.mkdir()
     (workspace_root / "sample.txt").write_text("hello", encoding="utf-8")
     run([str(python), "-I", "-B", "-c", script, str(workspace_root)], tmp_path)
+    # The base installation above still works without Core. Now install the
+    # existing Core wheel offline to qualify the optional Analyst composition.
+    core_artifacts = tmp_path / "core-artifacts"
+    run(
+        ["uv", "build", "--no-build-isolation", "--out-dir", str(core_artifacts)],
+        root.parents[1],
+    )
+    core_wheel = next(core_artifacts.glob("*.whl"))
+    run(
+        [
+            "uv", "pip", "install", "--python", str(python),
+            "--offline", "--no-deps", str(core_wheel),
+        ],
+        tmp_path,
+    )
+    example = tmp_path / "repository_analyst.py"
+    example.write_bytes((root / "examples" / "repository_analyst.py").read_bytes())
+    result = run([str(python), "-I", "-B", str(example)], tmp_path)
+    assert result.stdout.splitlines() == [
+        "succeeded",
+        "a.py, b.py",
+        "The supplied files define and import greet.",
+    ]
