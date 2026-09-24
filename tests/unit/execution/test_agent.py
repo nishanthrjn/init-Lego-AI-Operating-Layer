@@ -23,7 +23,11 @@ def definition() -> AgentDefinition:
     )
 
 
-@pytest.mark.parametrize("text", ["", " ", "x" * 16385, "\ud800"])
+@pytest.mark.parametrize(
+    "text",
+    ["", " ", "x" * 16385, "\ud800"],
+    ids=["empty", "blank", "oversized", "invalid-utf8"],
+)
 def test_definition_rejects_invalid_instructions(text: str) -> None:
     with pytest.raises(ValueError):
         replace(definition(), instructions=text)
@@ -48,7 +52,11 @@ def test_exact_types_and_context_budget() -> None:
         AgentRequest(_Environment().execution_context(), 7)  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("text", ["", "\n", "x" * 65537, "\ud800"])
+@pytest.mark.parametrize(
+    "text",
+    ["", "\n", "x" * 65537, "\ud800"],
+    ids=["empty", "blank", "oversized", "invalid-utf8"],
+)
 def test_request_rejects_invalid_text(text: str) -> None:
     with pytest.raises(ValueError):
         AgentRequest(_Environment().execution_context(), text)
@@ -64,4 +72,4 @@ def test_utf8_bytes_and_immutability() -> None:
     configured = definition()
     assert not hasattr(configured, "__dict__")
     with pytest.raises(FrozenInstanceError):
-        setattr(configured, "instructions", "changed")
+        configured.instructions = "changed"  # type: ignore[misc]

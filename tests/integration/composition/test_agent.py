@@ -95,7 +95,8 @@ def test_route_failure_never_invokes_model(count: int) -> None:
             definition(), AgentRequest(env.execution_context(), "input")
         )
         assert result.status is AgentExecutionStatus.ROUTING_FAILED
-        assert result.output is result.model_execution is None
+        assert result.output is None
+        assert result.model_execution is None
         assert adapter.chat_calls == 0
 
     asyncio.run(scenario())

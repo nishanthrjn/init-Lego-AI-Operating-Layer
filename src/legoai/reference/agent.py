@@ -63,7 +63,7 @@ class OneStepAgentRuntime:
             assert outcome.response is not None
             try:
                 definition.output_contract.validate(outcome.response.content)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 status = AgentExecutionStatus.OUTPUT_INVALID
             else:
                 status = AgentExecutionStatus.SUCCEEDED
