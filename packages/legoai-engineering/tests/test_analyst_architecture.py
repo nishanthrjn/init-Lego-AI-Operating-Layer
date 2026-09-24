@@ -7,7 +7,7 @@ from pathlib import Path
 
 def test_analyst_import_has_no_acquisition_or_invocation(tmp_path: Path) -> None:
     script = """
-import os, sys, threading, dataclasses, json
+import os, sys, threading, dataclasses, json, hashlib
 from unittest.mock import patch
 def denied(*args, **kwargs):
     raise AssertionError('import effect')
@@ -28,6 +28,10 @@ with patch.object(os, 'getenv', denied), patch.object(type(os.environ), '__getit
     import legoai_engineering.reviewer.values
     import legoai_engineering.reviewer.definition
     import legoai_engineering.reviewer.api
+    import legoai_engineering.coding.definition
+    import legoai_engineering.coding.values
+    import legoai_engineering.coding.api
+    import legoai_engineering.coding._composition
 assert 'legoai_engineering.repository.local' not in sys.modules
 assert 'legoai.reference.model' not in sys.modules
 assert 'legoai_engineering.sandbox.docker' not in sys.modules

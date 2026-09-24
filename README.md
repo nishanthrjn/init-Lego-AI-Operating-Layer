@@ -14,8 +14,14 @@ M8.1 Repository Analyst is locally qualified for its documented scope.
 It composes authorized bounded file reads with the existing one-step Agent and
 governed Model routing. See the [contract and validation commands](packages/legoai-engineering/README.md#m81--repository-analyst).
 M1–M7 retain their qualified scopes. M8.2 Independent Reviewer is locally qualified
-for bounded supplied-text review; M8.3–M8.4 remain unstarted. See the
+for bounded supplied-text review. See the
 [Reviewer contract and local commands](packages/legoai-engineering/README.md#m82--independent-reviewer).
+
+M8.3 Bounded Coding Agent implementation is complete with local validation pending.
+It proposes M4-compatible CREATE/UPDATE changesets after authorized bounded reads;
+it never applies or executes them. See the
+[Coding contract and validation script](packages/legoai-engineering/README.md#m83--bounded-coding-agent).
+M8.4 remains unstarted.
 
 Every governed capability
 invocation -- including calls to an external Model provider -- passes through

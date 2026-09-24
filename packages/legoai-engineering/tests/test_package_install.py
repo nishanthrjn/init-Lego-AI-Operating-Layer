@@ -69,6 +69,11 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/reviewer/definition.py",
         "legoai_engineering/reviewer/values.py",
         "legoai_engineering/reviewer/api.py",
+        "legoai_engineering/coding/__init__.py",
+        "legoai_engineering/coding/definition.py",
+        "legoai_engineering/coding/values.py",
+        "legoai_engineering/coding/api.py",
+        "legoai_engineering/coding/_composition.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -102,6 +107,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "examples/governed_demo.py" in paths
         assert "examples/independent_reviewer.py" in paths
         assert "tests/test_reviewer.py" in paths
+        assert "examples/bounded_coding.py" in paths
+        assert "tests/test_coding.py" in paths
+        assert "tests/test_coding_m4.py" in paths
         assert "tests/test_analyst.py" in paths
         assert "tests/test_analyst_architecture.py" in paths
         assert "tests/test_sandbox.py" in paths
@@ -288,4 +296,13 @@ else:
         "changes_required",
         "correctness",
         "The proposal needs a missing-input policy.",
+    ]
+    coding_example = tmp_path / "bounded_coding.py"
+    coding_example.write_bytes((root / "examples" / "bounded_coding.py").read_bytes())
+    result = run(
+        [str(python), "-I", "-B", "-c", runner, str(tmp_path), str(coding_example)],
+        tmp_path,
+    )
+    assert result.stdout.splitlines() == [
+        "succeeded", "1 proposed change", "example.py update",
     ]

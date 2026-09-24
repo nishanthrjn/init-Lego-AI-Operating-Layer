@@ -714,3 +714,21 @@ for skip classifications, exact scope and limitations.
 
 `INDEPENDENT_REVIEWER_M8_2_COMPLETE = YES`. M1–M8.2 retain their documented
 qualified scopes. M8.3 Coding Agent and M8.4 Test/Validation Agent remain unstarted.
+
+## M8.3 implementation handoff
+
+M1–M8.2 remain qualified. M8.3 is **IMPLEMENTATION COMPLETE — LOCAL VALIDATION
+PENDING**. `legoai_engineering.coding` proposes bounded CREATE/UPDATE M4 changesets
+after authorized M2 evidence and one governed M7 invocation. Digests are computed
+from acquired exact text; Model-provided digests, paths outside scope and DELETE
+are rejected. No apply, tests, sandbox, Git, Reviewer orchestration, retry, fallback,
+memory, Workflow or Team. M8.4 remains unstarted.
+
+ADR-018's existing ownership/disclosure decision applies; no new ADR, canonical
+change, runtime dependency or Core modification. Tests cover denied acquisition,
+CREATE absence/parent checks, UPDATE digests, limits/invalid output, no writes,
+M4 stale-precondition handoff and dependency boundaries. Static review only internally.
+See [plan](M8.3-BOUNDED-CODING-PLAN.md),
+[contract](../packages/legoai-engineering/README.md#m83--bounded-coding-agent), and
+[local script](../CODING_AGENT_M8_3_test.ps1).
+`CODING_AGENT_M8_3_COMPLETE = NO` pending local qualification.
