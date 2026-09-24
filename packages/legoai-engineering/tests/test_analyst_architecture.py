@@ -25,6 +25,9 @@ with patch.object(os, 'getenv', denied), patch.object(type(os.environ), '__getit
     import legoai_engineering.analyst.values
     import legoai_engineering.analyst.api
     import legoai_engineering.analyst._composition
+    import legoai_engineering.reviewer.values
+    import legoai_engineering.reviewer.definition
+    import legoai_engineering.reviewer.api
 assert 'legoai_engineering.repository.local' not in sys.modules
 assert 'legoai.reference.model' not in sys.modules
 assert 'legoai_engineering.sandbox.docker' not in sys.modules

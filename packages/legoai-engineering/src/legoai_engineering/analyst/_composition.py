@@ -12,6 +12,7 @@ from legoai.governance.ports import (
 )
 from legoai.kernel.context import TenantContext
 from legoai.kernel.references import ConfigurationRef
+
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,
@@ -101,7 +102,7 @@ class AuthorizedRepositoryEvidence:
             try:
                 # Enforce aggregate limits incrementally, before another read.
                 RepositoryEvidence(tuple(files))
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 raise EvidenceAcquisitionError(AcquisitionFailure.BUDGET) from None
         self._authorize(tenant)
         return RepositoryEvidence(tuple(files))

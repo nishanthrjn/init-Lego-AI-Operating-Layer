@@ -676,3 +676,41 @@ Only source review was performed internally. Engineering lock regeneration,
 tests, typing, lint/format, package installation and the offline example await
 local execution. `REPOSITORY_ANALYST_M8_1_COMPLETE = NO` pending that evidence.
 M8.2 Reviewer Agent, M8.3 Coding Agent and M8.4 Test/Validation Agent are unstarted.
+
+## M8.1 closure and M8.2 handoff
+
+M8.1 is locally qualified: 153 Core dependency regressions, 284 Engineering tests,
+mypy (55 files), Ruff, wheel/sdist/fresh install, example and diff check passed.
+The remaining Analyst/M2 symlink gap closed with **2 passed in 0.16s**.
+`REPOSITORY_ANALYST_M8_1_COMPLETE = YES`; see the
+[completion report](M8.1-REPOSITORY-ANALYST-PLAN.md#completion-report).
+Earlier handoff sections preserve chronology, not current status.
+
+M8.2 Independent Reviewer is **IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**.
+It consumes bounded supplied proposals and material through M7/M6.5/governed Chat,
+enforces producer/reviewer definition separation, and validates structured review
+opinions and evidence-member references. Review does not grant authorization.
+No repository acquisition, mutation, checks, sandbox, memory, retry, fallback,
+Workflow or Team. ADR-018 reviewed as a reusable ownership/disclosure decision;
+its Proposed canonical status is unchanged. No new dependency or Core production
+change. M8.1 production contracts remain unchanged; examples share demo wiring.
+
+See the [M8.2 plan](M8.2-INDEPENDENT-REVIEWER-PLAN.md),
+[contract](../packages/legoai-engineering/README.md#m82--independent-reviewer), and
+[local script](../INDEPENDENT_REVIEWER_M8_2_test.ps1). Same-assistant static review
+only, no runnable validation internally. `INDEPENDENT_REVIEWER_M8_2_COMPLETE = NO`.
+M8.3 Coding Agent and M8.4 Test/Validation Agent remain unstarted.
+
+## M8.2 local qualification closure
+
+Maintainer output: 153 Core regressions passed; 333 non-Docker Engineering tests
+passed with five existing filesystem skips; mypy passed for 62 files; Ruff lint
+and formatting passed; packaging/fresh install and both offline examples passed.
+Final diff check showed only line-ending notices. The Analyst/M2 symlink boundary
+was already proven by the earlier two-test elevated run; M8.2 does not change it
+or introduce filesystem access. No new elevated run or Docker qualification is needed.
+See the [full completion report](M8.2-INDEPENDENT-REVIEWER-PLAN.md#completion-report)
+for skip classifications, exact scope and limitations.
+
+`INDEPENDENT_REVIEWER_M8_2_COMPLETE = YES`. M1–M8.2 retain their documented
+qualified scopes. M8.3 Coding Agent and M8.4 Test/Validation Agent remain unstarted.

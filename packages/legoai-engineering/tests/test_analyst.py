@@ -26,10 +26,12 @@ from legoai_engineering.repository.workspace import RepositoryPath
 
 def answer(**changes: object) -> str:
     result: dict[str, object] = {
-        "status": "succeeded", "summary": "A defines the behavior.",
+        "status": "succeeded",
+        "summary": "A defines the behavior.",
         "relevant_files": ["a.py"],
         "findings": [{"text": "Definition supplied.", "paths": ["a.py"]}],
-        "risks": [], "unknowns": ["Execution was not observed."],
+        "risks": [],
+        "unknowns": ["Execution was not observed."],
     }
     result.update(changes)
     return json.dumps(result)
@@ -45,8 +47,10 @@ def workspace(tmp_path: Path) -> Path:
 def test_success_ordering_one_call_and_no_mutation(workspace: Path) -> None:
     before = {p.name: p.read_bytes() for p in workspace.iterdir()}
     prompts = []
-    for targets in ((RepositoryPath("b.py"), RepositoryPath("a.py")),
-                    (RepositoryPath("a.py"), RepositoryPath("b.py"))):
+    for targets in (
+        (RepositoryPath("b.py"), RepositoryPath("a.py")),
+        (RepositoryPath("a.py"), RepositoryPath("b.py")),
+    ):
         analyst, request, model = create_demo(workspace, answer(), targets=targets)
         result = asyncio.run(analyst.analyze(request))
         assert result.status is RepositoryAnalysisStatus.SUCCEEDED
@@ -69,14 +73,33 @@ def test_routing_failure_never_calls_model(workspace: Path, count: int) -> None:
     assert model.calls == 0
 
 
-@pytest.mark.parametrize("output", [
-    "not JSON", "[]", '{"status":"succeeded","status":"succeeded"}',
-    answer(relevant_files=["invented.py"]), answer(relevant_files=["../outside"]),
-    answer(findings=[{"text": "guess", "paths": ["missing.py"]}]),
-    answer(extra="unexpected"), answer(summary="x" * 2049),
-    answer(risks=["risk"] * 9), answer(findings=[{"text": "guess", "paths": []}]),
-], ids=["syntax", "array", "duplicate", "invented", "escape", "fake-finding",
-        "extra", "summary-budget", "array-budget", "uncited"])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "not JSON",
+        "[]",
+        '{"status":"succeeded","status":"succeeded"}',
+        answer(relevant_files=["invented.py"]),
+        answer(relevant_files=["../outside"]),
+        answer(findings=[{"text": "guess", "paths": ["missing.py"]}]),
+        answer(extra="unexpected"),
+        answer(summary="x" * 2049),
+        answer(risks=["risk"] * 9),
+        answer(findings=[{"text": "guess", "paths": []}]),
+    ],
+    ids=[
+        "syntax",
+        "array",
+        "duplicate",
+        "invented",
+        "escape",
+        "fake-finding",
+        "extra",
+        "summary-budget",
+        "array-budget",
+        "uncited",
+    ],
+)
 def test_malformed_or_uncited_output_is_rejected(workspace: Path, output: str) -> None:
     analyst, request, model = create_demo(workspace, output)
     result = asyncio.run(analyst.analyze(request))
@@ -88,19 +111,24 @@ def test_malformed_or_uncited_output_is_rejected(workspace: Path, output: str) -
 
 
 def test_unknowns_are_explicit(workspace: Path) -> None:
-    analyst, request, _ = create_demo(workspace, answer(
-        status="insufficient_evidence", findings=[], relevant_files=[]
-    ))
+    analyst, request, _ = create_demo(
+        workspace,
+        answer(status="insufficient_evidence", findings=[], relevant_files=[]),
+    )
     result = asyncio.run(analyst.analyze(request))
     assert result.status is RepositoryAnalysisStatus.INSUFFICIENT_EVIDENCE
     assert result.analysis is not None and result.analysis.unknowns
 
 
 def test_denied_and_missing_stop_before_model(workspace: Path) -> None:
-    for allowed, expected in ((False, AcquisitionFailure.DENIED),
-                              (True, AcquisitionFailure.UNAVAILABLE)):
+    for allowed, expected in (
+        (False, AcquisitionFailure.DENIED),
+        (True, AcquisitionFailure.UNAVAILABLE),
+    ):
         analyst, request, model = create_demo(
-            workspace, answer(), read_allowed=allowed,
+            workspace,
+            answer(),
+            read_allowed=allowed,
             targets=(RepositoryPath("missing.py"),),
         )
         result = asyncio.run(analyst.analyze(request))
@@ -116,7 +144,9 @@ def test_m2_path_boundary(path: str) -> None:
         RepositoryPath(path)
 
 
-def test_symlink_escape_is_rejected_before_model(workspace: Path, tmp_path: Path) -> None:
+def test_symlink_escape_is_rejected_before_model(
+    workspace: Path, tmp_path: Path
+) -> None:
     outside = tmp_path.parent / (tmp_path.name + "-outside")
     outside.write_text("private", encoding="utf-8")
     try:
@@ -177,7 +207,9 @@ def test_denied_selection_cannot_read_workspace(workspace: Path) -> None:
         reader = analyst.evidence_reader
         assert isinstance(reader, AuthorizedRepositoryEvidence)
         with patch.object(
-            type(reader.workspace), "read_text", side_effect=AssertionError("denied read")
+            type(reader.workspace),
+            "read_text",
+            side_effect=AssertionError("denied read"),
         ):
             if read_allowed:
                 request = replace(request, targets=(RepositoryPath("ungranted.py"),))
@@ -230,13 +262,17 @@ def test_workspace_limit_fails_before_disclosure(workspace: Path) -> None:
     assert model.calls == 0
 
 
-def test_expired_read_authority_cannot_release_acquired_evidence(workspace: Path) -> None:
+def test_expired_read_authority_cannot_release_acquired_evidence(
+    workspace: Path,
+) -> None:
     analyst, request, model = create_demo(workspace, answer())
     reader = analyst.evidence_reader
     assert isinstance(reader, AuthorizedRepositoryEvidence)
     now = reader.security_context.established_at
     times = iter((now, now, now + timedelta(hours=2)))
-    analyst = replace(analyst, evidence_reader=replace(reader, clock=lambda: next(times)))
+    analyst = replace(
+        analyst, evidence_reader=replace(reader, clock=lambda: next(times))
+    )
     result = asyncio.run(analyst.analyze(request))
     assert result.acquisition_failure is AcquisitionFailure.DENIED
     assert result.evidence is None
