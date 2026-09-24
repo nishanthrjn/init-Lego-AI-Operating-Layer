@@ -16,7 +16,11 @@ workload isolation implementation and local qualification are complete for the
 documented Windows Docker Desktop Linux scope. See
 [M6 implementation and scope](ENGINEERING-M6-IMPLEMENTATION.md) and the
 [qualification handoff](../packages/legoai-engineering/README.md#m6-engineering-workload-isolation).
-M6.5 implementation is complete with local validation pending; M7 is unstarted.
+M6.5 is complete for its documented scope: user-supplied evidence reports 1,425
+Core tests, two DocuMind tests, clean mypy/lint/format, build/fresh install and
+the routing example. M7 implementation is complete with local validation pending;
+see the [M7 plan](M7-AGENT-PLAN.md) and [handoff](../docs/agent.md).
+M8 specialized engineering Agents remain unstarted.
 See the [M6.5 design](M6.5-MODEL-ROUTING-PLAN.md) and
 [validation handoff](../docs/model-routing.md#local-validation-required).
 Other remaining Phase C and later work remains planned and unstarted.
@@ -634,5 +638,19 @@ offline-example tests are authored. Same-assistant static review is the only
 internal verification; no tests, mypy, Ruff, builds, installs or examples ran.
 Follow the [local commands](../docs/model-routing.md#local-validation-required).
 **IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING.**
-`MODEL_ROUTING_M6_5_COMPLETE = NO` until returned local evidence is reviewed.
+`MODEL_ROUTING_M6_5_COMPLETE = YES` based on the returned local evidence above.
+
+## M7 implementation handoff
+
+The one-step execution-owner Agent consumes M6.5 and existing governed Chat.
+It bounds inputs and accepted UTF-8 output, retaining downstream effects even
+when Agent output validation fails. Shared Model code and M6 are unchanged.
+No tools, memory, Workflow, Team, retry, fallback or framework dependency.
+Provider generation/token limits, bounded transport, provider max-token translation
+and cost/resource budgeting remain future Model/runtime optimization work.
+
+Same-assistant static review only; no local validation executed internally.
+The exact outstanding M6 resource-control test is a separate local observation,
+not an automatic M7 failure. See docs/agent.md for commands and classification.
+`AGENT_M7_COMPLETE = NO` until returned local evidence qualifies the slice.
 M7 remains unstarted. Stop for local validation.

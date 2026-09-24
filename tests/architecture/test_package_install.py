@@ -93,6 +93,9 @@ with patch.object(threading.Thread, "start", denied), patch.object(logging, "bas
     import legoai.intelligence.model.ports
     import legoai.intelligence.model.routing
     import legoai.reference.model_routing
+    import legoai.execution.agent.values
+    import legoai.execution.agent.ports
+    import legoai.reference.agent
     tenant = legoai.kernel.context.TenantContext(legoai.kernel.identity.TenantId("t"))
     target = legoai.kernel.references.ConfigurationRef(
         legoai.kernel.references.ApplicationRef(
@@ -129,7 +132,10 @@ assert {name for name in sys.modules if name.startswith("legoai.")} == {
     "legoai.runtime", "legoai.runtime._composition", "legoai.runtime._composition.direct",
     "legoai.intelligence", "legoai.intelligence.model",
     "legoai.intelligence.model.values", "legoai.intelligence.model.ports",
-    "legoai.intelligence.model.routing", "legoai.reference.model_routing"
+    "legoai.intelligence.model.routing", "legoai.reference.model_routing",
+    "legoai.execution", "legoai.execution.values", "legoai.execution.agent",
+    "legoai.execution.agent.values", "legoai.execution.agent.ports",
+    "legoai.reference.agent"
 }
 """
     result = run([sys.executable, "-I", "-B", "-c", script], tmp_path)
@@ -208,6 +214,11 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/model_routing.py",
         "legoai/reference/model.py",
         "legoai/runtime/_composition/model_governed.py",
+        "legoai/execution/agent/__init__.py",
+        "legoai/execution/agent/values.py",
+        "legoai/execution/agent/ports.py",
+        "legoai/reference/agent.py",
+        "legoai/runtime/_composition/agent.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -242,6 +253,11 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "docs/development.md",
             "docs/model-routing.md",
             "examples/model_routing.py",
+            "docs/agent.md",
+            "examples/agent.py",
+            "tests/unit/execution/test_agent.py",
+            "tests/integration/composition/test_agent.py",
+            "tests/architecture/test_agent.py",
             "tests/unit/kernel/test_identity.py",
             "tests/unit/kernel/test_foundation.py",
             "tests/unit/kernel/test_provenance.py",
@@ -585,6 +601,11 @@ assert composition_result.normalized_text == "smoke test"
         "reasoning-local: demo-provider/demo-model",
         "configuration: r1",
     ]
+    agent_example = tmp_path / "agent.py"
+    agent_example.write_bytes((root / "examples" / "agent.py").read_bytes())
+    result = run([str(interpreter), "-I", "-B", str(agent_example)], tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.splitlines() == ["succeeded", "A bounded Agent result."]
 
 
 def test_f1_static_misuse(tmp_path: Path) -> None:

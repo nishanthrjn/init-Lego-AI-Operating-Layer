@@ -554,6 +554,10 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.reference.model.")
                         or target == "legoai.intelligence.model.routing"
                         or target.startswith("legoai.intelligence.model.routing.")
+                        or (
+                            name == "legoai.runtime._composition.agent"
+                            and target.startswith("legoai.execution.agent.ports")
+                        )
                         or target == "legoai.runtime"
                         or target.startswith("legoai.runtime._composition")
                     ):
