@@ -13,7 +13,7 @@ scope. M5 implementation and local validation are complete for the documented
 trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
 Linux workload scope documented below. M6.5 and M7 are locally qualified in Core.
 M8.1 and M8.2 are locally qualified for their documented scopes;
-M8.3–M8.4 are unstarted.
+M8.3 implementation is complete with local validation pending; M8.4 is unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -1223,3 +1223,112 @@ No code, configuration or dependency defect remains in this output.
 See the [completion report](../../planning/M8.2-INDEPENDENT-REVIEWER-PLAN.md#completion-report).
 M8.3 Coding and M8.4 Test/Validation Agents remain unstarted.
 `INDEPENDENT_REVIEWER_M8_2_COMPLETE = YES`.
+
+## M8.3 — Bounded Coding Agent
+
+**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+
+`coding.api.CodingAgent.propose` receives an immutable `CodingRequest`: objective,
+1–8 `CodingTarget` values (RepositoryPath plus existing M4 CREATE/UPDATE kind),
+up to eight constraints and ExecutionContext. `coding_definition()` returns
+`coding-agent` v1.0.0, distinct from Analyst and Reviewer, using the existing
+`engineering-reasoning` profile. The Agent acquires deterministic bounded evidence,
+invokes M7 once, validates JSON, and returns actual M4 RepositoryChangeSet data.
+It has no mutation, Git, check, sandbox, Reviewer, memory or Workflow Port.
+
+Trusted `coding._composition.AuthorizedCodingEvidence` wraps the existing M8.1
+AuthorizedRepositoryEvidence. This reuses its explicit M2 workspace, operator
+allowlist, grant/policy evaluator, clock and `read-for-model-analysis` action.
+The operator binds the workspace and configured Model destination and authorizes
+all disclosure. Request targets cannot widen that allowlist. UPDATE uses the
+existing authorized read path. CREATE additionally requires operator-authorized
+bounded metadata inspection of the target's parent under the same workspace scope.
+The private M8.1 authorization check is reused before each CREATE observation and
+before releasing the final bundle; no new authorization framework/action is added.
+Approval-bearing contexts remain unsupported and fail closed.
+
+CREATE requires an existing parent with a successful bounded M2 listing and no
+case-insensitive target match, followed by a target read returning MISSING.
+That read also enforces target-specific M2 exclusions/depth, so excluded names
+are not mistaken for absence. Other read failures do not mean CREATE is allowed.
+Parent entry metadata is never sent to the Model. Listing can conservatively fail
+because of parent size, excluded/unsafe namespace or another unsupported entry;
+there is no discovery fallback. New directories are not proposed or created.
+All dot-prefixed components, including .git/.venv/.env, are outside this first slice.
+M2's path, alias, symlink/reparse, hardlink and stable-filesystem rules are retained.
+
+Each `CodingFile` holds its selected target and exact current RepositoryText for
+UPDATE, with an init-disabled ContentDigest computed by M4 `digest_text`. CREATE
+holds no current text or digest. `CodingEvidence` is sorted by exact path. Digests
+are not requested from or disclosed to the Model, and a digest field in output
+is rejected. UPDATE proposals receive the corresponding trusted digest; CREATE
+uses M4's absence precondition (`expected=None`). Neither observation is guaranteed
+current at later application: separately authorized M4 application must recheck it.
+
+| Boundary | Limit |
+|---|---|
+| Targets | 1–8 distinct portable paths; no case aliases or ancestor overlaps |
+| Objective | Nonblank, <=2048 UTF-8 bytes |
+| Constraints | 0–8 nonblank strings, <=1024 bytes each |
+| Existing file | <=8192 UTF-8 bytes; exact BOM/newlines retained |
+| Total acquired content | <=24576 bytes |
+| Serialized input | <=32768 bytes, including JSON escaping |
+| Total M7 prompt | <=49152 bytes, including static instructions |
+| Accepted output | <=32768 UTF-8 bytes |
+| Generated file/total | <=8192 bytes per file, <=24576 bytes total |
+| Summary/reasons | Summary <=2048; one nonblank reason <=1024 per change |
+| Risks/unknowns | 0–8 nonblank strings each, <=1024 bytes per string |
+
+Closed JSON fields: `summary`, `changes`, `risks`, `unknowns`. Each of 1–8 changes
+has exactly `path`, `operation`, `content`, `reason`. Every returned path and kind
+must match a selected target. A subset of selected targets may be proposed, but
+no invalid change is silently dropped. Duplicate keys/paths, extra fields,
+fabricated targets, DELETE, invalid UTF-8, NUL and oversized payloads fail the
+entire proposal. Empty replacement content is valid. No truncation or compression.
+Constructing actual M4 FileChange/RepositoryChangeSet values retains M4's own
+precondition, path and payload validation. Reasons remain ordered with those changes.
+
+`CodingResult` separates SUCCEEDED, INVALID_REQUEST, MODEL_FAILURE and OUTPUT_INVALID.
+Malformed request values raise safe constructor errors. Acquisition/absence/scope
+failure returns INVALID_REQUEST with existing AcquisitionFailure classification;
+serialized context overflow uses BUDGET. No-match/ambiguous routing and governed
+invocation failure return MODEL_FAILURE. Invalid output carries no partial
+CodingProposal. The exact AgentResult and completed/unknown Model effects are
+preserved. Source and narrative are excluded from repr/error messages; consumers
+must not log retained source or raw Model output. Unexpected Port errors and
+cancellation propagate; M2 synchronous I/O has no new timeout/cancellation guarantee.
+
+**Proposal is not authorization or mutation.** Only separately authorized external
+code may later call M4 apply. This Agent and its offline example never do so.
+Generated code is not tested, executed, self-reviewed or independently reviewed.
+Model narrative remains unverified, and syntactically valid proposals can be wrong.
+No retries, fallback, auto-repair or Coding→Reviewer orchestration. Provider token
+generation, transport allocation and cost limits remain deferred; M7 only bounds
+accepted output. DELETE is deferred because the initial fixture needs CREATE/UPDATE.
+
+### M8.3 local validation required
+
+No tests, typechecker, Ruff, builds, installs or examples ran internally. From the
+repository root, in a symlink-capable Windows PowerShell session, run:
+
+```powershell
+.\CODING_AGENT_M8_3_test.ps1
+```
+
+The script runs focused M7/M6.5/Model regressions, the full non-Docker Engineering
+suite (M8.3, Reviewer, Analyst, M4, architecture/inertness and packaging), mypy,
+Ruff lint/format, all three offline examples and diff check. Existing metadata
+and the `analyst` extra are reused; no dependency or lock change is needed.
+Packaging checks wheel/sdist inventory and runs all copied examples against a
+fresh installed wheel plus existing Core. The Coding example creates only its
+temporary fixture and prints `succeeded`, `1 proposed change`, `example.py update`.
+No generated proposal is applied. A separate test driver deliberately exercises
+M4's rejection of stale/now-existing targets to prove handoff compatibility;
+this adds no production apply path.
+
+New Coding symlink tests for UPDATE targets and CREATE parents must pass to close
+M8.3; a privilege skip leaves those boundaries pending. Existing POSIX-only skips
+on Windows are expected. Do not rerun Docker or unrelated application suites.
+Classify failures as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDENCY
+DEFECT and request only the smallest necessary rerun.
+`CODING_AGENT_M8_3_COMPLETE = NO` until local evidence is green. M8.4 is unstarted.

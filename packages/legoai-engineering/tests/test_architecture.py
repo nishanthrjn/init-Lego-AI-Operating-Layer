@@ -16,6 +16,43 @@ def import_violations(source: str, module: str = "") -> set[str]:
         "legoai_engineering.repository.values",
     }
     additions = {
+        "coding.definition": {
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.intelligence.model.routing",
+            "legoai.kernel.versions",
+        },
+        "coding.values": {
+            "enum",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.execution.values",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.coding.definition",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.workspace",
+        },
+        "coding.api": {
+            "json", "typing",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.kernel.context",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.coding.definition",
+            "legoai_engineering.coding.values",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.workspace",
+        },
+        "coding._composition": {
+            "legoai.kernel.context",
+            "legoai_engineering.analyst._composition",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.coding.values",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.workspace",
+        },
         "reviewer.definition": {
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
@@ -178,6 +215,11 @@ def import_violations(source: str, module: str = "") -> set[str]:
     allowed.update(additions.get(module, set()))
     errors: set[str] = set()
     for node in ast.walk(ast.parse(source)):
+        if module.startswith("coding.") and (
+            (isinstance(node, ast.Attribute) and node.attr in {"apply", "check"})
+            or (isinstance(node, ast.Name) and node.id in {"apply", "check"})
+        ):
+            errors.add("coding-cannot-apply-or-check")
         if isinstance(node, ast.Import):
             errors.update(
                 alias.name for alias in node.names if alias.name not in allowed
@@ -260,7 +302,7 @@ def test_source_boundaries_and_inert_initializers() -> None:
         source = path.read_text(encoding="utf-8")
         module = (
             path.parent.name + "." + path.stem
-            if path.parent.name in {"git", "checks", "sandbox", "analyst", "reviewer"}
+            if path.parent.name in {"git", "checks", "sandbox", "analyst", "reviewer", "coding"}
             else path.stem
         )
         assert not import_violations(source, module), path
@@ -321,6 +363,25 @@ def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
 )
 def test_reviewer_effectful_imports_and_calls_are_forbidden(source: str) -> None:
     for module in ("reviewer.api", "reviewer.values", "reviewer.definition"):
+        assert import_violations(source, module)
+
+
+@pytest.mark.parametrize("source", [
+    "from legoai_engineering.repository.mutation_ports import RepositoryMutationPort",
+    "from legoai_engineering.repository.mutation_local import LocalRepositoryMutation",
+    "import legoai_engineering.repository.local",
+    "import legoai_engineering.checks.local",
+    "import legoai_engineering.sandbox.ports",
+    "import legoai_engineering.sandbox.docker",
+    "import legoai_engineering.git.local",
+    "import legoai_engineering.reviewer.api",
+    "from legoai.intelligence.model.ports import ModelPort",
+    "import legoai.reference.model", "import openai", "import langgraph",
+    "import subprocess", "writer.apply(changes)", "apply(changes)",
+    "checks.check(request)", "path.write_text('code')", "open('file', 'w')",
+])
+def test_coding_can_propose_but_cannot_apply_or_execute(source: str) -> None:
+    for module in ("coding.api", "coding.values", "coding.definition", "coding._composition"):
         assert import_violations(source, module)
 
 
