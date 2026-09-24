@@ -656,3 +656,23 @@ Maintainer evidence: 53 focused M7 tests, 100 routing/Model regressions and
 whitespace checks passed. The corrected targeted M6 test passed (3.33s), closing
 the separate environment/test-defect observation. See docs/agent.md for details.
 `AGENT_M7_COMPLETE = YES`. M8 remains unstarted; stop at this qualification gate.
+
+## M8.1 implementation handoff
+
+M1–M7 remain complete for their qualified scopes. M8.1 Repository Analyst is
+**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**. The specialization is
+in the existing Engineering package with an optional Core dependency, preserving
+Core ownership and unchanged Model/M7 contracts. See
+[ADR-018](../adrs/ADR-018.md), the [scoped plan](M8.1-REPOSITORY-ANALYST-PLAN.md)
+and [contract/local commands](../packages/legoai-engineering/README.md#m81--repository-analyst).
+
+Explicit authorized M2 reads produce sorted bounded M1 RepositoryText evidence.
+One existing M7 invocation uses M6.5 routing and governed Chat. A small closed
+JSON validator bounds analysis and validates structured citation membership;
+narrative remains unverified. No tools, mutation, execution, Git, memory, retry,
+fallback, Workflow or Team. No new third-party runtime dependency.
+
+Only source review was performed internally. Engineering lock regeneration,
+tests, typing, lint/format, package installation and the offline example await
+local execution. `REPOSITORY_ANALYST_M8_1_COMPLETE = NO` pending that evidence.
+M8.2 Reviewer Agent, M8.3 Coding Agent and M8.4 Test/Validation Agent are unstarted.
