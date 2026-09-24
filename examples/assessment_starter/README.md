@@ -46,7 +46,7 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-From frontend: `npm run build` and `npm run lint`.
+From frontend: `npm test`, `npm run build` and `npm run lint`.
 Backend tests use an in-process TestClient and forbid external socket connections.
 
 ## Export a standalone project
@@ -80,3 +80,5 @@ This is an offline local starter, not an authenticated production deployment.
 A future provider adapter needs explicit credentials, timeout, cancellation and
 error semantics. Built frontend assets need a same-origin /api reverse proxy;
 Vite preview alone is not a full-stack deployment. Docker is unnecessary here.
+
+Frontend tests use Vitest, React Testing Library and mocked fetch: no running backend or external network is needed. Use npm run test:watch for watch mode. Regenerate standalone projects to receive these tests.

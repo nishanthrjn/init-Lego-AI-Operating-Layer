@@ -86,3 +86,17 @@ def test_hardlinked_output_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="unshared"):
         export(destination, force=True)
     assert alias.read_bytes() == original.read_bytes()
+
+
+def test_export_includes_frontend_behavior_tests(tmp_path: Path) -> None:
+    import json
+
+    destination = export(tmp_path / "frontend-tests")
+    frontend = destination / "frontend"
+    for name in ("src/App.test.tsx", "src/test/setup.ts", "vitest.config.ts"):
+        assert (frontend / name).read_text(encoding="utf-8") == (
+            ROOT / "examples/assessment_starter/frontend" / name
+        ).read_text(encoding="utf-8")
+    package = json.loads((frontend / "package.json").read_text())
+    assert package["scripts"]["test"] == "vitest run"
+    assert "vitest" in package["devDependencies"]
