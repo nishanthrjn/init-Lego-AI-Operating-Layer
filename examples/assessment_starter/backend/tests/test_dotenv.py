@@ -24,9 +24,9 @@ def test_env_file_selects_ollama_and_does_not_mutate_environment(
     before = dict(os.environ)
     settings = Settings.from_startup(path, environment={})
     assert settings.model_provider == "ollama"
-    assert settings.ollama_model == "llama3"
+    assert settings.ollama_model == "llama3.2:latest"
     assert settings.ollama_base_url == "http://localhost:11434"
-    assert settings.model_timeout_seconds == 10
+    assert settings.model_timeout_seconds == 120
     assert not isinstance(make_model(settings), FixedModel)
     assert dict(os.environ) == before
 
