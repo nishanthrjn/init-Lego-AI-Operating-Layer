@@ -23,6 +23,8 @@ BACKEND_FILES = [
     "src/assessment_starter/api/schemas.py",
     "src/assessment_starter/api/routes.py",
     "src/assessment_starter/main.py",
+    "src/assessment_starter/model_factory.py",
+    "tests/test_model_selection.py",
     "tests/conftest.py",
     "tests/test_answer_service.py",
     "tests/test_api.py",
@@ -84,6 +86,18 @@ class ChatResult:
             raise TypeError("ChatResult requires text")
 
 
+class ModelPreflightError(Exception):
+    """No request was sent."""
+
+
+class ModelResponseRejectedError(Exception):
+    """The provider response was unusable."""
+
+
+class ModelResponseUncertainError(Exception):
+    """The request may have been processed; do not silently retry."""
+
+
 class ModelPort(Protocol):
     async def chat(self, request: ChatRequest) -> ChatResult: ...
 
@@ -115,75 +129,98 @@ def make_model() -> FixedModel:
         )
     )
 '''
-README = """# Standalone assessment starter
+MODEL_FACTORY = '''"""Single application model-selection point. Construction performs no I/O."""
 
-This generated project has no dependency on LegoAI. Its immutable Chat contracts
-were deliberately reduced to roles, messages, requests, response text, an async
-ModelPort and FixedModel. Provider/model identities, usage accounting, embedding,
-tenant context, routing, governance, plugins, execution, agents, RAG, workflow,
-and configuration persistence are omitted.
+from app.core.config import Settings
+from app.fixtures import make_model as make_fixed_model
+from app.model import ModelPort
+from app.ollama import OllamaModelAdapter
 
-FixedModel is the default: no API key, external model call or token consumption.
-Python 3.14, uv and Node.js 22.12+ (or Node 24) are required.
 
-## Run
+def make_model(settings: Settings) -> ModelPort:
+    if settings.model_provider == "fixed":
+        return make_fixed_model()
+    return OllamaModelAdapter(settings)
+'''
+OLLAMA_ADAPTER = '''"""Chat-only Ollama transport; no platform imports, SDK, retry or embeddings."""
 
-In one terminal:
+import asyncio
+import http.client
+import json
+import socket
+import urllib.error
+import urllib.request
 
-```powershell
-cd backend
-uv sync
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
+from app.core.config import Settings
+from app.model import (
+    ChatRequest,
+    ChatResult,
+    ModelPreflightError,
+    ModelResponseRejectedError,
+    ModelResponseUncertainError,
+)
 
-In another:
 
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+class OllamaModelAdapter:
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
 
-Open the URL printed by Vite. Its development proxy forwards /api to localhost:8000.
-GET http://127.0.0.1:8000/health returns {"status":"ok"}.
-POST /api/v1/ask accepts {"question":"Hello"} and returns {"answer":"..."}.
-The same fixed answer is intentional. Empty, non-string, oversized or extra-field
-requests are rejected. Dependencies must be installed before offline use.
-On Windows with restricted PowerShell script execution, use npm.cmd.
+    async def chat(self, request: ChatRequest) -> ChatResult:
+        if type(request) is not ChatRequest:
+            raise TypeError("chat requires ChatRequest")
+        return await asyncio.to_thread(self._chat, request)
 
-## Verify
-
-```powershell
-cd backend
-uv run pytest
-uv run mypy src tests
-uv run ruff check .
-uv run ruff format --check .
-cd ../frontend
-npm test
-npm run build
-npm run lint
-```
-
-Tests use an in-process HTTP client and prohibit external socket connections.
-No Docker or Git initialization is required. Built frontend assets need a host
-that proxies /api to the backend; Vite preview is a static preview, not that host.
-
-## Extend
-
-Implement async chat(request: ChatRequest) -> ChatResult in an adapter and inject
-it with create_app(model=your_adapter). Keep SDK types and credentials inside
-explicit adapter composition. Define provider timeout, cancellation and safe error
-translation before enabling live calls. Do not silently add retries.
-
-This is a local application starter, not a production deployment: authentication,
-rate limits, persistence, HTTPS and deployment policy are not supplied.
-No provider generation or transport resource guarantees are implied.
-
-Generated from the maintained in-repository example by export_assessment_starter.py.
-Regenerate from that source; --force overwrites generated files and preserves
-unrelated destination files. It does not merge local edits or delete stale files.
-"""
+    def _chat(self, request: ChatRequest) -> ChatResult:
+        payload = {
+            "model": self._settings.ollama_model,
+            "messages": [
+                {"role": item.role.value, "content": item.content}
+                for item in request.messages
+            ],
+            "stream": False,
+        }
+        outgoing = urllib.request.Request(
+            self._settings.ollama_base_url.rstrip("/") + "/api/chat",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(
+                outgoing, timeout=self._settings.model_timeout_seconds
+            ) as response:
+                status = response.status
+                raw = response.read(1048577)
+        except urllib.error.HTTPError as error:
+            error.close()
+            raise ModelResponseRejectedError("Model returned an HTTP error") from None
+        except urllib.error.URLError as error:
+            if isinstance(error.reason, (ConnectionRefusedError, socket.gaierror)):
+                raise ModelPreflightError(
+                    "Model connection could not be established"
+                ) from error
+            raise ModelResponseUncertainError(
+                "Model transport failed; effects unknown"
+            ) from error
+        except (OSError, http.client.HTTPException) as error:
+            raise ModelResponseUncertainError(
+                "Model transport failed; effects unknown"
+            ) from error
+        if len(raw) > 1048576:
+            raise ModelResponseUncertainError("Model response exceeded transport limit")
+        if status != 200:
+            raise ModelResponseRejectedError("Model returned an HTTP error")
+        try:
+            data = json.loads(raw)
+        except ValueError, UnicodeError, RecursionError:
+            raise ModelResponseRejectedError("Model returned invalid JSON") from None
+        message = data.get("message") if isinstance(data, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if type(content) is not str:
+            raise ModelResponseRejectedError("Model response has no text content")
+        return ChatResult(content)
+'''
+README = '# Standalone assessment starter\n\nThis generated project has no dependency on LegoAI. Its immutable Chat contracts\nwere deliberately reduced to roles, messages, requests, response text, an async\nModelPort and FixedModel. Provider/model identities, usage accounting, embedding,\ntenant context, routing, governance, plugins, execution, agents, RAG, workflow,\nand configuration persistence are omitted.\n\nFixedModel is the default: no API key, external model call or token consumption.\nPython 3.14, uv and Node.js 22.12+ (or Node 24) are required.\n\n## Run\n\nIn one terminal:\n\n```powershell\ncd backend\nuv sync\nuv run uvicorn app.main:app --host 127.0.0.1 --port 8001\n```\n\nIn another:\n\n```powershell\ncd frontend\nnpm install\nnpm run dev\n```\n\nOpen the URL printed by Vite. Its development proxy forwards /api to localhost:8001.\nGET http://127.0.0.1:8001/health returns {"status":"ok"}.\nPOST /api/v1/ask accepts {"question":"Hello"} and returns {"answer":"..."}.\nThe same fixed answer is intentional. Empty, non-string, oversized or extra-field\nrequests are rejected. Dependencies must be installed before offline use.\nOn Windows with restricted PowerShell script execution, use npm.cmd.\n\n## Verify\n\n```powershell\ncd backend\nuv run pytest\nuv run mypy src tests\nuv run ruff check .\nuv run ruff format --check .\ncd ../frontend\nnpm test\nnpm run build\nnpm run lint\n```\n\nTests use an in-process HTTP client and prohibit external socket connections.\nNo Docker or Git initialization is required. Built frontend assets need a host\nthat proxies /api to the backend; Vite preview is a static preview, not that host.\n\n## Extend\n\nImplement async chat(request: ChatRequest) -> ChatResult in an adapter and inject\nit with create_app(model=your_adapter). Keep SDK types and credentials inside\nexplicit adapter composition. Define provider timeout, cancellation and safe error\ntranslation before enabling live calls. Do not silently add retries.\n\nThis is a local application starter, not a production deployment: authentication,\nrate limits, persistence, HTTPS and deployment policy are not supplied.\nNo provider generation or transport resource guarantees are implied.\n\nGenerated from the maintained in-repository example by export_assessment_starter.py.\nRegenerate from that source; --force overwrites generated files and preserves\nunrelated destination files. It does not merge local edits or delete stale files.\n\n## Choose the model\n\nEdit startup configuration, not the service or routes. The factory is\nbackend/src/app/model_factory.py; fixtures.py is only the offline fixture.\nDefault MODEL_PROVIDER=fixed makes no model calls.\n\nFor a real Ollama model installed on your server:\n```powershell\n$env:MODEL_PROVIDER = "ollama"\n$env:OLLAMA_MODEL = "your-installed-chat-model"\n$env:OLLAMA_BASE_URL = "http://127.0.0.1:11434"\n$env:MODEL_TIMEOUT_SECONDS = "10"\nuv run uvicorn app.main:app --host 127.0.0.1 --port 8001\n```\n\nRestart the backend after changing settings. The frontend proxy must use the same\nbackend port (currently 8001). To return offline, set `$env:MODEL_PROVIDER = "fixed"`\nand restart. .env.example lists available variables; no .env file is automatically\nloaded. Invalid providers, missing Ollama model names or invalid URLs/timeouts\nfail startup. There is no fallback to the fake when Ollama fails.\n\n\nThe standalone Chat-only adapter is backend/src/app/ollama.py. It uses no SDK\nor platform imports. Responses are read with a 1 MiB ceiling; generation remains\nprovider controlled. Socket timeouts do not bound total generation time, and\ncoroutine cancellation does not stop a running worker. Model failures return\nsafe HTTP 502 errors without automatic retry. Credentials and production\nauthorization remain outside this local starter.\n'
 GITIGNORE = """__pycache__/
 *.py[cod]
 .venv/
@@ -249,6 +286,8 @@ def copy_backend_example() -> dict[str, str]:
         target = name.replace("src/assessment_starter/", "src/app/")
         if name == "src/assessment_starter/fixtures.py":
             content = FIXTURES
+        elif name == "src/assessment_starter/model_factory.py":
+            content = MODEL_FACTORY
         elif name == "pyproject.toml":
             content = content.replace(', "legoai-reference"', "")
             content = content.replace(
@@ -295,6 +334,7 @@ def verify_export(destination: Path) -> None:
 def build_files() -> dict[str, str]:
     files = copy_backend_example() | copy_frontend()
     files["backend/src/app/model.py"] = CONTRACTS
+    files["backend/src/app/ollama.py"] = OLLAMA_ADAPTER
     files["README.md"] = README
     files[".gitignore"] = GITIGNORE
     verify_contents(files)

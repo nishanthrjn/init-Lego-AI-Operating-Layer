@@ -15,7 +15,7 @@ From this directory, in separate terminals:
 ```powershell
 cd backend
 uv sync --locked
-uv run uvicorn assessment_starter.main:app --host 127.0.0.1 --port 8000
+uv run uvicorn assessment_starter.main:app --host 127.0.0.1 --port 8001
 ```
 
 ```powershell
@@ -24,16 +24,17 @@ npm ci
 npm run dev
 ```
 
-Open Vite's printed URL. The dev proxy sends /api to port 8000.
-GET /health on port 8000 reports health; POST /api/v1/ask accepts
-{"question":"Hello"}. The fixed answer is intentional. No external model, key,
+Open Vite's printed URL. The dev proxy sends /api to port 8001.
+GET /health on port 8001 reports health; POST /api/v1/ask accepts
+{"question":"Hello"}. The fixed answer is intentional. In default fixed mode, no external model, key,
 network service or tokens are needed after dependencies are installed.
 Use npm.cmd on Windows if PowerShell blocks npm.ps1.
 
 The backend has its own environment and editable dependency on the repository
 root. No frontend/backend runtime dependencies are added to the LegoAI package.
-Settings and ModelPort are passed explicitly to create_app. .env.example is
-documentation; the app does not implicitly load environment variables or secrets.
+Settings and ModelPort are passed explicitly to create_app. The server entry point
+reads validated model settings from environment variables once at startup.
+.env.example documents them; no .env file or secret is loaded automatically.
 
 ## Verify
 
@@ -77,8 +78,49 @@ are maintained here, then regenerated. Reduced standalone model/fixture text is
 maintained in scripts/export_assessment_starter.py, not a second application tree.
 
 This is an offline local starter, not an authenticated production deployment.
-A future provider adapter needs explicit credentials, timeout, cancellation and
+Additional providers need explicit credentials, timeout, cancellation and
 error semantics. Built frontend assets need a same-origin /api reverse proxy;
 Vite preview alone is not a full-stack deployment. Docker is unnecessary here.
 
 Frontend tests use Vitest, React Testing Library and mocked fetch: no running backend or external network is needed. Use npm run test:watch for watch mode. Regenerate standalone projects to receive these tests.
+
+## Choose the model
+
+The application model factory is `backend/src/assessment_starter/model_factory.py`.
+`fixtures.py` only constructs the offline test fixture. The API and service do not
+construct providers. `main.py` reads validated environment settings once at startup
+and calls this factory. Programmatic `create_app(settings, model=...)` supports
+explicit injection, which takes precedence over the configured provider.
+
+Default: `MODEL_PROVIDER=fixed`. No model call or API key is required.
+
+For Ollama, in the backend terminal (replace the model name with one installed
+on your Ollama server):
+
+```powershell
+$env:MODEL_PROVIDER = "ollama"
+$env:OLLAMA_MODEL = "your-installed-chat-model"
+$env:OLLAMA_BASE_URL = "http://127.0.0.1:11434"
+$env:MODEL_TIMEOUT_SECONDS = "10"
+uv run uvicorn assessment_starter.main:app --host 127.0.0.1 --port 8001
+```
+
+Restart the backend after changing settings. The frontend proxy must use the same
+backend port (currently 8001). To return offline, set `$env:MODEL_PROVIDER = "fixed"`
+and restart. .env.example lists available variables; no .env file is automatically
+loaded. Invalid providers, missing Ollama model names or invalid URLs/timeouts
+fail startup. There is no fallback to the fake when Ollama fails.
+
+The in-repository example uses the existing LegoAI Ollama adapter. Its required
+embedding-model field has an unused placeholder; this application never calls
+embedding. Generated standalone projects use a Chat-only standard-library adapter
+in `backend/src/app/ollama.py`, selected by `backend/src/app/model_factory.py`.
+They contain no platform imports. The standalone response-read ceiling is 1 MiB;
+this does not bound provider generation. The existing LegoAI adapter retains its
+existing buffered transport behavior.
+
+Both use the [Ollama Chat API](https://docs.ollama.com/api/chat) with streaming
+disabled. Provider failures return a safe HTTP 502 without raw provider text.
+No retry is attempted. The socket timeout is not an overall generation deadline;
+cancelling the waiting coroutine does not stop its underlying blocking worker.
+Authenticated/hosted providers and production authorization remain out of scope.

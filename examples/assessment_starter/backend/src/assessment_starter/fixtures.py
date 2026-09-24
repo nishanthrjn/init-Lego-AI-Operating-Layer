@@ -1,4 +1,4 @@
-"""Offline composition using valid, existing LegoAI values."""
+"""Offline test fixture; runtime provider selection lives in model_factory.py."""
 
 from legoai.intelligence.model.values import ChatResult, ModelId, ModelUsage, ProviderId
 from legoai.reference.model_fake import FixedModel
