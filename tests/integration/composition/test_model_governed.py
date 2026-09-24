@@ -9,6 +9,7 @@ fake `ModelPort` (no live Ollama/network required by default -- task SS17).
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -22,6 +23,7 @@ from legoai.capabilities.values import (
 from legoai.execution.ports import (
     CoordinationOutcome,
     CoordinationRequest,
+    ExecutionTransitionError,
     SecurityContextResolutionPort,
 )
 from legoai.execution.values import (
@@ -36,6 +38,12 @@ from legoai.intelligence.model.ports import (
     ModelPreflightError,
     ModelResponseRejectedError,
     ModelResponseUncertainError,
+)
+from legoai.intelligence.model.routing import (
+    ModelBinding,
+    ModelRequirement,
+    ModelRouteDecision,
+    ModelRouteStatus,
 )
 from legoai.intelligence.model.values import (
     ChatMessage,
@@ -60,12 +68,14 @@ from legoai.kernel.identity import (
 from legoai.kernel.references import (
     ApplicationRef,
     ConfigurationRef,
+    ConfigurationRevisionRef,
     OperationRef,
     PrincipalRef,
     ReferenceScope,
 )
 from legoai.kernel.versions import Version
 from legoai.plugins.ports import PluginAdmissionId
+from legoai.plugins.values import PluginDeclaration, PluginId
 from legoai.reference.catalog import InMemoryCatalog
 from legoai.reference.evidence import InMemoryEvidenceCustody
 from legoai.reference.execution import (
@@ -77,11 +87,14 @@ from legoai.reference.model import (
     ollama_chat_capability_id,
     ollama_declaration,
 )
+from legoai.reference.model_routing import DeterministicModelRouter
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
 from legoai.reference.resolution import ResolutionStatus, resolve
 from legoai.runtime._composition.model_governed import (
+    ConfiguredModelBinding,
     invoke_governed_chat,
     invoke_governed_embedding,
+    invoke_routed_chat,
 )
 from tests.support.execution import ImmediateSecurityContextResolver
 from tests.support.governance import (
@@ -111,7 +124,9 @@ def _operation(tenant: str = "tenant") -> OperationRef:
 
 
 class _Environment:
-    def __init__(self, *, tenant: str = "tenant") -> None:
+    def __init__(
+        self, *, tenant: str = "tenant", declaration: PluginDeclaration | None = None
+    ) -> None:
         self.tenant = tenant
         self.grantee = _principal("service")
         self.grant_state = InMemoryGrantStateFake()
@@ -126,7 +141,8 @@ class _Environment:
             self.authorization, self.catalog, self.evidence, self.approval_use
         )
 
-        declaration = ollama_declaration()
+        if declaration is None:
+            declaration = ollama_declaration()
         discovered = inspect(declaration)
         validation = validate(discovered, declaration, evaluated_at=_EPOCH)
         record = admit(
@@ -462,5 +478,324 @@ def test_concurrent_governed_chat_calls_only_one_reaches_provider() -> None:
         failures = [o for o in outcomes if isinstance(o, Exception)]
         assert len(successes) == 1
         assert len(failures) == 1
+
+    asyncio.run(scenario())
+
+
+def _routed_binding(
+    env: _Environment, adapter: _FakeModelPort
+) -> tuple[ModelRouteDecision, ConfiguredModelBinding]:
+    requirement = ModelRequirement("engineering-reasoning")
+    binding = ModelBinding(
+        "reasoning", requirement, ModelId("fake-model"), ProviderId("fake-provider")
+    )
+    revision = ConfigurationRevisionRef(_target(env.tenant), "r1", Version(1, 0, 0))
+    route = DeterministicModelRouter(revision, (binding,)).route(
+        requirement, TenantContext(TenantId(env.tenant))
+    )
+    assert route.status is ModelRouteStatus.RESOLVED
+    assert adapter.chat_calls == 0
+    entry = env._resolve(ollama_chat_capability_id())
+    return route, ConfiguredModelBinding(revision, binding, entry, adapter)
+
+
+def _routed_result() -> ChatResult:
+    return ChatResult(
+        "routed answer", ModelId("fake-model"), ProviderId("fake-provider"), None
+    )
+
+
+@pytest.mark.parametrize(
+    ("error", "effect"),
+    [
+        (None, EffectExtent.COMPLETED),
+        (ModelPreflightError("before send"), EffectExtent.NONE),
+        (ModelResponseUncertainError("after send"), EffectExtent.UNKNOWN),
+        (ModelResponseRejectedError("rejected"), EffectExtent.NONE),
+    ],
+)
+def test_routed_chat_uses_governed_path_and_preserves_effects(
+    error: Exception | None, effect: EffectExtent
+) -> None:
+    async def scenario() -> None:
+        # A different admitted Plugin supplies the same chat contract. Neither
+        # the logical requirement nor routing has to know its provider identity.
+        declaration = replace(
+            ollama_declaration(),
+            plugin_id=PluginId("legoai.test", "fake-model-adapter"),
+        )
+        env = _Environment(declaration=declaration)
+        adapter = _FakeModelPort(chat_result=_routed_result(), chat_error=error)
+        route, configured = _routed_binding(env, adapter)
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=env.grant()))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        request = ChatRequest((ChatMessage(ChatRole.USER, "hi"),))
+        execution, output = await invoke_routed_chat(
+            coordinator, coordination, request, route, configured
+        )
+        assert adapter.chat_calls == 1
+        assert adapter.embed_calls == 0
+        assert execution.effect is effect
+        if error is None:
+            assert execution.final_state is ExecutionState.SUCCEEDED
+            assert output == _routed_result()
+        else:
+            assert execution.final_state is ExecutionState.FAILED
+            assert output is None
+        with pytest.raises(ExecutionTransitionError):
+            await invoke_routed_chat(
+                coordinator, coordination, request, route, configured
+            )
+        assert adapter.chat_calls == 1
+
+    asyncio.run(scenario())
+
+
+def test_routed_selection_does_not_authorize_invocation() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        adapter = _FakeModelPort(chat_result=_routed_result())
+        route, configured = _routed_binding(env, adapter)
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=None))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        assert coordination.category is ErrorCategory.AUTHORIZATION_DENIED
+        with pytest.raises(ValueError, match="READY"):
+            await invoke_routed_chat(
+                coordinator,
+                coordination,
+                ChatRequest((ChatMessage(ChatRole.USER, "hi"),)),
+                route,
+                configured,
+            )
+        assert adapter.chat_calls == 0
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "mismatch",
+    [
+        "revision",
+        "model",
+        "provider",
+        "binding",
+        "entry",
+        "subject",
+        "absent",
+        "ambiguous",
+    ],
+)
+def test_routed_mismatch_never_substitutes_or_invokes(mismatch: str) -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        adapter = _FakeModelPort(chat_result=_routed_result())
+        route, configured = _routed_binding(env, adapter)
+        original = configured
+        if mismatch == "revision":
+            configured = replace(
+                configured,
+                configuration_revision=replace(
+                    configured.configuration_revision, revision="r2"
+                ),
+            )
+        elif mismatch == "model":
+            configured = replace(
+                configured,
+                binding=replace(configured.binding, model_id=ModelId("other")),
+            )
+        elif mismatch == "provider":
+            configured = replace(
+                configured,
+                binding=replace(configured.binding, provider_id=ProviderId("other")),
+            )
+        elif mismatch == "binding":
+            configured = replace(
+                configured, binding=replace(configured.binding, binding_id="other")
+            )
+        elif mismatch == "entry":
+            configured = replace(
+                configured,
+                entry=replace(
+                    configured.entry, admission_id=PluginAdmissionId("other")
+                ),
+            )
+        elif mismatch == "subject":
+            revision = replace(
+                configured.configuration_revision,
+                configuration=replace(_target(), instance="other"),
+            )
+            route = replace(route, configuration_revision=revision)
+            configured = replace(configured, configuration_revision=revision)
+        elif mismatch == "absent":
+            route = replace(route, candidates=())
+        else:
+            route = replace(
+                route,
+                candidates=(
+                    configured.binding,
+                    replace(configured.binding, binding_id="other"),
+                ),
+            )
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=env.grant()))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(original.entry)
+        )
+        execution, output = await invoke_routed_chat(
+            coordinator,
+            coordination,
+            ChatRequest((ChatMessage(ChatRole.USER, "hi"),)),
+            route,
+            configured,
+        )
+        assert output is None
+        assert execution.final_state is ExecutionState.FAILED
+        assert execution.effect is EffectExtent.NONE
+        assert adapter.chat_calls == 0
+
+    asyncio.run(scenario())
+
+
+def test_routed_response_identity_mismatch_is_rejected_without_fallback() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        adapter = _FakeModelPort(
+            chat_result=replace(_routed_result(), model_identity=ModelId("wrong"))
+        )
+        route, configured = _routed_binding(env, adapter)
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=env.grant()))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        execution, output = await invoke_routed_chat(
+            coordinator,
+            coordination,
+            ChatRequest((ChatMessage(ChatRole.USER, "hi"),)),
+            route,
+            configured,
+        )
+        assert output is None
+        assert execution.final_state is ExecutionState.FAILED
+        assert execution.effect is EffectExtent.NONE
+        assert adapter.chat_calls == 1
+
+    asyncio.run(scenario())
+
+
+def test_routed_chat_and_existing_chat_share_the_same_invocation_claim() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        adapter = _FakeModelPort(chat_result=_routed_result())
+        route, configured = _routed_binding(env, adapter)
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=env.grant()))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        request = ChatRequest((ChatMessage(ChatRole.USER, "hi"),))
+        results = await asyncio.gather(
+            invoke_routed_chat(coordinator, coordination, request, route, configured),
+            invoke_governed_chat(coordinator, coordination, request, adapter),
+            return_exceptions=True,
+        )
+        assert adapter.chat_calls == 1
+        assert (
+            sum(isinstance(result, ExecutionTransitionError) for result in results) == 1
+        )
+
+    asyncio.run(scenario())
+
+
+def test_configured_binding_rejects_wrong_tenant_and_operation_kind() -> None:
+    env = _Environment()
+    _, configured = _routed_binding(env, _FakeModelPort())
+    with pytest.raises(ValueError, match="tenant"):
+        replace(
+            configured,
+            entry=replace(
+                configured.entry, tenant_context=TenantContext(TenantId("other"))
+            ),
+        )
+    with pytest.raises(ValueError, match="chat"):
+        replace(configured, entry=env.embedding_entry)
+
+
+def test_routed_chat_requires_this_coordinators_actual_admission() -> None:
+    async def scenario() -> None:
+        env = _Environment()
+        adapter = _FakeModelPort(chat_result=_routed_result())
+        route, configured = _routed_binding(env, adapter)
+        resolver = ImmediateSecurityContextResolver(
+            env.security_context(grant=env.grant())
+        )
+        coordinator = env.coordinator(resolver)
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        with pytest.raises(ExecutionTransitionError):
+            await invoke_routed_chat(
+                env.coordinator(resolver),
+                coordination,
+                ChatRequest((ChatMessage(ChatRole.USER, "hi"),)),
+                route,
+                configured,
+            )
+        assert adapter.chat_calls == 0
+
+    asyncio.run(scenario())
+
+
+def test_routed_mismatch_cannot_settle_an_inflight_invocation() -> None:
+    async def scenario() -> None:
+        started, finish = asyncio.Event(), asyncio.Event()
+
+        class WaitingModel(_FakeModelPort):
+            async def chat(self, request: ChatRequest) -> ChatResult:
+                started.set()
+                await finish.wait()
+                return await super().chat(request)
+
+        env = _Environment()
+        adapter = WaitingModel(chat_result=_routed_result())
+        route, configured = _routed_binding(env, adapter)
+        coordinator = env.coordinator(
+            ImmediateSecurityContextResolver(env.security_context(grant=env.grant()))
+        )
+        coordination = await coordinator.coordinate(
+            env.coordination_request(configured.entry)
+        )
+        request = ChatRequest((ChatMessage(ChatRole.USER, "hi"),))
+        async with asyncio.TaskGroup() as group:
+            pending = group.create_task(
+                invoke_routed_chat(
+                    coordinator, coordination, request, route, configured
+                )
+            )
+            await asyncio.wait_for(started.wait(), timeout=5)
+            try:
+                with pytest.raises(ExecutionTransitionError):
+                    await invoke_routed_chat(
+                        coordinator,
+                        coordination,
+                        request,
+                        replace(route, candidates=()),
+                        configured,
+                    )
+            finally:
+                finish.set()
+        assert pending.result()[0].final_state is ExecutionState.SUCCEEDED
+        assert adapter.chat_calls == 1
 
     asyncio.run(scenario())

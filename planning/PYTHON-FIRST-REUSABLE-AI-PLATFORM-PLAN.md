@@ -15,8 +15,10 @@ are complete for the documented trusted-local Windows scope. M6 engineering
 workload isolation implementation and local qualification are complete for the
 documented Windows Docker Desktop Linux scope. See
 [M6 implementation and scope](ENGINEERING-M6-IMPLEMENTATION.md) and the
-[qualification handoff](../packages/legoai-engineering/README.md#m6-engineering-workload-isolation). M6.5 and M7 are
-unstarted.
+[qualification handoff](../packages/legoai-engineering/README.md#m6-engineering-workload-isolation).
+M6.5 implementation is complete with local validation pending; M7 is unstarted.
+See the [M6.5 design](M6.5-MODEL-ROUTING-PLAN.md) and
+[validation handoff](../docs/model-routing.md#local-validation-required).
 Other remaining Phase C and later work remains planned and unstarted.
 
 ## A. Corrected product direction
@@ -613,3 +615,24 @@ warnings, with no whitespace errors reported. The sole pytest skip was unrelated
 to M5; Windows symlink and junction checks passed. Qualification is limited to
 the documented trusted-local Windows scope; no POSIX or sandbox claim follows.
 `ENGINEERING_M5_COMPLETE = YES`; M6 remains unstarted.
+
+## M6.5 implementation handoff
+
+M1–M6 retain their documented qualification. M6.5 implements exact Chat profile
+selection through ModelRequirement, ModelBinding, ModelRouteStatus,
+ModelRouteDecision, ModelRouterPort and DeterministicModelRouter. Configuration
+revision and selected binding remain pinned; private composition checks their
+correspondence and reuses the existing governed Chat claim/effect path.
+
+No new dependency, distribution, provider, configuration store or canonical/ADR
+change. Ollama, DocuMind, Document Pack and engineering source are unchanged.
+Shared Chat composition changes require the documented DocuMind regression.
+ADR-012 remains Proposed and M6 qualification is unchanged.
+
+Focused routing, architecture, governance/replay/effect, installed-wheel and
+offline-example tests are authored. Same-assistant static review is the only
+internal verification; no tests, mypy, Ruff, builds, installs or examples ran.
+Follow the [local commands](../docs/model-routing.md#local-validation-required).
+**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING.**
+`MODEL_ROUTING_M6_5_COMPLETE = NO` until returned local evidence is reviewed.
+M7 remains unstarted. Stop for local validation.

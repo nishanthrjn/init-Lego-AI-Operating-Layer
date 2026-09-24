@@ -46,7 +46,10 @@ unimplemented. M6 adds a separate bounded Python sandbox capability targeting
 Docker Desktop Linux. Implementation and local qualification are complete for
 the documented bounded workload scope; see the [M6 completion report](planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).
 Engineering workload isolation is distinct from Plugin isolation: ADR-012 remains
-Proposed. M6.5 model routing and M7 Agent foundation remain unstarted.
+Proposed. [M6.5 model routing](docs/model-routing.md) is implemented, with local
+validation pending. It maps logical Chat profiles to immutable configured model
+bindings without provider I/O or authorization; actual calls retain governed
+execution. M7 Agent foundation remains unstarted.
 
 ## Quickstart: the DocuMind CLI
 

@@ -439,11 +439,27 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # maximum (K, C, M, A, G, R, O, X) would separately
                         # permit those for a future ports.py-level need.
                         errors.add("intelligence-owner")
+                    if name == "legoai.intelligence.model.routing" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.intelligence.model.values"
+                        or target.startswith("legoai.intelligence.model.values.")
+                    ):
+                        errors.add("intelligence-owner")
+                    if name == "legoai.reference.model_routing" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or target == "legoai.intelligence.model.routing"
+                        or target.startswith("legoai.intelligence.model.routing.")
+                    ):
+                        errors.add("reference-owner")
                     if name == "legoai.intelligence.model.ports" and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.intelligence.model.values"
                         or target.startswith("legoai.intelligence.model.values.")
+                        or target == "legoai.intelligence.model.routing"
+                        or target.startswith("legoai.intelligence.model.routing.")
                     ):
                         # ModelPort's two operations and its three effect-
                         # phase exceptions need only this owner's own values
@@ -536,6 +552,8 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.intelligence.model.ports.")
                         or target == "legoai.reference.model"
                         or target.startswith("legoai.reference.model.")
+                        or target == "legoai.intelligence.model.routing"
+                        or target.startswith("legoai.intelligence.model.routing.")
                         or target == "legoai.runtime"
                         or target.startswith("legoai.runtime._composition")
                     ):

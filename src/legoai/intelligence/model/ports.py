@@ -5,6 +5,9 @@ names a single "Model Port," not two -- splitting generation and embedding
 into separate Ports would invent structure authority does not ask for, not
 avoid combining unrelated concerns for convenience.
 
+M6.5 adds ModelRouterPort for pure configuration selection. It performs no
+interaction and leaves ModelPort's two operations unchanged.
+
 **Three exception classes, one per observable effect phase** -- this is the
 seam `planning/V0.1-DOCUMIND-IMPLEMENTATION-PLAN.md` SS G requires so a
 caller (the composition-layer invocation wiring, never this module) can map
@@ -41,12 +44,14 @@ call by an outer permitted consumer, never imported into this Port itself.
 
 from typing import Protocol
 
+from legoai.intelligence.model.routing import ModelRequirement, ModelRouteDecision
 from legoai.intelligence.model.values import (
     ChatRequest,
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
 )
+from legoai.kernel.context import TenantContext
 
 
 class ModelPreflightError(Exception):
@@ -81,3 +86,18 @@ class ModelPort(Protocol):
     async def chat(self, request: ChatRequest) -> ChatResult: ...
 
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResult: ...
+
+
+class ModelRouterPort(Protocol):
+    """Pure Chat configuration selection, separate from ModelPort invocation.
+
+    Exact logical profile matching returns all candidates in configuration order:
+    zero means NO_MATCH, one RESOLVED, more AMBIGUOUS. No default or fallback.
+    Implementations validate explicit tenant scope and pin configuration identity.
+    Routing performs no I/O, authority decision, dispatch or model call. Invalid
+    types/configuration raise TypeError/ValueError; normal misses are results.
+    """
+
+    def route(
+        self, requirement: ModelRequirement, tenant_context: TenantContext
+    ) -> ModelRouteDecision: ...
