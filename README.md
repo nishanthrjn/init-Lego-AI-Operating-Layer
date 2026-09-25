@@ -1,5 +1,10 @@
 # LegoAI
 
+A narrow [configuration-selected Model composition proof](docs/model-composition.md)
+now builds on admitted Catalog contributions and existing governed invocation.
+It includes two adapter realizations with offline substitution tests; live-provider
+behavioral qualification and a public application-authoring facade remain future work.
+
 LegoAI is a Python-first platform and reusable component ecosystem for composing
 governed AI applications. Reusable Python capabilities and the governed runtime
 are its implementation foundation; providers, frameworks and protocols integrate

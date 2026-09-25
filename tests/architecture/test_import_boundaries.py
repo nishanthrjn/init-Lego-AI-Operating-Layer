@@ -558,6 +558,13 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target == "legoai.intelligence.model.routing"
                         or target.startswith("legoai.intelligence.model.routing.")
                         or (
+                            name == "legoai.runtime._composition.model_selection"
+                            and (
+                                target == "legoai.plugins.ports"
+                                or target.startswith("legoai.plugins.ports.")
+                            )
+                        )
+                        or (
                             name == "legoai.runtime._composition.agent"
                             and target.startswith("legoai.execution.agent.ports")
                         )
@@ -2118,7 +2125,9 @@ def test_composition_root_never_imports_asyncio_or_threading() -> None:
                 assert module_root not in {"asyncio", "threading"}, path
 
 
-@pytest.mark.parametrize("filename", ["governed.py", "model_governed.py"])
+@pytest.mark.parametrize(
+    "filename", ["governed.py", "model_governed.py", "model_selection.py"]
+)
 def test_composition_root_does_not_hide_coordinator_behind_generic_lookup(
     filename: str,
 ) -> None:
