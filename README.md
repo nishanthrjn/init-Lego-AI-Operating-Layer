@@ -98,3 +98,9 @@ See [docs/development.md](docs/development.md) for running this
 package's own test suite, mypy, and ruff.
 
 See [foundational ports and adapters](docs/ports-and-adapters.md) for existing contracts, offline injection and persistence test support.
+
+
+Local ComfyUI text-to-image integration is implemented in the optional
+[generative-media package](packages/legoai-generative-media/README.md).
+[Local validation is pending](planning/COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md);
+ComfyUI remains an external operator-managed runtime.
