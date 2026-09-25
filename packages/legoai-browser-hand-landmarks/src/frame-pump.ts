@@ -12,6 +12,7 @@ export class FramePump<F extends LocalFrame> {
   private generation = 0;
   private busy = false;
   private sequence = 0;
+  submitted = 0;
   processed = 0;
   dropped = 0;
   constructor(
@@ -34,6 +35,7 @@ export class FramePump<F extends LocalFrame> {
       this.sequence++;
       const request = parseFrame({ schemaVersion: 1, frameId: this.sequence, timestampMs,
         width: frame.width, height: frame.height }, this.config);
+      this.submitted = Math.min(this.submitted + 1, 1_000_000_000);
       const output = parseResult(await this.adapter.process(request, frame));
       if (output.frameId !== request.frameId) throw new Error("FRAME_ID");
       if (this.active && generation === this.generation) {
@@ -41,8 +43,8 @@ export class FramePump<F extends LocalFrame> {
         this.accept(output);
       }
     } finally {
-      frame?.close(); // safe also for transferred ImageBitmap
-      this.busy = false;
+      try { frame?.close(); } // safe also for transferred ImageBitmap
+      finally { this.busy = false; }
     }
   }
 }

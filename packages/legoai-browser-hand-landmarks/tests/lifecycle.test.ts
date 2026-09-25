@@ -128,3 +128,34 @@ test("malformed worker response fails safely without leaking response", async ()
   assert.equal((await initialized).reason,"OUTPUT");
   await client.stop();
 });
+
+for (const failure of ["capture", "inference", "close"] as const) {
+  test("in-flight slot is released after " + failure + " failure", async () => {
+    let captures = 0, calls = 0, closes = 0;
+    const adapter: HandAdapter<LocalFrame> = {
+      initialize: async () => result(0, "SUCCESS", "OK"), stop: async () => {},
+      process: async request => {
+        calls++;
+        if (failure === "inference" && calls === 1) throw new Error("INFERENCE");
+        return result(request.frameId, "SUCCESS", "OK");
+      },
+    };
+    const outputs: HandResult[] = [];
+    const pump = new FramePump(adapter, DEFAULT_CONFIG, async () => {
+      captures++;
+      if (failure === "capture" && captures === 1) throw new Error("CAPTURE");
+      return { width: 10, height: 10, close() {
+        closes++;
+        if (failure === "close" && closes === 1) throw new Error("CLOSE");
+      } };
+    }, output => outputs.push(output));
+    pump.start();
+    await assert.rejects(pump.tick(1));
+    await pump.tick(2);
+    assert.equal(captures, 2);
+    assert.equal(pump.dropped, 0);
+    assert.equal(pump.submitted, failure === "capture" ? 1 : 2);
+    assert.equal(outputs.at(-1)?.status, "SUCCESS");
+    pump.stop();
+  });
+}
