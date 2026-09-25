@@ -55,6 +55,7 @@ class LocalHTTP:
                     asyncio.open_connection(parsed.hostname, parsed.port, limit=65536),
                     3,
                 )
+                assert writer is not None  # Successful connection owns a writer.
                 headers = (
                     f"{method} {path} HTTP/1.1\r\nHost: {parsed.netloc}\r\n"
                     f"Connection: close\r\nAccept-Encoding: identity\r\n"
@@ -91,10 +92,10 @@ class LocalHTTP:
                     ):
                         raise ValueError("ambiguous framing")
                     for _ in range(65536):
-                        line = await reader.readuntil(b"\r\n")
-                        if len(line) > 128 or b";" in line:
+                        chunk_header = await reader.readuntil(b"\r\n")
+                        if len(chunk_header) > 128 or b";" in chunk_header:
                             raise ValueError("invalid chunk header")
-                        size = int(line.strip(), 16)
+                        size = int(chunk_header.strip(), 16)
                         if size < 0 or len(data) + size > limit:
                             raise ValueError("response oversized")
                         if size == 0:

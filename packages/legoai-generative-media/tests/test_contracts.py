@@ -17,7 +17,8 @@ from legoai_generative_media.workflow import ApprovedWorkflow
 def test_request_and_image() -> None:
     request = TextToImageRequest("red mug", 12)
     with pytest.raises(FrozenInstanceError):
-        request.prompt = "changed"
+        # Deliberately violate the frozen contract to verify runtime enforcement.
+        request.prompt = "changed"  # type: ignore[misc]
     image = GeneratedImage(
         png(), ProviderJobRef("comfyui", "local", "job"), workflow().reference, 12
     )
