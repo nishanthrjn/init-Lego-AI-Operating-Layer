@@ -1,5 +1,5 @@
 import {
-  CameraLease, DEFAULT_CONFIG, FramePump, WorkerHandAdapter, preflight,
+  CameraLease, DEFAULT_CONFIG, FramePump, WorkerHandAdapter, preflight, parseConfig,
 } from "../../packages/legoai-browser-hand-landmarks/src/index.js";
 import type { HandResult } from "../../packages/legoai-browser-hand-landmarks/src/index.js";
 
@@ -12,6 +12,7 @@ const video = element("video", HTMLVideoElement);
 const overlay = element("overlay", HTMLCanvasElement);
 const startButton = element("start", HTMLButtonElement);
 const previewButton = element("preview-only", HTMLButtonElement);
+const handLimit = element("hand-limit", HTMLSelectElement);
 const deviceSelect = element("camera-device", HTMLSelectElement);
 const lastSession = element("last-session", HTMLPreElement);
 const stopButton = element("stop", HTMLButtonElement);
@@ -144,14 +145,14 @@ async function stop(message = "Stopped. Camera tracks closed."): Promise<void> {
   clearOverlay();
   status.textContent = message;
   showDiagnostics();
-  startButton.disabled = previewButton.disabled = deviceSelect.disabled = true;
+  startButton.disabled = previewButton.disabled = handLimit.disabled = deviceSelect.disabled = true;
   stopButton.disabled = true;
   const current = adapter;
   adapter = undefined;
   const shutdown = current?.stop() ?? closing ?? Promise.resolve();
   closing = shutdown;
   await shutdown;
-  if (closing === shutdown) { closing = undefined; startButton.disabled = previewButton.disabled = deviceSelect.disabled = permissionPending; }
+  if (closing === shutdown) { closing = undefined; startButton.disabled = previewButton.disabled = handLimit.disabled = deviceSelect.disabled = permissionPending; }
 }
 function accept(output: HandResult): void {
   safeCode = output.status === "SUCCESS" ? "RUNNING" : output.status + ":" + output.reason;
@@ -170,16 +171,17 @@ function accept(output: HandResult): void {
     context.arc(point.x * overlay.width, point.y * overlay.height, 4, 0, 2 * Math.PI);
     context.fill();
   }
-  status.textContent = output.hands.length === 0 ? "Running — no hand detected (success)." : "Running — 21 landmarks, local only.";
+  status.textContent = output.hands.length === 0 ? "Running — no hand detected (success)." : `Running — ${output.hands.length} hands / ${output.hands.length * 21} landmarks, local only.`;
 }
 async function start(raw = false): Promise<void> {
   if (opening || permissionPending || cameraReady || adapter || closing) return;
   mode = raw ? "raw" : "inference";
   overlay.hidden = raw;
   visualSignal = "NOT_SAMPLED";
+  const config = parseConfig({ ...DEFAULT_CONFIG, maxHands: Number(handLimit.value) });
   opening = true;
   const session = ++generation;
-  startButton.disabled = previewButton.disabled = deviceSelect.disabled = true;
+  startButton.disabled = previewButton.disabled = handLimit.disabled = deviceSelect.disabled = true;
   stopButton.disabled = false;
   cameraReady = workerReady = false;
   submitted = completed = dropped = 0;
@@ -193,7 +195,7 @@ async function start(raw = false): Promise<void> {
     adapter = current;
     status.textContent = "Initializing verified local assets…";
     let initialized: HandResult;
-    try { initialized = await current.initialize(DEFAULT_CONFIG); }
+    try { initialized = await current.initialize(config); }
     catch {
       if (session === generation) { safeCode = "WORKER_INITIALIZATION_FAILED"; await stop(safeCode); }
       return;
@@ -217,7 +219,7 @@ async function start(raw = false): Promise<void> {
         width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
     })).finally(() => {
       permissionPending = false;
-      if (session !== generation && !closing) startButton.disabled = previewButton.disabled = deviceSelect.disabled = false;
+      if (session !== generation && !closing) startButton.disabled = previewButton.disabled = handLimit.disabled = deviceSelect.disabled = false;
     });
     if (!stream || session !== generation) return;
     sessionTimer = setTimeout(() => { safeCode = "SESSION_DEADLINE"; void stop("Session limit reached (60 seconds). Press Start Camera to restart."); }, DEFAULT_CONFIG.sessionLimitMs);
@@ -249,7 +251,7 @@ async function start(raw = false): Promise<void> {
       return;
     }
     if (!current) throw new Error("WORKER_UNAVAILABLE");
-    pump = new FramePump(current, DEFAULT_CONFIG, async () => {
+    pump = new FramePump(current, config, async () => {
       if (video.videoWidth < 1 || video.videoWidth > 640 || video.videoHeight < 1 || video.videoHeight > 480) {
         if (session === generation) safeCode = "INVALID_FRAME_DIMENSIONS";
         throw new Error("FRAME");

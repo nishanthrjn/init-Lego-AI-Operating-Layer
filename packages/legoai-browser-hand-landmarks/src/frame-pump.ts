@@ -36,7 +36,7 @@ export class FramePump<F extends LocalFrame> {
       const request = parseFrame({ schemaVersion: 1, frameId: this.sequence, timestampMs,
         width: frame.width, height: frame.height }, this.config);
       this.submitted = Math.min(this.submitted + 1, 1_000_000_000);
-      const output = parseResult(await this.adapter.process(request, frame));
+      const output = parseResult(await this.adapter.process(request, frame), this.config.maxHands);
       if (output.frameId !== request.frameId) throw new Error("FRAME_ID");
       if (this.active && generation === this.generation) {
         this.processed = Math.min(this.processed + 1, 1_000_000_000);

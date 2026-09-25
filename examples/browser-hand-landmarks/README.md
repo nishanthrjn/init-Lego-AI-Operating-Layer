@@ -124,3 +124,18 @@ The 60-second limit remains; a separate last-session summary preserves counters
 before cleanup while current counters/readiness describe the stopped session.
 
 Only static inspection performed for these changes; local validation pending.
+
+## Bounded two-hand extension — local validation required
+
+The user has qualified the preceding one-hand slice: automated checks, live camera,
+MediaPipe inference, 21 landmarks, zero-hand success, stop/restart, and no media
+uploads on the tested application path. This does not qualify the new extension.
+
+Run `python .\validate_browser_hand_landmark.py`, then
+`npm.cmd --prefix packages/legoai-browser-hand-landmarks run dev` and reload
+http://127.0.0.1:5174. With Maximum hands at its default 1, verify one-hand tracking.
+Stop, select Maximum hands 2, and start again. Show two separated hands: expect
+"Running — 2 hands / 42 landmarks". Remove one hand, then both: expect one-hand
+and successful zero-hand results respectively. Verify stop/restart and Network
+with no media uploads. Selection is local to this page and locked during sessions.
+There are no hand identities, gestures or changes to mirroring/backpressure.

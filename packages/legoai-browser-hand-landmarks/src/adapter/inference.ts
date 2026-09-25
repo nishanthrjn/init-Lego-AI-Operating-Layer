@@ -25,7 +25,7 @@ export class Inference<F extends LocalFrame> {
       const elapsed = Math.max(0, this.now() - start);
       if (elapsed > this.config.frameDeadlineMs) return result(request.frameId, "DEADLINE", "FRAME");
       try {
-        if (raw.landmarks.length > 1 || raw.handedness.length !== raw.landmarks.length) throw new Error("OUTPUT");
+        if (raw.landmarks.length > this.config.maxHands || raw.handedness.length !== raw.landmarks.length) throw new Error("OUTPUT");
         const hands: Hand[] = raw.landmarks.map((points, index) => {
           const category = raw.handedness[index]?.[0];
           if (!category || (category.categoryName !== "Left" && category.categoryName !== "Right")) throw new Error("OUTPUT");

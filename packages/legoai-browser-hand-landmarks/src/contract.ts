@@ -20,7 +20,7 @@ export interface HandConfig {
   readonly implementation: typeof IMPLEMENTATION;
   readonly approvedAsset: typeof ASSET;
   readonly runningMode: "VIDEO";
-  readonly maxHands: 2;
+  readonly maxHands: 1 | 2;
   readonly localOnly: true;
   readonly maxWidth: number;
   readonly maxHeight: number;
@@ -59,6 +59,7 @@ export interface HandResult {
     backend: "CPU/WASM" | "fixture";
   }>;
   readonly durationMs: number;
+  // Array position is observational, never a persistent cross-frame identity.
   readonly hands: readonly Hand[];
 }
 export function closed(value: unknown, keys: readonly string[]): Record<string, unknown> {
@@ -85,14 +86,16 @@ export function integer(value: unknown, min: number, max: number): number {
 }
 export function parseConfig(value: unknown): HandConfig {
   const r = closed(value, Object.keys(DEFAULT_CONFIG));
-  for (const key of ["schemaVersion", "revision", "implementation", "approvedAsset", "runningMode", "maxHands", "localOnly"] as const) {
+  for (const key of ["schemaVersion", "revision", "implementation", "approvedAsset", "runningMode", "localOnly"] as const) {
     if (r[key] !== DEFAULT_CONFIG[key]) throw new Error("CONFIGURATION");
   }
   for (const key of ["maxWidth", "maxHeight", "frameDeadlineMs", "initializationDeadlineMs", "sessionLimitMs"] as const) {
     if (r[key] !== DEFAULT_CONFIG[key]) throw new Error("CONFIGURATION_REVISION");
   }
+  if (r.maxHands !== 1 && r.maxHands !== 2) throw new Error("MAX_HANDS");
   return Object.freeze({
     ...DEFAULT_CONFIG,
+    maxHands: r.maxHands,
     maxWidth: integer(r.maxWidth, 2, 640), maxHeight: integer(r.maxHeight, 2, 480),
     frameDeadlineMs: integer(r.frameDeadlineMs, 100, 5000),
     initializationDeadlineMs: integer(r.initializationDeadlineMs, 1000, 60000),
@@ -108,7 +111,8 @@ export function parseFrame(value: unknown, config: HandConfig): FrameRequest {
     width: integer(r.width, 1, config.maxWidth), height: integer(r.height, 1, config.maxHeight),
   });
 }
-export function parseResult(value: unknown): HandResult {
+export function parseResult(value: unknown, maxHands: 1 | 2 = 2): HandResult {
+  if (maxHands !== 1 && maxHands !== 2) throw new Error("MAX_HANDS");
   const r = closed(value, ["schemaVersion", "frameId", "configurationRevision", "status", "reason", "attribution", "durationMs", "hands"]);
   if (r.schemaVersion !== 1 || r.configurationRevision !== "hand-local-v1") throw new Error("VERSION");
   if (typeof r.status !== "string" || !Object.hasOwn(reasons, r.status)) throw new Error("STATUS");
@@ -118,7 +122,7 @@ export function parseResult(value: unknown): HandResult {
   const real = a.implementation === IMPLEMENTATION && a.asset === ASSET && a.digest === DIGEST && a.backend === "CPU/WASM";
   const fake = a.implementation === "fake" && a.asset === "fixture" && a.digest === "fixture" && a.backend === "fixture";
   if (!real && !fake) throw new Error("ATTRIBUTION");
-  if (!Array.isArray(r.hands) || r.hands.length > 1 || (status !== "SUCCESS" && r.hands.length !== 0)) throw new Error("HANDS");
+  if (!Array.isArray(r.hands) || r.hands.length > maxHands || (status !== "SUCCESS" && r.hands.length !== 0)) throw new Error("HANDS");
   const hands = r.hands.map((value: unknown): Hand => {
     const hasHandedness = value !== null && typeof value === "object" && Object.hasOwn(value, "handedness");
     const hand = closed(value, hasHandedness ? ["landmarks", "handedness"] : ["landmarks"]);
