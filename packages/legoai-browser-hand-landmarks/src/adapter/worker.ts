@@ -45,10 +45,14 @@ async function initialize(value: unknown): Promise<void> {
   // stop can be received while asset loading awaits.
   if ((state as string) === "closed") return;
   const [loaderBytes, wasmBytes, modelBytes] = buffers;
-  if (!loaderBytes || !wasmBytes || !modelBytes) return;
-  const loader = URL.createObjectURL(new Blob([loaderBytes], { type: "text/javascript" }));
-  const wasm = URL.createObjectURL(new Blob([wasmBytes], { type: "application/wasm" }));
+  if (!loaderBytes || !wasmBytes || !modelBytes) {
+    scope.postMessage(result(0, "INITIALIZATION_FAILURE", "ASSET")); return;
+  }
+  let loader: string | undefined;
+  let wasm: string | undefined;
   try {
+    loader = URL.createObjectURL(new Blob([loaderBytes], { type: "text/javascript" }));
+    wasm = URL.createObjectURL(new Blob([wasmBytes], { type: "application/wasm" }));
     task = await HandLandmarker.createFromOptions(
       { wasmLoaderPath: loader, wasmBinaryPath: wasm },
       { baseOptions: { modelAssetBuffer: new Uint8Array(modelBytes), delegate: "CPU" },
@@ -65,7 +69,10 @@ async function initialize(value: unknown): Promise<void> {
     state = "ready";
     scope.postMessage(result(0, "SUCCESS", "OK", [], performance.now() - start));
   } catch { scope.postMessage(result(0, "INITIALIZATION_FAILURE", "LOCAL_RUNTIME")); }
-  finally { URL.revokeObjectURL(loader); URL.revokeObjectURL(wasm); }
+  finally {
+    if (loader !== undefined) URL.revokeObjectURL(loader);
+    if (wasm !== undefined) URL.revokeObjectURL(wasm);
+  }
 }
 scope.onmessage = event => {
   const value = event.data;
@@ -77,7 +84,12 @@ scope.onmessage = event => {
     const tag = (value as { kind?: unknown }).kind;
     if (tag === "init") {
       const message = closed(value, ["kind", "config"]);
-      void initialize(message.config);
+      // The synchronous message-handler catch cannot catch async rejections.
+      void initialize(message.config).catch(() => {
+        if (state !== "closed") {
+          scope.postMessage(result(0, "INITIALIZATION_FAILURE", "LOCAL_RUNTIME"));
+        }
+      });
     } else if (tag === "stop") {
       closed(value, ["kind"]); finish();
     } else if (tag === "frame") {

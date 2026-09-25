@@ -64,3 +64,25 @@ preview moves, and whether the overlay moves. Do not send images, frames or
 biometric landmark data. If only VIDEO_WAITING_FOR_FRAME appears, the preview is
 not producing new usable frames; if submitted advances but completed does not,
 report the eventual worker/frame deadline or error code.
+
+### Initialization failure follow-up
+
+Static review found a code defect in error propagation: blob URL creation was
+outside the initialization catch, and the async message-handler call had no
+rejection handler. Such failures bypassed a structured initialization response
+and waited for the client's 30-second deadline. Missing asset buffers also
+returned silently. These paths now return an explicit initialization failure;
+partially created blob URLs are revoked. No inference moved to the UI thread.
+
+The reported loading symptom is not yet attributed to this defect: browser/version,
+safe panel values and network/console errors were supplied only as placeholders.
+Worker compatibility is therefore unconfirmed, not a demonstrated blocker.
+The example uses the fixed static host (not Vite), with /worker.js and /assets/*
+matching the build output and allowlist. The pinned SDK maps the WASM filename to
+its verified blob URL and receives model bytes directly. Frame submission starts
+only after worker initialization and camera readiness; VIDEO timestamps increase.
+A camera permission request can remain pending until the browser/user settles it.
+Report the actual safe status to distinguish that from worker initialization.
+
+Only static inspection was performed for this follow-up. Rerun the authoritative
+validation command above, restart the static host and reload before manual checks.
