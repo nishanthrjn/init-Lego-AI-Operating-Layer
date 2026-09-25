@@ -1,5 +1,9 @@
 # LegoAI
 
+The [browser-local hand-landmark slice](planning/BROWSER-HAND-LANDMARK-VERTICAL-SLICE.md)
+is implemented with local validation pending. It is isolated from Python Core;
+run its user validation launcher before the manual camera smoke test.
+
 A narrow [configuration-selected Model composition proof](docs/model-composition.md)
 now builds on admitted Catalog contributions and existing governed invocation.
 It includes two adapter realizations with offline substitution tests; live-provider
