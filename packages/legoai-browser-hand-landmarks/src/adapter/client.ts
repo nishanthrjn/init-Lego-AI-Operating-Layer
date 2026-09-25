@@ -62,7 +62,7 @@ export class WorkerHandAdapter implements HandAdapter<ImageBitmap> {
     worker.listen(value => {
       if (this.worker !== worker) return;
       try {
-        const output = parseResult(value);
+        const output = parseResult(value, this.config.maxHands);
         if (!this.pending || output.frameId !== this.pending.id ||
             output.attribution.implementation !== IMPLEMENTATION) throw new Error("OUTPUT");
         this.ready = output.status === "SUCCESS";

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { CameraLease, FramePump } from "../src/frame-pump.js";
 import type { LocalFrame, HandAdapter } from "../src/frame-pump.js";
-import { DEFAULT_CONFIG, result } from "../src/contract.js";
+import { DEFAULT_CONFIG, parseConfig, result } from "../src/contract.js";
 import type { HandResult } from "../src/contract.js";
 import { WorkerHandAdapter } from "../src/adapter/client.js";
 import type { Clock, WorkerTransport } from "../src/adapter/client.js";
@@ -157,5 +157,24 @@ for (const failure of ["capture", "inference", "close"] as const) {
     assert.equal(pump.submitted, failure === "capture" ? 1 : 2);
     assert.equal(outputs.at(-1)?.status, "SUCCESS");
     pump.stop();
+  });
+}
+
+for (const maxHands of [1, 2] as const) {
+  test("worker responses enforce requested maxHands " + maxHands, async () => {
+    const worker = new FakeWorker();
+    const client = new WorkerHandAdapter(() => worker, new ManualClock());
+    const initializing = client.initialize(parseConfig({ ...DEFAULT_CONFIG, maxHands }));
+    await Promise.resolve();
+    assert.equal((worker.sent[0] as { config: { maxHands: number } }).config.maxHands, maxHands);
+    worker.message(result(0, "SUCCESS", "OK"));
+    await initializing;
+    const pending = client.process(request, frame());
+    const hand = { landmarks: Array.from({ length: 21 }, () => ({ x: .5, y: .5, z: 0 })) };
+    worker.message(result(1, "SUCCESS", "OK", [hand, hand]));
+    const output = await pending;
+    assert.equal(output.status, maxHands === 2 ? "SUCCESS" : "EXECUTION_FAILURE");
+    assert.equal(output.hands.length, maxHands === 2 ? 2 : 0);
+    await client.stop();
   });
 }

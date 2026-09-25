@@ -4,7 +4,8 @@
 <body><main><h1>Local hand landmarks</h1>
 <p>Camera frames and landmarks stay on this device. There is no upload, server inference or remote telemetry.
 Approved model assets load locally before the camera opens.</p>
-<p>One hand · unmirrored preview · session stops after 60 seconds.</p>
+<p>One or two hands · unmirrored preview · session stops after 60 seconds.</p>
+<p><label for="hand-limit">Maximum hands</label> <select id="hand-limit"><option value="1" selected>1 (default)</option><option value="2">2</option></select> — stop before changing.</p>
 <div class="controls"><button id="preview-only">Preview camera only</button><button id="start">Start Camera</button><button id="stop" disabled>Stop</button></div>
 <p><label for="camera-device">Local camera</label> <select id="camera-device"><option value="">Browser default camera</option></select><br>After granting camera access, stop to choose a different camera. Selection stays on this page only.</p>
 <p id="status" role="status" aria-live="polite">Stopped. Ready to initialize.</p>

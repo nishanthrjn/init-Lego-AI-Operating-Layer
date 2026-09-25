@@ -56,7 +56,7 @@ async function initialize(value: unknown): Promise<void> {
     task = await HandLandmarker.createFromOptions(
       { wasmLoaderPath: loader, wasmBinaryPath: wasm },
       { baseOptions: { modelAssetBuffer: new Uint8Array(modelBytes), delegate: "CPU" },
-        runningMode: "VIDEO", numHands: 1 },
+        runningMode: "VIDEO", numHands: config.maxHands },
     );
     if ((state as string) === "closed") { task.close(); task = undefined; return; }
     // Initialize the graph before any camera acquisition; lazy initialization is

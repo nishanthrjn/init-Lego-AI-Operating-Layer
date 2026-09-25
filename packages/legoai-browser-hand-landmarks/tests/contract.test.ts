@@ -15,7 +15,8 @@ test("closed configuration is copied and frozen", () => {
   assert.ok(Object.isFrozen(config));
 });
 for (const change of [{ schemaVersion: 2 }, { module: "arbitrary" }, { localOnly: false },
-  { maxHands: 2 }, { approvedAsset: "https://example.invalid/model" }, { maxWidth: 9999 }]) {
+  { maxHands: 3 }, { maxHands: 4 }, { maxHands: 0 }, { maxHands: -1 },
+  { maxHands: 1.5 }, { maxHands: "2" }, { maxHands: null }, { maxHands: NaN }, { approvedAsset: "https://example.invalid/model" }, { maxWidth: 9999 }]) {
   test("reject invalid configuration " + JSON.stringify(change), () => {
     assert.throws(() => parseConfig({ ...DEFAULT_CONFIG, ...change }));
   });
@@ -42,7 +43,7 @@ for (const coordinate of ["x", "y", "z"]) for (const number of [NaN, Infinity, -
   });
 }
 test("too many hands, wrong score, mismatched status and unknown fields fail", () => {
-  assert.throws(() => result(1, "SUCCESS", "OK", [hand, hand]));
+  assert.throws(() => result(1, "SUCCESS", "OK", [hand, hand, hand]));
   assert.throws(() => result(1, "SUCCESS", "OK", [{ ...hand, handedness: { label: "Left", score: 1.1 } }]));
   assert.throws(() => result(1, "SUCCESS", "OK", [{ ...hand, handedness: { label: "Left", score: NaN } }]));
   const valid = result(1, "SUCCESS", "OK", [hand]);
@@ -79,4 +80,33 @@ test("configuration is inert plain data, never class instances or getters", () =
   Object.defineProperty(value,"implementation",{enumerable:true,get(){evaluated=true;return "mediapipe-0.10.21";}});
   assert.throws(() => parseConfig(value));
   assert.equal(evaluated,false);
+});
+
+for (const maxHands of [1, 2] as const) test("accept bounded maxHands " + maxHands, () => {
+  const config = parseConfig({ ...DEFAULT_CONFIG, maxHands });
+  assert.equal(config.maxHands, maxHands);
+  assert.ok(Object.isFrozen(config));
+  assert.equal(DEFAULT_CONFIG.maxHands, 1);
+});
+test("two hands are copied, deeply immutable and bounded by selected configuration", () => {
+  const input = { ...result(1, "SUCCESS", "OK"), hands: [hand, hand] };
+  const output = parseResult(input, 2);
+  assert.equal(output.hands.length, 2);
+  for (const detected of output.hands) {
+    assert.equal(detected.landmarks.length, 21);
+    assert.notEqual(detected.landmarks, hand.landmarks);
+    assert.ok(Object.isFrozen(detected));
+    assert.ok(Object.isFrozen(detected.landmarks));
+    assert.ok(Object.isFrozen(detected.landmarks[0]));
+  }
+  assert.ok(Object.isFrozen(output.hands));
+  assert.throws(() => parseResult(input, 1));
+});
+for (const second of [
+  { landmarks: hand.landmarks.slice(1) },
+  { landmarks: hand.landmarks.map(p => ({ ...p, x: NaN })) },
+  { ...hand, extra: true },
+  { ...hand, handedness: { label: "Left", score: 2 } },
+]) test("malformed second hand rejects entire result " + JSON.stringify(second), () => {
+  assert.throws(() => parseResult({ ...result(1, "SUCCESS", "OK"), hands: [hand, second] }));
 });

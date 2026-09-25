@@ -51,12 +51,12 @@ a new revision and deliberate implementation update. It is not a server-issued
 ConfigurationRevisionRef, admission or permission.
 
 Configuration permits exactly the built-in implementation/asset, VIDEO mode,
-one hand, localOnly=true, dimensions at most 640 by 480, a 30-second initialization
+one or two hands (default one), localOnly=true, dimensions at most 640 by 480, a 30-second initialization
 acceptance deadline, 2-second frame deadline and 60-second camera session limit.
 No arbitrary module, class, model URL, endpoint or metadata is accepted.
 Runtime validators copy and freeze nested accepted values.
 
-SUCCESS permits zero or one hand; a detected hand has exactly 21 finite x/y/z
+SUCCESS permits zero, one or two hands within the configured maximum; a detected hand has exactly 21 finite x/y/z
 points in MediaPipe's documented landmark order (wrist, thumb, index, middle,
 ring, little finger). x/y use image-relative coordinates. z is relative depth
 with wrist origin, not calibrated distance. Values are not silently clamped.
@@ -198,3 +198,15 @@ Do not add gestures/AirTouch, Face/Pose, ONNX/WebGPU, generic inference/model
 contracts, browser governance/Plugin marketplaces, remote telemetry, servers,
 accounts, caches/sync, training, conversion or deployment in this milestone.
 No production or M8.3 qualification claim follows from implementation.
+
+
+## Bounded two-hand follow-up
+
+The user reports local automated and manual qualification of the original one-hand
+slice. The current extension is statically inspected only and needs local validation.
+The closed maxHands field now accepts 1 | 2 (default 1). Other resource limits,
+assets, worker ownership and one-in-flight behavior remain unchanged. Array order
+has no cross-frame identity semantics. The example's Maximum hands selector
+supplies a validated frozen configuration per session. Existing validation phases
+include the expanded contract, inference-bound and worker-response tests; no new
+launcher is needed. Follow the example README for manual 2 -> 1 -> 0 validation.
