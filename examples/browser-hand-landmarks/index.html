@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LegoAI local hand landmarks</title><link rel="stylesheet" href="/style.css"></head>
+<body><main><h1>Local hand landmarks</h1>
+<p>Camera frames and landmarks stay on this device. There is no upload, server inference or remote telemetry.
+Approved model assets load locally before the camera opens.</p>
+<p>One hand · unmirrored preview · session stops after 60 seconds.</p>
+<div class="controls"><button id="start">Start Camera</button><button id="stop" disabled>Stop</button></div>
+<p id="status" role="status" aria-live="polite">Stopped. Ready to initialize.</p>
+<div class="preview"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
+<pre id="diagnostics" aria-label="Local diagnostics"></pre>
+<p>CPU/WASM reference slice. No gestures or identity tracking.</p>
+</main><script type="module" src="/main.js"></script></body></html>
