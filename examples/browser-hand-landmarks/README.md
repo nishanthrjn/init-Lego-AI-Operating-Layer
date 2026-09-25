@@ -86,3 +86,41 @@ Report the actual safe status to distinguish that from worker initialization.
 
 Only static inspection was performed for this follow-up. Rerun the authoritative
 validation command above, restart the static host and reload before manual checks.
+
+### Raw camera/source isolation
+
+Manual evidence: 287 submissions and 286 completed results before the session
+limit establish an active inference loop. False readiness after cleanup describes
+the stopped state, not startup failure. The black preview's root cause remains
+unclassified until source isolation is performed.
+
+Static review found no application spinner or opaque overlay: video is displayed,
+the overlay is transparent and cleared with clearRect, and capture uses a fresh
+createImageBitmap(video), not the overlay or a placeholder. Explicit stacking and
+transparency now document that layout. Mirroring remains unchanged.
+
+After rebuilding through the validation launcher and reloading the example:
+
+1. Press **Preview camera only**, grant access and verify a live image. This mode
+   creates no worker, loads no model, captures no inference bitmap and hides the
+   overlay. Worker readiness false and zero submissions are expected.
+2. Stop, select a physical camera from **Local camera**, and retry raw preview if
+   necessary. Devices are listed after permission; selection and identifiers stay
+   in page memory only. No persistence, logging or transmission is added.
+3. Stop and press **Start Camera** using the same selected device. Verify live video
+   and increasing submitted/completed counts. The brightness bucket samples the
+   exact bitmap transferred to the worker, on a disposable 16x12 local canvas.
+   Only NEAR_BLACK/NORMAL/BRIGHT/UNAVAILABLE is displayed; no pixels are retained or
+   exposed. A bucket cannot prove meaningful content or hand visibility.
+4. Show one hand and verify 21 moving landmarks. Remove it and expect successful
+   zero-hand status. Stop and confirm camera indicator off; restart and repeat.
+5. Inspect Network for no frame/landmark uploads. Report browser/version, raw versus
+   normal visibility, safe counters and visual-signal bucket; no camera images.
+
+A black raw preview narrows investigation to camera selection/device/browser
+playback; live raw video but black normal mode points to integration/rendering.
+Neither diagnosis is established by a successful inference response alone.
+The 60-second limit remains; a separate last-session summary preserves counters
+before cleanup while current counters/readiness describe the stopped session.
+
+Only static inspection performed for these changes; local validation pending.
