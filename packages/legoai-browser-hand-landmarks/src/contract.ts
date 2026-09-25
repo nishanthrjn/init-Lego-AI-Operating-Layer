@@ -20,7 +20,7 @@ export interface HandConfig {
   readonly implementation: typeof IMPLEMENTATION;
   readonly approvedAsset: typeof ASSET;
   readonly runningMode: "VIDEO";
-  readonly maxHands: 1;
+  readonly maxHands: 2;
   readonly localOnly: true;
   readonly maxWidth: number;
   readonly maxHeight: number;

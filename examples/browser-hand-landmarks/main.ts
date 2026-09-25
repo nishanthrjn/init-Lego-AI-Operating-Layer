@@ -11,6 +11,9 @@ function element<T extends HTMLElement>(id: string, kind: { new(): T }): T {
 const video = element("video", HTMLVideoElement);
 const overlay = element("overlay", HTMLCanvasElement);
 const startButton = element("start", HTMLButtonElement);
+const previewButton = element("preview-only", HTMLButtonElement);
+const deviceSelect = element("camera-device", HTMLSelectElement);
+const lastSession = element("last-session", HTMLPreElement);
 const stopButton = element("stop", HTMLButtonElement);
 const status = element("status", HTMLParagraphElement);
 const diagnostics = element("diagnostics", HTMLPreElement);
@@ -29,10 +32,51 @@ let workerReady = false;
 let safeCode = "STOPPED";
 let submitted = 0, completed = 0, dropped = 0;
 let dimensions = "0 x 0";
+let mode: "raw" | "inference" = "inference";
+let visualSignal = "NOT_SAMPLED";
+let devices: MediaDeviceInfo[] = []; // session-page local only; never stored or logged
+async function listCameras(session: number, activeId: string | undefined): Promise<void> {
+  try {
+    const available = await navigator.mediaDevices.enumerateDevices();
+    if (session !== generation) return;
+    devices = available.filter(device => device.kind === "videoinput");
+    deviceSelect.replaceChildren(new Option("Browser default camera", ""));
+    devices.forEach((device, index) => {
+      deviceSelect.add(new Option(device.label || "Camera " + (index + 1), String(index)));
+      if (device.deviceId === activeId) deviceSelect.value = String(index);
+    });
+  } catch { /* Device enumeration is optional; the active stream remains usable. */
+    if (session !== generation) return;
+    deviceSelect.replaceChildren(new Option("Camera listing unavailable; browser default", ""));
+    devices = [];
+  }
+}
+function inspectFrame(frame: ImageBitmap): string {
+  // Coarse local diagnostic of the exact bitmap about to be transferred.
+  // No pixels are retained, displayed, logged or sent elsewhere.
+  const sample = document.createElement("canvas");
+  sample.width = 16; sample.height = 12;
+  try {
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) return "UNAVAILABLE";
+    context.drawImage(frame, 0, 0, 16, 12);
+    const pixels = context.getImageData(0, 0, 16, 12).data;
+    let total = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      total += 0.2126 * (pixels[i] ?? 0) + 0.7152 * (pixels[i + 1] ?? 0) + 0.0722 * (pixels[i + 2] ?? 0);
+    }
+    pixels.fill(0);
+    const mean = total / (16 * 12);
+    return mean < 16 ? "NEAR_BLACK" : mean > 235 ? "BRIGHT" : "NORMAL";
+  } catch { return "UNAVAILABLE"; }
+  finally { sample.width = 0; sample.height = 0; }
+}
 function showDiagnostics(): void {
   if (pump) { submitted = pump.submitted; completed = pump.processed; dropped = pump.dropped; }
   diagnostics.textContent = [
+    "Current mode: " + mode,
     "Safe status: " + safeCode,
+    "Captured frame visual signal: " + visualSignal,
     "Camera stream acquired: " + cameraReady,
     "Video dimensions (last observed): " + dimensions,
     "Video readyState: " + video.readyState + "; paused: " + video.paused,
@@ -73,6 +117,7 @@ function clearOverlay(): void {
   overlay.getContext("2d")?.clearRect(0, 0, overlay.width, overlay.height);
 }
 async function stop(message = "Stopped. Camera tracks closed."): Promise<void> {
+  const hadSession = opening || cameraReady || workerReady || pump !== undefined;
   generation++;
   opening = false;
   if (animation !== undefined) cancelAnimationFrame(animation);
@@ -80,6 +125,13 @@ async function stop(message = "Stopped. Camera tracks closed."): Promise<void> {
   if (sessionTimer !== undefined) clearTimeout(sessionTimer);
   sessionTimer = undefined;
   showDiagnostics(); // preserve final counts before releasing the pump
+  if (hadSession) lastSession.textContent = [
+    "Last session (before cleanup): " + mode + " / " + safeCode,
+    "Submitted: " + submitted + "; completed: " + completed + "; dropped: " + dropped,
+    "Visual signal: " + visualSignal + "; dimensions: " + dimensions,
+  ].join("\n");
+  submitted = completed = dropped = 0;
+  visualSignal = "NOT_SAMPLED";
   playback?.abort();
   playback = undefined;
   pump?.stop();
@@ -92,14 +144,14 @@ async function stop(message = "Stopped. Camera tracks closed."): Promise<void> {
   clearOverlay();
   status.textContent = message;
   showDiagnostics();
-  startButton.disabled = true;
+  startButton.disabled = previewButton.disabled = deviceSelect.disabled = true;
   stopButton.disabled = true;
   const current = adapter;
   adapter = undefined;
   const shutdown = current?.stop() ?? closing ?? Promise.resolve();
   closing = shutdown;
   await shutdown;
-  if (closing === shutdown) { closing = undefined; startButton.disabled = permissionPending; }
+  if (closing === shutdown) { closing = undefined; startButton.disabled = previewButton.disabled = deviceSelect.disabled = permissionPending; }
 }
 function accept(output: HandResult): void {
   safeCode = output.status === "SUCCESS" ? "RUNNING" : output.status + ":" + output.reason;
@@ -120,30 +172,38 @@ function accept(output: HandResult): void {
   }
   status.textContent = output.hands.length === 0 ? "Running — no hand detected (success)." : "Running — 21 landmarks, local only.";
 }
-async function start(): Promise<void> {
-  if (opening || permissionPending || adapter || closing) return;
+async function start(raw = false): Promise<void> {
+  if (opening || permissionPending || cameraReady || adapter || closing) return;
+  mode = raw ? "raw" : "inference";
+  overlay.hidden = raw;
+  visualSignal = "NOT_SAMPLED";
   opening = true;
   const session = ++generation;
-  startButton.disabled = true;
+  startButton.disabled = previewButton.disabled = deviceSelect.disabled = true;
   stopButton.disabled = false;
   cameraReady = workerReady = false;
   submitted = completed = dropped = 0;
   dimensions = "0 x 0";
-  safeCode = "WORKER_INITIALIZING";
+  safeCode = raw ? "CAMERA_PERMISSION_PENDING" : "WORKER_INITIALIZING";
   showDiagnostics();
-  if (!preflight().supported) { safeCode = "UNSUPPORTED_BROWSER_APIS"; await stop(safeCode); return; }
-  const current = new WorkerHandAdapter();
-  adapter = current;
-  status.textContent = "Initializing verified local assets…";
-  let initialized: HandResult;
-  try { initialized = await current.initialize(DEFAULT_CONFIG); }
-  catch {
-    if (session === generation) { safeCode = "WORKER_INITIALIZATION_FAILED"; await stop(safeCode); }
-    return;
+  let current: WorkerHandAdapter | undefined;
+  if (!raw) {
+    if (!preflight().supported) { safeCode = "UNSUPPORTED_BROWSER_APIS"; await stop(safeCode); return; }
+    current = new WorkerHandAdapter();
+    adapter = current;
+    status.textContent = "Initializing verified local assets…";
+    let initialized: HandResult;
+    try { initialized = await current.initialize(DEFAULT_CONFIG); }
+    catch {
+      if (session === generation) { safeCode = "WORKER_INITIALIZATION_FAILED"; await stop(safeCode); }
+      return;
+    }
+    if (session !== generation) return;
+    if (initialized.status !== "SUCCESS") { accept(initialized); return; }
+    workerReady = true;
+  } else if (!globalThis.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    safeCode = "UNSUPPORTED_CAMERA_APIS"; await stop(safeCode); return;
   }
-  if (session !== generation) return;
-  if (initialized.status !== "SUCCESS") { accept(initialized); return; }
-  workerReady = true;
   safeCode = "CAMERA_PERMISSION_PENDING";
   showDiagnostics();
   status.textContent = "Allow camera access to continue.";
@@ -151,10 +211,13 @@ async function start(): Promise<void> {
   try {
     permissionPending = true;
     const stream = await camera.acquire(() => navigator.mediaDevices.getUserMedia({
-      audio: false, video: { width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
+      audio: false, video: {
+        ...(deviceSelect.value !== "" && devices[Number(deviceSelect.value)]
+          ? { deviceId: { exact: devices[Number(deviceSelect.value)]!.deviceId } } : {}),
+        width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
     })).finally(() => {
       permissionPending = false;
-      if (!adapter && !closing) startButton.disabled = false;
+      if (session !== generation && !closing) startButton.disabled = previewButton.disabled = deviceSelect.disabled = false;
     });
     if (!stream || session !== generation) return;
     sessionTimer = setTimeout(() => { safeCode = "SESSION_DEADLINE"; void stop("Session limit reached (60 seconds). Press Start Camera to restart."); }, DEFAULT_CONFIG.sessionLimitMs);
@@ -173,16 +236,29 @@ async function start(): Promise<void> {
     if (video.videoWidth < 1 || video.videoWidth > 640 || video.videoHeight < 1 || video.videoHeight > 480) {
       safeCode = "INVALID_FRAME_DIMENSIONS"; await stop(safeCode); return;
     }
+    void listCameras(session, stream.getVideoTracks()[0]?.getSettings().deviceId);
     stage = "capture";
     dimensions = video.videoWidth + " x " + video.videoHeight;
     overlay.width = video.videoWidth;
     overlay.height = video.videoHeight;
+    if (raw) {
+      opening = false;
+      safeCode = "RAW_PREVIEW";
+      status.textContent = "Raw camera preview only — no worker, inference or overlay.";
+      showDiagnostics();
+      return;
+    }
+    if (!current) throw new Error("WORKER_UNAVAILABLE");
     pump = new FramePump(current, DEFAULT_CONFIG, async () => {
       if (video.videoWidth < 1 || video.videoWidth > 640 || video.videoHeight < 1 || video.videoHeight > 480) {
         if (session === generation) safeCode = "INVALID_FRAME_DIMENSIONS";
         throw new Error("FRAME");
       }
-      try { return await createImageBitmap(video); }
+      try {
+        const frame = await createImageBitmap(video);
+        if (session === generation) visualSignal = inspectFrame(frame);
+        return frame;
+      }
       catch { if (session === generation) safeCode = "FRAME_CAPTURE_FAILED"; throw new Error("FRAME_CAPTURE_FAILED"); }
     }, accept);
     pump.start();
@@ -223,6 +299,7 @@ async function start(): Promise<void> {
   }
 }
 startButton.addEventListener("click", () => { void start(); });
+previewButton.addEventListener("click", () => { void start(true); });
 stopButton.addEventListener("click", () => { safeCode = "STOPPED"; void stop(); });
 window.addEventListener("pagehide", () => { safeCode = "STOPPED"; void stop(); });
 document.addEventListener("visibilitychange", () => {
