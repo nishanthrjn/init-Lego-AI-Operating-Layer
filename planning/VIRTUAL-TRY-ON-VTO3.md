@@ -1,6 +1,57 @@
 # VTO-3 — Live Local CUDA Qualification
 
-Status: LIVE QUALIFICATION PREPARED — OPERATOR RUN REQUIRED.
+Status: VTO-3 LIVE QUALIFICATION PREPARED — DEFERRED UNTIL CUDA RUNTIME AVAILABLE.
+
+## Deferral record (2026-09-28)
+
+- **Tooling ready.** The live tooling is implemented and statically clean.
+  `validate_virtual_try_on_vto2.py` passes 19/19 phases, including 13b,
+  which now has 23 live-tooling tests. VTO-2 remains deterministically
+  qualified, and the VTO-1 and provider-compatibility regressions remain
+  qualified.
+- **Operator attempts sent nothing.** In every attempt, the counted writes
+  were 0 uploads and 0 submissions, with disclosure none. The attempts
+  showed:
+  - inputs first rejected as JPEGs named `.png`, then accepted after
+    conversion to real PNGs;
+  - the template digest approved (`bbf35565…4dc4`);
+  - ComfyUI reachable (legacy 0.37.0), with upload capability passing;
+  - node preflight correctly stopping at the first missing model
+    (`CLIPLoader.clip_name`), because no Qwen-Image-Edit-2509 files are
+    installed.
+- **Blocked only by the environment.** The only remaining blockers are a
+  suitable local CUDA runtime and the operator-installed Qwen components.
+  The current machine has run ComfyUI on CPU only, and a CPU run is not
+  required or forced.
+- **Not a failure.** This is not a product or code failure. Every safety
+  gate behaved as specified, and no VTO architectural change is required.
+- **Cloud still unsupported.** Cloud remains unsupported for personal-image
+  input under ADR-020 §8.
+- **Ceiling unchanged.** The 1800-second completion ceiling is unchanged and
+  will not be raised speculatively.
+- **Repository safety.** `comfyui-proof/` is tracked by git. Personal input
+  and output images must stay outside the repository (for example
+  `%USERPROFILE%\legoai-vto3\`). Only non-personal template artifacts, such
+  as `comfyui-proof/tryon-workflow.json`, may live in the tracked proof
+  folder.
+- **Model installation stays external.** LegoAI ships no download scripts.
+  Obtaining the model components is an operator deployment act.
+
+### Resume procedure (when CUDA is available)
+
+1. Install the three Qwen-Image-Edit-2509 components outside LegoAI, into
+   the folders listed under Prerequisites.
+2. Restart ComfyUI.
+3. Run the read-only preflight until it shows `node preflight: PASS`, with
+   the diffusion model, text encoder and VAE all `present`.
+4. Prepare and approve the template: reuse the approved digest if the model
+   filenames are unchanged, otherwise regenerate, review and re-pin it.
+5. Run one live generation (`--live`).
+6. Reconcile the same job (`--reconcile JOB_ID`).
+7. Compare the SHA-256 with `--expect-sha256`.
+8. Record the elapsed runtime, the hard pass criteria, and the qualitative
+   output observations. Update this status to LIVE QUALIFIED only if every
+   hard criterion is met.
 Qualifies the VTO-2 `VirtualTryOnPort` against a real local CUDA ComfyUI.
 It adds no new architecture, only operator tooling.
 Authority: [ADR-020](../adrs/ADR-020.md), [VTO-2](VIRTUAL-TRY-ON-VTO2.md).
