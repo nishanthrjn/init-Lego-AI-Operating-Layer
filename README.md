@@ -54,6 +54,13 @@ quickstart, not a restatement of that authority.
   questions over them, using `legoai-document`'s capabilities composed
   through `legoai`'s governed runtime and a local Ollama instance.
 
+The [`legoai-collation`](packages/legoai-collation/) pack is a pure,
+dependency-free slice: source-linked field readings, text/decimal/choice
+normalization, and single-field precedence collation that keeps every
+disagreement visible. It has no Core dependency and `legoai` never imports it.
+See its [README](packages/legoai-collation/README.md) for the contract and
+local commands.
+
 The new [`legoai-engineering`](packages/legoai-engineering/) pack is a separate
 first foundation milestone: pure inspection of supplied repository text with an
 intake example. M1 local validation is complete, as recorded in the forward plan.

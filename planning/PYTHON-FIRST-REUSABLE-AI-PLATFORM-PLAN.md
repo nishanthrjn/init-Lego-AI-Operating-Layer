@@ -55,6 +55,7 @@ preserved, with a visible current amendment pointer. ADR-001/002 stay valid.
 | `src/legoai` / `legoai-reference` | Existing owner values/Ports → reference realizations → private composition; enforce ADR-002 |
 | `packages/legoai-document` | Existing document capabilities; public Core contracts only |
 | `packages/legoai-engineering` | M1 pure repository text inspection; no Core dependency needed for this preparatory data transformation |
+| `packages/legoai-collation` | Slice F1 pure source-linked reading normalization and single-field precedence collation; no Core dependency; see [F1 record](COLLATION-F1-SLICE.md) |
 | Future Agent, Workflow, Team modules | Use ADR-002's logical owner map once actual consumers require executable subsets; no empty packages now |
 | Future provider/framework/protocol distributions | Distinct import roots, public contracts only, optional third-party dependencies |
 | `examples/documind` | Existing application composition, unchanged |
