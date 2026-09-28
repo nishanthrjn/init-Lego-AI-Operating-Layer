@@ -1,6 +1,6 @@
 # ComfyUI Provider Compatibility and Configuration Layer
 
-Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTION FIX PENDING RE-RUN.
+Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTED, SUBMISSION NOT AUTHORIZED.
 
 **Validation evidence (maintainer-run, 2026-09-28).**
 
@@ -32,6 +32,18 @@ Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTION FIX P
   rejected. Re-run of the Cloud probe is pending. Cloud submit, status,
   `/workflow` and signed-URL retrieval remain unqualified until one live
   Cloud generation.
+- Cloud probe re-run after the fix: reachable, `api_family: v2`, capabilities
+  as declared, `submission performed: NO`. Detection and Bearer auth for reads
+  are validated live.
+- Cloud generation through the unchanged `app.py` (config switch only):
+  `failed`, effect `none`, no job, `AuthorizationDenied`/`forbidden`. This is
+  a documented v2 rejection that creates no job, so no job was created and no
+  credits were spent. The account or key can read jobs but is not permitted
+  to submit. Neither the docs nor the SDK name the cause (the SDK's
+  `403 not_enabled` applies to its separate Router surface). Results now carry
+  sanitized evidence (status, media type, error-code identifier), so the next
+  attempt shows Cloud's code. Cloud submit, status and retrieval remain
+  unqualified.
 
 Builds on [the text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md).
 No Core, ModelPort or `TextToImageRequest` change. No live runtime or Cloud

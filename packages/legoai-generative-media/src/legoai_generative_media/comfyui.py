@@ -251,7 +251,12 @@ class ComfyTextToImageAdapter:
             )
         except ProviderError as error:
             return GenerationResult(
-                Outcome.FAILED, effect, job, error=error.category, reason=error.reason
+                Outcome.FAILED,
+                effect,
+                job,
+                error=error.category,
+                reason=error.reason,
+                evidence=error.evidence,
             )
         except InvalidOutput:
             return GenerationResult(
@@ -278,6 +283,7 @@ class ComfyTextToImageAdapter:
         completed = False
         category = ErrorCategory.DEPENDENCY_FAILURE
         reason: str | None = None
+        evidence: tuple[str, ...] = ()
         try:
             async with asyncio.timeout(self.completion.max_wait_seconds):
                 observed = await self.driver.observe(budget, job, thorough=True)
@@ -314,7 +320,7 @@ class ComfyTextToImageAdapter:
         except TimeoutError:
             category = ErrorCategory.DEADLINE_EXCEEDED
         except ProviderError as error:
-            category, reason = error.category, error.reason
+            category, reason, evidence = error.category, error.reason, error.evidence
         except InvalidOutput:
             category = ErrorCategory.VALIDATION_ERROR
         except OSError:
@@ -328,6 +334,7 @@ class ComfyTextToImageAdapter:
             else ReconciliationStatus.UNRESOLVED,
             error=category,
             reason=reason,
+            evidence=evidence,
         )
 
 

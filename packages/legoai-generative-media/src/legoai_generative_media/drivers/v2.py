@@ -92,26 +92,30 @@ def is_job_not_found(response: Response) -> bool:
 
 
 def provider_error(response: Response, *, submit: bool) -> Exception:
-    """Map a non-success response; only documented no-job rejections are NONE."""
+    """Map a non-success response; only documented no-job rejections are NONE.
+
+    Every ProviderError carries sanitized evidence (status, media type, error
+    code identifier) so an operator can diagnose without raw payloads.
+    """
     status, code = response.status, envelope_code(response)
     if 300 <= status < 400:
         return ValueError("redirect forbidden")
     kind = SubmissionRejected if submit else ProviderError
+    seen = (observed("v2 submit" if submit else "v2 request", response),)
     if status == 401:
-        return kind(ErrorCategory.AUTHORIZATION_DENIED, "authentication_failed")
+        return kind(ErrorCategory.AUTHORIZATION_DENIED, "authentication_failed", seen)
     if status == 403:
-        return kind(ErrorCategory.AUTHORIZATION_DENIED, "forbidden")
+        return kind(ErrorCategory.AUTHORIZATION_DENIED, "forbidden", seen)
     if status == 402:
-        return kind(ErrorCategory.DEPENDENCY_FAILURE, "insufficient_credits")
+        return kind(ErrorCategory.DEPENDENCY_FAILURE, "insufficient_credits", seen)
     if status == 422 and code in _REJECTED_422:
-        return kind(ErrorCategory.VALIDATION_ERROR, _REJECTED_422[code])
+        return kind(ErrorCategory.VALIDATION_ERROR, _REJECTED_422[code], seen)
     if status == 429:
-        return kind(
-            ErrorCategory.DEPENDENCY_FAILURE, _429.get(code or "", "rate_limited")
-        )
+        reason = _429.get(code or "", "rate_limited")
+        return kind(ErrorCategory.DEPENDENCY_FAILURE, reason, seen)
     if status >= 500 or status == 422:
         # Includes idempotency_key_reuse: the job may exist; never NONE.
-        return ProviderError(ErrorCategory.DEPENDENCY_FAILURE, "upstream_error")
+        return ProviderError(ErrorCategory.DEPENDENCY_FAILURE, "upstream_error", seen)
     return ValueError("unexpected provider response")
 
 

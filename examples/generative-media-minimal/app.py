@@ -45,6 +45,8 @@ async def run(args: argparse.Namespace) -> int:
     if result.image is None:
         print("category:", result.error.value if result.error else "cancelled")
         print("reason:", result.reason or "-")
+        for line in result.evidence:
+            print("evidence", line)
         return 1
     with args.output.open("xb") as destination:
         destination.write(result.image.content)
