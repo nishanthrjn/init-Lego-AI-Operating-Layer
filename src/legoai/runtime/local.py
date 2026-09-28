@@ -90,9 +90,6 @@ from legoai.runtime.api import (
     OllamaSettings,
 )
 
-_ISSUER = "legoai.runtime.local"
-_INVOKE = "invoke-capability"
-
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
@@ -305,7 +302,7 @@ class _LocalGovernedHost:
             raise TypeError("correlation must be CorrelationId or None")
         if purpose not in self._purposes:
             raise HostError(HostFailure.PURPOSE_UNAVAILABLE)
-        grant = self._grants.get((_INVOKE, purpose.capability_id.value))
+        grant = self._grants.get(("invoke-capability", purpose.capability_id.value))
         if grant is None:
             raise HostError(HostFailure.GRANT_NOT_CONFIGURED)
         if len(self._minted) >= self._config.max_executions:
@@ -320,7 +317,7 @@ class _LocalGovernedHost:
             ExecutionId(f"exec-{token}"),
             operation,
             self._tenant,
-            SecurityContextRef(_ISSUER, token),
+            SecurityContextRef("legoai.runtime.local", token),
             correlation if correlation is not None else CorrelationId(f"corr-{token}"),
             None,
             deadline,
