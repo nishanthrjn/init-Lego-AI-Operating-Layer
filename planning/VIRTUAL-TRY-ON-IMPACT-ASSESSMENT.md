@@ -1,7 +1,8 @@
 # Virtual Try-On — Impact Assessment and Design
 
-Status: VTO-0 COMPLETE; ADR-020 ACCEPTED (2026-09-28); VTO-1 IMPLEMENTED —
-LOCAL VALIDATION PENDING ([VTO-1](VIRTUAL-TRY-ON-VTO1.md)); local providers only. Current decisions are in §11a and ADR-020; earlier
+Status: VTO-0 COMPLETE; ADR-020 ACCEPTED (2026-09-28); VTO-1 IMPLEMENTED AND
+DETERMINISTICALLY VALIDATED ([VTO-1](VIRTUAL-TRY-ON-VTO1.md)); local providers
+only. Next: VTO-2 (not started). Current decisions are in §11a and ADR-020; earlier
 sections are kept as the original analysis where they differ.
 Builds on the [text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md) and
 [provider compatibility](COMFYUI-PROVIDER-COMPATIBILITY-SLICE.md). Evidence

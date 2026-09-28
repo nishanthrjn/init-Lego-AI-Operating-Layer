@@ -1,6 +1,23 @@
 # VTO-1 — Bounded PNG Image Inputs, Metadata Stripping, Local ComfyUI Upload
 
-Status: IMPLEMENTED — LOCAL VALIDATION PENDING.
+Status: IMPLEMENTED — DETERMINISTICALLY VALIDATED (maintainer-run, 2026-09-28).
+
+**Validation evidence.**
+
+- `uv run python .alidate_virtual_try_on_vto1.py` passed 16/16 phases:
+  36 PNG-contract, 16 stripping, 18 disclosure, 10 upload-transport,
+  9 policy, 39 reconciliation, 121 text-to-image compatibility, 4
+  architecture and 129 other generative-media tests, plus the wheel build
+  and import.
+- `uv run python .alidate_comfyui_provider_compatibility.py` still passes
+  16/16, including 254 affected existing repository checks, after the
+  transport changes.
+- The first run exposed a Windows connect-timing race: a refused loopback
+  connect was reported as UNKNOWN (conservative) instead of NONE. It was
+  fixed by bounding connect to half the exchange timeout (see Upload
+  behaviour).
+- No live ComfyUI, Cloud, GPU or real image was used. Live input transfer is
+  qualified together with generation in VTO-3.
 Authority: [ADR-020](../adrs/ADR-020.md) (Accepted 2026-09-28) and the
 [Virtual Try-On assessment](VIRTUAL-TRY-ON-IMPACT-ASSESSMENT.md) §11a–§16.
 No Core change and no application-contract change. `TextToImageRequest` is
