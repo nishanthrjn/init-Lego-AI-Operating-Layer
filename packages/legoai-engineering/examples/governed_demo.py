@@ -1,12 +1,20 @@
-"""Offline examples only: fake Model behind the existing governed M7 composition."""
+"""Offline examples only: fake Model behind the public ADR-014 local host.
 
-from dataclasses import dataclass, replace
+Operator configuration (grants, selection, capacity) and the trusted fake
+ModelPort live here, at the example's composition root. Engineering
+specializations receive only public contracts: an `AgentRuntimePort`, an
+`ExecutionContext` minted by the host, and (for readers) a host-issued
+`SecurityContext` plus `AuthorizationPort`.
+"""
+
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from legoai.execution.values import ExecutionContext, ExecutionId, SecurityContextRef
-from legoai.governance.ports import SecurityContext
-from legoai.governance.values import Grant, GrantId, PolicyRef, Principal
-from legoai.intelligence.model.routing import ModelBinding, ModelRequirement
+from legoai.execution.agent.ports import AgentRuntimePort
+from legoai.execution.values import ExecutionContext
+from legoai.governance.values import GrantId, PolicyRef
+from legoai.intelligence.model.ports import ModelPort
+from legoai.intelligence.model.routing import ModelRequirement
 from legoai.intelligence.model.values import (
     ChatRequest,
     ChatResult,
@@ -15,44 +23,31 @@ from legoai.intelligence.model.values import (
     ModelId,
     ProviderId,
 )
-from legoai.kernel.context import TenantContext
-from legoai.kernel.identity import (
-    ApplicationId,
-    CorrelationId,
-    OperationId,
-    PrincipalId,
-    TenantId,
-)
+from legoai.kernel.identity import ApplicationId, PrincipalId, TenantId
 from legoai.kernel.references import (
     ApplicationRef,
     ConfigurationRef,
     ConfigurationRevisionRef,
-    OperationRef,
     PrincipalRef,
     ReferenceScope,
 )
 from legoai.kernel.versions import Version
-from legoai.plugins.ports import PluginAdmissionId
 from legoai.plugins.values import PluginId
-from legoai.reference.agent import OneStepAgentRuntime
-from legoai.reference.catalog import InMemoryCatalog
-from legoai.reference.evidence import InMemoryEvidenceCustody
-from legoai.reference.execution import (
-    DeterministicDispatchArbiter,
-    ExecutionCoordinator,
-    StaticSecurityContextRegistry,
+from legoai.runtime.api import (
+    GovernedHost,
+    LocalHostConfig,
+    ModelBindingConfig,
+    ModelPurpose,
+    OperatorGrant,
+    TrustedModelContribution,
 )
-from legoai.reference.governance import (
-    DeterministicAuthorizationEvaluator,
-    InMemoryApprovalRegistry,
-    InMemoryGrantRegistry,
-    InMemoryPolicyRegistry,
-)
-from legoai.reference.model import ollama_chat_capability_id, ollama_declaration
-from legoai.reference.model_routing import DeterministicModelRouter
-from legoai.reference.plugins import activate, admit, initialize, inspect, validate
-from legoai.runtime._composition.agent import GovernedAgentChat
-from legoai.runtime._composition.model_governed import ConfiguredModelBinding
+from legoai.runtime.local import open_local_host
+
+NOW = datetime(2026, 1, 1, tzinfo=UTC)
+READ_ACTION = "read-for-model-analysis"
+WORKSPACE = "workspace"
+_ACTIVE = (NOW, NOW + timedelta(hours=1))
+_EXPIRED = (NOW - timedelta(hours=2), NOW - timedelta(hours=1))
 
 
 class StaticModel:
@@ -77,101 +72,80 @@ class StaticModel:
 
 @dataclass(frozen=True)
 class GovernedDemo:
-    runtime: OneStepAgentRuntime
+    host: GovernedHost
+    runtime: AgentRuntimePort
     context: ExecutionContext
     model: StaticModel
-    security: SecurityContext
-    authorization: DeterministicAuthorizationEvaluator
+    configuration: ConfigurationRef
 
 
 def create_governed_demo(
-    output: str, *, route_count: int = 1, model_allowed: bool = True
+    output: str,
+    *,
+    route_count: int = 1,
+    model_allowed: bool = True,
+    read_allowed: bool = True,
 ) -> GovernedDemo:
-    now = datetime(2026, 1, 1, tzinfo=UTC)
-    version = Version(1, 0, 0)
-    tenant = TenantContext(TenantId("demo"))
+    """Open one host for one demo run.
+
+    `route_count` 1 routes the engineering profile; 0 configures a different
+    profile so routing finds no match. The public host pins exactly one selected
+    binding, so an ambiguous route cannot be configured through it. Denied
+    authority is modelled as a configured but expired operator grant.
+    """
+    if route_count not in (0, 1):
+        raise ValueError("the public local host pins exactly one binding")
+    tenant = TenantId("demo")
     target = ConfigurationRef(
-        ApplicationRef(
-            ReferenceScope("operator", tenant.tenant_id), ApplicationId("demo")
-        ),
+        ApplicationRef(ReferenceScope("operator", tenant), ApplicationId("demo")),
         "models",
     )
-    operation = OperationRef(target, OperationId("analyze"), "configuration")
-    revision = ConfigurationRevisionRef(target, "r1", version)
-    requirement = ModelRequirement("engineering-reasoning")
-    binding = ModelBinding("static", requirement, ModelId("static"), ProviderId("demo"))
-    # Reuse the existing v1 Chat capability, supplied by an explicit fake Plugin.
-    # The historical declaration helper constructs data, never an Ollama client.
-    declaration = replace(
-        ollama_declaration(), plugin_id=PluginId("legoai.demo", "static")
-    )
-    catalog = InMemoryCatalog()
-    record = admit(
-        validate(inspect(declaration), declaration, evaluated_at=now),
-        tenant,
-        PluginAdmissionId("demo"),
-        established_at=now,
-    )
-    record = activate(initialize(record, established_at=now), established_at=now)
-    entry = catalog.publish(
-        record, declaration, declaration.offers[0], established_at=now
-    )
-    principal = Principal(PrincipalRef("operator", PrincipalId("service")))
-    grant = Grant(
-        GrantId("demo"),
-        principal,
-        principal,
-        tenant,
-        "invoke-capability",
-        ollama_chat_capability_id().value,
-        False,
-        now,
-        now + timedelta(hours=1),
-    )
-    security = SecurityContext(
-        principal,
-        tenant,
-        operation,
-        "invoke-capability",
-        ollama_chat_capability_id().value,
-        grant if model_allowed else None,
-        None,
-        PolicyRef("operator", "demo", version),
-        now,
-    )
-    security_ref = SecurityContextRef("operator", "demo")
-    resolver = StaticSecurityContextRegistry()
-    resolver.register(security_ref, security)
-    approvals = InMemoryApprovalRegistry()
-    authorization = DeterministicAuthorizationEvaluator(
-        InMemoryGrantRegistry(), approvals, InMemoryPolicyRegistry()
-    )
-    arbiter = DeterministicDispatchArbiter(
-        authorization,
-        catalog,
-        InMemoryEvidenceCustody(),
-        approvals,
-    )
     model = StaticModel(output)
-    bindings = tuple(
-        replace(binding, binding_id=f"static-{i}") for i in range(route_count)
-    )
-    selected = bindings[0] if bindings else binding
-    runtime = OneStepAgentRuntime(
-        DeterministicModelRouter(revision, bindings),
-        GovernedAgentChat(
-            ExecutionCoordinator(resolver, arbiter, clock=lambda: now),
-            ConfiguredModelBinding(revision, selected, entry, model),
+
+    def construct() -> ModelPort:
+        return model
+
+    profile = "engineering-reasoning" if route_count else "unrouted-profile"
+    config = LocalHostConfig(
+        ConfigurationRevisionRef(target, "r1", Version(1, 0, 0)),
+        PrincipalRef("operator", PrincipalId("service")),
+        PolicyRef("operator", "demo", Version(1, 0, 0)),
+        (
+            OperatorGrant(
+                GrantId("demo"),
+                "invoke-capability",
+                ModelPurpose.CHAT.capability_id.value,
+                *(_ACTIVE if model_allowed else _EXPIRED),
+            ),
+            OperatorGrant(
+                GrantId("read"),
+                READ_ACTION,
+                WORKSPACE,
+                *(_ACTIVE if read_allowed else _EXPIRED),
+            ),
         ),
+        (
+            ModelBindingConfig(
+                "static",
+                ModelRequirement(profile),
+                TrustedModelContribution(
+                    PluginId("legoai.demo", "static"),
+                    ProviderId("demo"),
+                    ModelId("static"),
+                    frozenset({ModelPurpose.CHAT}),
+                    construct,
+                ),
+            ),
+        ),
+        max_executions=64,
     )
-    context = ExecutionContext(
-        ExecutionId("demo"),
-        operation,
-        tenant,
-        security_ref,
-        CorrelationId("demo"),
-        None,
-        None,
-        None,
+    host = open_local_host(
+        config, {"revision": "r1", "binding": "static"}, clock=lambda: NOW
     )
-    return GovernedDemo(runtime, context, model, security, authorization)
+    return GovernedDemo(
+        host,
+        host.agent_runtime(),
+        host.model_execution(ModelPurpose.CHAT),
+        model,
+        target,
+    )

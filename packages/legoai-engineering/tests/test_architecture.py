@@ -442,6 +442,25 @@ def test_core_does_not_import_engineering_pack() -> None:
                 assert node.module.split(".")[0] != "legoai_engineering", path
 
 
+def test_examples_use_only_the_public_governed_host() -> None:
+    # ADR-014: consumers compose through legoai.runtime.api/local only and
+    # never manufacture authority; the host issues grants from operator config.
+    examples = Path(__file__).resolve().parents[1] / "examples"
+    for path in sorted(examples.glob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            modules: list[str] = []
+            if isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules = [node.module]
+            for module in modules:
+                assert not module.startswith(
+                    ("legoai.reference", "legoai.runtime._composition")
+                ), (path.name, module)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                assert node.func.id not in {"Grant", "SecurityContext"}, path.name
+
+
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
 import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing

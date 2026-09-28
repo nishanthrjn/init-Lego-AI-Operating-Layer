@@ -223,6 +223,8 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/reference/agent.py",
         "legoai/runtime/_composition/agent.py",
         "legoai/runtime/_composition/model_selection.py",
+        "legoai/runtime/api.py",
+        "legoai/runtime/local.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -319,6 +321,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
             "tests/architecture/test_model_routing.py",
+            "examples/local_host.py",
+            "tests/integration/composition/test_local_host.py",
+            "tests/architecture/test_local_host.py",
         }
     environment = tmp_path / "installed"
     venv.EnvBuilder(with_pip=False).create(environment)
@@ -641,6 +646,29 @@ assert composition_result.normalized_text == "smoke test"
     result = run([str(interpreter), "-I", "-B", str(agent_example)], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.splitlines() == ["succeeded", "A bounded Agent result."]
+
+    # ADR-014: the public local host from the installed wheel, public imports
+    # only. The consumer module itself never names reference/private wiring.
+    host_example = tmp_path / "local_host.py"
+    host_example.write_bytes((root / "examples" / "local_host.py").read_bytes())
+    assert "legoai.reference" not in host_example.read_text(encoding="utf-8")
+    assert "_composition" not in host_example.read_text(encoding="utf-8")
+    result = run([str(interpreter), "-I", "-B", str(host_example)], tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.splitlines() == ["succeeded", "A bounded Agent result."]
+    public = """
+import sys
+from pathlib import Path
+import legoai.runtime.api as api
+import legoai.runtime.local as local
+for module in (api, local):
+    assert Path(module.__file__).is_relative_to(Path(sys.prefix)), module.__file__
+assert callable(local.open_local_host)
+assert [p.value for p in api.ModelPurpose] == ["chat", "embedding"]
+assert api.HostError(api.HostFailure.CAPACITY_EXHAUSTED).failure.value == "capacity_exhausted"
+"""
+    result = run([str(interpreter), "-I", "-B", "-c", public], tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_f1_static_misuse(tmp_path: Path) -> None:

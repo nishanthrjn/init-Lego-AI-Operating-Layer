@@ -1332,3 +1332,20 @@ on Windows are expected. Do not rerun Docker or unrelated application suites.
 Classify failures as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDENCY
 DEFECT and request only the smallest necessary rerun.
 `CODING_AGENT_M8_3_COMPLETE = NO` until local evidence is green. M8.4 is unstarted.
+
+## ADR-014 public governed host (CR-1b; local validation pending)
+
+The offline examples now compose through Core's public local host only
+(`legoai.runtime.api`, `legoai.runtime.local`). `examples/governed_demo.py` opens
+one host per demo, with operator grants for Chat and `read-for-model-analysis`.
+`repository_analyst.py` takes its read `SecurityContext` and `AuthorizationPort`
+from `host.security_context(...)`/`host.authorization`. No example imports
+`legoai.reference.*` or `legoai.runtime._composition.*`, or constructs a `Grant`.
+Denied authority is modelled as a configured but expired grant; the M8.3
+governance-separation test now uses an expired model grant with authorized
+reads (`model_allowed=False`), because a hand-forged context is refused earlier
+as `FOREIGN_CONTEXT` (covered in Core). The host pins one
+binding, so the engineering tests exercise NO_MATCH routing only; ambiguous
+routing stays covered by Core M7 tests. Specialization contracts and the
+`analyst/_composition`/`coding/_composition` modules are unchanged (CR-3 owns them).
+See [ADR-014](../../adrs/ADR-014.md).

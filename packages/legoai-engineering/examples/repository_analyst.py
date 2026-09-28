@@ -1,4 +1,4 @@
-"""Offline Repository Analyst technical composition, with explicit read grants."""
+"""Offline Repository Analyst composition; read authority comes from the host."""
 
 import asyncio
 import json
@@ -6,10 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from governed_demo import StaticModel, create_governed_demo
-from legoai.governance.values import GrantId
-from legoai.kernel.identity import OperationId
-from legoai.kernel.references import ConfigurationRef, OperationRef
+from governed_demo import NOW, READ_ACTION, WORKSPACE, StaticModel, create_governed_demo
 
 from legoai_engineering.analyst._composition import AuthorizedRepositoryEvidence
 from legoai_engineering.analyst.api import RepositoryAnalyst
@@ -27,45 +24,29 @@ def create_demo(
     *,
     route_count: int = 1,
     read_allowed: bool = True,
+    model_allowed: bool = True,
     targets: tuple[RepositoryPath, ...] = (
         RepositoryPath("a.py"),
         RepositoryPath("b.py"),
     ),
 ) -> tuple[RepositoryAnalyst, RepositoryAnalysisRequest, StaticModel]:
-    demo = create_governed_demo(output, route_count=route_count)
-    now = demo.security.established_at
-    security = demo.security
-    grant = security.grant
-    assert grant is not None
-    target = demo.context.operation.subject
-    assert isinstance(target, ConfigurationRef)
-    workspace_reference = replace(target, instance="workspace")
-    read_security = replace(
-        security,
-        operation=OperationRef(
-            workspace_reference, OperationId("read"), "configuration"
-        ),
-        action="read-for-model-analysis",
-        resource_scope="workspace",
-        grant=replace(
-            grant,
-            grant_id=GrantId("read"),
-            action="read-for-model-analysis",
-            resource_scope="workspace",
-        )
-        if read_allowed
-        else None,
+    demo = create_governed_demo(
+        output,
+        route_count=route_count,
+        read_allowed=read_allowed,
+        model_allowed=model_allowed,
     )
+    workspace_reference = replace(demo.configuration, instance=WORKSPACE)
     reader = AuthorizedRepositoryEvidence(
         workspace_reference,
         LocalRepositoryWorkspace(
             LocalWorkspaceRoot(root),
             WorkspacePolicy(8192, 8192, 16, 8, (".git", ".venv")),
         ),
-        read_security,
-        demo.authorization,
+        demo.host.security_context(workspace_reference, READ_ACTION, WORKSPACE),
+        demo.host.authorization,
         targets,
-        lambda: now,
+        lambda: NOW,
     )
     request = RepositoryAnalysisRequest(
         "Which files implement the supplied behavior?",

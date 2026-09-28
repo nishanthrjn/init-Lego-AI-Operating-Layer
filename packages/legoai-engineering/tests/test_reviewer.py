@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from governed_demo import create_governed_demo
+from governed_demo import GovernedDemo, create_governed_demo
 from legoai.execution.agent.values import AgentId
 from legoai.intelligence.model.ports import ModelResponseUncertainError
 from legoai.kernel.effects import EffectExtent
@@ -47,6 +47,11 @@ def finding(**changes: object) -> dict[str, object]:
     return obj
 
 
+def bound(request: ReviewRequest, demo: GovernedDemo) -> ReviewRequest:
+    """Each public host accepts only execution contexts it minted itself."""
+    return replace(request, context=demo.context)
+
+
 @pytest.fixture
 def request_value() -> ReviewRequest:
     demo = create_governed_demo(output())
@@ -67,7 +72,9 @@ def test_review_is_one_governed_opinion_without_mutation(
     file.write_text("original", encoding="utf-8")
     before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
     demo = create_governed_demo(output())
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.COMPLETED
     assert result.review is not None
     assert result.review.decision is ReviewDecision.ACCEPT
@@ -94,7 +101,9 @@ def test_changes_required_and_unknowns_are_explicit(
         ),
     ):
         demo = create_governed_demo(text)
-        result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+        result = asyncio.run(
+            IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+        )
         assert result.status is ReviewStatus.COMPLETED
         assert result.review is not None and result.review.decision is decision
         assert demo.model.calls == 1
@@ -103,19 +112,24 @@ def test_changes_required_and_unknowns_are_explicit(
 def test_self_review_is_rejected_before_model(request_value: ReviewRequest) -> None:
     demo = create_governed_demo(output())
     request_value = replace(request_value, producer=reviewer_definition().agent_id)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.INVALID_SUBMISSION
     assert result.submission_failure is SubmissionFailure.SELF_REVIEW
     assert result.agent_result is None and result.review is None
     assert demo.model.calls == 0
 
 
-@pytest.mark.parametrize("route_count", [0, 2])
+# The public host pins one selected binding; ambiguity is covered in Core M7 tests.
+@pytest.mark.parametrize("route_count", [0])
 def test_route_failures_do_not_invoke_model(
     request_value: ReviewRequest, route_count: int
 ) -> None:
     demo = create_governed_demo(output(), route_count=route_count)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.MODEL_FAILURE
     assert (
         result.agent_result is not None and result.agent_result.route.selected is None
@@ -175,7 +189,9 @@ def test_invalid_review_preserves_model_effect(
     request_value: ReviewRequest, text: str
 ) -> None:
     demo = create_governed_demo(text)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.OUTPUT_INVALID
     assert result.review is None
     assert (
@@ -191,7 +207,9 @@ def test_m7_output_contract_is_retained(
     request_value: ReviewRequest, text: str
 ) -> None:
     demo = create_governed_demo(text)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.OUTPUT_INVALID
     assert result.agent_result is not None and result.agent_result.output is None
     assert demo.model.calls == 1
@@ -202,7 +220,9 @@ def test_model_uncertainty_has_no_retry_or_fallback(
 ) -> None:
     demo = create_governed_demo(output())
     demo.model.error = ModelResponseUncertainError("uncertain response")
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.MODEL_FAILURE
     assert (
         result.agent_result is not None
@@ -214,7 +234,9 @@ def test_model_uncertainty_has_no_retry_or_fallback(
 
 def test_model_authorization_remains_external(request_value: ReviewRequest) -> None:
     demo = create_governed_demo(output(), model_allowed=False)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.status is ReviewStatus.MODEL_FAILURE
     assert result.agent_result is not None
     assert result.agent_result.model_execution is not None
@@ -229,7 +251,9 @@ def test_unexpected_errors_propagate(request_value: ReviewRequest) -> None:
         type(demo.runtime), "run", AsyncMock(side_effect=asyncio.CancelledError)
     ):
         with pytest.raises(asyncio.CancelledError):
-            asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+            asyncio.run(
+                IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+            )
 
 
 def test_input_and_aggregate_bounds(request_value: ReviewRequest) -> None:
@@ -254,7 +278,9 @@ def test_input_and_aggregate_bounds(request_value: ReviewRequest) -> None:
 def test_json_expansion_fails_before_model(request_value: ReviewRequest) -> None:
     demo = create_governed_demo(output())
     request_value = replace(request_value, proposal="\x01" * 8192)
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     assert result.submission_failure is SubmissionFailure.CONTEXT_BUDGET
     assert result.agent_result is None and demo.model.calls == 0
 
@@ -269,7 +295,7 @@ def test_prompt_order_and_untrusted_content(request_value: ReviewRequest) -> Non
         demo = create_governed_demo(output())
         result = asyncio.run(
             IndependentReviewer(demo.runtime).review(
-                replace(request_value, evidence=evidence)
+                replace(bound(request_value, demo), evidence=evidence)
             )
         )
         assert result.status is ReviewStatus.COMPLETED
@@ -282,7 +308,9 @@ def test_result_attribution_and_status_cannot_be_fabricated(
     request_value: ReviewRequest,
 ) -> None:
     demo = create_governed_demo(output())
-    result = asyncio.run(IndependentReviewer(demo.runtime).review(request_value))
+    result = asyncio.run(
+        IndependentReviewer(demo.runtime).review(bound(request_value, demo))
+    )
     with pytest.raises(ValueError):
         replace(result, review=None)
     with pytest.raises(ValueError):

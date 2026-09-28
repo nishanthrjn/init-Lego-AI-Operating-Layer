@@ -76,6 +76,43 @@ governed invocation are unchanged. Future Model/runtime optimization must addres
 token limits, bounded response transport, provider-specific max-token translation
 and generation-cost/resource budgeting; none is implemented here.
 
+## Public consumption path (ADR-014, CR-1b)
+
+Applications obtain the governed Agent path through the public local host.
+They never import `legoai.reference.*` or `legoai.runtime._composition.*`,
+and never construct `Grant` or `SecurityContext` values. The wiring described
+above remains the host's private implementation.
+
+```python
+from legoai.execution.agent.ports import AgentRequest
+from legoai.runtime.api import LocalHostConfig, ModelPurpose
+from legoai.runtime.local import open_local_host
+
+# Composition root: operator configuration (grants, bindings, capacity) plus
+# trusted code (a TrustedModelContribution or the built-in OllamaSettings).
+host = open_local_host(config, {"revision": "r1", "binding": "offline"})
+
+# Application code: public contracts only.
+context = host.model_execution(ModelPurpose.CHAT)
+result = await host.agent_runtime().run(definition, AgentRequest(context, text))
+```
+
+- `agent_runtime()` is bound to the binding pinned when the host opened. It
+  takes no provider argument, and M7's single call with no retry is unchanged.
+- `AgentRequest.context` must come from `model_execution(ModelPurpose.CHAT)` on
+  the same host. Another host's context fails with `HostError(FOREIGN_CONTEXT)`
+  before any model work.
+- Denied authority (an unconfigured, expired or not-yet-valid operator grant)
+  never reaches the provider. The effect mapping (NONE/COMPLETED/UNKNOWN) is
+  the existing one.
+- A host is confined to its opening thread and the event loop of its first
+  async use (`WRONG_EVENT_LOOP`), and to `max_executions` minted contexts
+  (`CAPACITY_EXHAUSTED`). Both are reference-host limits, not scalability
+  claims.
+
+See [ADR-014](../adrs/ADR-014.md) and the runnable
+[`examples/local_host.py`](../examples/local_host.py).
+
 ## Local validation required
 
 No runnable validation was performed internally. From the repository root, run

@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from bounded_coding import create_demo
-from legoai.execution.values import SecurityContextRef
 from legoai.intelligence.model.ports import ModelResponseUncertainError
 from legoai.kernel.effects import EffectExtent
 
@@ -124,7 +123,8 @@ def test_request_cannot_expand_operator_scope(workspace: Path) -> None:
     assert result.acquisition_failure is AcquisitionFailure.DENIED and model.calls == 0
 
 
-@pytest.mark.parametrize("count", [0, 2])
+# The public host pins one selected binding; ambiguity is covered in Core M7 tests.
+@pytest.mark.parametrize("count", [0])
 def test_no_match_or_ambiguous_routes_do_not_call_model(workspace: Path, count: int) -> None:
     agent, request, model = create_demo(workspace, output(), (target(),), route_count=count)
     result = asyncio.run(agent.propose(request))
@@ -296,10 +296,8 @@ def test_create_observation_rechecks_authority_before_disclosure(workspace: Path
 
 
 def test_model_governance_is_separate_from_read_authority(workspace: Path) -> None:
-    agent, request, model = create_demo(workspace, output(), (target(),))
-    request = replace(request, context=replace(
-        request.context, security_context_ref=SecurityContextRef("operator", "missing")
-    ))
+    # Reads stay authorized while the operator's model grant has expired.
+    agent, request, model = create_demo(workspace, output(), (target(),), model_allowed=False)
     result = asyncio.run(agent.propose(request))
     assert result.status is CodingStatus.MODEL_FAILURE
     assert result.agent_result is not None and result.agent_result.model_execution is not None

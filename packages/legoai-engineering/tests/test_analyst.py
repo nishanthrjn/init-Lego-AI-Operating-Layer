@@ -65,7 +65,8 @@ def test_success_ordering_one_call_and_no_mutation(workspace: Path) -> None:
     assert before == {p.name: p.read_bytes() for p in workspace.iterdir()}
 
 
-@pytest.mark.parametrize("count", [0, 2])
+# The public host pins one selected binding; ambiguity is covered in Core M7 tests.
+@pytest.mark.parametrize("count", [0])
 def test_routing_failure_never_calls_model(workspace: Path, count: int) -> None:
     analyst, request, model = create_demo(workspace, answer(), route_count=count)
     result = asyncio.run(analyst.analyze(request))

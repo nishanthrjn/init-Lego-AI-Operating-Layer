@@ -580,6 +580,29 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # concrete observation sink (F8b task SS41-42) --
                         # those remain the caller's own explicit choice.
                         errors.add("composition-owner")
+                    if name == "legoai.runtime.api" and not (
+                        target == "legoai.kernel"
+                        or target.startswith("legoai.kernel.")
+                        or any(
+                            target == f"legoai.{owner}"
+                            or target.startswith(f"legoai.{owner}.")
+                            for owner in (
+                                "capabilities.values",
+                                "execution.values",
+                                "execution.agent.ports",
+                                "governance.values",
+                                "governance.ports",
+                                "intelligence.model.values",
+                                "intelligence.model.ports",
+                                "intelligence.model.routing",
+                                "plugins.values",
+                            )
+                        )
+                    ):
+                        # ADR-014 §3.1: the public facade is contract-only. It
+                        # never imports reference realizations, private
+                        # composition or its own composition entry module.
+                        errors.add("runtime-api")
                 elif root not in sys.stdlib_module_names:
                     errors.add("external")
                 if target in sources:

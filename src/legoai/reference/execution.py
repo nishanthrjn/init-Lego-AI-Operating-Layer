@@ -761,3 +761,20 @@ class StaticSecurityContextRegistry:
         if context is None or context.tenant_context != tenant_context:
             return None
         return context
+
+
+def running_event_loop() -> object:
+    """The caller's running event loop, as an opaque identity (ADR-014 §5).
+
+    The reference Coordinator's `asyncio.Lock` confines it to one loop. This
+    lets the public local host fail fast on cross-loop use without importing
+    `asyncio` outside this module. The loop object itself is returned (not
+    `id()`), so a retained identity cannot collide with a later loop. Raises
+    RuntimeError when no loop is running.
+    """
+    return asyncio.get_running_loop()
+
+
+def current_thread_ident() -> int:
+    """The calling thread's identity, for the same host confinement check."""
+    return threading.get_ident()
