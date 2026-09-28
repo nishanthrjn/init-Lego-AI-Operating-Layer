@@ -40,11 +40,6 @@ from legoai.kernel.references import (
 )
 from legoai.plugins.values import PluginId
 
-MAX_GRANTS = 64
-MAX_BINDINGS = 16
-MAX_EXECUTIONS = 100_000
-_MAX_TEXT = 256
-
 
 class HostFailure(Enum):
     """Closed ADR-014 failure vocabulary; ADR-019 names reused where they exist."""
@@ -100,7 +95,7 @@ def _text(value: object, failure: HostFailure) -> None:
     if type(value) is not str:
         raise TypeError("host configuration text must be str")
     if (
-        not 1 <= len(value) <= _MAX_TEXT
+        not 1 <= len(value) <= 256
         or value.isspace()
         or any(ord(char) < 32 or ord(char) == 127 for char in value)
     ):
@@ -239,11 +234,12 @@ class LocalHostConfig:
             raise TypeError("host bindings require tuple[ModelBindingConfig, ...]")
         if type(self.max_executions) is not int:
             raise TypeError("max_executions must be an exact int")
-        if not 1 <= len(self.grants) <= MAX_GRANTS:
+        # Bounds: 1–64 grants, 1–16 bindings, 1–100,000 lifetime executions.
+        if not 1 <= len(self.grants) <= 64:
             raise HostError(HostFailure.INVALID_CONFIGURATION)
-        if not 1 <= len(self.bindings) <= MAX_BINDINGS:
+        if not 1 <= len(self.bindings) <= 16:
             raise HostError(HostFailure.INVALID_CONFIGURATION)
-        if not 1 <= self.max_executions <= MAX_EXECUTIONS:
+        if not 1 <= self.max_executions <= 100_000:
             raise HostError(HostFailure.INVALID_CONFIGURATION)
         grant_ids = {grant.grant_id for grant in self.grants}
         pairs = {(grant.action, grant.resource_scope) for grant in self.grants}
