@@ -1,6 +1,20 @@
 # VTO-2 — Provider-Neutral Virtual Try-On Capability
 
-Status: IMPLEMENTED — DETERMINISTIC VALIDATION PENDING.
+Status: IMPLEMENTED — DETERMINISTICALLY VALIDATED (maintainer-run, 2026-09-28).
+Live qualification is VTO-3.
+
+**Validation evidence.**
+
+- `uv run python .\validate_virtual_try_on_vto2.py` passed 19/19 phases:
+  - contract 7, preflight 18, workflow 24, composition 12;
+  - effects 6, geometry 9, reconciliation 46, reuse 18;
+  - architecture 4, plus the wheel build and import;
+  - VTO-1 regressions 83, provider regressions 121, other package tests 127.
+- `validate_virtual_try_on_vto1.py` still passes 16/16.
+- `validate_comfyui_provider_compatibility.py` still passes 16/16,
+  including 254 affected existing repository checks, after the engine,
+  composition and configuration refactors.
+- No live ComfyUI, CUDA, model or real image was used.
 Authority: [ADR-020](../adrs/ADR-020.md), the
 [assessment](VIRTUAL-TRY-ON-IMPACT-ASSESSMENT.md) §11a–§16 and
 [VTO-1](VIRTUAL-TRY-ON-VTO1.md). No Core change. `TextToImagePort` and
