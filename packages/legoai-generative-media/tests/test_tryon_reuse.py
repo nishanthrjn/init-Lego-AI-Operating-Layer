@@ -23,7 +23,11 @@ from legoai_generative_media.config import (
     load_try_on_config,
     parse_try_on_config,
 )
-from legoai_generative_media.service import TryOnService, open_virtual_try_on
+from legoai_generative_media.service import (
+    TryOnService,
+    WriteCounter,
+    open_virtual_try_on,
+)
 from legoai_generative_media.values import Outcome
 
 REPO = Path(__file__).resolve().parents[3]
@@ -127,9 +131,12 @@ def test_second_consumer_reconciles_without_uploads(
     http = FakeHTTP()
     http.use_tryon_job()
     operator = load(CONSUMERS[1])
-    assert asyncio.run(operator.reconcile(service(tmp_path, http), "job-1", None)) == 0
+    counter = WriteCounter(Transports({LOCAL: http}))
+    built = asyncio.run(open_virtual_try_on(config(tmp_path), transports=counter))
+    assert asyncio.run(operator.reconcile(built, "job-1", None, counter)) == 0
     out = capsys.readouterr().out
-    assert "uploads performed: NO" in out and "status: COMPLETED" in out
+    assert "uploads performed: 0" in out and "submission performed: NO" in out
+    assert "status: COMPLETED" in out
     assert http.uploads() == 0 and http.prompts() == []
 
 

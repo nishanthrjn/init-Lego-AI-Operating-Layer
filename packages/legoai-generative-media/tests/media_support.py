@@ -256,6 +256,8 @@ class FakeHTTP:
             return Response(200, "image/png", self.image)
         elif path == "/upload/image" and method == "POST":
             return self.upload(body, headers)
+        elif path == "/system_stats":
+            data = {"system": {"comfyui_version": "0.37.0"}}
         else:
             raise AssertionError("unexpected route " + path)
         return Response(200, "application/json", json.dumps(data).encode())

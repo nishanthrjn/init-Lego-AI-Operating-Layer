@@ -154,12 +154,13 @@ class LegacyDriver:
                     limit=1024 * 1024,
                 )
             )
+            # Messages name only public node/input identifiers (operator diagnostics).
             if node not in response or type(response[node]) is not dict:
-                raise ValueError("missing required node")
+                raise ValueError(f"missing required node {node}")
             for field, filename in models.get(node, []):
                 choices = response[node]["input"]["required"][field][0]
                 if type(choices) is not list or filename not in choices:
-                    raise ValueError("missing approved model file")
+                    raise ValueError(f"missing approved model file for {node}.{field}")
 
     async def submit(self, budget: Budget, graph: dict[str, Any]) -> Submission:
         payload = json.dumps({"prompt": graph}, ensure_ascii=True).encode("utf-8")

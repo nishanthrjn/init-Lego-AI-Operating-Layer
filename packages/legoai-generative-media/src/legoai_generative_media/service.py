@@ -15,8 +15,15 @@ from .comfyui import ComfyTextToImageAdapter
 from .composition import TRY_ON_OFFER, invoke, invoke_try_on
 from .config import GenerationConfig, ProviderConfig, TryOnConfig, resolve_secret
 from .discovery import DRIVERS, confirm, discover
-from .drivers.base import ComfyDriver, ProviderError, ProviderProfile, TransportFactory
-from .http import Endpoint, LocalHTTP, RemoteHTTPS
+from .drivers.base import (
+    Budget,
+    ComfyDriver,
+    ProviderError,
+    ProviderProfile,
+    Transport,
+    TransportFactory,
+)
+from .http import Endpoint, Headers, LocalHTTP, RemoteHTTPS, Response
 from .local_host import prepare_local
 from .transfer import ImageTransfer
 from .values import (
@@ -31,11 +38,15 @@ from .virtual_try_on import ComfyVirtualTryOnAdapter
 __all__ = [
     "ProviderError",
     "ProviderProfile",
+    "PreflightReport",
     "TextToImageService",
     "TryOnService",
+    "WriteCounter",
+    "default_transports",
     "open_image_transfer",
     "open_text_to_image",
     "open_virtual_try_on",
+    "preflight_virtual_try_on",
     "probe_provider",
 ]
 
@@ -265,3 +276,133 @@ async def open_virtual_try_on(
         local=provider.deployment == "local",
     )
     return TryOnService(config, adapter)
+
+
+class WriteCounter:
+    """Operator diagnostics: counts provider write attempts, never their content.
+
+    Wraps a TransportFactory. Every non-GET request is counted when it is
+    attempted, as an input upload or otherwise as a submission.
+    """
+
+    _UPLOAD_ROUTES = frozenset({"/upload/image"})
+
+    def __init__(self, inner: TransportFactory) -> None:
+        self._inner = inner
+        self.uploads = 0
+        self.submissions = 0
+
+    def __call__(self, origin: str, token: str | None) -> Transport:
+        return _CountedTransport(self._inner(origin, token), self)
+
+
+class _CountedTransport:
+    def __init__(self, inner: Transport, counter: WriteCounter) -> None:
+        self._inner = inner
+        self._counter = counter
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        body: bytes = b"",
+        *,
+        limit: int,
+        headers: Headers = (),
+    ) -> Response:
+        if method != "GET":
+            if path.split("?", 1)[0] in WriteCounter._UPLOAD_ROUTES:
+                self._counter.uploads += 1
+            else:
+                self._counter.submissions += 1
+        return await self._inner.request(
+            method, path, body, limit=limit, headers=headers
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class PreflightReport:
+    """Safe, ordered preflight lines; `ok` only if every check passed."""
+
+    ok: bool
+    lines: tuple[tuple[str, str], ...]
+
+
+async def preflight_virtual_try_on(
+    config: TryOnConfig,
+    *,
+    environ: Mapping[str, str] | None = None,
+    transports: TransportFactory | None = None,
+    clock: Callable[[], float] = time.monotonic,
+) -> PreflightReport:
+    """Read-only live readiness check: never uploads, submits or mutates.
+
+    All provider I/O goes through read-only budgets, so any POST is
+    structurally refused. Checks stop at the first failure.
+    """
+    provider = config.provider
+    lines: list[tuple[str, str]] = []
+
+    def report(ok: bool) -> PreflightReport:
+        return PreflightReport(ok, tuple(lines))
+
+    if provider.deployment != "local":
+        lines.append(("local-only policy", "FAIL (remote personal images forbidden)"))
+        return report(False)
+    lines.append(("local-only policy", "PASS"))
+    try:
+        workflow = config.workflow.load()
+    except (OSError, ValueError, TypeError) as error:
+        lines.append(("approved template", f"FAIL ({str(error)[:120]})"))
+        return report(False)
+    width, height = workflow.geometry
+    lines.append(("approved template", f"PASS {workflow.kind.value} {width}x{height}"))
+    token = resolve_secret(
+        provider.secret_ref, os.environ if environ is None else environ
+    )
+    factory = transports or default_transports(provider)
+    primary = factory(provider.origin, token)
+    timeout = provider.completion.request_timeout_seconds
+    try:
+        if provider.api_family == "auto":
+            family, version = await discover(
+                "auto", primary, request_timeout=timeout, clock=clock
+            )
+        else:
+            family = provider.api_family
+            version = await confirm(
+                family, primary, request_timeout=timeout, clock=clock
+            )
+    except ProviderError as error:
+        lines.append(("provider reachable", f"FAIL ({error.reason})"))
+        return report(False)
+    lines.append(("provider reachable", "YES"))
+    lines.append(("api family", f"{family} {version or ''}".strip()))
+    driver = DRIVERS[family](
+        version, primary, frozenset(provider.download_origins), factory
+    )
+    capabilities = driver.profile.capabilities
+    if not capabilities.input_upload:
+        lines.append(("upload capability", "FAIL"))
+        return report(False)
+    lines.append(("upload capability", "PASS"))
+    if not capabilities.node_preflight:
+        lines.append(("node preflight", "FAIL (provider cannot verify nodes/models)"))
+        return report(False)
+    budget = Budget(
+        clock() + provider.completion.max_wait_seconds, clock, timeout, True
+    )
+    try:
+        await driver.preflight(budget, workflow)
+    except ProviderError as error:
+        lines.append(("node preflight", f"FAIL ({error.reason})"))
+        return report(False)
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+        lines.append(("node preflight", f"FAIL ({str(error)[:120]})"))
+        return report(False)
+    models = workflow.models
+    lines.append(("node preflight", "PASS"))
+    lines.append(("diffusion model", f"present ({models.diffusion_model})"))
+    lines.append(("text encoder", f"present ({models.text_encoder})"))
+    lines.append(("vae", f"present ({models.vae})"))
+    return report(True)
