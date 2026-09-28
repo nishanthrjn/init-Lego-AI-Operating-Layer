@@ -1333,7 +1333,7 @@ Classify failures as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDE
 DEFECT and request only the smallest necessary rerun.
 `CODING_AGENT_M8_3_COMPLETE = NO` until local evidence is green. M8.4 is unstarted.
 
-## ADR-014 public governed host (CR-1b; local validation pending)
+## ADR-014 public governed host (CR-1b; locally qualified 2026-09-28)
 
 The offline examples now compose through Core's public local host only
 (`legoai.runtime.api`, `legoai.runtime.local`). `examples/governed_demo.py` opens
