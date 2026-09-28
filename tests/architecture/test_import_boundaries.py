@@ -1101,6 +1101,24 @@ def test_no_documind_or_document_pack_import_by_core() -> None:
     assert offenders == []
 
 
+def test_core_does_not_import_collation_pack() -> None:
+    root = Path(__file__).resolve().parents[2] / "src" / "legoai"
+    sources = list(root.rglob("*.py"))
+    assert sources, "Core source tree is missing"
+    offenders: list[str] = []
+    for path in sources:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            roots: set[str] = set()
+            if isinstance(node, ast.Import):
+                roots = {alias.name.split(".")[0] for alias in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                roots = {node.module.split(".")[0]}
+            if "legoai_collation" in roots:
+                offenders.append(str(path.relative_to(root)))
+    assert offenders == []
+
+
 # --- F5: reference-persistence codec boundary -----------------------------
 
 
