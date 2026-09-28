@@ -122,6 +122,17 @@ def reason_code(value: str | None) -> None:
         raise ValueError("unknown reason")
 
 
+def evidence_lines(value: tuple[str, ...]) -> None:
+    """Bounded, printable, already-sanitized provider observations."""
+    if type(value) is not tuple or len(value) > 4:
+        raise ValueError("invalid evidence")
+    for line in value:
+        if type(line) is not str or not 1 <= len(line) <= 200:
+            raise ValueError("invalid evidence")
+        if any(not 0x20 <= ord(c) <= 0x7E for c in line):
+            raise ValueError("invalid evidence")
+
+
 class Outcome(Enum):
     SUCCESS = "success"
     FAILED = "failed"
@@ -143,6 +154,7 @@ class GenerationResult:
     error: ErrorCategory | None = None
     cessation: Cessation = Cessation.NOT_REQUESTED
     reason: str | None = None
+    evidence: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.outcome) is not Outcome or type(self.effect) is not EffectExtent:
@@ -154,6 +166,7 @@ class GenerationResult:
         if self.error is not None and type(self.error) is not ErrorCategory:
             raise TypeError("invalid error")
         reason_code(self.reason)
+        evidence_lines(self.evidence)
         if self.outcome is Outcome.SUCCESS:
             if type(self.image) is not GeneratedImage or self.error is not None:
                 raise ValueError("success requires image only")
@@ -187,6 +200,7 @@ class ReconciliationResult:
     image: GeneratedImage | None = field(default=None, repr=False)
     error: ErrorCategory | None = None
     reason: str | None = None
+    evidence: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.job) is not ProviderJobRef:
@@ -196,6 +210,7 @@ class ReconciliationResult:
         if self.error is not None and type(self.error) is not ErrorCategory:
             raise TypeError("invalid error")
         reason_code(self.reason)
+        evidence_lines(self.evidence)
         if self.image is not None:
             if type(self.image) is not GeneratedImage or self.image.job != self.job:
                 raise ValueError("image attribution mismatch")

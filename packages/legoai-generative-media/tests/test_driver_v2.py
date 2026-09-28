@@ -146,6 +146,11 @@ def test_documented_rejections_prove_no_job(
     assert result.outcome is Outcome.FAILED and result.effect is EffectExtent.NONE
     assert result.error is category and result.reason == reason
     assert result.job is None and fake.posts() == 1
+    # Sanitized evidence: status, media type and code identifier; never messages.
+    assert result.evidence == (
+        f"v2 submit: status={status} type=application/json code={code}",
+    )
+    assert "provider text" not in " ".join(result.evidence)
 
 
 @pytest.mark.parametrize(
@@ -374,3 +379,32 @@ def test_unrelated_404_code_is_unresolved_not_absence() -> None:
     fake.known, fake.not_found_code = False, "route_not_found"
     result = asyncio.run(engine(fake).reconcile(JOB))
     assert result.status is ReconciliationStatus.UNRESOLVED
+
+
+def test_reconcile_failure_carries_sanitized_evidence() -> None:
+    class Denied(FakeV2):
+        async def request(
+            self,
+            method: str,
+            path: str,
+            body: bytes = b"",
+            *,
+            limit: int,
+            headers: tuple[tuple[str, str], ...] = (),
+        ) -> Response:
+            return envelope(403, "forbidden")
+
+    result = asyncio.run(engine(Denied()).reconcile(JOB))
+    assert result.status is ReconciliationStatus.UNRESOLVED
+    assert result.reason == "forbidden"
+    assert result.evidence == (
+        "v2 request: status=403 type=application/json code=forbidden",
+    )
+
+
+@pytest.mark.parametrize("evidence", [("x" * 201,), ("a\nb",), ("",), ("a",) * 5])
+def test_result_evidence_is_bounded(evidence: tuple[str, ...]) -> None:
+    from legoai_generative_media.values import GenerationResult
+
+    with pytest.raises(ValueError):
+        GenerationResult(Outcome.FAILED, EffectExtent.NONE, evidence=evidence)

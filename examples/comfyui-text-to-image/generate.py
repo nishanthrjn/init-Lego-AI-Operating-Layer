@@ -59,6 +59,8 @@ async def reconcile(
     print("status:", result.status.value.upper(), "effect:", result.effect.value)
     if result.error is not None:
         print("category:", result.error.value, "reason:", result.reason or "-")
+        for line in result.evidence:
+            print("evidence", line)
     if result.image is None:
         return 1
     save(result.image, output)
@@ -98,6 +100,8 @@ async def run(args: argparse.Namespace, config: GenerationConfig) -> int:
     if result.image is None:
         print("category:", result.error.value if result.error else "cancelled")
         print("reason:", result.reason or "-")
+        for line in result.evidence:
+            print("evidence", line)
         if result.job is not None:
             print(
                 "Reconcile later without resubmitting: --reconcile", result.job.job_id
