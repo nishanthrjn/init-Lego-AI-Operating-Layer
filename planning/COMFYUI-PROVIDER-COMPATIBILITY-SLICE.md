@@ -17,9 +17,14 @@ Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD NOT ESTABLISHED
 - Cloud probe (`comfy-cloud.toml`, explicit `v2`): `unsupported_api`. The
   structured v2 `not_found` evidence was not observed, so v2 support on
   `cloud.comfy.org` is **PROVIDER CAPABILITY NOT ESTABLISHED**. The probe
-  failed closed, and detection was not loosened. Since then the probe reports
-  sanitized evidence (status, media type, error-code identifier) and maps any
-  401/403 to an authentication failure. A re-run is needed to diagnose.
+  failed closed, and detection was not loosened. After the probe gained
+  sanitized evidence, the re-run showed
+  `v2 probe: status=404 type=application/json code=job_not_found`. Bearer
+  auth is accepted (no 401/403) and the route answers with a structured
+  error, but `job_not_found` appears in neither the v2 reference (which
+  documents `not_found`) nor the Cloud v1 job reference. Adopting it would
+  rest on one undocumented observation, so it is not accepted without an
+  explicit maintainer decision.
 
 Builds on [the text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md).
 No Core, ModelPort or `TextToImageRequest` change. No live runtime or Cloud
