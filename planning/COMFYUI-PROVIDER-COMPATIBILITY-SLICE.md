@@ -1,6 +1,6 @@
 # ComfyUI Provider Compatibility and Configuration Layer
 
-Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTED, SUBMISSION NOT AUTHORIZED.
+Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTED; CLOUD GENERATION BLOCKED BY ACCOUNT CREDITS.
 
 **Validation evidence (maintainer-run, 2026-09-28).**
 
@@ -44,6 +44,16 @@ Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTED, SUBMI
   sanitized evidence (status, media type, error-code identifier), so the next
   attempt shows Cloud's code. Cloud submit, status and retrieval remain
   unqualified.
+- Re-run with evidence (the deterministic validator again passed all 16
+  phases): `v2 submit: status=403 type=application/json code=forbidden`,
+  effect `none`, no job. The maintainer's Comfy dashboard showed "This
+  workspace is out of credits", the most likely cause. Cloud answered a
+  generic `403 forbidden` where the v2 docs specify `402
+  insufficient_credits`. The driver deliberately does not remap 403 to
+  credits, because `forbidden` also covers real permission failures. Both are
+  documented no-job rejections, so effect NONE is correct either way.
+  Qualifying Cloud generation needs workspace credits; it is an operator
+  precondition, not a code gap.
 
 Builds on [the text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md).
 No Core, ModelPort or `TextToImageRequest` change. No live runtime or Cloud
