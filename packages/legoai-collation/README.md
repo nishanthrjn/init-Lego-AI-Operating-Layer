@@ -82,7 +82,12 @@ from legoai_collation import (
     SourceId, SourceRef, collate_field,
 )
 
-context = ComparisonContext("demo-station-01", "air_temperature", (("unit", "degC"),))
+# Station (subject), metric (field), time and unit are fixed for every reading.
+context = ComparisonContext(
+    "demo-station-01",
+    "air_temperature",
+    (("observed_at", "2026-03-01T06:00:00Z"), ("unit", "degC")),
+)
 policy = PrecedencePolicy("demo/1", ((SourceId("feed-a"), 0), (SourceId("feed-b"), 1)))
 rule = DecimalRule(allow_negative_sign=True)
 readings = (
@@ -96,7 +101,8 @@ assert result.selected == Decimal("4.2") and result.has_disagreement
 
 ## Local validation
 
-From the repository root (the first `uv sync` creates this pack's `uv.lock`):
+From the repository root. The pack has its own `uv.lock`, containing only
+the pinned development and build tools:
 
 ```powershell
 Push-Location packages/legoai-collation
