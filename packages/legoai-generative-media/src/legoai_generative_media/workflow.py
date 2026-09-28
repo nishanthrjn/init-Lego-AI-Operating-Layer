@@ -108,3 +108,20 @@ class ApprovedWorkflow:
         if len(output) > MAX_WORKFLOW_BYTES:
             raise ValueError("request oversized")
         return output
+
+    def attribute(self, graph: object) -> TextToImageRequest:
+        """Recover the request whose binding reproduces graph exactly, or reject.
+
+        Proves shape equivalence with this approved workflow only; it is not a
+        cryptographic link to who submitted the graph or when.
+        """
+        try:
+            text = graph["6"]["inputs"]["text"]  # type: ignore[index]
+            seed = graph["3"]["inputs"]["seed"]  # type: ignore[index]
+        except KeyError, TypeError, IndexError:
+            raise ValueError("graph not attributable") from None
+        request = TextToImageRequest(text, seed)
+        expected = json_object(self.bind(request))["prompt"]
+        if json.dumps(graph, sort_keys=True) != json.dumps(expected, sort_keys=True):
+            raise ValueError("graph not attributable to approved workflow")
+        return request

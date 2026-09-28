@@ -15,6 +15,8 @@ sha256 = "866cac365049f11c819f547d3a2e0bf4272f73b015f7664d958ef10223deb8a8"
 prompt = "a cute white bunny sleeping inside a teacup, flowers around it, pastel colors, cozy, whimsical, soft lighting, highly detailed, 8k, cinematic lighting, photorealistic, trending on artstation"
 seed = "42"
 output_path = r".\comfyui-proof\mug.png"
+# Operator completion wait in seconds (max 1800). CPU runs observed ~640 s.
+timeout_seconds = "900"
 
 
 def main() -> int:
@@ -31,6 +33,7 @@ def main() -> int:
         "--prompt", prompt,
         "--seed", seed,
         "--output", str(ROOT / output_path),
+        "--timeout", timeout_seconds,
     ]
     print(f"Generating image with seed {seed}...", flush=True)
     try:

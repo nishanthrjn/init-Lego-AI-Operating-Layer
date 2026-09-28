@@ -104,6 +104,9 @@ def main() -> int:
             tests("5 contracts", "test_contracts.py")
             tests("6 transport", "test_adapter.py", "test_http.py")
             tests("7 effects", "test_effects.py", "test_composition.py")
+            # Completion policy, simulated long jobs, reconciliation with zero
+            # submissions and UNKNOWN -> COMPLETED knowledge refinement.
+            tests("7b policy and reconciliation", "test_policy.py", "test_reconcile.py")
             tests("8 architecture", "test_architecture.py")
             wheel_dir = Path(temporary) / "wheel"
             wheel_dir.mkdir()
@@ -140,9 +143,7 @@ def main() -> int:
             return 1
     for item in completed:
         print("PASS " + item)
-    print(
-        "DETERMINISTIC VALIDATION PASSED â€” LIVE COMFYUI QUALIFICATION STILL REQUIRED"
-    )
+    print("DETERMINISTIC VALIDATION PASSED - LIVE COMFYUI QUALIFICATION STILL REQUIRED")
     return 0
 
 

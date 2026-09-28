@@ -1,5 +1,6 @@
 """Explicit single-operator reference host; no implicit authority from env data."""
 
+import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
@@ -43,6 +44,7 @@ from legoai.reference.governance import (
 )
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
 
+from .comfyui import HARD_MAX_WAIT_SECONDS
 from .composition import OFFER, Contribution, select
 from .ports import TextToImagePort
 from .values import ApprovedWorkflowRef
@@ -69,8 +71,15 @@ async def prepare_local(
 
     Admission/grant are host acts, never consequences of untrusted input. This
     uses existing in-memory reference authority, not multi-tenant production IAM.
-    The operator owns the exact configuration digest passed here.
+    The operator owns the exact configuration digest passed here. timeout is
+    the Execution deadline; pass the adapter's CompletionPolicy.max_wait_seconds.
     """
+    if (
+        type(timeout) not in (float, int)
+        or not math.isfinite(timeout)
+        or not 0 < timeout <= HARD_MAX_WAIT_SECONDS
+    ):
+        raise ValueError("invalid execution timeout")
     now = datetime.now(UTC)
     tenant = TenantContext(TenantId("local-operator"))
     target = ConfigurationRef(
