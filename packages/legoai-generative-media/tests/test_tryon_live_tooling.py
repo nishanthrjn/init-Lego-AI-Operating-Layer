@@ -204,6 +204,42 @@ def test_cli_generation_reports_counted_evidence(
     assert "tEXt" not in out and "prompt" not in out.lower()
 
 
+@pytest.mark.parametrize(
+    "which,content,expected",
+    [
+        ("person", None, "person image file not found"),
+        (
+            "garment",
+            b"\xff\xd8\xff\xe0 JPEG renamed",
+            "garment image rejected: PNG signature",
+        ),
+        ("person", make_png(color=3), "person image rejected: unsupported PNG profile"),
+        ("garment", make_png(4096, 64), "garment image rejected: input dimensions"),
+    ],
+)
+def test_cli_names_rejected_input_before_any_provider_contact(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    which: str,
+    content: bytes | None,
+    expected: str,
+) -> None:
+    cli = load("try_on_cli.py")
+    args = cli_args(tmp_path)
+    target: Path = getattr(args, which)
+    if content is None:
+        target.unlink()
+    else:
+        target.write_bytes(content)
+    http = FakeHTTP()
+    counter = WriteCounter(Transports({LOCAL: http}))
+    code = asyncio.run(cli.generate(args, config(tmp_path), counter))
+    out = capsys.readouterr().out
+    assert code == 1 and expected in out
+    assert "uploads performed: 0" in out and "submission performed: NO" in out
+    assert http.calls == []  # Not even preflight: nothing reached the provider.
+
+
 def test_cli_generation_stops_when_preflight_fails(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
