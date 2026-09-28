@@ -14,6 +14,7 @@ Authority: [ADR-020](../adrs/ADR-020.md), [VTO-2](VIRTUAL-TRY-ON-VTO2.md).
 | `try_on_cli.py` | Exactly one mode: `--preflight`, `--live` (generation, explicit opt-in) or `--reconcile JOB_ID`. It prints counted uploads and submissions, elapsed seconds, and `--expect-sha256` for the same-job digest check. `--live` runs the read-only preflight first and stops before any upload if it fails. |
 | `prepare_template.py --config` | Writes the exact approved graph from the configured model files to `try_on.path`, never overwrites, and prints kind, geometry, models and SHA-256. |
 | Legacy preflight messages | Name the missing node class or `Node.input` (public identifiers only). |
+| Input diagnostics (live-run fix) | The first live attempt stopped before any provider contact with an unexplained generic failure. `--live` now validates both PNGs first and names the failing input and ImageInput's safe reason (for example "garment image rejected: PNG signature required"). It still sends nothing. Regression-tested. |
 | `configs/tryon-local.toml` | `max_wait_seconds = 1800` (the existing maximum, not raised); `path = comfyui-proof/tryon-workflow.json`. |
 
 ## Prerequisites (operator)

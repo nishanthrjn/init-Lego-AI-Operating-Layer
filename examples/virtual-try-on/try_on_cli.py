@@ -51,6 +51,32 @@ def read_png(path: Path) -> ImageInput:
         return ImageInput(source.read(MAX_READ))
 
 
+def load_inputs(person: Path, garment: Path) -> tuple[ImageInput, ImageInput] | None:
+    """Both inputs or None, printing which one failed and why (nothing is sent).
+
+    Reasons are ImageInput's static messages or the OS error class, never bytes.
+    """
+    images = []
+    for label, path in (("person", person), ("garment", garment)):
+        try:
+            images.append(read_png(path))
+        except FileNotFoundError:
+            print(f"input: FAIL ({label} image file not found)")
+            return None
+        except OSError as error:
+            print(f"input: FAIL ({label} image unreadable: {type(error).__name__})")
+            return None
+        except (ValueError, TypeError) as error:
+            print(f"input: FAIL ({label} image rejected: {error})")
+            print(
+                "input requirements: PNG only, 8-bit RGB/RGBA, no transparency "
+                "chunk, non-interlaced, 64-2048 px per side, at most 16 MiB"
+            )
+            return None
+    print("input: PASS (2 PNGs validated and metadata-stripped locally)")
+    return images[0], images[1]
+
+
 def save(image: GeneratedImage, output: Path | None) -> None:
     if output is not None:
         with output.open("xb") as destination:
@@ -109,7 +135,12 @@ async def generate(
     args: argparse.Namespace, config: TryOnConfig, counter: WriteCounter
 ) -> int:
     print("mode: live generation (uploads 2 local PNGs, submits once)")
-    person, garment = read_png(args.person), read_png(args.garment)
+    inputs = load_inputs(args.person, args.garment)
+    if inputs is None:
+        writes(counter)
+        print("input_disclosure: none (stopped before any provider contact)")
+        return 1
+    person, garment = inputs
     report = await preflight_virtual_try_on(config, transports=counter)
     show(report)
     if not report.ok:
@@ -195,8 +226,10 @@ def main() -> int:
         return asyncio.run(run(args, config))
     except ProviderError as error:
         print("provider:", error.reason, "category:", error.category.value)
-    except ValueError, OSError, TypeError:
-        print("Configuration, input or provider failure; no automatic retry.")
+    except (ValueError, OSError, TypeError) as error:
+        # Operator diagnostics: our messages and OS error classes only.
+        print(f"failure: {type(error).__name__}: {str(error)[:160]}")
+        print("No automatic retry.")
     return 1
 
 
