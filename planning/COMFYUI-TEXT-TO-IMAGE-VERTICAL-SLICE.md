@@ -1,6 +1,7 @@
 # Local ComfyUI Text-to-Image Integration
 
-Status: IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING.
+Status: IMPLEMENTED — LOCALLY VALIDATED (deterministic suite and live generation;
+see slice 2 validation evidence). Live cancellation (`--cancel-after`) is not recorded.
 Assessment authority: [ComfyUI impact assessment](COMFYUI-INTEGRATION-IMPACT-ASSESSMENT.md).
 No Core, ModelPort or browser contract changes. No live runtime calls or tests run
 internally; only syntax/import sanity and focused static source review/formatting.
@@ -88,8 +89,28 @@ toolchain and imports the wheel from a temporary location without installing it.
 
 ## Long-running jobs and reconciliation (slice 2)
 
-Status: IMPLEMENTED — LOCAL VALIDATION PENDING. No Core, ModelPort or
-TextToImageRequest change.
+Status: IMPLEMENTED — LOCALLY VALIDATED (maintainer-run, 2026-09-28). No Core,
+ModelPort or TextToImageRequest change.
+
+**Validation evidence (maintainer-run).**
+
+- `python .alidate_comfyui_text_to_image.py` passed all 13 phases: typing,
+  lint, contracts, transport, effects/composition, 97 policy/reconciliation
+  tests (phase 7b), architecture, wheel build and import-without-install, and
+  254 affected existing-repository checks. The phase 11 CRLF notice is
+  informational only.
+- Long-running policy: a new live generation with `--timeout 900` completed
+  successfully (outcome success, effect completed). No hidden 300 s ceiling
+  remains.
+- Reconciliation: `--reconcile` of the earlier deadline-exceeded job
+  `21829e58-1423-4262-a6ab-334fe4bd698f` printed `submission performed: NO`,
+  `status: COMPLETED`, effect completed, and retrieved one validated PNG.
+- Knowledge refinement: that job was UNKNOWN at LegoAI's 300 s deadline and
+  was later shown COMPLETED by reconciliation, live and in the dedicated
+  deterministic test.
+
+Not recorded: repeat-reconciliation digest comparison, visual inspection of
+the images, and elapsed time of the 900 s run.
 
 **Evidence.** A real CPU generation of the fixed workflow took about 10m40s
 (~640 s). LegoAI's 300 s deadline expired first and correctly returned

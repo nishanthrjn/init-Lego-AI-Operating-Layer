@@ -1,7 +1,8 @@
 # LegoAI generative media
 
-Local ComfyUI text-to-image vertical slice. Implementation complete; deterministic
-and live qualification pending. No tests or runtime generation were run internally.
+Local ComfyUI text-to-image vertical slice. Deterministic validation and live
+generation/reconciliation were validated locally by the maintainer; see the
+implementation document for the exact evidence.
 
 The optional package depends on legoai-reference and Python's standard library;
 Core has no dependency on this package. `TextToImagePort.generate` accepts only
