@@ -46,14 +46,22 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         )
     with tarfile.open(archives[0]) as archive:
         paths = {name.partition("/")[2] for name in archive.getnames()}
-    assert {f"src/{name}" for name in MODULES} <= paths
-    assert {
+        ignore = next(m for m in archive.getmembers() if m.name.endswith("/.gitignore"))
+        handle = archive.extractfile(ignore)
+        assert handle is not None
+        shipped_ignore = handle.read()
+    # Exact inventory: nothing from outside the pack may enter the sdist.
+    assert paths == {
+        *(f"src/{name}" for name in MODULES),
+        *(f"tests/{path.name}" for path in (PACK / "tests").glob("*.py")),
+        "examples/station_reading.py",
         "README.md",
         "pyproject.toml",
-        "examples/station_reading.py",
-        "tests/test_collate.py",
-        "tests/test_architecture.py",
-    } <= paths
+        "PKG-INFO",
+        ".gitignore",
+    }
+    # Hatchling always ships the nearest .gitignore; it must be the pack's own.
+    assert shipped_ignore == (PACK / ".gitignore").read_bytes()
 
     environment = tmp_path / "installed"
     venv.EnvBuilder(with_pip=False).create(environment)
