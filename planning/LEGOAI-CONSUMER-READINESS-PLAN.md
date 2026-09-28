@@ -173,10 +173,12 @@ IAM, multi-tenant isolation or durable authority.
 
 ## 5. ADR-014 proposal
 
-**Status update (CR-1a, 2026-09-28):** ADR-014 is allocated as
-[ADR-014 — Public local governed host composition boundary](../adrs/ADR-014.md),
-**Proposed — Ready for Decision**. Where it differs from the sketch in this
-section and §4.2, the ADR is authoritative:
+**Status update (2026-09-28): CR-1a COMPLETE. ADR-014 ACCEPTED. CR-1b READY.**
+[ADR-014 — Public local governed host composition boundary](../adrs/ADR-014.md)
+was accepted by the maintainer, and its §13 decisions are resolved. CR-1b is
+architecturally authorized to implement it; nothing is implemented yet. ForgeAI-1
+remains blocked by M8.3 closure, CR-1b, CR-2a/2b and CR-3. Where the ADR differs
+from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
 - a closed built-in provider set is paired with trusted code contributions;

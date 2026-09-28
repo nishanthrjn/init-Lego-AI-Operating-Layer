@@ -15,10 +15,10 @@ under intent §55 while preserving canonical semantic neutrality.
 direction and first-milestone instruction. It extends ADR-001's initial runtime
 choice to ongoing reusable component delivery and preserves ADR-002's boundaries.
 
-**Current register:** 17 allocated ADRs: 14 Accepted, three Proposed (012/013/014).
-ADR-014 was allocated on 2026-09-28 by explicit maintainer instruction (CR-1a).
-It is narrowed to the public local governed host boundary; broader authoring
-remains undecided. Current totals: P0 = 3, P1 = 8,
+**Current register:** 17 allocated ADRs: 15 Accepted, two Proposed (012/013).
+ADR-014 was allocated on 2026-09-28 by explicit maintainer instruction (CR-1a)
+and accepted by the maintainer the same day. It is narrowed to the public local
+governed host boundary; broader authoring remains undecided. Current totals: P0 = 3, P1 = 8,
 P2 = 4, P3 = 2, P4 = 0; A = 3, B = 9, C = 4, D = 1, E = 0. ADR-020 was
 accepted by the maintainer on 2026-09-28. Register gap: ADR-017, ADR-018 and
 ADR-019 exist as Proposed decision records but are not yet entered in this
@@ -31,7 +31,7 @@ register/forward pointer and does not retroactively alter those review findings.
 | ADR | Decision | Class / priority / type | Dependencies | Status / evidence |
 |---|---|---|---|---|
 | [ADR-016](ADR-016.md) | Python-first reusable AI component platform | A / P0 for strategic increment / 2 | Intent 1.0 + IA-001, ADR-001/002 and retained governance decisions | Accepted; repository impact, alternative/burden and alignment review. M1 local validation complete; results recorded in the forward plan. |
-| [ADR-014](ADR-014.md) | Public local governed host composition boundary | C / P2 before Gate 3 or any supported consumer composition / 2 | ADR-002/003/005/007/008/015/017/019 | Proposed — Ready for Decision (2026-09-28). Would supplement ADR-002 §12 with one public composition module. Maintainer acceptance required; no implementation authorized. |
+| [ADR-014](ADR-014.md) | Public local governed host composition boundary | C / P2 before Gate 3 or any supported consumer composition / 2 | ADR-002/003/005/007/008/015/017/019 | Accepted 2026-09-28 by explicit maintainer decision (CR-1a closed). Supplements ADR-002 §12 with exactly one public composition module (`legoai.runtime.local`). Closed CHAT/EMBEDDING purposes and a hard `max_executions` capacity. Authorizes CR-1b; no implementation yet. |
 | [ADR-020](ADR-020.md) | Personal image inputs in generative media | C / P2 for Virtual Try-On image transfer / 2 | SECURITY SEC-004/011/039/066/067/075/077; ComfyUI provider compatibility slice | Accepted 2026-09-28 by explicit maintainer decision (Generative Media / Security boundary owner). Authorizes VTO-1 for local providers only. |
 
 The next work follows the [forward plan](../planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md),
