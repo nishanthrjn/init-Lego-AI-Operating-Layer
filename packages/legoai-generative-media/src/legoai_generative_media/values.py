@@ -135,6 +135,61 @@ class GenerationResult:
             raise ValueError("failed result cannot expose image")
 
 
+class ReconciliationStatus(Enum):
+    """Provider observation of one existing job; not a Core lifecycle state."""
+
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    NOT_FOUND = "not_found"
+    UNRESOLVED = "unresolved"
+
+
+@dataclass(frozen=True, slots=True)
+class ReconciliationResult:
+    """Knowledge at inspection time; may refine an earlier UNKNOWN effect.
+
+    Only a provider-confirmed success establishes COMPLETED. Pending, failed,
+    missing and unresolved observations never collapse the effect to NONE.
+    A COMPLETED status may carry a retrieval error instead of an image.
+    """
+
+    job: ProviderJobRef
+    status: ReconciliationStatus
+    image: GeneratedImage | None = field(default=None, repr=False)
+    error: ErrorCategory | None = None
+
+    def __post_init__(self) -> None:
+        if type(self.job) is not ProviderJobRef:
+            raise TypeError("exact job required")
+        if type(self.status) is not ReconciliationStatus:
+            raise TypeError("invalid status")
+        if self.error is not None and type(self.error) is not ErrorCategory:
+            raise TypeError("invalid error")
+        if self.image is not None:
+            if type(self.image) is not GeneratedImage or self.image.job != self.job:
+                raise ValueError("image attribution mismatch")
+            if self.status is not ReconciliationStatus.COMPLETED:
+                raise ValueError("only completed jobs expose images")
+        if self.status is ReconciliationStatus.COMPLETED:
+            if (self.image is None) == (self.error is None):
+                raise ValueError("completed requires image or retrieval error")
+        elif self.status in (
+            ReconciliationStatus.FAILED,
+            ReconciliationStatus.UNRESOLVED,
+        ):
+            if self.error is None:
+                raise ValueError("failure requires category")
+        elif self.error is not None:
+            raise ValueError("pending/not-found carry no error")
+
+    @property
+    def effect(self) -> EffectExtent:
+        if self.status is ReconciliationStatus.COMPLETED:
+            return EffectExtent.COMPLETED
+        return EffectExtent.UNKNOWN
+
+
 class GenerationCancelled(asyncio.CancelledError):
     """Cancellation propagates while retaining external job/effect facts."""
 

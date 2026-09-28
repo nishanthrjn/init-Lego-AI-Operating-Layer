@@ -15,28 +15,67 @@ sys.path[:0] = [
     str(ROOT / "src"),
 ]
 
-from legoai_generative_media.comfyui import ComfyUIConfig, LocalComfyUIAdapter
+from legoai_generative_media.comfyui import (
+    HARD_MAX_WAIT_SECONDS,
+    ComfyUIConfig,
+    CompletionPolicy,
+    LocalComfyUIAdapter,
+)
 from legoai_generative_media.composition import invoke
 from legoai_generative_media.http import Endpoint
 from legoai_generative_media.local_host import prepare_local
 from legoai_generative_media.values import (
     ApprovedWorkflowRef,
+    GeneratedImage,
     GenerationCancelled,
+    ProviderJobRef,
     TextToImageRequest,
 )
 from legoai_generative_media.workflow import ApprovedWorkflow, template
 
 
-async def run(args: argparse.Namespace) -> int:
+def save(image: GeneratedImage, output: Path | None) -> None:
+    if output is not None:
+        # Explicit output only; exclusive creation prevents overwriting another result.
+        with output.open("xb") as destination:
+            destination.write(image.content)
+    print("PNG bytes:", image.byte_length, "SHA-256:", image.sha256)
+
+
+def adapter_for(args: argparse.Namespace) -> LocalComfyUIAdapter:
     workflow = ApprovedWorkflow.load(
         args.workflow,
         ApprovedWorkflowRef("local-txt2img", "1", args.sha256),
         args.checkpoint,
     )
-    config = ComfyUIConfig(
-        workflow, Endpoint(args.endpoint), timeout_seconds=args.timeout
+    # Operator/runtime setting only; the application request never carries it.
+    policy = CompletionPolicy.for_wait(args.timeout)
+    return LocalComfyUIAdapter(
+        ComfyUIConfig(workflow, Endpoint(args.endpoint), completion=policy)
     )
-    adapter = LocalComfyUIAdapter(config)
+
+
+async def reconcile(args: argparse.Namespace) -> int:
+    adapter = adapter_for(args)
+    job = ProviderJobRef("comfyui", adapter.config.binding, args.reconcile)
+    print("mode: reconcile existing job (read-only)")
+    result = await adapter.reconcile(job)
+    # Structural: reconcile uses a GET-only transport that refuses any POST.
+    print("submission performed: NO")
+    print("job:", job.job_id)
+    print("status:", result.status.value.upper(), "effect:", result.effect.value)
+    if result.error is not None:
+        print("category:", result.error.value)
+    if result.image is None:
+        return 1
+    save(result.image, args.output)
+    return 0
+
+
+async def run(args: argparse.Namespace) -> int:
+    adapter = adapter_for(args)
+    workflow = adapter.config.workflow
+    policy = adapter.config.completion
     # All operator-controlled settings participate in the immutable association.
     digest = hashlib.sha256(
         json.dumps(
@@ -44,14 +83,17 @@ async def run(args: argparse.Namespace) -> int:
                 "workflow": workflow.reference.sha256,
                 "checkpoint": args.checkpoint,
                 "endpoint": args.endpoint,
-                "timeout": args.timeout,
+                "max_wait": policy.max_wait_seconds,
+                "poll_interval": policy.poll_interval_seconds,
+                "request_timeout": policy.request_timeout_seconds,
             },
             sort_keys=True,
         ).encode()
     ).hexdigest()
     session = await prepare_local(
-        adapter, digest, approved=workflow.reference, timeout=args.timeout
+        adapter, digest, approved=workflow.reference, timeout=policy.max_wait_seconds
     )
+    print("completion policy: max wait", policy.max_wait_seconds, "s")
     task = asyncio.create_task(
         invoke(
             session.coordinator,
@@ -83,11 +125,12 @@ async def run(args: argparse.Namespace) -> int:
     print("job:", result.job.job_id if result.job else "unknown/not submitted")
     if result.image is None:
         print("category:", result.error.value if result.error else "cancelled")
+        if result.job is not None:
+            print(
+                "Reconcile later without resubmitting: --reconcile", result.job.job_id
+            )
         return 1
-    # Explicit output only; exclusive creation prevents overwriting another result.
-    with args.output.open("xb") as destination:
-        destination.write(result.image.content)
-    print("PNG bytes:", result.image.byte_length, "SHA-256:", result.image.sha256)
+    save(result.image, args.output)
     return 0
 
 
@@ -108,9 +151,19 @@ def main() -> int:
     parser.add_argument("--endpoint", default="http://127.0.0.1:8188")
     parser.add_argument("--prompt")
     parser.add_argument("--seed", type=int)
-    parser.add_argument("--timeout", type=float, default=300)
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=300,
+        help=f"Total completion wait in seconds (max {HARD_MAX_WAIT_SECONDS})",
+    )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--cancel-after", type=float)
+    parser.add_argument(
+        "--reconcile",
+        metavar="JOB_ID",
+        help="Inspect an existing job and retrieve its image; never submits",
+    )
     args = parser.parse_args()
     if args.prepare_template:
         content = json.dumps(template(args.checkpoint), indent=2).encode() + b"\n"
@@ -121,18 +174,32 @@ def main() -> int:
             hashlib.sha256(content).hexdigest(),
         )
         return 0
-    if not args.sha256 or not args.prompt or args.output is None:
-        parser.error("--sha256, --prompt and --output are required for generation")
-    if args.output.exists():
+    if not args.sha256:
+        parser.error("--sha256 is required")
+    if args.output is not None and args.output.exists():
         parser.error("output already exists")
-    if args.cancel_after is not None and not 0 < args.cancel_after <= 300:
-        parser.error("cancel-after must be in (0,300]")
+    if not 0 < args.timeout <= HARD_MAX_WAIT_SECONDS:
+        parser.error(f"timeout must be in (0,{HARD_MAX_WAIT_SECONDS}]")
+    if args.reconcile is not None:
+        if args.prompt is not None or args.seed is not None or args.cancel_after:
+            parser.error("--reconcile takes no --prompt, --seed or --cancel-after")
+        operation = reconcile
+    else:
+        if not args.prompt or args.output is None:
+            parser.error("--prompt and --output are required for generation")
+        if args.cancel_after is not None and not (
+            0 < args.cancel_after <= HARD_MAX_WAIT_SECONDS
+        ):
+            parser.error(f"cancel-after must be in (0,{HARD_MAX_WAIT_SECONDS}]")
+        operation = run
     try:
-        return asyncio.run(run(args))
+        return asyncio.run(operation(args))
     except ValueError, OSError, TypeError:
         print(
             "Local configuration/output failure; no automatic retry. Check approved settings."
         )
+        if args.reconcile is not None:
+            print("submission performed: NO")
         return 1
 
 

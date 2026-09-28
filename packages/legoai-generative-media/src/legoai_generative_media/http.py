@@ -34,8 +34,13 @@ class Response:
 
 
 class LocalHTTP:
-    def __init__(self, endpoint: Endpoint) -> None:
+    def __init__(self, endpoint: Endpoint, timeout: float = 10) -> None:
+        if type(endpoint) is not Endpoint:
+            raise TypeError("validated endpoint required")
+        if type(timeout) not in (float, int) or not 0 < timeout <= 60:
+            raise ValueError("invalid request timeout")
         self.endpoint = endpoint
+        self.timeout = timeout
 
     async def request(
         self, method: str, path: str, body: bytes = b"", *, limit: int
@@ -49,11 +54,11 @@ class LocalHTTP:
         parsed = urlsplit(self.endpoint.value)
         writer: asyncio.StreamWriter | None = None
         # Each exchange has its own ceiling within the enclosing generation deadline.
-        async with asyncio.timeout(10):
+        async with asyncio.timeout(self.timeout):
             try:
                 reader, writer = await asyncio.wait_for(
                     asyncio.open_connection(parsed.hostname, parsed.port, limit=65536),
-                    3,
+                    min(3, self.timeout),
                 )
                 assert writer is not None  # Successful connection owns a writer.
                 headers = (

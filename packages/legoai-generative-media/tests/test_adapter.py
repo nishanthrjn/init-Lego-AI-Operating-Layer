@@ -4,10 +4,11 @@ from typing import Any
 
 import pytest
 from legoai.kernel.effects import EffectExtent
-from media_support import FakeHTTP, workflow
+from media_support import FakeHTTP, FakeTime, workflow
 
 from legoai_generative_media.comfyui import (
     ComfyUIConfig,
+    CompletionPolicy,
     LocalComfyUIAdapter,
     safe_location,
 )
@@ -16,9 +17,13 @@ from legoai_generative_media.values import GenerationResult, Outcome, TextToImag
 
 
 def execute(http: FakeHTTP) -> GenerationResult:
+    time = FakeTime()
     return asyncio.run(
         LocalComfyUIAdapter(
-            ComfyUIConfig(workflow(), poll_interval=0.001, max_polls=2), http
+            ComfyUIConfig(workflow(), completion=CompletionPolicy(10, 1, 1)),
+            http,
+            clock=time.clock,
+            sleep=time.sleep,
         ).generate(TextToImageRequest("red mug", 42))
     )
 
@@ -91,7 +96,9 @@ def test_poll_bound() -> None:
     result = execute(http)
     assert result.outcome is Outcome.DEADLINE and result.effect is EffectExtent.UNKNOWN
     assert result.job is not None
-    assert len([c for c in http.calls if c[1].startswith("/history")]) == 2
+    # 10 s wait / 1 s interval: polls at t=0..9, the deadline check stops t=10.
+    assert len([c for c in http.calls if c[1].startswith("/history")]) == 10
+    assert http.posts() == 1
 
 
 @pytest.mark.parametrize(

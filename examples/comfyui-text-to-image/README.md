@@ -43,6 +43,24 @@ UNKNOWN provider cessation; if the job is already known its ID is retained. No
 provider stop is claimed or attempted. Reconcile/stop that job yourself in ComfyUI
 if needed. This prevents interrupting other users/jobs. Repeat with `--timeout 5`
 to observe bounded deadline behavior. Do not blindly repeat an UNKNOWN submission.
+5a. **Reconcile an existing job without resubmitting.** Use the job ID printed
+by an earlier UNKNOWN/deadline result. Use the same workflow, digest and
+checkpoint so the job can be attributed. `--output` is optional and must not
+already exist.
+
+```powershell
+.\.venv\Scripts\python.exe examples/comfyui-text-to-image/generate.py --workflow .\comfyui-proof\workflow.json --sha256 APPROVED_SHA256 --checkpoint $checkpoint --reconcile JOB_ID --output .\comfyui-proof\reconciled.png
+```
+
+It always prints `submission performed: NO`, then a status: COMPLETED (with PNG
+size and SHA-256), PENDING, FAILED, NOT_FOUND (history no longer exposed, for
+example after a ComfyUI restart; this does not mean the job never ran) or
+UNRESOLVED. Repeat it as often as you like; it is read-only.
+
+5b. **Long CPU runs.** `--timeout` sets the total completion wait for new jobs,
+up to 1800 s. For example, `--timeout 900` covers the observed ~640 s CPU run.
+The value belongs to operator configuration, not to the request.
+
 6. If another hardware profile is available, operator-restart ComfyUI with that
 profile and repeat the SAME application command with a new destination. One profile
 is sufficient for the first local qualification; cross-hardware equality is not claimed.

@@ -19,8 +19,13 @@ A compatible SD1.x-style checkpoint is required; availability alone does not pro
 architectural/model compatibility. No models or nodes are installed by this package.
 
 `LocalComfyUIAdapter` uses bounded HTTP polling with one call in flight and one
-submission per call. Default total timeout 300 seconds, <=300 polls, 1 second
-between polls, 3-second connect ceiling and 10-second HTTP exchange ceiling.
+submission per call. Timing is one operator-side `CompletionPolicy`, which is
+never part of the request. Defaults: 300 s total wait, 1 s poll interval and
+10 s per HTTP exchange (connect <= 3 s). The total wait may be up to 1800 s,
+for example 900 s for CPU runs. The poll count is derived from the policy. The
+deadline uses a monotonic clock.
+`reconcile(ProviderJobRef)` inspects an existing job read-only and returns
+PENDING, COMPLETED, FAILED, NOT_FOUND or UNRESOLVED. It can never POST.
 JSON is <=1 MiB, workflow/request <=256 KiB, PNG <=16 MiB. No automatic retries.
 Literal loopback HTTP IPs with explicit ports only; no DNS names, proxies, URL
 credentials, redirects or remote hosts. Transport injection is trusted test/host
