@@ -116,6 +116,12 @@ acknowledged so far.
 - **Transport:** the existing `LocalHTTP`, with a literal loopback origin,
   redirects rejected, proxies bypassed, bounded body, response and timeout,
   and no second HTTP client.
+- **Connect bound:** connect gets at most half the exchange timeout. A failed
+  connect is therefore classified as `NotSent` (disclosure NONE) by the
+  transport, before an enclosing deadline of equal length can fire. If an
+  outer deadline does fire first, the result is UNKNOWN, which is
+  conservative. This was found on Windows, where a refused loopback connect
+  takes about 2 s.
 
 ## Local-only restriction (ADR-020 §8)
 
