@@ -343,3 +343,24 @@ class InputTransferCancelled(asyncio.CancelledError):
     def __init__(self, transfer: InputTransfer) -> None:
         super().__init__("input transfer cancelled; disclosure retained")
         self.transfer = transfer
+
+
+@dataclass(frozen=True, slots=True)
+class TryOnRequest:
+    """Virtual try-on input: two privacy-sensitive PNGs and an optional seed.
+
+    No prompt, model, provider, hardware, geometry, mask, filename or consent
+    field: the approved template and operator configuration own all of those.
+    """
+
+    person: ImageInput = field(repr=False)
+    garment: ImageInput = field(repr=False)
+    seed: int | None = None
+
+    def __post_init__(self) -> None:
+        if type(self.person) is not ImageInput or type(self.garment) is not ImageInput:
+            raise TypeError("ImageInput required")
+        if self.seed is not None and (
+            type(self.seed) is not int or not 0 <= self.seed <= 2**63 - 1
+        ):
+            raise ValueError("seed must be integer in 0..2**63-1")

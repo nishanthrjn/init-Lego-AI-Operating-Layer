@@ -9,6 +9,7 @@ import math
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorCategory
@@ -32,6 +33,7 @@ from .values import (
     GeneratedImage,
     GenerationCancelled,
     GenerationResult,
+    InputTransferCancelled,
     Outcome,
     ProviderJobRef,
     ReconciliationResult,
@@ -39,10 +41,11 @@ from .values import (
     TextToImageRequest,
     identifier,
 )
-from .workflow import ApprovedWorkflow
+from .workflow import ApprovedTemplate, ApprovedWorkflow
 
 __all__ = [
     "HARD_MAX_WAIT_SECONDS",
+    "ComfyEngine",
     "ComfyTextToImageAdapter",
     "ComfyUIConfig",
     "CompletionPolicy",
@@ -125,11 +128,34 @@ class CompletionPolicy:
         return int(self.max_wait_seconds // self.poll_interval_seconds) + 1
 
 
-@dataclass(frozen=True)
-class ComfyTextToImageAdapter:
-    """TextToImagePort + JobReconciliationPort over any admitted driver."""
+class Refused(Exception):
+    """A complete pre-submission result (for example a failed input transfer)."""
 
-    workflow: ApprovedWorkflow
+    def __init__(self, result: GenerationResult) -> None:
+        super().__init__("refused before submission")
+        self.result = result
+
+
+@dataclass
+class RunState:
+    """Per-invocation facts a capability's preparation step may update."""
+
+    disclosure: EffectExtent = EffectExtent.NONE
+    category: ErrorCategory = ErrorCategory.DEPENDENCY_FAILURE
+
+
+Prepare = Callable[[Budget, RunState], Awaitable[tuple[dict[str, Any], int]]]
+
+
+@dataclass(frozen=True)
+class ComfyEngine[W: ApprovedTemplate]:
+    """Deadline, single submission, effect truth, attribution and PNG checks.
+
+    Capabilities supply only a preparation step returning the bound graph and
+    seed. Everything from submission onwards is shared and identical.
+    """
+
+    workflow: W
     driver: ComfyDriver = field(repr=False)
     binding: str = "comfyui-local"
     completion: CompletionPolicy = CompletionPolicy()
@@ -141,11 +167,8 @@ class ComfyTextToImageAdapter:
     _busy: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
-        if (
-            type(self.workflow) is not ApprovedWorkflow
-            or type(self.completion) is not CompletionPolicy
-        ):
-            raise TypeError("validated workflow and policy required")
+        if type(self.completion) is not CompletionPolicy:
+            raise TypeError("completion policy required")
         identifier(self.binding)
         if type(self.requires) is not frozenset or not (
             self.requires <= Capabilities.names()
@@ -178,25 +201,29 @@ class ComfyTextToImageAdapter:
         if capabilities.node_preflight:
             await self.driver.preflight(budget, self.workflow)
 
-    async def generate(self, request: TextToImageRequest) -> GenerationResult:
-        if type(request) is not TextToImageRequest:
-            raise TypeError("TextToImageRequest required")
+    async def _execute(self, prepare: Prepare) -> GenerationResult:
         if self._busy:
             return GenerationResult(
                 Outcome.FAILED, EffectExtent.NONE, error=ErrorCategory.CONFLICT
             )
         object.__setattr__(self, "_busy", True)
+        run = RunState()
         effect = EffectExtent.NONE
         job: ProviderJobRef | None = None
-        category = ErrorCategory.DEPENDENCY_FAILURE
         reason: str | None = None
         policy = self.completion
         budget = self._budget(read_only=False)
+        width, height = self.workflow.geometry
+
+        def result(outcome: Outcome, **values: Any) -> GenerationResult:
+            return GenerationResult(
+                outcome, effect, job, input_disclosure=run.disclosure, **values
+            )
+
         try:
             # Real-time backstop even if an injected clock misbehaves.
             async with asyncio.timeout(policy.max_wait_seconds):
-                graph = self.workflow.graph(request)
-                await self._preflight(budget)
+                graph, seed = await prepare(budget, run)
                 # Conservative from the instant dispatch might occur: never resubmit.
                 effect = EffectExtent.UNKNOWN
                 try:
@@ -218,54 +245,53 @@ class ComfyTextToImageAdapter:
                     ):
                         continue
                     if observed.status is ReconciliationStatus.FAILED:
-                        category = ErrorCategory.EXECUTION_FAILURE
+                        run.category = ErrorCategory.EXECUTION_FAILURE
                         reason = observed.reason
                         raise ValueError("generation failed")
                     effect = EffectExtent.COMPLETED
-                    category = ErrorCategory.VALIDATION_ERROR
+                    run.category = ErrorCategory.VALIDATION_ERROR
                     output = self.driver.output(observed)
-                    category = ErrorCategory.DEPENDENCY_FAILURE
+                    run.category = ErrorCategory.DEPENDENCY_FAILURE
                     content = await self.driver.fetch(budget, output)
-                    category = ErrorCategory.VALIDATION_ERROR
+                    run.category = ErrorCategory.VALIDATION_ERROR
                     generated = GeneratedImage(
                         content,
                         job,
                         self.workflow.reference,
-                        request.seed if request.seed is not None else 0,
+                        seed,
+                        width=width,
+                        height=height,
                     )
-                    return GenerationResult(Outcome.SUCCESS, effect, job, generated)
+                    return result(Outcome.SUCCESS, image=generated)
                 raise TimeoutError("poll bound exceeded")
+        except Refused as refused:
+            return refused.result
+        except InputTransferCancelled as cancelled:
+            run.disclosure = cancelled.transfer.disclosure
+            raise GenerationCancelled(
+                result(Outcome.CANCELLED, cessation=Cessation.UNKNOWN)
+            ) from None
         except asyncio.CancelledError:
             raise GenerationCancelled(
-                GenerationResult(
-                    Outcome.CANCELLED, effect, job, cessation=Cessation.UNKNOWN
-                )
+                result(Outcome.CANCELLED, cessation=Cessation.UNKNOWN)
             ) from None
         except TimeoutError:
-            return GenerationResult(
+            return result(
                 Outcome.DEADLINE,
-                effect,
-                job,
                 error=ErrorCategory.DEADLINE_EXCEEDED,
                 cessation=Cessation.UNKNOWN,
             )
         except ProviderError as error:
-            return GenerationResult(
+            return result(
                 Outcome.FAILED,
-                effect,
-                job,
                 error=error.category,
                 reason=error.reason,
                 evidence=error.evidence,
             )
         except InvalidOutput:
-            return GenerationResult(
-                Outcome.FAILED, effect, job, error=ErrorCategory.VALIDATION_ERROR
-            )
+            return result(Outcome.FAILED, error=ErrorCategory.VALIDATION_ERROR)
         except FAILURES:
-            return GenerationResult(
-                Outcome.FAILED, effect, job, error=category, reason=reason
-            )
+            return result(Outcome.FAILED, error=run.category, reason=reason)
         finally:
             object.__setattr__(self, "_busy", False)
 
@@ -292,7 +318,7 @@ class ComfyTextToImageAdapter:
                     return ReconciliationResult(job, ReconciliationStatus.NOT_FOUND)
                 category = ErrorCategory.VALIDATION_ERROR
                 graph = await self.driver.recorded_graph(budget, job, observed)
-                request = self.workflow.attribute(graph)
+                seed = self.workflow.seed_of(graph)
                 if observed.status is ReconciliationStatus.PENDING:
                     return ReconciliationResult(job, ReconciliationStatus.PENDING)
                 if observed.status is ReconciliationStatus.FAILED:
@@ -308,11 +334,14 @@ class ComfyTextToImageAdapter:
                 category = ErrorCategory.DEPENDENCY_FAILURE
                 content = await self.driver.fetch(budget, output)
                 category = ErrorCategory.VALIDATION_ERROR
+                width, height = self.workflow.geometry
                 image = GeneratedImage(
                     content,
                     job,
                     self.workflow.reference,
-                    request.seed if request.seed is not None else 0,
+                    seed,
+                    width=width,
+                    height=height,
                 )
                 return ReconciliationResult(
                     job, ReconciliationStatus.COMPLETED, image=image
@@ -336,6 +365,27 @@ class ComfyTextToImageAdapter:
             reason=reason,
             evidence=evidence,
         )
+
+
+@dataclass(frozen=True)
+class ComfyTextToImageAdapter(ComfyEngine[ApprovedWorkflow]):
+    """TextToImagePort + JobReconciliationPort over any admitted driver."""
+
+    def __post_init__(self) -> None:
+        if type(self.workflow) is not ApprovedWorkflow:
+            raise TypeError("validated workflow and policy required")
+        super().__post_init__()
+
+    async def generate(self, request: TextToImageRequest) -> GenerationResult:
+        if type(request) is not TextToImageRequest:
+            raise TypeError("TextToImageRequest required")
+
+        async def prepare(budget: Budget, run: RunState) -> tuple[dict[str, Any], int]:
+            graph = self.workflow.graph(request)
+            await self._preflight(budget)
+            return graph, request.seed if request.seed is not None else 0
+
+        return await self._execute(prepare)
 
 
 @dataclass(frozen=True, slots=True)

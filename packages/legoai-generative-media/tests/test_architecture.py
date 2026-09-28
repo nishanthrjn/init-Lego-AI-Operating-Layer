@@ -29,7 +29,14 @@ def test_no_runtime_launch_or_dynamic_imports() -> None:
 
 def test_image_byte_paths_never_log_or_print() -> None:
     root = Path(__file__).resolve().parents[1] / "src" / "legoai_generative_media"
-    for name in ("png.py", "values.py", "transfer.py", "drivers/legacy.py"):
+    for name in (
+        "png.py",
+        "values.py",
+        "transfer.py",
+        "drivers/legacy.py",
+        "tryon.py",
+        "virtual_try_on.py",
+    ):
         tree = ast.parse((root / name).read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -49,5 +56,14 @@ def test_application_contracts_carry_no_provider_types() -> None:
                 module = node.module or ""
                 assert not any(
                     part in module
-                    for part in ("drivers", "comfyui", "transfer", "http", "service")
+                    for part in (
+                        "drivers",
+                        "comfyui",
+                        "transfer",
+                        "http",
+                        "service",
+                        "tryon",
+                        "virtual_try_on",
+                        "workflow",
+                    )
                 ), (name, module)

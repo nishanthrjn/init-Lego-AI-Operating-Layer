@@ -8,8 +8,45 @@ from pathlib import Path
 from typing import Any
 
 from legoai_generative_media.http import Headers, NotSent, Response
-from legoai_generative_media.values import ApprovedWorkflowRef, TextToImageRequest
+from legoai_generative_media.tryon import (
+    ApprovedTryOnWorkflow,
+    TryOnModels,
+    tryon_template,
+)
+from legoai_generative_media.values import (
+    ApprovedWorkflowRef,
+    TextToImageRequest,
+    UploadedImageRef,
+)
 from legoai_generative_media.workflow import ApprovedWorkflow, template
+
+TRYON_MODELS = TryOnModels(
+    "qwen_image_edit_2509_fp8_e4m3fn.safetensors",
+    "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+    "qwen_image_vae.safetensors",
+)
+PERSON_REF = UploadedImageRef("11111111-1111-4111-8111-111111111111.png")
+GARMENT_REF = UploadedImageRef("22222222-2222-4222-8222-222222222222.png")
+
+
+def tryon_workflow(models: TryOnModels = TRYON_MODELS) -> ApprovedTryOnWorkflow:
+    content = json.dumps(tryon_template(models)).encode()
+    return ApprovedTryOnWorkflow(
+        ApprovedWorkflowRef("tryon", "1", hashlib.sha256(content).hexdigest()),
+        models,
+        content,
+    )
+
+
+def tryon_graph(seed: int | None = 7) -> Any:
+    return tryon_workflow().graph(PERSON_REF, GARMENT_REF, seed)
+
+
+def write_tryon_workflow(directory: Path) -> tuple[Path, str]:
+    approved = tryon_workflow()
+    path = directory / "tryon_workflow.json"
+    path.write_bytes(approved.content)
+    return path, approved.reference.sha256
 
 
 def workflow() -> ApprovedWorkflow:
@@ -135,6 +172,32 @@ class FakeHTTP:
         self.upload_modes: list[str] = []
         self.uploaded: list[bytes] = []
         self.upload_headers: list[Headers] = []
+        # object_info model lists per loader input; missing node classes.
+        self.models: dict[str, tuple[str, ...]] = {
+            "ckpt_name": ("test.safetensors",),
+            "unet_name": (TRYON_MODELS.diffusion_model,),
+            "clip_name": (TRYON_MODELS.text_encoder,),
+            "vae_name": (TRYON_MODELS.vae,),
+        }
+        self.missing_nodes: set[str] = set()
+        self.running_graph: Any = None  # Graph recorded for a running job.
+
+    def prompts(self) -> list[Any]:
+        """Submitted API graphs, in order."""
+        return [
+            json.loads(c[2])["prompt"]
+            for c in self.calls
+            if c[:2] == ("POST", "/prompt")
+        ]
+
+    def uploads(self) -> int:
+        return len([c for c in self.calls if c[:2] == ("POST", "/upload/image")])
+
+    def use_tryon_job(self, seed: int = 7) -> None:
+        """History for job-1 recorded as an approved try-on graph."""
+        self.history["job-1"]["prompt"][2] = tryon_graph(seed)
+        self.running_graph = tryon_graph(seed)
+        self.image = make_png(768, 1024)
 
     def running(self) -> bool:
         return self.time is not None and self.time.now < self.ready_at
@@ -160,12 +223,11 @@ class FakeHTTP:
         data: Any
         if path.startswith("/object_info/"):
             node = path.rsplit("/", 1)[-1]
+            required = {field: [list(files)] for field, files in self.models.items()}
             data = (
                 {}
-                if self.missing
-                else {
-                    node: {"input": {"required": {"ckpt_name": [["test.safetensors"]]}}}
-                }
+                if self.missing or node in self.missing_nodes
+                else {node: {"input": {"required": required}}}
             )
         elif path == "/prompt":
             data = self.submission
@@ -174,7 +236,17 @@ class FakeHTTP:
         elif path == "/queue":
             data = (
                 {
-                    "queue_running": [[1, "job-1", graph(), {}, ["9"]]],
+                    "queue_running": [
+                        [
+                            1,
+                            "job-1",
+                            graph()
+                            if self.running_graph is None
+                            else self.running_graph,
+                            {},
+                            ["9"],
+                        ]
+                    ],
                     "queue_pending": [],
                 }
                 if self.running()
@@ -343,3 +415,40 @@ class Transports:
         if origin not in self.routes:
             raise AssertionError("unexpected origin " + origin)
         return self.routes[origin]
+
+
+def tryon_request(seed: int | None = 7) -> Any:
+    """Synthetic person/garment PNGs only (ADR-020: no real photos in tests)."""
+    from legoai_generative_media.values import ImageInput, TryOnRequest
+
+    return TryOnRequest(
+        ImageInput(make_png(96, 128)), ImageInput(make_png(80, 80, color=6)), seed
+    )
+
+
+def tryon_adapter(
+    http: Any,
+    time: FakeTime | None = None,
+    *,
+    local: bool = True,
+    driver: Any = None,
+    wait: float = 300,
+) -> Any:
+    """The try-on engine over a fake legacy provider, with fake time."""
+    from legoai_generative_media.comfyui import CompletionPolicy
+    from legoai_generative_media.drivers.legacy import LegacyDriver
+    from legoai_generative_media.virtual_try_on import ComfyVirtualTryOnAdapter
+
+    time = time or FakeTime()
+    if hasattr(http, "use_tryon_job") and http.image == png():
+        # Default fake output becomes the approved try-on geometry; tests of
+        # other sizes must set http.image after constructing the adapter.
+        http.image = make_png(768, 1024)
+    return ComfyVirtualTryOnAdapter(
+        tryon_workflow(),
+        driver or LegacyDriver(http),
+        completion=CompletionPolicy(wait, 1, 10),
+        clock=time.clock,
+        sleep=time.sleep,
+        local=local,
+    )

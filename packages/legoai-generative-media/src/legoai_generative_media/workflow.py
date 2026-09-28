@@ -1,23 +1,66 @@
-"""One fixed API workflow shape, not a graph DSL or arbitrary graph executor."""
+"""A closed set of fixed API workflow shapes; not a graph DSL or executor.
+
+Each template kind owns its exact graph, mutable slots, required nodes and
+models, output node and geometry. Approved bytes are digest-pinned.
+"""
 
 import hashlib
 import json
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from .values import ApprovedWorkflowRef, TextToImageRequest
 
 MAX_WORKFLOW_BYTES = 256 * 1024
+# Every template's single SaveImage node; drivers validate outputs against it.
+OUTPUT_NODE = "9"
+
+ModelRequirement = tuple[str, str, str]  # (node class, input name, filename)
+
+
+class TemplateKind(Enum):
+    TEXT_TO_IMAGE = "text-to-image"
+    TRY_ON = "try-on"
+
+
+class ApprovedTemplate(Protocol):
+    """What the provider-neutral engine needs from any approved template."""
+
+    @property
+    def reference(self) -> ApprovedWorkflowRef: ...
+
+    @property
+    def kind(self) -> TemplateKind: ...
+
+    @property
+    def required_nodes(self) -> frozenset[str]: ...
+
+    @property
+    def required_models(self) -> tuple[ModelRequirement, ...]: ...
+
+    @property
+    def geometry(self) -> tuple[int, int]: ...
+
+    def seed_of(self, graph: object) -> int:
+        """The seed of a provider-recorded graph proven to be this template."""
+        ...
+
+
+def basename(value: str, name: str) -> str:
+    """An operator model filename: a bare basename, never a path."""
+    if type(value) is not str or not value or len(value) > 128:
+        raise ValueError(f"{name} basename required")
+    if any(c in value for c in "/\\:") or value in (".", ".."):
+        raise ValueError(f"{name} path forbidden")
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        raise ValueError(f"{name} controls forbidden")
+    return value
 
 
 def template(checkpoint: str) -> dict[str, Any]:
-    if type(checkpoint) is not str or not checkpoint or len(checkpoint) > 128:
-        raise ValueError("checkpoint basename required")
-    if any(c in checkpoint for c in "/\\:") or checkpoint in (".", ".."):
-        raise ValueError("checkpoint path forbidden")
-    if any(ord(c) < 32 or ord(c) == 127 for c in checkpoint):
-        raise ValueError("checkpoint controls forbidden")
+    basename(checkpoint, "checkpoint")
     return {
         "3": {
             "class_type": "KSampler",
@@ -110,9 +153,25 @@ class ApprovedWorkflow:
         return output
 
     @property
+    def kind(self) -> TemplateKind:
+        return TemplateKind.TEXT_TO_IMAGE
+
+    @property
     def required_nodes(self) -> frozenset[str]:
         """Node classes a provider must offer to execute this workflow."""
         return frozenset(v["class_type"] for v in template(self.checkpoint).values())
+
+    @property
+    def required_models(self) -> tuple[ModelRequirement, ...]:
+        return (("CheckpointLoaderSimple", "ckpt_name", self.checkpoint),)
+
+    @property
+    def geometry(self) -> tuple[int, int]:
+        return (512, 512)
+
+    def seed_of(self, graph: object) -> int:
+        seed = self.attribute(graph).seed
+        return seed if seed is not None else 0
 
     def graph(self, request: TextToImageRequest) -> dict[str, Any]:
         """The bound API-format graph; drivers choose their own envelope."""

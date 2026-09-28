@@ -12,8 +12,8 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 
 from .comfyui import ComfyTextToImageAdapter
-from .composition import invoke
-from .config import GenerationConfig, ProviderConfig, resolve_secret
+from .composition import TRY_ON_OFFER, invoke, invoke_try_on
+from .config import GenerationConfig, ProviderConfig, TryOnConfig, resolve_secret
 from .discovery import DRIVERS, confirm, discover
 from .drivers.base import ComfyDriver, ProviderError, ProviderProfile, TransportFactory
 from .http import Endpoint, LocalHTTP, RemoteHTTPS
@@ -24,14 +24,18 @@ from .values import (
     ProviderJobRef,
     ReconciliationResult,
     TextToImageRequest,
+    TryOnRequest,
 )
+from .virtual_try_on import ComfyVirtualTryOnAdapter
 
 __all__ = [
     "ProviderError",
     "ProviderProfile",
     "TextToImageService",
+    "TryOnService",
     "open_image_transfer",
     "open_text_to_image",
+    "open_virtual_try_on",
     "probe_provider",
 ]
 
@@ -185,3 +189,79 @@ async def open_image_transfer(
     return ImageTransfer(
         driver, provider.deployment == "local", provider.completion, clock
     )
+
+
+@dataclass(frozen=True)
+class TryOnService:
+    """VirtualTryOnPort for applications: governed, configuration-selected."""
+
+    config: TryOnConfig
+    adapter: ComfyVirtualTryOnAdapter = field(repr=False)
+
+    @property
+    def profile(self) -> ProviderProfile:
+        return self.adapter.profile
+
+    def job(self, job_id: str) -> ProviderJobRef:
+        return ProviderJobRef("comfyui", self.adapter.binding, job_id)
+
+    def describe(self) -> dict[str, str]:
+        """Safe diagnostics: no image bytes, prompts, credentials or payloads."""
+        profile = self.profile
+        width, height = self.adapter.workflow.geometry
+        return {
+            "api_family": profile.family,
+            "version": profile.version or "not observable",
+            "origin": self.config.provider.origin,
+            "deployment": self.config.provider.deployment,
+            "binding": self.adapter.binding,
+            "template": self.config.workflow.template,
+            "workflow_sha256": self.adapter.workflow.reference.sha256,
+            "geometry": f"{width}x{height}",
+        }
+
+    async def try_on(self, request: TryOnRequest) -> GenerationResult:
+        session = await prepare_local(
+            self.adapter,
+            self.config.digest,
+            approved=self.adapter.workflow.reference,
+            timeout=self.adapter.completion.max_wait_seconds,
+            binding=self.adapter.binding,
+            offer=TRY_ON_OFFER,
+        )
+        _, result = await invoke_try_on(
+            session.coordinator,
+            session.ready,
+            session.context,
+            session.contribution,
+            session.contribution.revision,
+            request,
+        )
+        return result
+
+    async def reconcile(self, job: ProviderJobRef) -> ReconciliationResult:
+        return await self.adapter.reconcile(job)
+
+
+async def open_virtual_try_on(
+    config: TryOnConfig,
+    *,
+    environ: Mapping[str, str] | None = None,
+    transports: TransportFactory | None = None,
+    clock: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+) -> TryOnService:
+    """Remote deployments build, but every try-on is refused before any I/O."""
+    provider = config.provider
+    driver = await _driver(provider, environ, transports, clock)
+    adapter = ComfyVirtualTryOnAdapter(
+        config.workflow.load(),
+        driver,
+        provider.binding,
+        provider.completion,
+        config.workflow.requires,
+        clock=clock,
+        sleep=sleep,
+        local=provider.deployment == "local",
+    )
+    return TryOnService(config, adapter)

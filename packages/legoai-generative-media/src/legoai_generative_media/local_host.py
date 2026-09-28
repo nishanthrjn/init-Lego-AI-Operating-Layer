@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from legoai.capabilities.values import CapabilityRequirement, CapabilityVersionRange
+from legoai.capabilities.values import (
+    CapabilityOffer,
+    CapabilityRequirement,
+    CapabilityVersionRange,
+)
 from legoai.execution.ports import CoordinationRequest, CoordinationResult
 from legoai.execution.values import ExecutionContext, ExecutionId, SecurityContextRef
 from legoai.governance.ports import SecurityContext
@@ -45,8 +49,8 @@ from legoai.reference.governance import (
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
 
 from .comfyui import HARD_MAX_WAIT_SECONDS
-from .composition import OFFER, Contribution, select
-from .ports import TextToImagePort
+from .composition import OFFER, TRY_ON_OFFER, Contribution, select
+from .ports import TextToImagePort, VirtualTryOnPort
 from .values import ApprovedWorkflowRef
 
 
@@ -60,13 +64,20 @@ class LocalSession:
     requirement: CapabilityRequirement
 
 
+_NAMES = {
+    OFFER: ("text-to-image", "generate-image"),
+    TRY_ON_OFFER: ("virtual-try-on", "try-on"),
+}
+
+
 async def prepare_local(
-    adapter: TextToImagePort,
+    adapter: TextToImagePort | VirtualTryOnPort,
     revision_digest: str,
     *,
     approved: ApprovedWorkflowRef,
     timeout: float = 300,
     binding: str = "comfyui-local",
+    offer: CapabilityOffer = OFFER,
 ) -> LocalSession:
     """Call only from an explicit operator-authorized local invocation.
 
@@ -81,17 +92,20 @@ async def prepare_local(
         or not 0 < timeout <= HARD_MAX_WAIT_SECONDS
     ):
         raise ValueError("invalid execution timeout")
+    if offer not in _NAMES:
+        raise ValueError("unsupported capability offer")
+    application, action = _NAMES[offer]
     now = datetime.now(UTC)
     tenant = TenantContext(TenantId("local-operator"))
     target = ConfigurationRef(
         ApplicationRef(
             ReferenceScope("local-host", tenant.tenant_id),
-            ApplicationId("text-to-image"),
+            ApplicationId(application),
         ),
         "generation",
     )
     revision = ConfigurationRevisionRef(target, revision_digest, Version(1, 0, 0))
-    operation = OperationRef(target, OperationId(uuid4().hex), "generate-image")
+    operation = OperationRef(target, OperationId(uuid4().hex), action)
     principal = Principal(PrincipalRef("local-host", PrincipalId("operator")))
     grant = Grant(
         GrantId(uuid4().hex),
@@ -99,7 +113,7 @@ async def prepare_local(
         principal,
         tenant,
         "invoke-capability",
-        OFFER.capability.value,
+        offer.capability.value,
         False,
         now,
         now + timedelta(seconds=timeout + 30),
@@ -122,20 +136,26 @@ async def prepare_local(
     )
     catalog = InMemoryCatalog()
     declaration = PluginDeclaration(
-        PluginId("legoai", "local-comfyui"), Version(1, 0, 0), (OFFER,)
+        PluginId("legoai", "local-comfyui"), Version(1, 0, 0), (offer,)
     )
     validated = validate(inspect(declaration), declaration, evaluated_at=now)
     record = admit(
         validated, tenant, PluginAdmissionId(uuid4().hex), established_at=now
     )
     active = activate(initialize(record, established_at=now), established_at=now)
-    entry = catalog.publish(active, declaration, OFFER, established_at=now)
+    entry = catalog.publish(active, declaration, offer, established_at=now)
     contribution = Contribution(binding, revision, entry, active, approved, adapter)
     requirement = CapabilityRequirement(
-        OFFER.capability, CapabilityVersionRange(OFFER.version)
+        offer.capability, CapabilityVersionRange(offer.version)
     )
     chosen = select(
-        requirement, contribution.binding, revision, (contribution,), catalog, now
+        requirement,
+        contribution.binding,
+        revision,
+        (contribution,),
+        catalog,
+        now,
+        offer=offer,
     )
     security_ref = SecurityContextRef("local-host", uuid4().hex)
     registry = StaticSecurityContextRegistry()

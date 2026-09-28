@@ -1,0 +1,29 @@
+# Virtual try-on on a LOCAL ComfyUI (ADR-020: personal images stay local).
+# Hardware is a ComfyUI deployment concern (CUDA recommended; see VTO-3).
+# No credentials. Remote/Cloud deployments are refused before any I/O.
+
+[provider]
+type = "comfyui"
+endpoint = "http://127.0.0.1:8188"
+api_family = "legacy"        # upload capability exists on the legacy family only
+deployment = "local"
+binding = "comfyui-local"
+
+[provider.auth]
+type = "none"
+
+[completion]
+max_wait_seconds = 900       # hard maximum 1800
+
+[try_on]
+template = "qwen-image-edit-2509"
+# Operator-installed files (basenames as ComfyUI lists them). Changing any of
+# them changes the approved graph bytes: regenerate with prepare_template.py,
+# review, and update sha256.
+diffusion_model = "qwen_image_edit_2509_fp8_e4m3fn.safetensors"
+text_encoder = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+vae = "qwen_image_vae.safetensors"
+path = "../../../comfyui-proof/tryon_workflow.json"
+# Placeholder: replace with the digest printed by prepare_template.py after
+# review. The adapter refuses to load bytes that do not match it.
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"

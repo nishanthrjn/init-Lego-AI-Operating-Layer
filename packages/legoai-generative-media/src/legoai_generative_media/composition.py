@@ -1,8 +1,10 @@
 """Trusted host composition, not a global provider registry or new owner."""
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import cast
 
 from legoai.capabilities.ports import CatalogEntry, CatalogPort
 from legoai.capabilities.values import (
@@ -22,7 +24,7 @@ from legoai.plugins.ports import PluginLifecycleRecord, PluginLifecycleState
 from legoai.reference.execution import ExecutionCoordinator
 from legoai.reference.resolution import resolve
 
-from .ports import TextToImagePort
+from .ports import TextToImagePort, VirtualTryOnPort
 from .values import (
     ApprovedWorkflowRef,
     Cessation,
@@ -30,10 +32,12 @@ from .values import (
     GenerationResult,
     Outcome,
     TextToImageRequest,
+    TryOnRequest,
     identifier,
 )
 
 OFFER = CapabilityOffer(CapabilityId("legoai.text-to-image"), Version(1, 0, 0))
+TRY_ON_OFFER = CapabilityOffer(CapabilityId("legoai.virtual-try-on"), Version(1, 0, 0))
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +47,7 @@ class Contribution:
     entry: CatalogEntry
     activation: PluginLifecycleRecord
     workflow: ApprovedWorkflowRef
-    adapter: TextToImagePort = field(repr=False, compare=False)
+    adapter: TextToImagePort | VirtualTryOnPort = field(repr=False, compare=False)
 
     def __post_init__(self) -> None:
         identifier(self.binding)
@@ -82,6 +86,7 @@ def select(
     contributions: tuple[Contribution, ...],
     catalog: CatalogPort,
     now: datetime,
+    offer: CapabilityOffer = OFFER,
 ) -> Contribution:
     identifier(binding)
     if type(contributions) is not tuple or not 1 <= len(contributions) <= 16:
@@ -96,7 +101,7 @@ def select(
         raise ValueError("inactive plugin")
     snapshot = catalog.snapshot(chosen.entry.tenant_context)
     resolution = resolve(requirement, snapshot, resolved_at=now)
-    if chosen.entry not in resolution.candidates or chosen.entry.offer != OFFER:
+    if chosen.entry not in resolution.candidates or chosen.entry.offer != offer:
         raise ValueError("unavailable or incompatible contribution")
     return chosen
 
@@ -111,6 +116,66 @@ async def invoke(
     *,
     sink: ObservationSinkPort | None = None,
 ) -> tuple[ExecutionResult, GenerationResult]:
+    adapter = cast(TextToImagePort, chosen.adapter)
+    return await _invoke(
+        coordinator,
+        ready,
+        context,
+        chosen,
+        expected_revision,
+        lambda: adapter.generate(request),
+        request.seed if request.seed is not None else 0,
+        may_disclose=False,
+        sink=sink,
+    )
+
+
+async def invoke_try_on(
+    coordinator: ExecutionCoordinator,
+    ready: CoordinationResult,
+    context: ExecutionContext,
+    chosen: Contribution,
+    expected_revision: ConfigurationRevisionRef,
+    request: TryOnRequest,
+    *,
+    sink: ObservationSinkPort | None = None,
+) -> tuple[ExecutionResult, GenerationResult]:
+    adapter = cast(VirtualTryOnPort, chosen.adapter)
+    return await _invoke(
+        coordinator,
+        ready,
+        context,
+        chosen,
+        expected_revision,
+        lambda: adapter.try_on(request),
+        request.seed if request.seed is not None else 0,
+        may_disclose=True,
+        sink=sink,
+    )
+
+
+async def _invoke(
+    coordinator: ExecutionCoordinator,
+    ready: CoordinationResult,
+    context: ExecutionContext,
+    chosen: Contribution,
+    expected_revision: ConfigurationRevisionRef,
+    call: Callable[[], Awaitable[GenerationResult]],
+    seed: int,
+    *,
+    may_disclose: bool,
+    sink: ObservationSinkPort | None,
+) -> tuple[ExecutionResult, GenerationResult]:
+    """One governed invocation; the call happens after claim, never twice.
+
+    `may_disclose` marks capabilities that transfer inputs. Their fallback
+    results report input disclosure as UNKNOWN once the call has started,
+    never NONE, so a deadline cannot erase a possible disclosure.
+    """
+
+    def unknown_disclosure(started: bool) -> EffectExtent:
+        return EffectExtent.UNKNOWN if may_disclose and started else EffectExtent.NONE
+
     if ready.outcome is not CoordinationOutcome.READY or ready.permit is None:
         raise ValueError("governed READY result required")
     if context.execution_id != ready.execution_id:
@@ -141,7 +206,7 @@ async def invoke(
             async with asyncio.timeout(remaining):
                 started = True
                 try:
-                    output = await chosen.adapter.generate(request)
+                    output = await call()
                 except GenerationCancelled as cancelled:
                     cancelled_receipt = cancelled.result
                     # asyncio.timeout recognizes the base cancellation type. Keep
@@ -159,20 +224,21 @@ async def invoke(
                     output.image is not None
                     and (
                         output.image.workflow != chosen.workflow
-                        or output.image.seed
-                        != (request.seed if request.seed is not None else 0)
+                        or output.image.seed != seed
                     )
                 ):
                     output = GenerationResult(
                         Outcome.FAILED,
                         output.effect,
                         error=ErrorCategory.VALIDATION_ERROR,
+                        input_disclosure=output.input_disclosure,
                     )
         except asyncio.CancelledError:
             output = cancelled_receipt or GenerationResult(
                 Outcome.CANCELLED,
                 EffectExtent.UNKNOWN if started else EffectExtent.NONE,
                 cessation=Cessation.UNKNOWN,
+                input_disclosure=unknown_disclosure(started),
             )
             await coordinator.settle(
                 ready,
@@ -190,12 +256,16 @@ async def invoke(
                 job=None if cancelled_receipt is None else cancelled_receipt.job,
                 error=ErrorCategory.DEADLINE_EXCEEDED,
                 cessation=Cessation.UNKNOWN,
+                input_disclosure=cancelled_receipt.input_disclosure
+                if cancelled_receipt is not None
+                else unknown_disclosure(started),
             )
         except Exception:
             output = GenerationResult(
                 Outcome.FAILED,
                 EffectExtent.UNKNOWN if started else EffectExtent.NONE,
                 error=ErrorCategory.EXECUTION_FAILURE,
+                input_disclosure=unknown_disclosure(started),
             )
     state = (
         ExecutionState.SUCCEEDED

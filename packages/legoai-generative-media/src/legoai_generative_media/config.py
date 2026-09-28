@@ -18,6 +18,7 @@ from typing import Any
 from .comfyui import CompletionPolicy
 from .drivers.base import Capabilities
 from .http import Endpoint, https_origin
+from .tryon import TEMPLATE_ID, ApprovedTryOnWorkflow, TryOnModels
 from .values import ApprovedWorkflowRef, identifier
 from .workflow import ApprovedWorkflow
 
@@ -42,6 +43,18 @@ _KEYS = {
         "request_timeout_seconds",
     },
     "workflow": {"path", "sha256", "checkpoint", "identity", "version", "requires"},
+    "try-on root": {"provider", "completion", "try_on"},
+    "try_on": {
+        "template",
+        "path",
+        "sha256",
+        "diffusion_model",
+        "text_encoder",
+        "vae",
+        "identity",
+        "version",
+        "requires",
+    },
 }
 
 
@@ -182,32 +195,55 @@ def _completion(table: dict[str, Any]) -> CompletionPolicy:
     )
 
 
-def parse_config(data: object, base: Path) -> GenerationConfig:
-    root = _table(data, "")
+def _provider_config(root: dict[str, Any]) -> ProviderConfig:
     provider = _table(root.get("provider"), "provider")
     if provider.get("type") != "comfyui":
         raise ValueError("provider.type must be comfyui")
     auth = _table(provider.get("auth", {"type": "none"}), "provider.auth")
     completion = _completion(_table(root.get("completion", {}), "completion"))
-    workflow = _table(root.get("workflow"), "workflow")
-    requires = workflow.get("requires", [])
-    if type(requires) is not list or any(type(r) is not str for r in requires):
-        raise ValueError("workflow.requires must be a list of capability names")
     secret_ref = auth.get("secret_ref")
     if secret_ref is not None and type(secret_ref) is not str:
         raise ValueError("secret_ref must be env:NAME")
+    return ProviderConfig(
+        _text(provider, "endpoint"),
+        _text(provider, "api_family", "auto"),
+        _text(provider, "deployment", "local"),
+        _text(provider, "binding", "comfyui-local"),
+        _text(auth, "type", "none"),
+        secret_ref,
+        _origins(provider, "allowed_origins"),
+        _origins(provider, "download_origins"),
+        completion,
+    )
+
+
+def _requires(table: dict[str, Any], name: str) -> frozenset[str]:
+    requires = table.get("requires", [])
+    if type(requires) is not list or any(type(r) is not str for r in requires):
+        raise ValueError(f"{name}.requires must be a list of capability names")
+    return frozenset(requires)
+
+
+def _provider_digest(p: ProviderConfig) -> list[Any]:
+    c = p.completion
+    return [
+        p.endpoint,
+        p.api_family,
+        p.deployment,
+        p.binding,
+        p.auth,
+        p.secret_ref,
+        list(p.allowed_origins),
+        list(p.download_origins),
+        [c.max_wait_seconds, c.poll_interval_seconds, c.request_timeout_seconds],
+    ]
+
+
+def parse_config(data: object, base: Path) -> GenerationConfig:
+    root = _table(data, "")
+    workflow = _table(root.get("workflow"), "workflow")
     return GenerationConfig(
-        ProviderConfig(
-            _text(provider, "endpoint"),
-            _text(provider, "api_family", "auto"),
-            _text(provider, "deployment", "local"),
-            _text(provider, "binding", "comfyui-local"),
-            _text(auth, "type", "none"),
-            secret_ref,
-            _origins(provider, "allowed_origins"),
-            _origins(provider, "download_origins"),
-            completion,
-        ),
+        _provider_config(root),
         WorkflowConfig(
             # Relative workflow paths resolve against the configuration file.
             (base / _text(workflow, "path")).resolve(),
@@ -215,17 +251,108 @@ def parse_config(data: object, base: Path) -> GenerationConfig:
             _text(workflow, "checkpoint"),
             _text(workflow, "identity", "local-txt2img"),
             _text(workflow, "version", "1"),
-            frozenset(requires),
+            _requires(workflow, "workflow"),
         ),
     )
 
 
-def load_config(path: Path) -> GenerationConfig:
+def _read(path: Path) -> object:
     with path.open("rb") as source:
         content = source.read(MAX_CONFIG_BYTES + 1)
     if len(content) > MAX_CONFIG_BYTES:
         raise ValueError("configuration oversized")
-    return parse_config(tomllib.loads(content.decode("utf-8")), path.resolve().parent)
+    return tomllib.loads(content.decode("utf-8"))
+
+
+def load_config(path: Path) -> GenerationConfig:
+    return parse_config(_read(path), path.resolve().parent)
+
+
+@dataclass(frozen=True, slots=True)
+class TryOnWorkflowConfig:
+    """Approved try-on template plus the operator's installed model files.
+
+    Changing a model file changes the approved graph bytes, so it needs a
+    re-reviewed template and digest, never an application change.
+    """
+
+    path: Path
+    sha256: str
+    diffusion_model: str
+    text_encoder: str
+    vae: str
+    template: str = TEMPLATE_ID
+    identity: str = "local-tryon"
+    version: str = "1"
+    requires: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        if self.template != TEMPLATE_ID:
+            raise ValueError(f"try_on.template must be {TEMPLATE_ID}")
+        ApprovedWorkflowRef(self.identity, self.version, self.sha256)
+        self.models()
+        if not self.requires <= Capabilities.names():
+            raise ValueError("unknown required capability")
+
+    def models(self) -> TryOnModels:
+        return TryOnModels(self.diffusion_model, self.text_encoder, self.vae)
+
+    def load(self) -> ApprovedTryOnWorkflow:
+        return ApprovedTryOnWorkflow.load(
+            self.path,
+            ApprovedWorkflowRef(self.identity, self.version, self.sha256),
+            self.models(),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class TryOnConfig:
+    provider: ProviderConfig
+    workflow: TryOnWorkflowConfig
+
+    @property
+    def digest(self) -> str:
+        """Configuration revision: every non-secret setting; never secret values."""
+        w = self.workflow
+        canonical = {
+            "provider": _provider_digest(self.provider),
+            "try_on": [
+                w.template,
+                w.sha256,
+                w.diffusion_model,
+                w.text_encoder,
+                w.vae,
+                w.identity,
+                w.version,
+                sorted(w.requires),
+            ],
+        }
+        return hashlib.sha256(
+            json.dumps(canonical, sort_keys=True).encode()
+        ).hexdigest()
+
+
+def parse_try_on_config(data: object, base: Path) -> TryOnConfig:
+    root = _table(data, "try-on root")
+    table = _table(root.get("try_on"), "try_on")
+    return TryOnConfig(
+        _provider_config(root),
+        TryOnWorkflowConfig(
+            (base / _text(table, "path")).resolve(),
+            _text(table, "sha256"),
+            _text(table, "diffusion_model"),
+            _text(table, "text_encoder"),
+            _text(table, "vae"),
+            _text(table, "template", TEMPLATE_ID),
+            _text(table, "identity", "local-tryon"),
+            _text(table, "version", "1"),
+            _requires(table, "try_on"),
+        ),
+    )
+
+
+def load_try_on_config(path: Path) -> TryOnConfig:
+    return parse_try_on_config(_read(path), path.resolve().parent)
 
 
 def local_config(
