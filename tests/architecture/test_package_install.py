@@ -222,6 +222,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
         "legoai/execution/agent/ports.py",
         "legoai/reference/agent.py",
         "legoai/runtime/_composition/agent.py",
+        "legoai/runtime/_composition/model_selection.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
@@ -314,6 +315,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_governance_registries.py",
             "tests/unit/reference/test_static_security_context_registry.py",
             "tests/integration/composition/test_model_governed.py",
+            "tests/integration/composition/test_model_selection.py",
             "tests/architecture/test_import_boundaries.py",
             "tests/architecture/test_package_install.py",
             "tests/architecture/test_model_routing.py",
@@ -526,6 +528,28 @@ routed_coordination = asyncio.run(ollama_coordinator.coordinate(execution_ports.
 routed_execution, routed_output = asyncio.run(model_governed.invoke_routed_chat(ollama_coordinator, routed_coordination, chat_request, route, configured))
 assert routed_execution.final_state is execution_values.ExecutionState.SUCCEEDED
 assert routed_output.content == "fake answer"
+import legoai.runtime._composition.model_selection as model_selection
+assert Path(model_selection.__file__).is_relative_to(Path(sys.prefix))
+desired = model_selection.capture_model_selection({"revision": "models-r1", "binding": "fake-binding"}, pinned_revision=model_revision)
+try:
+    model_selection.capture_model_selection({"revision": "stale", "binding": "fake-binding"}, pinned_revision=model_revision)
+except model_selection.ModelCompositionError as error:
+    assert error.failure is model_selection.CompositionFailure.STALE_CONFIGURATION
+else:
+    raise AssertionError("stale selection accepted")
+chat_offer = reference_model.ollama_chat_offer()
+chat_requirement = capabilities_values.CapabilityRequirement(chat_offer.capability, capabilities_values.CapabilityVersionRange(chat_offer.version))
+contribution = model_selection.ModelContribution(model_revision, model_binding, ollama_entry, ollama_active, _FakeModelPort)
+composed = model_selection.compose_model(chat_requirement, desired, catalog=catalog, contributions=(contribution,), resolved_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+assert composed.route.selected == model_binding
+assert composed.configured.entry == ollama_entry
+selected_coordination = asyncio.run(ollama_coordinator.coordinate(execution_ports.CoordinationRequest(execution_values.ExecutionContext(
+    execution_values.ExecutionId("exec-selected"), resource_operation, context.TenantContext(identity.TenantId("t")),
+    execution_values.SecurityContextRef("issuer", "ref-selected"), identity.CorrelationId("corr-selected"), None, None, None,
+), ollama_entry)))
+selected_execution, selected_output = asyncio.run(model_governed.invoke_routed_chat(ollama_coordinator, selected_coordination, chat_request, composed.route, composed.configured))
+assert selected_execution.final_state is execution_values.ExecutionState.SUCCEEDED
+assert selected_output.content == "fake answer"
 assert len(effects.EffectExtent) == 4
 assert len(errors.ErrorCategory) == 9
 assert Path(identity.__file__).is_relative_to(Path(sys.prefix))
