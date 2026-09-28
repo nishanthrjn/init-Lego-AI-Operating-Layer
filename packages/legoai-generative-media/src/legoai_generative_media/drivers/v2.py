@@ -80,6 +80,17 @@ def envelope_code(response: Response) -> str | None:
     return error_code(response)
 
 
+# The v2 spec documents the generic `not_found`; the live public API returns the
+# entity-specific `job_not_found` (observed on cloud.comfy.org 2026-09-28).
+# Comfy-Org's own comfy-python-sdk maps both (src/comfy_sdk/exceptions.py @c0c4a33).
+# Structured codes only: a bare or unrelated 404 is never job-absence evidence.
+_JOB_NOT_FOUND = frozenset({"not_found", "job_not_found"})
+
+
+def is_job_not_found(response: Response) -> bool:
+    return response.status == 404 and envelope_code(response) in _JOB_NOT_FOUND
+
+
 def provider_error(response: Response, *, submit: bool) -> Exception:
     """Map a non-success response; only documented no-job rejections are NONE."""
     status, code = response.status, envelope_code(response)
@@ -116,7 +127,7 @@ def json_body(response: Response, status: int) -> dict[str, Any]:
 
 
 async def probe(budget: Budget, transport: Transport) -> tuple[bool, str]:
-    """v2 evidence is a structured not_found envelope for a well-formed id.
+    """v2 evidence is a structured job-not-found envelope for a well-formed id.
 
     Any 401/403 is an authentication failure whatever its body says.
     """
@@ -127,7 +138,7 @@ async def probe(budget: Budget, transport: Transport) -> tuple[bool, str]:
     if response.status in (401, 403):
         reason = "authentication_failed" if response.status == 401 else "forbidden"
         raise ProviderError(ErrorCategory.AUTHORIZATION_DENIED, reason, (evidence,))
-    return response.status == 404 and envelope_code(response) == "not_found", evidence
+    return is_job_not_found(response), evidence
 
 
 class V2Driver:
@@ -178,7 +189,7 @@ class V2Driver:
             "/api/v2/jobs/" + quote(job.job_id, safe=""),
             limit=1024 * 1024,
         )
-        if response.status == 404 and envelope_code(response) == "not_found":
+        if is_job_not_found(response):
             return JobObservation(ReconciliationStatus.NOT_FOUND)
         if response.status != 200:
             raise provider_error(response, submit=False)

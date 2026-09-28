@@ -291,3 +291,22 @@ def test_evidence_is_sanitized_and_never_echoes_bodies() -> None:
     joined = " ".join(caught.value.evidence)
     assert leak not in joined and "code=-" in joined
     assert "legacy probe: status=404" in joined
+
+
+@pytest.mark.parametrize("code", ["not_found", "job_not_found"])
+def test_v2_detected_by_spec_or_live_cloud_not_found_code(code: str) -> None:
+    fake = FakeV2()
+    fake.not_found_code = code
+    assert run_discover("auto", fake) == ("v2", None)
+    clock = FakeTime().clock
+    assert asyncio.run(confirm("v2", fake, request_timeout=5, clock=clock)) is None
+    assert fake.posts() == 0
+
+
+@pytest.mark.parametrize("code", ["asset_not_found", "route_not_found", "NOT_FOUND"])
+def test_other_structured_404_codes_are_not_v2_evidence(code: str) -> None:
+    fake = FakeV2()
+    fake.not_found_code = code
+    with pytest.raises(ProviderError) as caught:
+        asyncio.run(confirm("v2", fake, request_timeout=5, clock=FakeTime().clock))
+    assert caught.value.reason == "unsupported_api"

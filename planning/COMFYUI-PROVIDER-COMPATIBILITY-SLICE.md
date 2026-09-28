@@ -1,6 +1,6 @@
 # ComfyUI Provider Compatibility and Configuration Layer
 
-Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD NOT ESTABLISHED.
+Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD DETECTION FIX PENDING RE-RUN.
 
 **Validation evidence (maintainer-run, 2026-09-28).**
 
@@ -22,9 +22,16 @@ Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD NOT ESTABLISHED
   `v2 probe: status=404 type=application/json code=job_not_found`. Bearer
   auth is accepted (no 401/403) and the route answers with a structured
   error, but `job_not_found` appears in neither the v2 reference (which
-  documents `not_found`) nor the Cloud v1 job reference. Adopting it would
-  rest on one undocumented observation, so it is not accepted without an
-  explicit maintainer decision.
+  documents `not_found`) nor the Cloud v1 job reference. Comfy-Org's
+  official `comfy-python-sdk` (`src/comfy_sdk/exceptions.py` at `c0c4a33`)
+  confirms the discrepancy: "public-api currently returns entity-specific 404
+  codes even though the spec documents the generic `not_found`". It maps
+  `job_not_found` to `NotFound`. The v2 driver now normalizes exactly
+  `{not_found, job_not_found}` in one place (`is_job_not_found`), used for
+  both detection and job absence. Bare or other structured 404s are still
+  rejected. Re-run of the Cloud probe is pending. Cloud submit, status,
+  `/workflow` and signed-URL retrieval remain unqualified until one live
+  Cloud generation.
 
 Builds on [the text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md).
 No Core, ModelPort or `TextToImageRequest` change. No live runtime or Cloud
