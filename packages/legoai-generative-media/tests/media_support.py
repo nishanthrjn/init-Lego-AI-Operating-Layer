@@ -166,6 +166,7 @@ class FakeV2:
         self.image = png()
         self.redirect: str | None = None
         self.known = True
+        self.not_found_code = "not_found"  # Spec code; live Cloud: job_not_found.
         self.fail_at = ""
         self.outputs: Any = None
         self.time: FakeTime | None = None
@@ -224,7 +225,7 @@ class FakeV2:
                 200, {"format": self.format, "workflow": self.recorded}
             )
         if path.startswith("/api/v2/jobs/"):
-            return envelope(404, "not_found")
+            return envelope(404, self.not_found_code)
         if path == f"/api/v2/assets/{V2_ASSET}/content":
             if self.redirect is not None:
                 return Response(302, "", b"", self.redirect)

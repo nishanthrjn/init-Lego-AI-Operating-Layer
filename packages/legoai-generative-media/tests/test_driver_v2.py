@@ -358,3 +358,19 @@ def test_cloud_missing_secret_fails_before_io(tmp_path: Path) -> None:
             )
         )
     assert "COMFY_API_KEY" in str(caught.value) and transports.opened == []
+
+
+@pytest.mark.parametrize("code", ["not_found", "job_not_found"])
+def test_missing_job_maps_to_not_found_for_both_codes(code: str) -> None:
+    fake = FakeV2()
+    fake.known, fake.not_found_code = False, code
+    result = asyncio.run(engine(fake).reconcile(JOB))
+    assert result.status is ReconciliationStatus.NOT_FOUND
+    assert result.effect is EffectExtent.UNKNOWN and fake.posts() == 0
+
+
+def test_unrelated_404_code_is_unresolved_not_absence() -> None:
+    fake = FakeV2()
+    fake.known, fake.not_found_code = False, "route_not_found"
+    result = asyncio.run(engine(fake).reconcile(JOB))
+    assert result.status is ReconciliationStatus.UNRESOLVED
