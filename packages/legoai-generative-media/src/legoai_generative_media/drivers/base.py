@@ -6,6 +6,7 @@ attribution and PNG validation stay in the engine above it.
 """
 
 import asyncio
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, fields
 from typing import Any, Protocol
@@ -14,7 +15,7 @@ from legoai.kernel.errors import ErrorCategory
 
 from ..http import Headers, Response
 from ..values import REASONS, ProviderJobRef, ReconciliationStatus, reason_code
-from ..workflow import ApprovedWorkflow
+from ..workflow import ApprovedWorkflow, json_object
 
 
 class Transport(Protocol):
@@ -36,12 +37,44 @@ TransportFactory = Callable[[str, str | None], Transport]
 class ProviderError(OSError):
     """Normalized provider failure; carries a category and closed reason code."""
 
-    def __init__(self, category: ErrorCategory, reason: str) -> None:
+    def __init__(
+        self, category: ErrorCategory, reason: str, evidence: tuple[str, ...] = ()
+    ) -> None:
         if reason not in REASONS:
             raise ValueError("unknown reason")
         super().__init__(reason)
         self.category = category
         self.reason = reason
+        # Sanitized observations (see `observed`) for operator diagnosis only.
+        self.evidence = evidence
+
+
+_MEDIA = re.compile(r"[a-z0-9.+-]{1,32}/[a-z0-9.+-]{1,64}")
+_CODE = re.compile(r"[A-Za-z0-9_.-]{1,64}")
+
+
+def error_code(response: Response) -> str | None:
+    """The provider's structured error code, if it is a short identifier."""
+    if response.content_type.split(";")[0].strip() != "application/json":
+        return None
+    if len(response.body) > 64 * 1024:
+        return None
+    try:
+        error = json_object(response.body).get("error")
+    except ValueError, RecursionError:
+        return None
+    code = error.get("code") if type(error) is dict else None
+    return code if type(code) is str and _CODE.fullmatch(code) else None
+
+
+def observed(label: str, response: Response) -> str:
+    """Status, media type and error-code identifier only: never bodies or messages."""
+    media = response.content_type.split(";")[0].strip().lower()
+    return (
+        f"{label}: status={response.status}"
+        f" type={media if _MEDIA.fullmatch(media) else 'other'}"
+        f" code={error_code(response) or '-'}"
+    )
 
 
 class SubmissionRejected(ProviderError):

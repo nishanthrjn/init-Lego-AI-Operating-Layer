@@ -61,27 +61,32 @@ async def discover(
         raise ValueError("unsupported API family")
     budget = Budget(clock() + 3 * request_timeout, clock, request_timeout, True)
     unreachable = 0
+    evidence: list[str] = []
     try:
-        is_v2 = await v2.probe(budget, transport)
+        is_v2, seen = await v2.probe(budget, transport)
+        evidence.append(seen)
     except ProviderError:
         raise  # Authentication failures are explicit, not "unsupported".
     except OSError:
         is_v2, unreachable = False, unreachable + 1
-    except ValueError:
-        is_v2 = False
+        evidence.append("v2 probe: unreachable")
     version: str | None = None
     try:
-        version = await legacy.probe_version(budget, transport)
-        is_legacy = True
+        version, seen = await legacy.probe(budget, transport)
+        evidence.append(seen)
     except OSError:
-        is_legacy, unreachable = False, unreachable + 1
-    except ValueError, KeyError, TypeError:
-        is_legacy = False
+        unreachable += 1
+        evidence.append("legacy probe: unreachable")
+    is_legacy = version is not None
     if unreachable == 2:
-        raise ProviderError(ErrorCategory.DEPENDENCY_FAILURE, "provider_unavailable")
+        raise ProviderError(
+            ErrorCategory.DEPENDENCY_FAILURE, "provider_unavailable", tuple(evidence)
+        )
     if is_v2 == is_legacy:
         # Neither, or ambiguous: fail closed and require an explicit family.
-        raise ProviderError(ErrorCategory.VERSION_MISMATCH, "unsupported_api")
+        raise ProviderError(
+            ErrorCategory.VERSION_MISMATCH, "unsupported_api", tuple(evidence)
+        )
     return ("v2", None) if is_v2 else ("legacy", version)
 
 
@@ -96,15 +101,17 @@ async def confirm(
     budget = Budget(clock() + 2 * request_timeout, clock, request_timeout, True)
     try:
         if family == "legacy":
-            return await legacy.probe_version(budget, transport)
-        if family == "v2" and await v2.probe(budget, transport):
-            return None
+            version, seen = await legacy.probe(budget, transport)
+            if version is not None:
+                return version
+        else:
+            found, seen = await v2.probe(budget, transport)
+            if found:
+                return None
     except ProviderError:
         raise
     except OSError:
         raise ProviderError(
             ErrorCategory.DEPENDENCY_FAILURE, "provider_unavailable"
         ) from None
-    except ValueError, KeyError, TypeError:
-        pass
-    raise ProviderError(ErrorCategory.VERSION_MISMATCH, "unsupported_api")
+    raise ProviderError(ErrorCategory.VERSION_MISMATCH, "unsupported_api", (seen,))

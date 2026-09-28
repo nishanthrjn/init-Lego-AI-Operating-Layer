@@ -239,3 +239,55 @@ def test_no_dynamic_imports_or_config_driven_code() -> None:
                 assert all(a.name not in ("importlib", "pkgutil") for a in node.names)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in ("eval", "exec", "__import__", "getattr")
+
+
+class Fixed(Html):
+    """Answers every request with one canned response."""
+
+    def __init__(self, response: Response) -> None:
+        super().__init__()
+        self.response = response
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        body: bytes = b"",
+        *,
+        limit: int,
+        headers: Headers = (),
+    ) -> Response:
+        self.calls.append(method)
+        return self.response
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_any_auth_rejection_is_explicit(status: int) -> None:
+    bare = Fixed(Response(status, "text/plain", b"denied"))
+    with pytest.raises(ProviderError) as caught:
+        run_discover("auto", bare)
+    assert caught.value.category is ErrorCategory.AUTHORIZATION_DENIED
+    assert caught.value.evidence == (
+        f"v2 probe: status={status} type=text/plain code=-",
+    )
+    with pytest.raises(ProviderError):
+        asyncio.run(confirm("v2", bare, request_timeout=5, clock=FakeTime().clock))
+
+
+def test_evidence_is_sanitized_and_never_echoes_bodies() -> None:
+    leak = "sk-live-DO-NOT-LEAK provider message with details"
+    response = json_response(404, {"error": {"code": "job_missing", "message": leak}})
+    with pytest.raises(ProviderError) as caught:
+        asyncio.run(
+            confirm("v2", Fixed(response), request_timeout=5, clock=FakeTime().clock)
+        )
+    assert caught.value.reason == "unsupported_api"
+    assert caught.value.evidence == (
+        "v2 probe: status=404 type=application/json code=job_missing",
+    )
+    odd = json_response(404, {"error": {"code": "has spaces " + leak}})
+    with pytest.raises(ProviderError) as caught:
+        run_discover("auto", Fixed(odd))
+    joined = " ".join(caught.value.evidence)
+    assert leak not in joined and "code=-" in joined
+    assert "legacy probe: status=404" in joined

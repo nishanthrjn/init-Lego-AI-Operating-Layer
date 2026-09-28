@@ -22,6 +22,7 @@ from .base import (
     ProviderProfile,
     Submission,
     Transport,
+    observed,
 )
 
 CAPABILITIES = Capabilities(
@@ -107,16 +108,20 @@ def queued_entry(queue: dict[str, Any], job: ProviderJobRef) -> list[Any] | None
     return found
 
 
-async def probe_version(budget: Budget, transport: Transport) -> str | None:
-    """Legacy family evidence: /system_stats with a string comfyui_version."""
-    stats = object_response(
-        await budget.request(transport, "GET", "/system_stats", limit=1024 * 1024)
+async def probe(budget: Budget, transport: Transport) -> tuple[str | None, str]:
+    """(version, evidence); version None unless /system_stats is legacy-shaped."""
+    response = await budget.request(
+        transport, "GET", "/system_stats", limit=1024 * 1024
     )
-    system = stats.get("system")
+    evidence = observed("legacy probe", response)
+    try:
+        system = object_response(response).get("system")
+    except ValueError, RecursionError:
+        return None, evidence
     if type(system) is not dict or type(system.get("comfyui_version")) is not str:
-        raise ValueError("not a legacy ComfyUI server")
+        return None, evidence
     version: str = system["comfyui_version"]
-    return version
+    return version, evidence
 
 
 class LegacyDriver:
