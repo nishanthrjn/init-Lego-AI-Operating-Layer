@@ -36,6 +36,8 @@ from .base import (
     SubmissionRejected,
     Transport,
     TransportFactory,
+    error_code,
+    observed,
 )
 
 CAPABILITIES = Capabilities(
@@ -75,18 +77,7 @@ def canonical_uuid(value: object) -> str:
 
 
 def envelope_code(response: Response) -> str | None:
-    if response.content_type.split(";")[0].strip() != "application/json":
-        return None
-    if len(response.body) > 64 * 1024:
-        return None
-    try:
-        error = json_object(response.body).get("error")
-    except ValueError:
-        return None
-    if type(error) is dict and type(error.get("code")) is str:
-        code: str = error["code"]
-        return code
-    return None
+    return error_code(response)
 
 
 def provider_error(response: Response, *, submit: bool) -> Exception:
@@ -124,15 +115,19 @@ def json_body(response: Response, status: int) -> dict[str, Any]:
     return json_object(response.body)
 
 
-async def probe(budget: Budget, transport: Transport) -> bool:
-    """v2 evidence is a structured not_found envelope for a well-formed id."""
+async def probe(budget: Budget, transport: Transport) -> tuple[bool, str]:
+    """v2 evidence is a structured not_found envelope for a well-formed id.
+
+    Any 401/403 is an authentication failure whatever its body says.
+    """
     response = await budget.request(
         transport, "GET", "/api/v2/jobs/" + PROBE_JOB_ID, limit=64 * 1024
     )
-    code = envelope_code(response)
-    if response.status in (401, 403) and code in ("unauthorized", "forbidden"):
-        raise provider_error(response, submit=False)
-    return response.status == 404 and code == "not_found"
+    evidence = observed("v2 probe", response)
+    if response.status in (401, 403):
+        reason = "authentication_failed" if response.status == 401 else "forbidden"
+        raise ProviderError(ErrorCategory.AUTHORIZATION_DENIED, reason, (evidence,))
+    return response.status == 404 and envelope_code(response) == "not_found", evidence
 
 
 class V2Driver:

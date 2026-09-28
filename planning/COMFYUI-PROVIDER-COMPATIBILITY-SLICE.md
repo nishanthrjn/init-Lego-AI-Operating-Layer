@@ -1,6 +1,26 @@
 # ComfyUI Provider Compatibility and Configuration Layer
 
-Status: IMPLEMENTED — LOCAL VALIDATION PENDING.
+Status: IMPLEMENTED — DETERMINISTIC AND LOCAL VALIDATED; CLOUD NOT ESTABLISHED.
+
+**Validation evidence (maintainer-run, 2026-09-28).**
+
+- `uv run --locked python .alidate_comfyui_provider_compatibility.py`
+  passed all 16 phases. That covers 37 configuration, 14 discovery, 115
+  legacy-regression, 34 v2, 20 remote-transport, 51 reconciliation/effects
+  and 8 reuse tests, the wheel build and import, and 254 affected existing
+  checks.
+- Local probe (`comfy-local.toml`, `api_family = "auto"`): reachable,
+  discovered `legacy` 0.37.0, `submission performed: NO`.
+- Configuration-driven local generation through the port-only
+  `generative-media-minimal/app.py`: success, effect completed, one validated
+  PNG.
+- Cloud probe (`comfy-cloud.toml`, explicit `v2`): `unsupported_api`. The
+  structured v2 `not_found` evidence was not observed, so v2 support on
+  `cloud.comfy.org` is **PROVIDER CAPABILITY NOT ESTABLISHED**. The probe
+  failed closed, and detection was not loosened. Since then the probe reports
+  sanitized evidence (status, media type, error-code identifier) and maps any
+  401/403 to an authentication failure. A re-run is needed to diagnose.
+
 Builds on [the text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md).
 No Core, ModelPort or `TextToImageRequest` change. No live runtime or Cloud
 calls were made during implementation; only static checks ran.

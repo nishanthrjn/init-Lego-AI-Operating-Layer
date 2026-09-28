@@ -36,6 +36,8 @@ def main() -> int:
     except ProviderError as error:
         print("submission performed: NO")
         print("provider:", error.reason, "category:", error.category.value)
+        for line in error.evidence:
+            print("evidence", line)
         return 1
     except ValueError, OSError:
         print("submission performed: NO")
