@@ -307,7 +307,8 @@ def test_model_governance_is_separate_from_read_authority(workspace: Path) -> No
 
 def test_current_digest_field_cannot_be_supplied(workspace: Path) -> None:
     file = CodingFile(target(), RepositoryText("example.py", "current"))
-    with pytest.raises(ValueError):
+    # digest is init=False; CPython 3.13+ dataclasses.replace rejects it with TypeError.
+    with pytest.raises(TypeError):
         replace(file, digest=ContentDigest("a" * 64))
 
 
