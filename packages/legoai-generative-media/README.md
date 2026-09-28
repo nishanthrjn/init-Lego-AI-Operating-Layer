@@ -64,6 +64,14 @@ token referenced as `env:NAME`. See
 [provider compatibility](../../planning/COMFYUI-PROVIDER-COMPATIBILITY-SLICE.md)
 and `uv run --locked python .alidate_comfyui_provider_compatibility.py`.
 
+Privacy-sensitive image inputs (ADR-020): `ImageInput` accepts bounded 8-bit
+RGB/RGBA PNG only and keeps just the metadata-free critical chunks.
+`service.open_image_transfer(config)` uploads at most two inputs, once each,
+to **local** legacy ComfyUI (`type=temp`, UUID names), and reports
+`input_disclosure` separately from any job effect. Remote and Cloud are
+refused before I/O, and deletion is never claimed. See
+[VTO-1](../../planning/VIRTUAL-TRY-ON-VTO1.md).
+
 From the repository root:
 
 ```powershell

@@ -14,7 +14,14 @@ from typing import Any, Protocol
 from legoai.kernel.errors import ErrorCategory
 
 from ..http import Headers, Response
-from ..values import REASONS, ProviderJobRef, ReconciliationStatus, reason_code
+from ..values import (
+    REASONS,
+    ImageInput,
+    ProviderJobRef,
+    ReconciliationStatus,
+    UploadedImageRef,
+    reason_code,
+)
 from ..workflow import ApprovedWorkflow, json_object
 
 
@@ -85,6 +92,14 @@ class InvalidOutput(ValueError):
     """Provider answered, but not with an acceptable output representation."""
 
 
+class DeadlineBeforeSend(TimeoutError):
+    """The operation deadline passed before a request was attempted."""
+
+
+class ProviderRenamed(ValueError):
+    """The provider stored an input under a name other than the requested one."""
+
+
 class RequestTimeout(OSError):
     """One exchange exceeded its own bound before the total deadline."""
 
@@ -133,7 +148,7 @@ class Budget:
             transport = ReadOnlyTransport(transport)
         remaining = self.deadline - self.clock()
         if remaining <= 0:
-            raise TimeoutError
+            raise DeadlineBeforeSend
         try:
             async with asyncio.timeout(min(self.request_timeout, remaining)):
                 if headers:
@@ -155,6 +170,10 @@ class Capabilities:
     idempotent_submission: bool
     durable_job_lookup: bool
     job_scoped_cancel: bool
+    # ADR-020: this driver can transfer a privacy-sensitive input image.
+    input_upload: bool
+    # Provider evidence that uploaded bytes are deleted (record deletion is not).
+    input_byte_deletion: bool
 
     @classmethod
     def names(cls) -> frozenset[str]:
@@ -240,4 +259,11 @@ class ComfyDriver(Protocol):
 
     async def fetch(self, budget: Budget, output: OutputRef) -> bytes:
         """Output bytes; PNG validation happens above the driver."""
+        ...
+
+    async def upload(self, budget: Budget, image: ImageInput) -> UploadedImageRef:
+        """One attempt to transfer one stripped input; never retried.
+
+        Raise NotSent/DeadlineBeforeSend only when no byte can have left.
+        """
         ...

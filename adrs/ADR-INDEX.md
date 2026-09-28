@@ -15,9 +15,13 @@ under intent §55 while preserving canonical semantic neutrality.
 direction and first-milestone instruction. It extends ADR-001's initial runtime
 choice to ongoing reusable component delivery and preserves ADR-002's boundaries.
 
-**Current register:** 15 allocated ADRs: 13 Accepted, two Proposed (012/013).
+**Current register:** 16 allocated ADRs: 14 Accepted, two Proposed (012/013).
 ADR-014 remains intentionally unallocated. Current totals: P0 = 3, P1 = 8,
-P2 = 2, P3 = 2, P4 = 0; A = 3, B = 9, C = 2, D = 1, E = 0.
+P2 = 3, P3 = 2, P4 = 0; A = 3, B = 9, C = 3, D = 1, E = 0. ADR-020 was
+accepted by the maintainer on 2026-09-28. Register gap: ADR-017, ADR-018 and
+ADR-019 exist as Proposed decision records but are not yet entered in this
+register. They are excluded from these counts pending the maintainer's
+registration decision.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.
@@ -25,7 +29,7 @@ register/forward pointer and does not retroactively alter those review findings.
 | ADR | Decision | Class / priority / type | Dependencies | Status / evidence |
 |---|---|---|---|---|
 | [ADR-016](ADR-016.md) | Python-first reusable AI component platform | A / P0 for strategic increment / 2 | Intent 1.0 + IA-001, ADR-001/002 and retained governance decisions | Accepted; repository impact, alternative/burden and alignment review. M1 local validation complete; results recorded in the forward plan. |
-| [ADR-020](ADR-020.md) | Personal image inputs in generative media | C / P2 for Virtual Try-On image transfer / 2 | SECURITY SEC-004/011/039/066/067/075/077; ComfyUI provider compatibility slice | Proposed 2026-09-28 for maintainer review (Generative Media / Security boundary owner). Gates VTO-1; see the Virtual Try-On assessment. |
+| [ADR-020](ADR-020.md) | Personal image inputs in generative media | C / P2 for Virtual Try-On image transfer / 2 | SECURITY SEC-004/011/039/066/067/075/077; ComfyUI provider compatibility slice | Accepted 2026-09-28 by explicit maintainer decision (Generative Media / Security boundary owner). Authorizes VTO-1 for local providers only. |
 
 The next work follows the [forward plan](../planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md),
 not the historical §18 instruction. ADR-016 neither allocates ADR-014 nor accepts

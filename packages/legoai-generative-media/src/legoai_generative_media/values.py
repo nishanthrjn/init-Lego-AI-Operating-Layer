@@ -113,6 +113,7 @@ REASONS = frozenset(
         "output_unavailable",
         "canceled",
         "expired",
+        "remote_personal_images_forbidden",
     }
 )
 
@@ -155,10 +156,14 @@ class GenerationResult:
     cessation: Cessation = Cessation.NOT_REQUESTED
     reason: str | None = None
     evidence: tuple[str, ...] = ()
+    # ADR-020 §4: input transfer is its own named effect, never the job effect.
+    input_disclosure: EffectExtent = EffectExtent.NONE
 
     def __post_init__(self) -> None:
         if type(self.outcome) is not Outcome or type(self.effect) is not EffectExtent:
             raise TypeError("invalid outcome/effect")
+        if type(self.input_disclosure) is not EffectExtent:
+            raise TypeError("invalid input disclosure")
         if type(self.cessation) is not Cessation:
             raise TypeError("invalid cessation")
         if self.job is not None and type(self.job) is not ProviderJobRef:
@@ -241,3 +246,100 @@ class GenerationCancelled(asyncio.CancelledError):
     def __init__(self, result: GenerationResult) -> None:
         super().__init__("generation cancelled; provider cessation unknown")
         self.result = result
+
+
+@dataclass(frozen=True, slots=True)
+class ImageInput:
+    """Privacy-sensitive PNG input, held only in stripped form (ADR-020).
+
+    Construction validates the PNG exactly and replaces `content` with the
+    metadata-free rebuild; the original bytes are not retained. No filename,
+    path, URL or provider field exists by design. Bytes never enter repr.
+    """
+
+    content: bytes = field(repr=False)
+    width: int = field(init=False)
+    height: int = field(init=False)
+
+    def __post_init__(self) -> None:
+        from .png import strip_png
+
+        stripped, width, height = strip_png(self.content)
+        object.__setattr__(self, "content", stripped)
+        object.__setattr__(self, "width", width)
+        object.__setattr__(self, "height", height)
+
+    @property
+    def byte_length(self) -> int:
+        return len(self.content)
+
+    @property
+    def sha256(self) -> str:
+        """Digest of the stripped PNG, for local diagnostics only."""
+        return hashlib.sha256(self.content).hexdigest()
+
+
+_UPLOAD_NAME = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png"
+)
+
+
+@dataclass(frozen=True, slots=True)
+class UploadedImageRef:
+    """Provider locator for one transferred input; not storage or ownership.
+
+    `provider_name` is a fresh random UUID name, never user-derived. `storage`
+    names the provider lifecycle ("temp"); it is not a deletion guarantee.
+    """
+
+    provider_name: str
+    storage: str = "temp"
+
+    def __post_init__(self) -> None:
+        if type(self.provider_name) is not str or not _UPLOAD_NAME.fullmatch(
+            self.provider_name
+        ):
+            raise ValueError("generated provider name required")
+        if self.storage != "temp":
+            raise ValueError("unsupported storage kind")
+
+
+@dataclass(frozen=True, slots=True)
+class InputTransfer:
+    """Outcome of transferring inputs: disclosure truth plus acknowledged refs."""
+
+    disclosure: EffectExtent
+    uploaded: tuple[UploadedImageRef, ...] = ()
+    error: ErrorCategory | None = None
+    reason: str | None = None
+    evidence: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if type(self.disclosure) is not EffectExtent:
+            raise TypeError("invalid disclosure")
+        if type(self.uploaded) is not tuple or len(self.uploaded) > 2:
+            raise ValueError("at most two uploads")
+        if any(type(u) is not UploadedImageRef for u in self.uploaded):
+            raise TypeError("uploaded references required")
+        if self.error is not None and type(self.error) is not ErrorCategory:
+            raise TypeError("invalid error")
+        reason_code(self.reason)
+        evidence_lines(self.evidence)
+        if self.error is None and (
+            self.disclosure is not EffectExtent.COMPLETED or not self.uploaded
+        ):
+            raise ValueError("success requires every input acknowledged")
+        if self.disclosure is EffectExtent.NONE and self.uploaded:
+            raise ValueError("acknowledged uploads imply disclosure")
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None
+
+
+class InputTransferCancelled(asyncio.CancelledError):
+    """Cancellation propagates while retaining the known disclosure facts."""
+
+    def __init__(self, transfer: InputTransfer) -> None:
+        super().__init__("input transfer cancelled; disclosure retained")
+        self.transfer = transfer

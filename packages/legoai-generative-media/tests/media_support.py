@@ -1,12 +1,13 @@
 import asyncio
 import hashlib
 import json
+import re
 import struct
 import zlib
 from pathlib import Path
 from typing import Any
 
-from legoai_generative_media.http import Headers, Response
+from legoai_generative_media.http import Headers, NotSent, Response
 from legoai_generative_media.values import ApprovedWorkflowRef, TextToImageRequest
 from legoai_generative_media.workflow import ApprovedWorkflow, template
 
@@ -24,21 +25,70 @@ def graph(prompt: str = "red mug", seed: int | None = 42) -> Any:
     return json.loads(workflow().bind(TextToImageRequest(prompt, seed)))["prompt"]
 
 
-def png() -> bytes:
-    def chunk(kind: bytes, data: bytes) -> bytes:
-        return (
-            struct.pack(">I", len(data))
-            + kind
-            + data
-            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-        )
+def chunk(kind: bytes, data: bytes) -> bytes:
+    return (
+        struct.pack(">I", len(data))
+        + kind
+        + data
+        + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+    )
 
+
+def png() -> bytes:
     return (
         b"\x89PNG\r\n\x1a\n"
         + chunk(b"IHDR", struct.pack(">IIBBBBB", 512, 512, 8, 2, 0, 0, 0))
         + chunk(b"IDAT", zlib.compress((b"\0" + b"\x80" * (512 * 3)) * 512))
         + chunk(b"IEND", b"")
     )
+
+
+Chunks = tuple[tuple[bytes, bytes], ...]
+
+
+def make_png(
+    width: int = 64,
+    height: int = 64,
+    *,
+    color: int = 2,
+    depth: int = 8,
+    interlace: int = 0,
+    before: Chunks = (),
+    after: Chunks = (),
+    idat_parts: int = 1,
+    trailing: bytes = b"",
+) -> bytes:
+    """Synthetic PNG only: flat pixels, optional extra chunks around IDAT."""
+    channels = 4 if color == 6 else 3
+    compressed = zlib.compress((b"\0" + b"\x80" * (width * channels)) * height)
+    step = -(-len(compressed) // idat_parts)
+    idats = b"".join(
+        chunk(b"IDAT", compressed[i : i + step])
+        for i in range(0, len(compressed), step)
+    )
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(
+            b"IHDR",
+            struct.pack(">IIBBBBB", width, height, depth, color, 0, 0, interlace),
+        )
+        + b"".join(chunk(k, d) for k, d in before)
+        + idats
+        + b"".join(chunk(k, d) for k, d in after)
+        + chunk(b"IEND", b"")
+        + trailing
+    )
+
+
+def chunks_of(data: bytes) -> list[tuple[bytes, bytes]]:
+    """(type, whole chunk bytes) in order, for structural assertions."""
+    out, offset = [], 8
+    while offset < len(data):
+        size = struct.unpack_from(">I", data, offset)[0]
+        end = offset + 12 + size
+        out.append((data[offset + 4 : offset + 8], data[offset:end]))
+        offset = end
+    return out
 
 
 class FakeTime:
@@ -82,6 +132,9 @@ class FakeHTTP:
         # Simulated long job: queued/running until time.now reaches ready_at.
         self.time: FakeTime | None = None
         self.ready_at = 0.0
+        self.upload_modes: list[str] = []
+        self.uploaded: list[bytes] = []
+        self.upload_headers: list[Headers] = []
 
     def running(self) -> bool:
         return self.time is not None and self.time.now < self.ready_at
@@ -129,8 +182,33 @@ class FakeHTTP:
             )
         elif path.startswith("/view?"):
             return Response(200, "image/png", self.image)
+        elif path == "/upload/image" and method == "POST":
+            return self.upload(body, headers)
         else:
             raise AssertionError("unexpected route " + path)
+        return Response(200, "application/json", json.dumps(data).encode())
+
+    def upload(self, body: bytes, headers: Headers) -> Response:
+        """Scripted /upload/image: one mode per call, 'ok' when unscripted."""
+        mode = self.upload_modes.pop(0) if self.upload_modes else "ok"
+        if mode == "not_sent":
+            raise NotSent("fixture: connection refused")
+        self.uploaded.append(body)
+        self.upload_headers.append(headers)
+        if mode == "lost":
+            raise OSError("fixture: reset after send")
+        match = re.search(rb'filename="([^"]+)"', body)
+        assert match is not None
+        name = match.group(1).decode("ascii")
+        if mode == "status500":
+            return Response(500, "application/json", b'{"error": {"code": "boom"}}')
+        if mode == "oversized":
+            return Response(200, "application/json", b" " * (70 * 1024))
+        data: Any = {"name": name, "subfolder": "", "type": "temp"}
+        if mode == "malformed":
+            data = {"name": name}
+        elif mode == "rename":
+            data = {**data, "name": name[:-4] + " (1).png"}
         return Response(200, "application/json", json.dumps(data).encode())
 
 

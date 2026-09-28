@@ -6,12 +6,15 @@ route present in newer servers is not used until live-qualified.
 """
 
 import json
+import uuid
 from typing import Any
 from urllib.parse import quote, urlencode
 
-from ..http import Response
+from legoai.kernel.errors import ErrorCategory
+
+from ..http import NotSent, RemoteHTTPS, Response
 from ..png import MAX_IMAGE_BYTES
-from ..values import ProviderJobRef, ReconciliationStatus
+from ..values import ImageInput, ProviderJobRef, ReconciliationStatus, UploadedImageRef
 from ..workflow import MAX_WORKFLOW_BYTES, ApprovedWorkflow, json_object
 from .base import (
     Budget,
@@ -19,7 +22,9 @@ from .base import (
     InvalidOutput,
     JobObservation,
     OutputRef,
+    ProviderError,
     ProviderProfile,
+    ProviderRenamed,
     Submission,
     Transport,
     observed,
@@ -30,6 +35,8 @@ CAPABILITIES = Capabilities(
     idempotent_submission=False,
     durable_job_lookup=False,
     job_scoped_cancel=False,
+    input_upload=True,
+    input_byte_deletion=False,
 )
 
 
@@ -240,6 +247,68 @@ class LegacyDriver:
         if raw.status != 200 or raw.content_type.split(";")[0].strip() != "image/png":
             raise InvalidOutput("PNG response required")
         return raw.body
+
+    async def upload(self, budget: Budget, image: ImageInput) -> UploadedImageRef:
+        """POST /upload/image once: type=temp, overwrite=false, fresh UUID name.
+
+        temp only shortens retention to the runtime's lifetime (when its asset
+        manager is disabled); nothing here deletes bytes, and nothing retries.
+        """
+        if type(image) is not ImageInput:
+            raise TypeError("ImageInput required")
+        if isinstance(self._transport, RemoteHTTPS):
+            # Defence in depth behind the configuration check (ADR-020 §8).
+            raise NotSent("personal images are never sent to remote transports")
+        name = f"{uuid.uuid4()}.png"
+        boundary = "legoai-" + uuid.uuid4().hex
+        if boundary.encode("ascii") in image.content:
+            raise NotSent("multipart boundary collision")
+        crlf = b"\r\n"
+        body = b"".join(
+            [
+                b"--" + boundary.encode("ascii") + crlf,
+                b'Content-Disposition: form-data; name="image"; filename="'
+                + name.encode("ascii")
+                + b'"'
+                + crlf,
+                b"Content-Type: image/png" + crlf + crlf,
+                image.content + crlf,
+                b"--" + boundary.encode("ascii") + crlf,
+                b'Content-Disposition: form-data; name="type"' + crlf + crlf,
+                b"temp" + crlf,
+                b"--" + boundary.encode("ascii") + crlf,
+                b'Content-Disposition: form-data; name="overwrite"' + crlf + crlf,
+                b"false" + crlf,
+                b"--" + boundary.encode("ascii") + b"--" + crlf,
+            ]
+        )
+        response = await budget.request(
+            self._transport,
+            "POST",
+            "/upload/image",
+            body,
+            limit=64 * 1024,
+            headers=(("Content-Type", f"multipart/form-data; boundary={boundary}"),),
+        )
+        if response.status != 200:
+            raise ProviderError(
+                ErrorCategory.DEPENDENCY_FAILURE,
+                "upstream_error",
+                (observed("legacy upload", response),),
+            )
+        if len(response.body) > 64 * 1024:
+            raise ValueError("upload acknowledgement oversized")
+        ack = object_response(response)
+        if ack == {"name": name, "subfolder": "", "type": "temp"}:
+            return UploadedImageRef(name)
+        if (
+            set(ack) == {"name", "subfolder", "type"}
+            and type(ack["name"]) is str
+            and ack["type"] == "temp"
+        ):
+            # Stored, but not under our name (hash dedup or collision rename).
+            raise ProviderRenamed("provider renamed the upload")
+        raise ValueError("malformed upload acknowledgement")
 
 
 # No global interrupt, queue clear, deletion, retry or output-directory access.

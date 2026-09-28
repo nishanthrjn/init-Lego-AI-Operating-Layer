@@ -15,9 +15,10 @@ from .comfyui import ComfyTextToImageAdapter
 from .composition import invoke
 from .config import GenerationConfig, ProviderConfig, resolve_secret
 from .discovery import DRIVERS, confirm, discover
-from .drivers.base import ProviderError, ProviderProfile, TransportFactory
+from .drivers.base import ComfyDriver, ProviderError, ProviderProfile, TransportFactory
 from .http import Endpoint, LocalHTTP, RemoteHTTPS
 from .local_host import prepare_local
+from .transfer import ImageTransfer
 from .values import (
     GenerationResult,
     ProviderJobRef,
@@ -29,6 +30,7 @@ __all__ = [
     "ProviderError",
     "ProviderProfile",
     "TextToImageService",
+    "open_image_transfer",
     "open_text_to_image",
     "probe_provider",
 ]
@@ -135,6 +137,25 @@ async def open_text_to_image(
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> TextToImageService:
     provider = config.provider
+    driver = await _driver(provider, environ, transports, clock)
+    adapter = ComfyTextToImageAdapter(
+        config.workflow.load(),
+        driver,
+        provider.binding,
+        provider.completion,
+        config.workflow.requires,
+        clock=clock,
+        sleep=sleep,
+    )
+    return TextToImageService(config, adapter)
+
+
+async def _driver(
+    provider: ProviderConfig,
+    environ: Mapping[str, str] | None,
+    transports: TransportFactory | None,
+    clock: Callable[[], float],
+) -> ComfyDriver:
     token = resolve_secret(
         provider.secret_ref, os.environ if environ is None else environ
     )
@@ -146,16 +167,21 @@ async def open_text_to_image(
         request_timeout=provider.completion.request_timeout_seconds,
         clock=clock,
     )
-    driver = DRIVERS[family](
+    return DRIVERS[family](
         version, primary, frozenset(provider.download_origins), factory
     )
-    adapter = ComfyTextToImageAdapter(
-        config.workflow.load(),
-        driver,
-        provider.binding,
-        provider.completion,
-        config.workflow.requires,
-        clock=clock,
-        sleep=sleep,
+
+
+async def open_image_transfer(
+    config: GenerationConfig,
+    *,
+    environ: Mapping[str, str] | None = None,
+    transports: TransportFactory | None = None,
+    clock: Callable[[], float] = time.monotonic,
+) -> ImageTransfer:
+    """Configuration-selected input transfer; remote deployments are refused."""
+    provider = config.provider
+    driver = await _driver(provider, environ, transports, clock)
+    return ImageTransfer(
+        driver, provider.deployment == "local", provider.completion, clock
     )
-    return TextToImageService(config, adapter)
