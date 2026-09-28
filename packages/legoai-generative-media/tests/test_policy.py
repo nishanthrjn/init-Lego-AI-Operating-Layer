@@ -84,14 +84,14 @@ def test_request_timeout_is_separate_from_total_wait() -> None:
 
 
 @pytest.mark.parametrize(
-    "wait,interval,request",
+    "wait,interval,per_request",
     [(900, 1, 10), (300, 1, 10), (1800, 1, 10), (5, 0.5, 5), (0.5, 0.05, 0.5)],
 )
 def test_single_operator_setting_derives_the_rest(
-    wait: float, interval: float, request: float
+    wait: float, interval: float, per_request: float
 ) -> None:
     policy = CompletionPolicy.for_wait(wait)
-    assert policy == CompletionPolicy(wait, interval, request)
+    assert policy == CompletionPolicy(wait, interval, per_request)
 
 
 @pytest.mark.parametrize("wait", [0, -1, HARD_MAX_WAIT_SECONDS + 1, math.inf, None])
