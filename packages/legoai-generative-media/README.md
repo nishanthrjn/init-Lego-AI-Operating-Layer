@@ -72,6 +72,18 @@ to **local** legacy ComfyUI (`type=temp`, UUID names), and reports
 refused before I/O, and deletion is never claimed. See
 [VTO-1](../../planning/VIRTUAL-TRY-ON-VTO1.md).
 
+Virtual try-on (`VirtualTryOnPort`, capability `legoai.virtual-try-on` 1.0.0):
+`TryOnRequest(person, garment, seed)` in, `GenerationResult` out.
+`service.open_virtual_try_on(config)` does the following, in order:
+
+- local and capability checks;
+- node and model preflight before any personal image is sent;
+- two uploads;
+- exactly one submission of the approved Qwen-Image-Edit-2509 template
+  (fixed 768x1024 portrait; model files come from configuration).
+
+Nothing is retried. See [VTO-2](../../planning/VIRTUAL-TRY-ON-VTO2.md).
+
 From the repository root:
 
 ```powershell

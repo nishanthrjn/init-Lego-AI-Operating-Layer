@@ -22,7 +22,7 @@ from ..values import (
     UploadedImageRef,
     reason_code,
 )
-from ..workflow import ApprovedWorkflow, json_object
+from ..workflow import ApprovedTemplate, json_object
 
 
 class Transport(Protocol):
@@ -233,7 +233,7 @@ class ComfyDriver(Protocol):
     @property
     def profile(self) -> ProviderProfile: ...
 
-    async def preflight(self, budget: Budget, workflow: ApprovedWorkflow) -> None:
+    async def preflight(self, budget: Budget, workflow: ApprovedTemplate) -> None:
         """Workflow compatibility checks; only called with node_preflight."""
         ...
 

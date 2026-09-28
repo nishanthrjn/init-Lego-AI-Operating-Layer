@@ -52,7 +52,10 @@ class ImageTransfer:
     completion: CompletionPolicy = CompletionPolicy()
     clock: Callable[[], float] = field(default=time.monotonic, repr=False)
 
-    async def upload(self, images: tuple[ImageInput, ...]) -> InputTransfer:
+    async def upload(
+        self, images: tuple[ImageInput, ...], *, budget: Budget | None = None
+    ) -> InputTransfer:
+        """`budget` lets a caller share one operation deadline (for example try-on)."""
         if type(images) is not tuple or not 1 <= len(images) <= MAX_INPUTS:
             raise ValueError("one or two inputs required")
         if any(type(image) is not ImageInput for image in images):
@@ -70,11 +73,14 @@ class ImageTransfer:
                 error=ErrorCategory.VERSION_MISMATCH,
                 reason="capability_missing",
             )
-        budget = Budget(
-            self.clock() + self.completion.max_wait_seconds,
-            self.clock,
-            self.completion.request_timeout_seconds,
-        )
+        if budget is None:
+            budget = Budget(
+                self.clock() + self.completion.max_wait_seconds,
+                self.clock,
+                self.completion.request_timeout_seconds,
+            )
+        elif type(budget) is not Budget or budget.read_only:
+            raise ValueError("writable operation budget required")
         uploaded: list[UploadedImageRef] = []
         total = len(images)
         disclosure: EffectExtent

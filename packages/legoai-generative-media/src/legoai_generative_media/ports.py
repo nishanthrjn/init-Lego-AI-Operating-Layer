@@ -7,6 +7,7 @@ from .values import (
     ProviderJobRef,
     ReconciliationResult,
     TextToImageRequest,
+    TryOnRequest,
 )
 
 
@@ -19,4 +20,17 @@ class TextToImagePort(Protocol):
 class JobReconciliationPort(Protocol):
     async def reconcile(self, job: ProviderJobRef) -> ReconciliationResult:
         """Inspect one existing job; never submits, retries or cancels work."""
+        ...
+
+
+class VirtualTryOnPort(Protocol):
+    async def try_on(self, request: TryOnRequest) -> GenerationResult:
+        """Two local uploads then at most one submission; nothing is retried.
+
+        `input_disclosure` reports image transfer separately from job effect.
+        """
+        ...
+
+    async def reconcile(self, job: ProviderJobRef) -> ReconciliationResult:
+        """Inspect an existing try-on job; never uploads or submits."""
         ...

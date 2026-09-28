@@ -15,7 +15,7 @@ from legoai.kernel.errors import ErrorCategory
 from ..http import NotSent, RemoteHTTPS, Response
 from ..png import MAX_IMAGE_BYTES
 from ..values import ImageInput, ProviderJobRef, ReconciliationStatus, UploadedImageRef
-from ..workflow import MAX_WORKFLOW_BYTES, ApprovedWorkflow, json_object
+from ..workflow import MAX_WORKFLOW_BYTES, ApprovedTemplate, json_object
 from .base import (
     Budget,
     Capabilities,
@@ -140,7 +140,11 @@ class LegacyDriver:
     def profile(self) -> ProviderProfile:
         return self._profile
 
-    async def preflight(self, budget: Budget, workflow: ApprovedWorkflow) -> None:
+    async def preflight(self, budget: Budget, workflow: ApprovedTemplate) -> None:
+        """Every required node exists and lists every approved model file."""
+        models: dict[str, list[tuple[str, str]]] = {}
+        for node, field, filename in workflow.required_models:
+            models.setdefault(node, []).append((field, filename))
         for node in sorted(workflow.required_nodes):
             response = object_response(
                 await budget.request(
@@ -152,10 +156,10 @@ class LegacyDriver:
             )
             if node not in response or type(response[node]) is not dict:
                 raise ValueError("missing required node")
-            if node == "CheckpointLoaderSimple":
-                choices = response[node]["input"]["required"]["ckpt_name"][0]
-                if type(choices) is not list or workflow.checkpoint not in choices:
-                    raise ValueError("missing approved checkpoint")
+            for field, filename in models.get(node, []):
+                choices = response[node]["input"]["required"][field][0]
+                if type(choices) is not list or filename not in choices:
+                    raise ValueError("missing approved model file")
 
     async def submit(self, budget: Budget, graph: dict[str, Any]) -> Submission:
         payload = json.dumps({"prompt": graph}, ensure_ascii=True).encode("utf-8")

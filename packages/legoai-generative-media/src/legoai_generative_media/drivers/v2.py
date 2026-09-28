@@ -23,7 +23,7 @@ from legoai.kernel.errors import ErrorCategory
 from ..http import Response, https_origin
 from ..png import MAX_IMAGE_BYTES
 from ..values import ImageInput, ProviderJobRef, ReconciliationStatus, UploadedImageRef
-from ..workflow import MAX_WORKFLOW_BYTES, ApprovedWorkflow, json_object
+from ..workflow import MAX_WORKFLOW_BYTES, ApprovedTemplate, json_object
 from .base import (
     Budget,
     Capabilities,
@@ -166,7 +166,7 @@ class V2Driver:
     def profile(self) -> ProviderProfile:
         return self._profile
 
-    async def preflight(self, budget: Budget, workflow: ApprovedWorkflow) -> None:
+    async def preflight(self, budget: Budget, workflow: ApprovedTemplate) -> None:
         # v2 documents no node/model catalogue; compatibility is proven by the
         # provider rejecting (422, no job created) or accepting the submission.
         raise ProviderError(ErrorCategory.VERSION_MISMATCH, "capability_missing")
