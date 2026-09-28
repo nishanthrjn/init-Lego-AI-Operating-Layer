@@ -23,9 +23,11 @@ def create_demo(
     *,
     route_count: int = 1,
     read_allowed: bool = True,
+    model_allowed: bool = True,
 ) -> tuple[CodingAgent, CodingRequest, StaticModel]:
     analyst, source, model = create_analyst_demo(
         root, output, route_count=route_count, read_allowed=read_allowed,
+        model_allowed=model_allowed,
         targets=tuple(target.path for target in targets),
     )
     reads = analyst.evidence_reader

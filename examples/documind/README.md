@@ -60,18 +60,20 @@ requires none.
 DocuMind CLI (this package, documind_app)
   -> legoai_document.ingestion / .answering
        -> legoai_document.embedding / .retrieval / .rerank
-  -> legoai.runtime._composition.model_governed (governed chat/embedding)
-       -> legoai Catalog / resolution / authorization / dispatch / Coordinator
-            -> legoai.reference.model.OllamaModelAdapter -> Ollama (HTTP)
+  -> legoai.runtime.local.open_local_host (public ADR-014 host; governed chat/embedding)
+       -> [private] Catalog / resolution / authorization / dispatch / Coordinator
+            -> built-in Ollama provider (OllamaSettings) -> Ollama (HTTP)
 ```
 
 `legoai_document` never constructs a `Catalog`, `ExecutionCoordinator`, or
 `ModelPort` -- it receives `governed_embed`/`governed_chat` as plain async
 callables from `documind_app.composition`, which is this application's own
-composition root (see `src/documind_app/composition.py`). This mirrors
-`legoai`'s own Internal-vs-Public Port/reference-realization split: an
-application composes reference realizations behind Core's stable public
-contracts, never the other way around.
+composition root (see `src/documind_app/composition.py`). That root imports only
+public `legoai.runtime.api`/`legoai.runtime.local` and owner values. It declares
+the chat and embedding grants as bounded operator configuration (24 h lifetime,
+`max_executions` 100,000, which is a reference-host bound and not a measured limit).
+It never imports reference realizations or constructs `Grant` values. An invalid
+Ollama URL now fails as a clean `GovernedInvocationError` instead of a traceback.
 
 Retrieval is a local SQLite-backed store combining brute-force cosine
 vector similarity and deterministic lexical word-overlap scoring via

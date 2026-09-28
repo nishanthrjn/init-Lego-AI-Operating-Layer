@@ -173,11 +173,14 @@ IAM, multi-tenant isolation or durable authority.
 
 ## 5. ADR-014 proposal
 
-**Status update (2026-09-28): CR-1a COMPLETE. ADR-014 ACCEPTED. CR-1b READY.**
+**Status update (2026-09-28): CR-1a COMPLETE. ADR-014 ACCEPTED. CR-1b IMPLEMENTED —
+LOCAL VALIDATION PENDING.**
 [ADR-014 — Public local governed host composition boundary](../adrs/ADR-014.md)
-was accepted by the maintainer, and its §13 decisions are resolved. CR-1b is
-architecturally authorized to implement it; nothing is implemented yet. ForgeAI-1
-remains blocked by M8.3 closure, CR-1b, CR-2a/2b and CR-3. Where the ADR differs
+was accepted by the maintainer, and its §13 decisions are resolved. CR-1b adds
+`legoai.runtime.api`/`legoai.runtime.local` and migrates the engineering Agent
+examples and DocuMind; see ADR-014 §12a. It is not qualified until the maintainer
+returns `validate_consumer_readiness_cr1b.py` output. ForgeAI-1 remains blocked by
+CR-1b qualification, M8.3 closure, CR-2a/2b and CR-3. Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;

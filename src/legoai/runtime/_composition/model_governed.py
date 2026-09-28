@@ -270,6 +270,55 @@ async def invoke_governed_embedding(
     if not _matches_known_offer(permit.resolved_entry, ollama_embedding_offer()):
         return await _settle_mismatch(coordinator, result), None
 
+    return await _invoke_embedding(coordinator, result, request, adapter)
+
+
+async def invoke_routed_embedding(
+    coordinator: ExecutionCoordinator,
+    result: CoordinationResult,
+    request: EmbeddingRequest,
+    entry: CatalogEntry,
+    adapter: ModelPort,
+    configuration_revision: ConfigurationRevisionRef,
+) -> tuple[ExecutionResult, EmbeddingResult | None]:
+    """ADR-014 §3.5: embedding through the same pinned selected binding.
+
+    The operator associates the selected contribution's own published v1
+    embedding entry and adapter; there is no second selection, lookup, retry or
+    fallback. Effect mapping is the shared embedding mapping below.
+    """
+    if type(result) is not CoordinationResult:
+        raise TypeError("routed embedding requires CoordinationResult")
+    if result.outcome is not CoordinationOutcome.READY:
+        raise ValueError("routed embedding requires a READY CoordinationResult")
+    if type(request) is not EmbeddingRequest:
+        raise TypeError("routed embedding requires EmbeddingRequest")
+    if type(entry) is not CatalogEntry:
+        raise TypeError("routed embedding requires CatalogEntry")
+    if type(configuration_revision) is not ConfigurationRevisionRef:
+        raise TypeError("routed embedding requires ConfigurationRevisionRef")
+    permit = result.permit
+    assert permit is not None
+    scope = configuration_revision.configuration.application.scope
+    if (
+        entry.offer != ollama_embedding_offer()
+        or entry.tenant_context.tenant_id != scope.tenant_id
+        or permit.resolved_entry != entry
+        or permit.operation.subject != configuration_revision.configuration
+    ):
+        # Same no-call discipline as routed Chat: consume the claim first.
+        await coordinator.claim_invocation(result.execution_id)
+        return await _settle_mismatch(coordinator, result), None
+    return await _invoke_embedding(coordinator, result, request, adapter)
+
+
+async def _invoke_embedding(
+    coordinator: ExecutionCoordinator,
+    result: CoordinationResult,
+    request: EmbeddingRequest,
+    adapter: ModelPort,
+) -> tuple[ExecutionResult, EmbeddingResult | None]:
+    """One shared embedding invocation claim and phase mapping."""
     await coordinator.claim_invocation(result.execution_id)
     try:
         embedding_result = await adapter.embed(request)
