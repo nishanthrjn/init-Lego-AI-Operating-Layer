@@ -149,6 +149,8 @@ def main() -> int:
             tests("11 output geometry", "test_tryon_geometry.py")
             tests("12 reconciliation", "test_tryon_reconcile.py", "test_reconcile.py")
             tests("13 N-application reuse", "test_tryon_reuse.py", "test_reuse.py")
+            # VTO-3 operator tooling, offline: preflight, --live, counted writes.
+            tests("13b live-qualification tooling", "test_tryon_live_tooling.py")
             tests("14 architecture and import boundaries", "test_architecture.py")
             wheel_dir = Path(temporary) / "wheel"
             wheel_dir.mkdir()
