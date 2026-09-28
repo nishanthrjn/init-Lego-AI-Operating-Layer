@@ -171,11 +171,19 @@ IAM, multi-tenant isolation or durable authority.
    public host member. Until then it remains a recorded, test-listed exception.
 4. Existing `_composition` code stays private and becomes the facade's implementation.
 
-## 5. ADR-014 proposal (scope only — not allocated, not accepted)
+## 5. ADR-014 proposal
 
-ADR-INDEX states that ADR-014 is "intentionally unallocated until its separate
-authoring/composition decision is authorized". This plan **requests allocation**
-and does not create the ADR.
+**Status update (CR-1a, 2026-09-28):** ADR-014 is allocated as
+[ADR-014 — Public local governed host composition boundary](../adrs/ADR-014.md),
+**Proposed — Ready for Decision**. Where it differs from the sketch in this
+section and §4.2, the ADR is authoritative:
+- `model_execution(purpose)` replaces a generic `new_execution`;
+- `agent_runtime()` takes no argument;
+- a closed built-in provider set is paired with trusted code contributions;
+- a hard execution capacity is added;
+- event-loop confinement is added.
+
+The original scoping text follows.
 
 - **Decision question:** How does an application obtain supported governed LegoAI
   capabilities through a public, versioned entry point, without importing
