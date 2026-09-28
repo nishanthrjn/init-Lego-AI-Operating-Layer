@@ -10,6 +10,13 @@ from dataclasses import dataclass
 from urllib.parse import urlsplit
 
 Headers = tuple[tuple[str, str], ...]
+# One bounded input image (16 MiB) plus multipart framing; JSON bodies are
+# bounded far lower by their producers (256 KiB workflows).
+MAX_REQUEST_BODY = 16 * 1024 * 1024 + 64 * 1024
+
+
+class NotSent(OSError):
+    """Failure established before any request byte left this process."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +78,7 @@ def _check(method: str, path: str, body: bytes, limit: int, headers: Headers) ->
         raise ValueError("invalid request path")
     if len(path) > 8192:
         raise ValueError("request path oversized")
-    if len(body) > 256 * 1024 or not 0 < limit <= 16 * 1024 * 1024:
+    if len(body) > MAX_REQUEST_BODY or not 0 < limit <= 16 * 1024 * 1024:
         raise ValueError("invalid HTTP bound")
     for key, value in headers:
         if key.lower() in ("authorization", "host", "content-length") or any(
@@ -94,12 +101,14 @@ async def _exchange(
     authorization: str | None,
 ) -> Response:
     extra = "".join(f"{k}: {v}\r\n" for k, v in headers)
+    if not any(k.lower() == "content-type" for k, _ in headers):
+        extra = "Content-Type: application/json\r\n" + extra
     if authorization is not None:
         extra += f"Authorization: {authorization}\r\n"
     head_out = (
         f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n"
         f"Connection: close\r\nAccept-Encoding: identity\r\n"
-        f"Content-Type: application/json\r\nContent-Length: {len(body)}\r\n"
+        f"Content-Length: {len(body)}\r\n"
         f"{extra}\r\n"
     ).encode("ascii")
     writer.write(head_out + body)
@@ -195,10 +204,15 @@ class LocalHTTP:
         # Each exchange has its own ceiling within the enclosing generation deadline.
         async with asyncio.timeout(self.timeout):
             try:
-                reader, writer = await asyncio.wait_for(
-                    asyncio.open_connection(parsed.hostname, parsed.port, limit=65536),
-                    min(3, self.timeout),
-                )
+                try:
+                    reader, writer = await asyncio.wait_for(
+                        asyncio.open_connection(
+                            parsed.hostname, parsed.port, limit=65536
+                        ),
+                        min(3, self.timeout),
+                    )
+                except OSError as error:  # Includes connect timeouts.
+                    raise NotSent("connection not established") from error
                 assert writer is not None  # Successful connection owns a writer.
                 response = await _exchange(
                     reader,
@@ -256,12 +270,15 @@ class RemoteHTTPS:
         writer: asyncio.StreamWriter | None = None
         async with asyncio.timeout(self.timeout):
             try:
-                reader, writer = await asyncio.wait_for(
-                    asyncio.open_connection(
-                        host, port, ssl=self._tls, server_hostname=host, limit=65536
-                    ),
-                    min(5, self.timeout),
-                )
+                try:
+                    reader, writer = await asyncio.wait_for(
+                        asyncio.open_connection(
+                            host, port, ssl=self._tls, server_hostname=host, limit=65536
+                        ),
+                        min(5, self.timeout),
+                    )
+                except OSError as error:  # Includes connect/TLS timeouts.
+                    raise NotSent("connection not established") from error
                 assert writer is not None
                 return await _exchange(
                     reader,

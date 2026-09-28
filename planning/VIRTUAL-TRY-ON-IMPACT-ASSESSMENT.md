@@ -1,8 +1,8 @@
 # Virtual Try-On — Impact Assessment and Design
 
-Status: VTO-0 COMPLETE — MAINTAINER REVIEW REQUIRED (ADR-020 Proposed).
-VTO-1 is authorized locally only after ADR-020 is accepted (§16). No VTO
-production code exists yet.
+Status: VTO-0 COMPLETE; ADR-020 ACCEPTED (2026-09-28); VTO-1 IMPLEMENTED —
+LOCAL VALIDATION PENDING ([VTO-1](VIRTUAL-TRY-ON-VTO1.md)); local providers only. Current decisions are in §11a and ADR-020; earlier
+sections are kept as the original analysis where they differ.
 Builds on the [text-to-image slice](COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md) and
 [provider compatibility](COMFYUI-PROVIDER-COMPATIBILITY-SLICE.md). Evidence
 comes from static, read-only inspection of the operator's ComfyUI 0.37.0
@@ -58,7 +58,8 @@ Application ── VirtualTryOnPort.try_on(TryOnRequest) -> GenerationResult
   There is no free-form prompt. The approved workflow owns the edit
   instruction, which keeps untrusted text out of the graph. There are no
   hardware, model, mask or path fields.
-- **`ImageInput`** is bounded bytes (PNG or JPEG) plus a declared media type.
+- **`ImageInput`** is bounded **PNG-only** bytes (decided in §11a and
+  ADR-020 §3; no media-type field).
   It is validated structurally (signature, dimensions, chunk/segment walk,
   ≤ 16 MiB, ≤ 2048² pixels) without decoding pixels, following the pattern
   in `png.py`. Its bytes never appear in a `repr` or in logs.
@@ -143,8 +144,8 @@ This is the first capability that processes images of identifiable people:
   Evidence is status and code only, as now.
 - **Metadata:** input EXIF and PNG text chunks (GPS, device) should be
   stripped structurally before transfer. Accepting PNG only makes this a
-  chunk filter. JPEG needs APPn segment removal. This is a maintainer
-  decision.
+  chunk filter. **Decided: PNG only, with structural stripping (§11a,
+  ADR-020 §3).**
 - **Third-party disclosure:** a remote or Cloud profile sends the person's
   photo to Comfy. The configuration must opt in explicitly (for example
   `allow_personal_images_remote = true`), and it fails closed otherwise.
@@ -154,6 +155,7 @@ This is the first capability that processes images of identifiable people:
   (retention, deletion limits, remote opt-in, metadata stripping,
   authorization scope). Per `CLAUDE.md`, this is a significant decision, and
   `security/SECURITY.md` must be checked for applicable clauses first.
+  **Done:** this is [ADR-020](../adrs/ADR-020.md), accepted 2026-09-28.
 
 ## 8. Feasibility gate
 
@@ -179,14 +181,11 @@ measured run.
 
 ## 10. Decisions required before VTO-1 (resolved; see §11a)
 
-1. **Model family:** Qwen-Image-Edit (Plus) or Flux Kontext. This fixes the
-   template, the files and the geometry.
-2. **Input formats:** PNG only (simplest metadata stripping) or PNG plus
-   JPEG.
-3. **Remote personal images:** allowed with an explicit opt-in, or local
-   only for now.
-4. **Qualification runtime:** local CUDA or Cloud (after credits).
-5. **ADR ownership and approval** for personal-image handling.
+1. **Model family:** decided, Qwen-Image-Edit-2509 (§11a).
+2. **Input formats:** decided, **PNG only** (§11a, ADR-020 §3).
+3. **Remote personal images:** decided, local only (§11a, ADR-020 §8).
+4. **Qualification runtime:** decided, local CUDA (§11a).
+5. **ADR:** decided, ADR-020 Accepted 2026-09-28 (platform maintainer).
 
 ## 11. Non-goals
 
@@ -206,7 +205,8 @@ image to the approved workflow.
 4. **Qualification runtime:** local CUDA ComfyUI for VTO-3. VTO-1 and VTO-2
    stay deterministic and GPU-free. The 1800 s ceiling is unchanged.
 5. **ADR owner:** the LegoAI platform maintainer, as Generative Media /
-   Security boundary owner. [ADR-020](../adrs/ADR-020.md) is Proposed.
+   Security boundary owner. [ADR-020](../adrs/ADR-020.md) is Accepted
+   (2026-09-28).
 
 ## 12. VTO-0 provider asset findings (read-only; nothing uploaded or mutated)
 
@@ -341,15 +341,16 @@ routes.
 
 ## 15. Planned result extension (VTO-1)
 
-`GenerationResult` and `ReconciliationResult` gain
-`input_disclosure: EffectExtent = NONE` (ADR-020 §4). Text-to-image leaves it
+`GenerationResult` gains `input_disclosure: EffectExtent = NONE`
+(ADR-020 §4). As implemented in VTO-1, `ReconciliationResult` does not carry
+it, because reconciliation never uploads. Text-to-image leaves it
 `NONE`. Reconciliation always reports `NONE`, because it never uploads.
 
 ## 16. VTO-1 authorization gate
 
 | Prerequisite | State |
 |---|---|
-| Personal-image ADR ready/accepted per repo governance | READY (ADR-020 Proposed; **needs maintainer acceptance**) |
+| Personal-image ADR ready/accepted per repo governance | DONE (ADR-020 Accepted 2026-09-28) |
 | PNG-only decision recorded | DONE (§11a) |
 | Local legacy upload semantics verified | DONE (§12) |
 | Disclosure/effect distinction settled | DONE (ADR-020 §4) |
@@ -357,9 +358,8 @@ routes.
 | Metadata stripping policy settled | DONE (ADR-020 §3) |
 | Local-only remote policy settled | DONE (ADR-020 §8) |
 
-**Decision: VTO-1 is BLOCKED only on ADR-020 acceptance.** When the
-maintainer accepts ADR-020, VTO-1 is **READY**, locally only. Cloud is not
-required.
+**Decision: VTO-1 is READY — LOCAL PROVIDERS ONLY.** Cloud is not required
+and remains unsupported for personal-image input.
 
 Next slice after acceptance, exactly: **VTO-1 — Bounded PNG Image Inputs +
 Metadata Stripping + Local ComfyUI Upload.** It covers:

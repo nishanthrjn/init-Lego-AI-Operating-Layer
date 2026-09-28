@@ -22,7 +22,7 @@ from legoai.kernel.errors import ErrorCategory
 
 from ..http import Response, https_origin
 from ..png import MAX_IMAGE_BYTES
-from ..values import ProviderJobRef, ReconciliationStatus
+from ..values import ImageInput, ProviderJobRef, ReconciliationStatus, UploadedImageRef
 from ..workflow import MAX_WORKFLOW_BYTES, ApprovedWorkflow, json_object
 from .base import (
     Budget,
@@ -45,6 +45,10 @@ CAPABILITIES = Capabilities(
     idempotent_submission=True,
     durable_job_lookup=True,
     job_scoped_cancel=True,
+    # v2 documents asset upload, but retention/deletion are not established
+    # (ADR-020); this driver deliberately does not transfer personal inputs.
+    input_upload=False,
+    input_byte_deletion=False,
 )
 # Well-formed id that no job has; used only for read-only family detection.
 PROBE_JOB_ID = "00000000-0000-4000-8000-000000000000"
@@ -261,6 +265,9 @@ class V2Driver:
         if response.status not in (302, 303, 307) or response.location is None:
             raise provider_error(response, submit=False)
         return await self._signed(budget, response.location)
+
+    async def upload(self, budget: Budget, image: ImageInput) -> UploadedImageRef:
+        raise ProviderError(ErrorCategory.VERSION_MISMATCH, "capability_missing")
 
     async def _signed(self, budget: Budget, location: str) -> bytes:
         """One redirect hop to an allowlisted storage origin, without credentials."""
