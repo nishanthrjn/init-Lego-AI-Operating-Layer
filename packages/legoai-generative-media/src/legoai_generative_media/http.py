@@ -19,6 +19,11 @@ class NotSent(OSError):
     """Failure established before any request byte left this process."""
 
 
+# Connect is bounded by at most half the exchange timeout, so a failed connect
+# is classified here (NotSent) before any enclosing request deadline of the
+# same length fires and can only report the outcome as unknown.
+
+
 @dataclass(frozen=True, slots=True)
 class Endpoint:
     value: str = "http://127.0.0.1:8188"
@@ -209,7 +214,7 @@ class LocalHTTP:
                         asyncio.open_connection(
                             parsed.hostname, parsed.port, limit=65536
                         ),
-                        min(3, self.timeout),
+                        min(3, self.timeout / 2),
                     )
                 except OSError as error:  # Includes connect timeouts.
                     raise NotSent("connection not established") from error
@@ -275,7 +280,7 @@ class RemoteHTTPS:
                         asyncio.open_connection(
                             host, port, ssl=self._tls, server_hostname=host, limit=65536
                         ),
-                        min(5, self.timeout),
+                        min(5, self.timeout / 2),
                     )
                 except OSError as error:  # Includes connect/TLS timeouts.
                     raise NotSent("connection not established") from error
