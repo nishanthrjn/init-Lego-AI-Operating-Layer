@@ -109,6 +109,15 @@ class ApprovedWorkflow:
             raise ValueError("request oversized")
         return output
 
+    @property
+    def required_nodes(self) -> frozenset[str]:
+        """Node classes a provider must offer to execute this workflow."""
+        return frozenset(v["class_type"] for v in template(self.checkpoint).values())
+
+    def graph(self, request: TextToImageRequest) -> dict[str, Any]:
+        """The bound API-format graph; drivers choose their own envelope."""
+        return json_object(self.bind(request))["prompt"]  # type: ignore[no-any-return]
+
     def attribute(self, graph: object) -> TextToImageRequest:
         """Recover the request whose binding reproduces graph exactly, or reject.
 

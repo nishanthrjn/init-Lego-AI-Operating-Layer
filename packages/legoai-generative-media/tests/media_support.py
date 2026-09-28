@@ -3,9 +3,10 @@ import hashlib
 import json
 import struct
 import zlib
+from pathlib import Path
 from typing import Any
 
-from legoai_generative_media.http import Response
+from legoai_generative_media.http import Headers, Response
 from legoai_generative_media.values import ApprovedWorkflowRef, TextToImageRequest
 from legoai_generative_media.workflow import ApprovedWorkflow, template
 
@@ -89,7 +90,13 @@ class FakeHTTP:
         return len([c for c in self.calls if c[0] == "POST"])
 
     async def request(
-        self, method: str, path: str, body: bytes = b"", *, limit: int
+        self,
+        method: str,
+        path: str,
+        body: bytes = b"",
+        *,
+        limit: int,
+        headers: Headers = (),
     ) -> Response:
         self.calls.append((method, path, body))
         if path.startswith(self.fail_at) and self.fail_at:
@@ -125,3 +132,135 @@ class FakeHTTP:
         else:
             raise AssertionError("unexpected route " + path)
         return Response(200, "application/json", json.dumps(data).encode())
+
+
+def write_workflow(directory: Path) -> tuple[Path, str]:
+    approved = workflow()
+    path = directory / "workflow.json"
+    path.write_bytes(approved.content)
+    return path, approved.reference.sha256
+
+
+def json_response(status: int, data: Any) -> Response:
+    return Response(status, "application/json", json.dumps(data).encode())
+
+
+def envelope(status: int, code: str) -> Response:
+    return json_response(status, {"error": {"code": code, "message": "provider text"}})
+
+
+V2_JOB = "7f3d2c1b-9a8e-4d6f-b012-3c4d5e6f7a8b"
+V2_ASSET = "11111111-2222-4333-8444-555555555555"
+SIGNED = "https://storage.googleapis.com/comfy-assets/x.png?X-Goog-Signature=abc"
+
+
+class FakeV2:
+    """Deterministic Comfy API v2 surface (docs.comfy.org/api-reference/v2)."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str, bytes, Headers]] = []
+        self.status = "succeeded"
+        self.submit: Response | None = None  # Override the 201 acknowledgement.
+        self.recorded: Any = graph()
+        self.format = "api"
+        self.image = png()
+        self.redirect: str | None = None
+        self.known = True
+        self.fail_at = ""
+        self.outputs: Any = None
+        self.time: FakeTime | None = None
+        self.ready_at = 0.0
+
+    def posts(self) -> int:
+        return len([c for c in self.calls if c[0] == "POST"])
+
+    def job(self) -> dict[str, Any]:
+        running = self.time is not None and self.time.now < self.ready_at
+        status = "running" if running else self.status
+        outputs = [
+            {
+                "node_id": "9",
+                "name": "images",
+                "type": "output",
+                "content_type": "image/png",
+                "size_bytes": len(self.image),
+                "id": V2_ASSET,
+                "url": SIGNED,
+                "url_expires_at": "2026-09-28T12:00:00Z",
+            }
+        ]
+        return {
+            "id": V2_JOB,
+            "status": status,
+            "outputs": (self.outputs if self.outputs is not None else outputs)
+            if status == "succeeded"
+            else [],
+            "error": None,
+        }
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        body: bytes = b"",
+        *,
+        limit: int,
+        headers: Headers = (),
+    ) -> Response:
+        self.calls.append((method, path, body, headers))
+        if self.fail_at and path.startswith(self.fail_at):
+            raise OSError("fixture failure")
+        if method == "POST" and path == "/api/v2/jobs":
+            if self.submit is not None:
+                return self.submit
+            self.recorded = json.loads(body)["workflow"]
+            return json_response(201, {**self.job(), "status": "queued", "outputs": []})
+        if method != "GET":
+            raise AssertionError("unexpected write " + path)
+        if path == f"/api/v2/jobs/{V2_JOB}" and self.known:
+            return json_response(200, self.job())
+        if path == f"/api/v2/jobs/{V2_JOB}/workflow" and self.known:
+            return json_response(
+                200, {"format": self.format, "workflow": self.recorded}
+            )
+        if path.startswith("/api/v2/jobs/"):
+            return envelope(404, "not_found")
+        if path == f"/api/v2/assets/{V2_ASSET}/content":
+            if self.redirect is not None:
+                return Response(302, "", b"", self.redirect)
+            return Response(200, "image/png", self.image)
+        return Response(404, "text/plain", b"404: Not Found")
+
+
+class FakeStorage:
+    """Signed-URL object store: no credentials expected."""
+
+    def __init__(self, image: bytes) -> None:
+        self.calls: list[tuple[str, str]] = []
+        self.image = image
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        body: bytes = b"",
+        *,
+        limit: int,
+        headers: Headers = (),
+    ) -> Response:
+        self.calls.append((method, path))
+        return Response(200, "application/octet-stream", self.image)
+
+
+class Transports:
+    """Test TransportFactory: records (origin, token) and routes by origin."""
+
+    def __init__(self, routes: dict[str, Any]) -> None:
+        self.routes = routes
+        self.opened: list[tuple[str, str | None]] = []
+
+    def __call__(self, origin: str, token: str | None) -> Any:
+        self.opened.append((origin, token))
+        if origin not in self.routes:
+            raise AssertionError("unexpected origin " + origin)
+        return self.routes[origin]

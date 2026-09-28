@@ -61,6 +61,15 @@ UNRESOLVED. Repeat it as often as you like; it is read-only.
 up to 1800 s. For example, `--timeout 900` covers the observed ~640 s CPU run.
 The value belongs to operator configuration, not to the request.
 
+5c. **Provider configuration.** Instead of the flags above, any admitted
+provider profile can be selected with `--config` (see
+`examples/generative-media-minimal/configs`). A read-only probe reports
+reachability, API family and capabilities without submitting anything:
+
+```powershell
+uv run --locked python examples/comfyui-text-to-image/probe_provider.py --config examples/generative-media-minimal/configs/comfy-local.toml
+```
+
 6. If another hardware profile is available, operator-restart ComfyUI with that
 profile and repeat the SAME application command with a new destination. One profile
 is sufficient for the first local qualification; cross-hardware equality is not claimed.

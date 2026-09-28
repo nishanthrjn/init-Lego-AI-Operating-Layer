@@ -100,7 +100,13 @@ def test_missing_history_is_not_found_not_none() -> None:
 def test_job_finishing_between_checks_is_found_on_recheck() -> None:
     class Racing(FakeHTTP):
         async def request(
-            self, method: str, path: str, body: bytes = b"", *, limit: int
+            self,
+            method: str,
+            path: str,
+            body: bytes = b"",
+            *,
+            limit: int,
+            headers: tuple[tuple[str, str], ...] = (),
         ) -> Response:
             first = not any(c[1].startswith("/history") for c in self.calls)
             response = await super().request(method, path, body, limit=limit)

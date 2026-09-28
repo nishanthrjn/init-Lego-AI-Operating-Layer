@@ -55,6 +55,15 @@ Its operator authority is illustrative single-process scope, not durable IAM or
 multi-tenant isolation. Constructors/settings are trusted; current lifecycle
 withdrawal remains the host's responsibility. No generic provider registry.
 
+Provider selection is configuration. `service.open_text_to_image(config)`
+returns a governed `TextToImagePort` + `JobReconciliationPort`. A closed
+driver registry chooses the legacy OSS API or Comfy API v2 (Comfy Cloud,
+deployments, `comfy-api-proxy`) by explicit `api_family` or by read-only
+discovery. Remote endpoints require HTTPS, an allowlisted origin and a bearer
+token referenced as `env:NAME`. See
+[provider compatibility](../../planning/COMFYUI-PROVIDER-COMPATIBILITY-SLICE.md)
+and `uv run --locked python .alidate_comfyui_provider_compatibility.py`.
+
 From the repository root:
 
 ```powershell

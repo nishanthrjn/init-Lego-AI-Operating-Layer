@@ -1,0 +1,21 @@
+# Local OSS ComfyUI (legacy API family), CPU or CUDA - the runtime decides.
+# No credentials. Loopback literal IP with explicit port only.
+
+[provider]
+type = "comfyui"
+endpoint = "http://127.0.0.1:8188"
+api_family = "auto"          # auto | legacy | v2 ; auto probes read-only
+deployment = "local"
+binding = "comfyui-local"
+
+[provider.auth]
+type = "none"
+
+[completion]
+max_wait_seconds = 900       # CPU runs observed ~640 s; hard maximum 1800
+
+[workflow]
+# Relative to this file. Reviewed and approved bytes, pinned by SHA-256.
+path = "../../../comfyui-proof/workflow.json"
+sha256 = "866cac365049f11c819f547d3a2e0bf4272f73b015f7664d958ef10223deb8a8"
+checkpoint = "v1-5-pruned-emaonly.safetensors"

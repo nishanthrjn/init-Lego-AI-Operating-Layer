@@ -157,7 +157,13 @@ def test_missing_checkpoint_before_submission() -> None:
 
     class MissingCheckpoint(FakeHTTP):
         async def request(
-            self, method: str, path: str, body: bytes = b"", *, limit: int
+            self,
+            method: str,
+            path: str,
+            body: bytes = b"",
+            *,
+            limit: int,
+            headers: tuple[tuple[str, str], ...] = (),
         ) -> Response:
             response = await super().request(method, path, body, limit=limit)
             if path.endswith("CheckpointLoaderSimple"):
