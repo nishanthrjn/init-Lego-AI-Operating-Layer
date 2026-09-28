@@ -1,0 +1,20 @@
+# Self-hosted ComfyUI speaking Comfy API v2 through comfy-api-proxy (beta).
+# The proxy listens on loopback; authentication is off by default.
+
+[provider]
+type = "comfyui"
+endpoint = "http://127.0.0.1:8189"
+api_family = "v2"
+deployment = "local"
+binding = "comfyui-local"
+
+[provider.auth]
+type = "none"
+
+[completion]
+max_wait_seconds = 900
+
+[workflow]
+path = "../../../comfyui-proof/workflow.json"
+sha256 = "866cac365049f11c819f547d3a2e0bf4272f73b015f7664d958ef10223deb8a8"
+checkpoint = "v1-5-pruned-emaonly.safetensors"

@@ -96,6 +96,32 @@ class GeneratedImage:
         return hashlib.sha256(self.content).hexdigest()
 
 
+# Closed, provider-neutral diagnostic codes; never raw provider payloads.
+REASONS = frozenset(
+    {
+        "authentication_failed",
+        "forbidden",
+        "insufficient_credits",
+        "invalid_workflow",
+        "missing_asset",
+        "rate_limited",
+        "queue_full",
+        "provider_unavailable",
+        "upstream_error",
+        "unsupported_api",
+        "capability_missing",
+        "output_unavailable",
+        "canceled",
+        "expired",
+    }
+)
+
+
+def reason_code(value: str | None) -> None:
+    if value is not None and value not in REASONS:
+        raise ValueError("unknown reason")
+
+
 class Outcome(Enum):
     SUCCESS = "success"
     FAILED = "failed"
@@ -116,6 +142,7 @@ class GenerationResult:
     image: GeneratedImage | None = field(default=None, repr=False)
     error: ErrorCategory | None = None
     cessation: Cessation = Cessation.NOT_REQUESTED
+    reason: str | None = None
 
     def __post_init__(self) -> None:
         if type(self.outcome) is not Outcome or type(self.effect) is not EffectExtent:
@@ -126,6 +153,7 @@ class GenerationResult:
             raise TypeError("invalid job")
         if self.error is not None and type(self.error) is not ErrorCategory:
             raise TypeError("invalid error")
+        reason_code(self.reason)
         if self.outcome is Outcome.SUCCESS:
             if type(self.image) is not GeneratedImage or self.error is not None:
                 raise ValueError("success requires image only")
@@ -158,6 +186,7 @@ class ReconciliationResult:
     status: ReconciliationStatus
     image: GeneratedImage | None = field(default=None, repr=False)
     error: ErrorCategory | None = None
+    reason: str | None = None
 
     def __post_init__(self) -> None:
         if type(self.job) is not ProviderJobRef:
@@ -166,6 +195,7 @@ class ReconciliationResult:
             raise TypeError("invalid status")
         if self.error is not None and type(self.error) is not ErrorCategory:
             raise TypeError("invalid error")
+        reason_code(self.reason)
         if self.image is not None:
             if type(self.image) is not GeneratedImage or self.image.job != self.job:
                 raise ValueError("image attribution mismatch")

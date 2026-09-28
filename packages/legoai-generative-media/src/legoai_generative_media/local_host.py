@@ -66,6 +66,7 @@ async def prepare_local(
     *,
     approved: ApprovedWorkflowRef,
     timeout: float = 300,
+    binding: str = "comfyui-local",
 ) -> LocalSession:
     """Call only from an explicit operator-authorized local invocation.
 
@@ -129,9 +130,7 @@ async def prepare_local(
     )
     active = activate(initialize(record, established_at=now), established_at=now)
     entry = catalog.publish(active, declaration, OFFER, established_at=now)
-    contribution = Contribution(
-        "comfyui-local", revision, entry, active, approved, adapter
-    )
+    contribution = Contribution(binding, revision, entry, active, approved, adapter)
     requirement = CapabilityRequirement(
         OFFER.capability, CapabilityVersionRange(OFFER.version)
     )

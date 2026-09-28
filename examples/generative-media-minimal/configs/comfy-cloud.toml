@@ -1,0 +1,28 @@
+# Comfy Cloud through Comfy API v2 (Cloud v1 is deprecated upstream).
+# The API key is NEVER written here: set the COMFY_API_KEY environment
+# variable in your shell. Generation on Cloud consumes credits.
+
+[provider]
+type = "comfyui"
+endpoint = "https://cloud.comfy.org"
+api_family = "v2"
+deployment = "remote"
+binding = "comfyui-cloud"
+# Operator authorization: the endpoint origin must be listed explicitly.
+allowed_origins = ["https://cloud.comfy.org"]
+# Output downloads redirect once to signed storage URLs; no credentials sent.
+download_origins = ["https://storage.googleapis.com"]
+
+[provider.auth]
+type = "bearer"
+secret_ref = "env:COMFY_API_KEY"
+
+[completion]
+max_wait_seconds = 900
+
+[workflow]
+path = "../../../comfyui-proof/workflow.json"
+sha256 = "866cac365049f11c819f547d3a2e0bf4272f73b015f7664d958ef10223deb8a8"
+# Must exist in the Cloud model library; v2 has no node/model preflight, so a
+# missing model is rejected at submission (422, no job created).
+checkpoint = "v1-5-pruned-emaonly.safetensors"
