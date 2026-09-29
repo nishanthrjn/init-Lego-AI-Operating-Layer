@@ -1006,7 +1006,7 @@ See [ADR-018](../../adrs/ADR-018.md) for placement and authorization decisions.
 
 The request contains a bounded question, explicit RepositoryPath targets and an
 ExecutionContext. Trusted composition supplies the workspace and model configuration;
-neither the request nor instructions grant permission. `_composition.AuthorizedRepositoryEvidence`
+neither the request nor instructions grant permission. `analyst.authorized.AuthorizedRepositoryEvidence`
 binds an explicit M2 Port to a workspace ConfigurationRef, an exact path allowlist,
 SecurityContext, AuthorizationPort and clock. It requires the external
 `read-for-model-analysis` action covering reads **and disclosure to the configured
@@ -1236,7 +1236,7 @@ up to eight constraints and ExecutionContext. `coding_definition()` returns
 invokes M7 once, validates JSON, and returns actual M4 RepositoryChangeSet data.
 It has no mutation, Git, check, sandbox, Reviewer, memory or Workflow Port.
 
-Trusted `coding._composition.AuthorizedCodingEvidence` wraps the existing M8.1
+Trusted `coding.authorized.AuthorizedCodingEvidence` wraps the existing M8.1
 AuthorizedRepositoryEvidence. This reuses its explicit M2 workspace, operator
 allowlist, grant/policy evaluator, clock and `read-for-model-analysis` action.
 The operator binds the workspace and configured Model destination and authorizes
@@ -1368,7 +1368,8 @@ reads (`model_allowed=False`), because a hand-forged context is refused earlier
 as `FOREIGN_CONTEXT` (covered in Core). The host pins one
 binding, so the engineering tests exercise NO_MATCH routing only; ambiguous
 routing stays covered by Core M7 tests. Specialization contracts and the
-`analyst/_composition`/`coding/_composition` modules are unchanged (CR-3 owns them).
+read-composition modules were unchanged here; CR-3 later made them public as
+`analyst/authorized` and `coding/authorized`.
 See [ADR-014](../../adrs/ADR-014.md).
 
 ## CR-2a — Python engineering-check sandbox image (locally qualified 2026-09-29)
@@ -1739,3 +1740,46 @@ the resource-profile limitation above.
 A separate re-check run without `--basetemp` hit the known Windows temp-root
 `PermissionError` after its tests had finished. That is an environment issue,
 not a test result.
+
+## CR-3 — authorized engineering effects (implemented; local validation pending)
+
+Two decorators add current authorization in front of the existing effect
+Ports, which are unchanged:
+
+- `repository.mutation_authorized.AuthorizedRepositoryMutation` implements
+  `RepositoryMutationPort` with action `apply-repository-changes`.
+- `checks.authorized.AuthorizedEngineeringChecks` implements
+  `EngineeringCheckPort` with action `run-engineering-check`. It works over
+  `LocalEngineeringChecks` or `SandboxedEngineeringChecks`.
+
+**Per-call behavior.** Before every call, each wrapper evaluates the operator's
+host-issued `SecurityContext` against the `AuthorizationPort` with a fresh
+timestamp. It never caches an allow. On denial it raises
+`authorization.EffectAuthorizationError` (`DENIED` or `UNAVAILABLE`), and the
+inner adapter is never called. Allowed calls reach the inner adapter exactly
+once, and its results and errors pass through unchanged, with no retry.
+
+**Composition checks.** Approval-bearing contexts are refused when the wrapper
+is constructed, as are contexts for another workspace, action or scope.
+
+**Shared helper.** The ADR-018 check is one private helper,
+`legoai_engineering._authority`. It is shared by the read composition and both
+wrappers.
+
+**Public read wiring.** The read composition is now public:
+- `analyst/_composition` became `analyst/authorized`;
+- `coding/_composition` became `coding/authorized`.
+
+The examples, including the new end-to-end `examples/governed_engineering.py`,
+import no private modules.
+
+See [docs/CONSUMING.md](docs/CONSUMING.md) for the application guide and the
+[ADR-018](../../adrs/ADR-018.md) addendum for the decision. The wrappers need
+the `analyst` extra (Core). Check results still do not record which inputs
+were checked, and no authorized Git or evidence wrapper exists.
+
+### CR-3 local validation required
+
+```powershell
+uv run python .\validate_consumer_readiness_cr3.py
+```

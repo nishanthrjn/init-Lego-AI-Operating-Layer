@@ -43,8 +43,14 @@ from legoai.runtime.api import (
 )
 from legoai.runtime.local import open_local_host
 
+from legoai_engineering.analyst.authorized import REPOSITORY_READ_ACTION
+from legoai_engineering.checks.authorized import ENGINEERING_CHECK_ACTION
+from legoai_engineering.repository.mutation_authorized import (
+    REPOSITORY_MUTATION_ACTION,
+)
+
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
-READ_ACTION = "read-for-model-analysis"
+READ_ACTION = REPOSITORY_READ_ACTION
 WORKSPACE = "workspace"
 _ACTIVE = (NOW, NOW + timedelta(hours=1))
 _EXPIRED = (NOW - timedelta(hours=2), NOW - timedelta(hours=1))
@@ -85,13 +91,16 @@ def create_governed_demo(
     route_count: int = 1,
     model_allowed: bool = True,
     read_allowed: bool = True,
+    write_allowed: bool = True,
+    check_allowed: bool = True,
 ) -> GovernedDemo:
     """Open one host for one demo run.
 
     `route_count` 1 routes the engineering profile; 0 configures a different
     profile so routing finds no match. The public host pins exactly one selected
     binding, so an ambiguous route cannot be configured through it. Denied
-    authority is modelled as a configured but expired operator grant.
+    authority is modelled as a configured but expired operator grant. Read,
+    write and check authority are separate grants on the same workspace.
     """
     if route_count not in (0, 1):
         raise ValueError("the public local host pins exactly one binding")
@@ -122,6 +131,18 @@ def create_governed_demo(
                 READ_ACTION,
                 WORKSPACE,
                 *(_ACTIVE if read_allowed else _EXPIRED),
+            ),
+            OperatorGrant(
+                GrantId("write"),
+                REPOSITORY_MUTATION_ACTION,
+                WORKSPACE,
+                *(_ACTIVE if write_allowed else _EXPIRED),
+            ),
+            OperatorGrant(
+                GrantId("check"),
+                ENGINEERING_CHECK_ACTION,
+                WORKSPACE,
+                *(_ACTIVE if check_allowed else _EXPIRED),
             ),
         ),
         (

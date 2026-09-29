@@ -66,7 +66,7 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/analyst/__init__.py",
         "legoai_engineering/analyst/values.py",
         "legoai_engineering/analyst/api.py",
-        "legoai_engineering/analyst/_composition.py",
+        "legoai_engineering/analyst/authorized.py",
         "legoai_engineering/reviewer/__init__.py",
         "legoai_engineering/reviewer/definition.py",
         "legoai_engineering/reviewer/values.py",
@@ -75,7 +75,11 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/coding/definition.py",
         "legoai_engineering/coding/values.py",
         "legoai_engineering/coding/api.py",
-        "legoai_engineering/coding/_composition.py",
+        "legoai_engineering/coding/authorized.py",
+        "legoai_engineering/authorization.py",
+        "legoai_engineering/_authority.py",
+        "legoai_engineering/repository/mutation_authorized.py",
+        "legoai_engineering/checks/authorized.py",
     }
     with zipfile.ZipFile(wheels[0]) as wheel:
         package_files = {name for name in wheel.namelist() if ".dist-info/" not in name}
@@ -123,6 +127,10 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "sandbox-images/python-checks/Dockerfile" in paths
         assert "sandbox-images/python-checks/requirements.txt" in paths
         assert "tests/test_checks.py" in paths
+        assert "examples/governed_engineering.py" in paths
+        assert "tests/test_authorized_effects.py" in paths
+        assert "tests/test_consumer_readiness.py" in paths
+        assert "docs/CONSUMING.md" in paths
         assert "tests/test_mutation.py" in paths
         assert "tests/test_git.py" in paths
         assert "tests/test_repository.py" in paths
@@ -315,4 +323,20 @@ else:
         "succeeded",
         "1 proposed change",
         "example.py update",
+    ]
+    # CR-3 consumer proof: public host plus authorized read, mutation and check
+    # wrappers, assembled by an independent script from installed wheels only.
+    governed_example = tmp_path / "governed_engineering.py"
+    governed_example.write_bytes(
+        (root / "examples" / "governed_engineering.py").read_bytes()
+    )
+    result = run(
+        [str(python), "-I", "-B", "-c", runner, str(tmp_path), str(governed_example)],
+        tmp_path,
+    )
+    assert result.stdout.splitlines() == [
+        "succeeded",
+        "applied greeting.py",
+        "GREETING = 'hello LegoAI'",
+        "ruff_check passed",
     ]

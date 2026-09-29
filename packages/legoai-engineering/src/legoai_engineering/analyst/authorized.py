@@ -1,11 +1,10 @@
 """Trusted read-for-analysis wiring; never selected by the model."""
 
 from collections.abc import Callable
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from legoai.governance.ports import (
-    AuthorizationDecision,
     AuthorizationOutcome,
     AuthorizationPort,
     SecurityContext,
@@ -13,6 +12,7 @@ from legoai.governance.ports import (
 from legoai.kernel.context import TenantContext
 from legoai.kernel.references import ConfigurationRef
 
+from legoai_engineering._authority import _bind, _evaluate
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,
@@ -22,6 +22,8 @@ from legoai_engineering.analyst.values import (
 from legoai_engineering.repository.errors import WorkspaceError, WorkspaceFailure
 from legoai_engineering.repository.ports import RepositoryWorkspacePort
 from legoai_engineering.repository.workspace import RepositoryPath
+
+REPOSITORY_READ_ACTION = "read-for-model-analysis"
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,35 +45,16 @@ class AuthorizedRepositoryEvidence:
     clock: Callable[[], datetime] = field(repr=False)
 
     def __post_init__(self) -> None:
-        if type(self.workspace_reference) is not ConfigurationRef:
-            raise TypeError("evidence reader requires workspace ConfigurationRef")
-        if type(self.security_context) is not SecurityContext:
-            raise TypeError("evidence reader requires SecurityContext")
+        _bind(self.workspace_reference, self.security_context, REPOSITORY_READ_ACTION)
         _paths(self.allowed_paths)
-        security = self.security_context
-        if (
-            security.operation.subject != self.workspace_reference
-            or security.action != "read-for-model-analysis"
-            or security.resource_scope != self.workspace_reference.instance
-            or security.approval is not None
-        ):
-            raise ValueError("unsupported repository read authorization scope")
 
     def _authorize(self, tenant: TenantContext) -> None:
         if tenant != self.security_context.tenant_context:
             raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
-        context = replace(self.security_context, established_at=self.clock())
-        decision = self.authorization.evaluate(context)
-        if type(decision) is not AuthorizationDecision:
-            raise TypeError("authorization must return AuthorizationDecision")
-        if (
-            decision.operation != context.operation
-            or decision.evaluated_at != context.established_at
-        ):
-            raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
-        if decision.outcome is AuthorizationOutcome.UNAVAILABLE:
+        outcome = _evaluate(self.security_context, self.authorization, self.clock)
+        if outcome is AuthorizationOutcome.UNAVAILABLE:
             raise EvidenceAcquisitionError(AcquisitionFailure.UNAVAILABLE)
-        if decision.outcome is not AuthorizationOutcome.ALLOWED:
+        if outcome is not AuthorizationOutcome.ALLOWED:
             raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
 
     async def acquire(

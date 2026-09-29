@@ -45,9 +45,9 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.mutation",
             "legoai_engineering.repository.workspace",
         },
-        "coding._composition": {
+        "coding.authorized": {
             "legoai.kernel.context",
-            "legoai_engineering.analyst._composition",
+            "legoai_engineering.analyst.authorized",
             "legoai_engineering.analyst.values",
             "legoai_engineering.coding.values",
             "legoai_engineering.repository.errors",
@@ -93,16 +93,43 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.workspace",
             "legoai_engineering.repository.errors",
         },
-        "analyst._composition": {
+        "analyst.authorized": {
             "collections.abc",
             "datetime",
             "legoai.governance.ports",
             "legoai.kernel.context",
             "legoai.kernel.references",
+            "legoai_engineering._authority",
             "legoai_engineering.analyst.values",
             "legoai_engineering.repository.errors",
             "legoai_engineering.repository.ports",
             "legoai_engineering.repository.workspace",
+        },
+        "authorization": {"enum"},
+        "_authority": {
+            "collections.abc",
+            "datetime",
+            "legoai.governance.ports",
+            "legoai.kernel.references",
+            "legoai_engineering.authorization",
+        },
+        "mutation_authorized": {
+            "collections.abc",
+            "datetime",
+            "legoai.governance.ports",
+            "legoai.kernel.references",
+            "legoai_engineering._authority",
+            "legoai_engineering.repository.mutation",
+            "legoai_engineering.repository.mutation_ports",
+        },
+        "checks.authorized": {
+            "collections.abc",
+            "datetime",
+            "legoai.governance.ports",
+            "legoai.kernel.references",
+            "legoai_engineering._authority",
+            "legoai_engineering.checks.ports",
+            "legoai_engineering.checks.values",
         },
         "errors": {"enum"},
         "workspace": {"enum", "legoai_engineering.repository.errors"},
@@ -354,7 +381,7 @@ def test_source_boundaries_and_inert_initializers() -> None:
     ],
 )
 def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
-    for module in ("analyst.api", "analyst.values", "analyst._composition"):
+    for module in ("analyst.api", "analyst.values", "analyst.authorized"):
         assert import_violations(source, module)
 
 
@@ -412,7 +439,7 @@ def test_coding_can_propose_but_cannot_apply_or_execute(source: str) -> None:
         "coding.api",
         "coding.values",
         "coding.definition",
-        "coding._composition",
+        "coding.authorized",
     ):
         assert import_violations(source, module)
 
@@ -665,7 +692,7 @@ def test_mutation_boundaries_and_public_surface() -> None:
     for name in ("mutation", "mutation_ports", "mutation_errors"):
         assert import_violations("import legoai_engineering.repository.local", name)
         assert import_violations("os.replace(a, b)", name)
-    for name in ("mutation_ports", "mutation_local"):
+    for name in ("mutation_ports", "mutation_local", "mutation_authorized"):
         tree = ast.parse((root / (name + ".py")).read_text(encoding="utf-8"))
         public = [
             item
@@ -682,7 +709,7 @@ def test_mutation_boundaries_and_public_surface() -> None:
 
 def test_check_surface_is_semantic_and_process_use_is_private() -> None:
     root = Path(__file__).resolve().parents[1] / "src" / "legoai_engineering"
-    for name in ("ports", "local", "sandboxed"):
+    for name in ("ports", "local", "sandboxed", "authorized"):
         tree = ast.parse((root / "checks" / (name + ".py")).read_text("utf-8"))
         public = [
             node
@@ -708,3 +735,100 @@ def test_check_surface_is_semantic_and_process_use_is_private() -> None:
     assert import_violations("subprocess.Popen(args, shell=True)", "checks._process")
     assert import_violations("subprocess.Popen(args)", "checks._process")
     assert import_violations("os.system('bad')", "checks._process")
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import subprocess",
+        "import os",
+        "import socket",
+        "import docker",
+        "import openai",
+        "import forgeai",
+        "from forgeai import app",
+        "import legoai.reference.governance",
+        "from legoai.runtime._composition.agent import GovernedAgentChat",
+        "from legoai.runtime.local import open_local_host",
+        "import legoai_engineering.sandbox.docker",
+        "import legoai_engineering.sandbox._process",
+        "import legoai_engineering.checks.local",
+        "import legoai_engineering.checks.sandboxed",
+        "import legoai_engineering.checks._process",
+        "import legoai_engineering.repository.local",
+        "import legoai_engineering.repository.mutation_local",
+        "import legoai_engineering.git.local",
+        "open('file')",
+        "path.write_text('x')",
+    ],
+)
+def test_authorized_wrappers_depend_only_on_ports(source: str) -> None:
+    # CR-3: wrappers add governance only; effects stay in replaceable adapters,
+    # and no Core internal, application, provider or process import is allowed.
+    for module in ("mutation_authorized", "checks.authorized", "_authority"):
+        assert import_violations(source, module)
+
+
+def test_authorized_wrappers_implement_existing_ports() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "legoai_engineering"
+    for path, method, argument, annotation in (
+        (
+            root / "repository" / "mutation_authorized.py",
+            "apply",
+            "changeset",
+            "RepositoryChangeSet",
+        ),
+        (root / "checks" / "authorized.py", "check", "request", "CheckRequest"),
+    ):
+        tree = ast.parse(path.read_text("utf-8"))
+        public = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+        ]
+        assert [node.name for node in public] == [method]
+        assert [arg.arg for arg in public[0].args.args] == ["self", argument]
+        assert ast.unparse(public[0].args.args[1].annotation or ast.Pass()) == (
+            annotation
+        )
+    helper = ast.parse((root / "_authority.py").read_text("utf-8"))
+    assert all(
+        node.name.startswith("_")
+        for node in helper.body
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef))
+    )
+
+
+def _private_imports(source: str) -> list[str]:
+    found = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+            names: list[str] = []
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules = [node.module]
+            names = [alias.name for alias in node.names]
+        else:
+            continue
+        for module in modules:
+            if module.startswith(("legoai.", "legoai_engineering")) and any(
+                part.startswith("_") for part in module.split(".")
+            ):
+                found.append(module)
+        if modules and modules[0].startswith(("legoai.", "legoai_engineering")):
+            found.extend(name for name in names if name.startswith("_"))
+    return found
+
+
+def test_governed_consumers_use_no_private_modules_or_names() -> None:
+    # CR-3: engineering examples and the consumer guide compose through public
+    # modules only; test-only fixtures are not consumer code.
+    package = Path(__file__).resolve().parents[1]
+    for path in sorted((package / "examples").glob("*.py")):
+        assert not _private_imports(path.read_text("utf-8")), path.name
+    guide = (package / "docs" / "CONSUMING.md").read_text("utf-8")
+    blocks = guide.split("```python")[1:]
+    assert blocks, "consumer guide must show public composition"
+    for block in blocks:
+        assert not _private_imports(block.split("```")[0]), block[:80]
+    assert "_composition" not in guide.replace("legoai.runtime._composition", "")

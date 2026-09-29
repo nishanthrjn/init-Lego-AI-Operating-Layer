@@ -24,14 +24,17 @@ sys.addaudithook(audit)
 with patch.object(os, 'getenv', denied), patch.object(type(os.environ), '__getitem__', denied), patch.object(threading.Thread, 'start', denied):
     import legoai_engineering.analyst.values
     import legoai_engineering.analyst.api
-    import legoai_engineering.analyst._composition
+    import legoai_engineering.analyst.authorized
     import legoai_engineering.reviewer.values
     import legoai_engineering.reviewer.definition
     import legoai_engineering.reviewer.api
     import legoai_engineering.coding.definition
     import legoai_engineering.coding.values
     import legoai_engineering.coding.api
-    import legoai_engineering.coding._composition
+    import legoai_engineering.coding.authorized
+    import legoai_engineering.authorization
+    import legoai_engineering.repository.mutation_authorized
+    import legoai_engineering.checks.authorized
 assert 'legoai_engineering.repository.local' not in sys.modules
 assert 'legoai.reference.model' not in sys.modules
 assert 'legoai_engineering.sandbox.docker' not in sys.modules

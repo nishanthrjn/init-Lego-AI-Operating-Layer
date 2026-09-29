@@ -8,9 +8,9 @@ from tempfile import TemporaryDirectory
 from governed_demo import StaticModel
 from repository_analyst import create_demo as create_analyst_demo
 
-from legoai_engineering.analyst._composition import AuthorizedRepositoryEvidence
-from legoai_engineering.coding._composition import AuthorizedCodingEvidence
+from legoai_engineering.analyst.authorized import AuthorizedRepositoryEvidence
 from legoai_engineering.coding.api import CodingAgent
+from legoai_engineering.coding.authorized import AuthorizedCodingEvidence
 from legoai_engineering.coding.values import CodingRequest, CodingTarget
 from legoai_engineering.repository.mutation import FileChangeKind
 from legoai_engineering.repository.workspace import RepositoryPath
