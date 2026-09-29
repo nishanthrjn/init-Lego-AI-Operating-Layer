@@ -564,7 +564,11 @@ observation-profile config (ADR-013); no new sandbox backend; no ForgeAI source.
 **FORGEAI-1 READY AFTER:** M8.3-closure, CR-1a, CR-1b, CR-2a, CR-2b, CR-3.
 All six are complete (2026-09-29): **FORGEAI-1 READY.**
 
-**ForgeAI-1 IMPLEMENTED — LOCAL VALIDATION PENDING (2026-09-29):** a single
-repository task worker lives in `examples/forgeai`. It is assembled from public LegoAI APIs only,
-and no LegoAI platform change or gap was needed. It is not qualified until
-`validate_forgeai_1.py` passes locally.
+**ForgeAI-1 COMPLETE — LOCALLY QUALIFIED (2026-09-29):**
+- A single repository task worker lives in `examples/forgeai`.
+- It is assembled from public LegoAI APIs only.
+- No LegoAI platform change or gap was needed.
+- All 20 phases of `validate_forgeai_1.py` passed. They used the offline
+  replay model, real sandboxed checks and a clean install; see
+  `examples/forgeai/README.md`, "Qualification evidence".
+- Live-model quality is not qualified.
