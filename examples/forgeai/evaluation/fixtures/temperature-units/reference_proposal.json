@@ -1,0 +1,21 @@
+{
+  "summary": "Support Kelvin and case-insensitive units; reject unknown units.",
+  "changes": [
+    {
+      "path": "src/units/temperature.py",
+      "operation": "update",
+      "content": "\"\"\"Temperature conversion to degrees Celsius.\"\"\"\n\n\ndef to_celsius(value: float, unit: str) -> float:\n    \"\"\"Convert ``value`` given in ``unit`` (\"C\", \"F\" or \"K\") to degrees Celsius.\n\n    Unit letters are case-insensitive; any other unit raises ValueError.\n    \"\"\"\n    normalized = unit.upper()\n    if normalized == \"C\":\n        return value\n    if normalized == \"F\":\n        return (value - 32) * 5 / 9\n    if normalized == \"K\":\n        return value - 273.15\n    raise ValueError(f\"unsupported temperature unit: {unit!r}\")\n",
+      "reason": "Add the missing branches."
+    },
+    {
+      "path": "tests/test_temperature.py",
+      "operation": "update",
+      "content": "import pytest\n\nfrom units.temperature import to_celsius\n\n\ndef test_celsius_is_unchanged() -> None:\n    assert to_celsius(100, \"C\") == 100\n\n\ndef test_fahrenheit() -> None:\n    assert to_celsius(212, \"F\") == pytest.approx(100.0)\n\n\ndef test_kelvin() -> None:\n    assert to_celsius(273.15, \"K\") == pytest.approx(0.0)\n\n\ndef test_lowercase_units() -> None:\n    assert to_celsius(32, \"f\") == pytest.approx(0.0)\n\n\ndef test_unknown_unit_is_rejected() -> None:\n    with pytest.raises(ValueError):\n        to_celsius(1, \"X\")\n",
+      "reason": "Cover every unit branch."
+    }
+  ],
+  "risks": [],
+  "unknowns": [
+    "The proposal was not executed by the model."
+  ]
+}

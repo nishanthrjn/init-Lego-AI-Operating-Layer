@@ -1,0 +1,17 @@
+{
+  "category": "boundary condition / off-by-one correction",
+  "objective": "Fix the off-by-one errors in pager.pages: page numbers are 1-based, and page_count must round up when the last page is partial. Update the tests to cover the first page, the last partial page and page_count rounding.",
+  "targets": [
+    {
+      "path": "src/pager/pages.py",
+      "operation": "update"
+    },
+    {
+      "path": "tests/test_pages.py",
+      "operation": "update"
+    }
+  ],
+  "constraints": [
+    "Keep both function signatures unchanged."
+  ]
+}

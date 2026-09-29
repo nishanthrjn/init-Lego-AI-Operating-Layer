@@ -1,0 +1,21 @@
+{
+  "summary": "Add textkit.slug.slugify and its tests.",
+  "changes": [
+    {
+      "path": "src/textkit/slug.py",
+      "operation": "create",
+      "content": "\"\"\"URL slugs.\"\"\"\n\nimport re\n\n\ndef slugify(text: str) -> str:\n    \"\"\"Return a lowercase, hyphen-separated slug of ``text``.\"\"\"\n    return re.sub(r\"[^a-z0-9]+\", \"-\", text.lower()).strip(\"-\")\n",
+      "reason": "New slug helper."
+    },
+    {
+      "path": "tests/test_slug.py",
+      "operation": "create",
+      "content": "from textkit.slug import slugify\n\n\ndef test_words_are_joined_with_hyphens() -> None:\n    assert slugify(\"Hello World\") == \"hello-world\"\n\n\ndef test_runs_of_separators_collapse() -> None:\n    assert slugify(\"a  --  b\") == \"a-b\"\n\n\ndef test_leading_and_trailing_separators_are_stripped() -> None:\n    assert slugify(\"  Hi!  \") == \"hi\"\n",
+      "reason": "Cover the slug rules."
+    }
+  ],
+  "risks": [],
+  "unknowns": [
+    "The proposal was not executed by the model."
+  ]
+}
