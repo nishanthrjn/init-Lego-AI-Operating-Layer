@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from legoai.kernel.context import TenantContext
 
-from legoai_engineering.analyst._composition import AuthorizedRepositoryEvidence
+from legoai_engineering.analyst.authorized import AuthorizedRepositoryEvidence
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,

@@ -8,8 +8,8 @@ from tempfile import TemporaryDirectory
 
 from governed_demo import NOW, READ_ACTION, WORKSPACE, StaticModel, create_governed_demo
 
-from legoai_engineering.analyst._composition import AuthorizedRepositoryEvidence
 from legoai_engineering.analyst.api import RepositoryAnalyst
+from legoai_engineering.analyst.authorized import AuthorizedRepositoryEvidence
 from legoai_engineering.analyst.values import RepositoryAnalysisRequest
 from legoai_engineering.repository.local import (
     LocalRepositoryWorkspace,

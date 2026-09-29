@@ -16,7 +16,7 @@ from legoai.kernel.effects import EffectExtent
 
 from legoai_engineering.analyst.api import repository_analyst_definition
 from legoai_engineering.analyst.values import AcquisitionFailure
-from legoai_engineering.coding._composition import AuthorizedCodingEvidence
+from legoai_engineering.coding.authorized import AuthorizedCodingEvidence
 from legoai_engineering.coding.definition import coding_definition
 from legoai_engineering.coding.values import (
     CodingEvidence,

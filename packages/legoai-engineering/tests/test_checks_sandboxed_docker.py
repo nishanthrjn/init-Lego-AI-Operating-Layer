@@ -9,12 +9,22 @@ import shutil
 import sys
 import time
 from collections.abc import Iterator
+from dataclasses import replace
 from pathlib import Path
 from threading import Event, Timer
 
 import pytest
+from governed_demo import NOW, WORKSPACE, create_governed_demo
 from python_checks_project import project_files
 
+from legoai_engineering.authorization import (
+    EffectAuthorizationError,
+    EffectAuthorizationFailure,
+)
+from legoai_engineering.checks.authorized import (
+    ENGINEERING_CHECK_ACTION,
+    AuthorizedEngineeringChecks,
+)
 from legoai_engineering.checks.errors import CheckError, CheckFailure
 from legoai_engineering.checks.local import LocalCheckTools, LocalEngineeringChecks
 from legoai_engineering.checks.ports import EngineeringCheckPort
@@ -40,7 +50,12 @@ from legoai_engineering.sandbox.docker import (
     SandboxImage,
     _preflight,
 )
-from legoai_engineering.sandbox.values import SandboxPolicy
+from legoai_engineering.sandbox.ports import CancellationSignal
+from legoai_engineering.sandbox.values import (
+    SandboxPolicy,
+    SandboxRequest,
+    SandboxResult,
+)
 
 pytestmark = pytest.mark.skipif(
     os.name != "nt", reason="Windows Desktop reference scope"
@@ -258,3 +273,57 @@ def test_same_consumer_with_host_and_sandboxed_adapters(
     expected = [CheckOutcome.PASSED] * 4
     assert outcomes(host, requests) == expected
     assert outcomes(sandboxed(docker, root), requests) == expected
+
+
+class CountingDockerSandbox:
+    def __init__(self, inner: DockerSandbox) -> None:
+        self.inner = inner
+        self.calls = 0
+
+    def execute(
+        self, request: SandboxRequest, cancellation: CancellationSignal | None = None
+    ) -> SandboxResult:
+        self.calls += 1
+        return self.inner.execute(request, cancellation)
+
+
+@pytest.mark.parametrize("allowed", [True, False], ids=["allowed", "denied"])
+def test_authorized_sandboxed_check(
+    docker: Path, tmp_path: Path, allowed: bool
+) -> None:
+    # CR-3: current authority is evaluated before the real sandbox; a denial
+    # starts no container (the fixture also checks no resources remain).
+    root = project(tmp_path)
+    sandbox = CountingDockerSandbox(
+        DockerSandbox(
+            DockerSandboxConfig(docker, SandboxImage.PYTHON_CHECKS),
+            SandboxPolicy(timeout_seconds=180, max_output_bytes=1_048_576),
+        )
+    )
+    inner = SandboxedEngineeringChecks(
+        LocalRepositoryWorkspace(
+            LocalWorkspaceRoot(root),
+            WorkspacePolicy(262_144, 65_536, 4096, 32, (".git", ".venv")),
+        ),
+        sandbox,
+        INPUTS,
+        CheckPolicy(timeout_seconds=120),
+    )
+    demo = create_governed_demo("{}", check_allowed=allowed)
+    reference = replace(demo.configuration, instance=WORKSPACE)
+    checks = AuthorizedEngineeringChecks(
+        reference,
+        inner,
+        demo.host.security_context(reference, ENGINEERING_CHECK_ACTION, WORKSPACE),
+        demo.host.authorization,
+        lambda: NOW,
+    )
+    if allowed:
+        result = checks.check(request(CheckKind.PYTEST, "tests"))
+        assert result.outcome is CheckOutcome.PASSED
+        assert sandbox.calls == 1
+    else:
+        with pytest.raises(EffectAuthorizationError) as caught:
+            checks.check(request(CheckKind.PYTEST, "tests"))
+        assert caught.value.reason is EffectAuthorizationFailure.DENIED
+        assert sandbox.calls == 0

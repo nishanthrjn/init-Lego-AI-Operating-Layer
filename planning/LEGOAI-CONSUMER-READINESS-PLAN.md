@@ -207,7 +207,15 @@ with all six symlink boundary tests passing; see the
 - A sandboxed pass is contained, not proven correct.
 - Input identity is deferred to CR-3 or ForgeAI-1.
 
-ForgeAI-1 remains blocked by CR-3. Where the ADR differs
+**CR-3 IMPLEMENTED — LOCAL VALIDATION PENDING (2026-09-29):**
+- `AuthorizedRepositoryMutation` and `AuthorizedEngineeringChecks` decorate the
+  unchanged Ports with per-effect current authorization.
+- One private helper is shared with the read composition.
+- The read composition is public (`analyst.authorized`, `coding.authorized`).
+- ADR-018 has an addendum, and `docs/CONSUMING.md` is written.
+- It is not complete until `validate_consumer_readiness_cr3.py` passes locally.
+
+ForgeAI-1 remains blocked by CR-3 local validation. Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
@@ -466,7 +474,7 @@ check found no need for a generic app builder.
 | CR-1c | Generative media | Migrate `local_host.prepare_local` to the public host | No |
 | CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Done 2026-09-29** (Docker-qualified) |
 | CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Done 2026-09-29** (Docker-qualified) |
-| CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Yes** |
+| CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Implemented 2026-09-29**; local validation pending |
 | CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | No (recommended with ForgeAI-1) |
 
 ## 15. Acceptance criteria per slice

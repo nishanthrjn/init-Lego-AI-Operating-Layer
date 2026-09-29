@@ -13,7 +13,7 @@ from legoai.intelligence.model.ports import ModelResponseUncertainError
 from legoai.kernel.effects import EffectExtent
 from repository_analyst import create_demo
 
-from legoai_engineering.analyst._composition import AuthorizedRepositoryEvidence
+from legoai_engineering.analyst.authorized import AuthorizedRepositoryEvidence
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     RepositoryAnalysisStatus,
