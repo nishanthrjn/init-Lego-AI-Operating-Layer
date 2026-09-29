@@ -81,7 +81,8 @@ validated. It maps logical Chat profiles to immutable configured model
 bindings without provider I/O or authorization; actual calls retain governed
 execution. [M7 Agent foundation](docs/agent.md) adds a single governed Chat step
 with bounded accepted output; implementation and local qualification are complete.
-M8 specialized engineering Agents remain unstarted.
+M8.1 Analyst, M8.2 Reviewer and M8.3 Coding Agent are locally qualified for their
+documented scopes; M8.4 remains unstarted.
 
 ## Quickstart: the DocuMind CLI
 

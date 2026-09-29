@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+import legoai_engineering.sandbox.docker as docker_module
 from legoai_engineering.repository.errors import WorkspaceBoundaryError
 from legoai_engineering.repository.values import RepositoryText
 from legoai_engineering.repository.workspace import RepositoryPath
@@ -16,6 +17,7 @@ from legoai_engineering.sandbox._process import _check, _Cli
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
     DockerSandboxConfig,
+    SandboxImage,
     _artifacts,
     _cleanup,
     _container,
@@ -232,3 +234,72 @@ def test_lost_creation_acknowledgment_remains_uncertain(tmp_path: Path) -> None:
         )
     assert caught.value.reason is SandboxFailure.CLEANUP
     assert isinstance(caught.value.__context__, SandboxError)
+
+
+STDLIB = (
+    "python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
+)
+
+
+def test_closed_image_set_and_stdlib_default(tmp_path: Path) -> None:
+    assert [image.value for image in SandboxImage] == ["python-stdlib", "python-checks"]
+    config = DockerSandboxConfig(tmp_path / "docker.exe")
+    assert config.profile is SandboxImage.PYTHON_STDLIB
+    assert config.image == STDLIB
+
+
+def test_unqualified_checks_image_fails_closed_before_docker(tmp_path: Path) -> None:
+    with patch.object(_Cli, "_run", side_effect=AssertionError("Docker invoked")):
+        with pytest.raises(ValueError):
+            DockerSandboxConfig(tmp_path / "docker.exe", SandboxImage.PYTHON_CHECKS)
+
+
+def test_callers_cannot_supply_image_strings(tmp_path: Path) -> None:
+    executable = tmp_path / "docker.exe"
+    with pytest.raises(TypeError):
+        DockerSandboxConfig(executable, STDLIB)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        DockerSandboxConfig(executable, image=STDLIB)  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "python:3.14-slim",
+        "legoai-python-checks:candidate",
+        "sha256:" + "A" * 64,
+        "sha256:" + "0" * 63,
+        "python@sha256:" + "g" * 64,
+        "other@sha256:" + "0" * 64,
+    ],
+)
+def test_recorded_identity_must_be_immutable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reference: str
+) -> None:
+    monkeypatch.setattr(docker_module, "_approved_image", lambda image: reference)
+    with pytest.raises(ValueError):
+        DockerSandboxConfig(tmp_path / "docker.exe", SandboxImage.PYTHON_CHECKS)
+
+
+def test_qualified_checks_identity_is_exact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    candidate = "sha256:" + "a" * 64
+    monkeypatch.setattr(docker_module, "_approved_image", lambda image: candidate)
+    config = DockerSandboxConfig(tmp_path / "docker.exe", SandboxImage.PYTHON_CHECKS)
+    assert config.image == candidate
+
+
+def test_images_share_one_fixed_runtime_profile() -> None:
+    stdlib = _container(STDLIB, "generated", "generated-v", False, "fixed")
+    checks = _container(
+        "sha256:" + "b" * 64, "generated", "generated-v", False, "fixed"
+    )
+    differing = [
+        index
+        for index, (left, right) in enumerate(zip(stdlib, checks, strict=True))
+        if left != right
+    ]
+    assert len(differing) == 1 and stdlib[differing[0]] == STDLIB
+    for required in ("--network=none", "--memory=128m", "--pids-limit=32", "--cpus=1"):
+        assert required in checks

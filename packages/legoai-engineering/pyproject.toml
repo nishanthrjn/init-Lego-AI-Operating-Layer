@@ -29,7 +29,7 @@ dev = [
 packages = ["src/legoai_engineering"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/examples", "/README.md", "/pyproject.toml"]
+include = ["/src", "/tests", "/examples", "/sandbox-images", "/README.md", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
 pythonpath = ["examples"]

@@ -114,6 +114,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "tests/test_analyst_architecture.py" in paths
         assert "tests/test_sandbox.py" in paths
         assert "tests/test_sandbox_docker.py" in paths
+        assert "tests/test_sandbox_checks_docker.py" in paths
+        assert "sandbox-images/python-checks/Dockerfile" in paths
+        assert "sandbox-images/python-checks/requirements.txt" in paths
         assert "tests/test_checks.py" in paths
         assert "tests/test_mutation.py" in paths
         assert "tests/test_git.py" in paths

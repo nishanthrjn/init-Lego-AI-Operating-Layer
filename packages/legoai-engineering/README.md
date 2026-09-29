@@ -1370,3 +1370,86 @@ binding, so the engineering tests exercise NO_MATCH routing only; ambiguous
 routing stays covered by Core M7 tests. Specialization contracts and the
 `analyst/_composition`/`coding/_composition` modules are unchanged (CR-3 owns them).
 See [ADR-014](../../adrs/ADR-014.md).
+
+## CR-2a — Python engineering-check sandbox image (Docker qualification pending)
+
+**IMPLEMENTED — DOCKER QUALIFICATION PENDING.** This extends M6's closed image set;
+it does not add a second sandbox or change any runtime control. The
+`EngineeringCheckPort` adapter that uses this image belongs to CR-2b.
+
+**Closed image set.** `DockerSandboxConfig(executable, profile=SandboxImage.…)`
+replaces the former free-form `image` string, and callers can no longer supply an
+image reference.
+- `SandboxImage.PYTHON_STDLIB` is the unchanged M6 image (`python@sha256:82bc…`),
+  and it remains the default.
+- `SandboxImage.PYTHON_CHECKS` is **fail-closed**: configuring it raises
+  `ValueError` before any Docker call, until the exact qualified image ID is
+  recorded in `sandbox.docker._approved_image`.
+- Only immutable references are accepted: `python@sha256:<64 hex>` or a local
+  image ID `sha256:<64 hex>`. Mutable tags are rejected.
+
+Both images run under the identical fixed M6 profile:
+- `network=none`, `--pull=never`, UID/GID 65534, all capabilities dropped,
+  no-new-privileges, read-only root;
+- 1 CPU, 128 MiB memory with swap disabled, 32 PIDs;
+- 32 MiB `noexec` `/work`, 8 MiB `/tmp`;
+- 1–300 s lifetime and bounded output.
+
+No image selects or alters any of these.
+
+**Image contents.** `sandbox-images/python-checks/Dockerfile` builds from the
+pinned M6 base (`python:3.14.7-slim-bookworm`, amd64, by digest). It installs,
+with `--require-hashes --no-deps --only-binary=:all:`, only the dependencies
+exported from this package's `uv.lock` into `requirements.txt`:
+- pytest 9.1.1, Ruff 0.16.8, mypy 2.3.1;
+- pluggy 1.6.0, iniconfig 2.3.0, packaging 26.3, pygments 2.21.0,
+  mypy-extensions 1.1.0, typing-extensions 4.16.0, pathspec 1.1.1, librt 0.15.0,
+  ast-serialize 0.11.2.
+
+The image contains no application source, secrets, credentials, Git or provider
+SDKs. The build needs network (an operator step); sandbox runtime never
+downloads or installs anything.
+
+**Digest qualification model.**
+1. Build.
+2. Capture the local image ID.
+3. Qualify that ID.
+4. Review and record it.
+5. The profile is enabled.
+
+During qualification the candidate ID reaches the tests only through
+`LEGOAI_SANDBOX_CHECKS_IMAGE`, bound inside the test process. Production
+configuration stays fail-closed. A rebuild yields a new ID and needs
+requalification; bit-for-bit reproducibility is not claimed.
+
+**Memory measurement.** A trusted qualification harness runs each tool as a
+child process with M5's exact options, then reads `memory.peak`, `memory.max` and
+`memory.events` (`oom_kill`) from the container's own cgroup v2. The peak is
+whole-container: harness, tool, and tmpfs input pages. That is exactly what the
+128 MiB limit applies to. The fixture is a small typed package (7 modules and
+3 test files, about 7.9 KB) within the unchanged input ceilings of 64 files,
+256 KiB each and 1 MiB total. Results are recorded here once qualified.
+
+**Containment is not result integrity.** Sandboxed pytest runs
+repository-controlled and model-written code in the pytest process. That code can
+manipulate its own outcome, for example with `os._exit(0)`. A passing result
+means "the contained process produced this observed result", not "the code is
+correct or trustworthy". CR-2b must preserve this statement. Hostile Plugin
+isolation remains ADR-012.
+
+**Qualification (operator, from the repository root, Windows + Docker Desktop Linux):**
+
+```powershell
+uv run python .\validate_consumer_readiness_cr2a.py
+```
+
+Part A is deterministic (typing, Ruff, profile tests, architecture/packaging).
+Part B builds the image and qualifies it with real Docker:
+- versions and contents;
+- confinement;
+- pytest pass, fail, collection error and no-tests;
+- Ruff clean and finding;
+- format clean and finding;
+- mypy clean and finding, with memory rows;
+- timeout, output limit, PID limit, OOM and cleanup;
+- the existing stdlib M6 regression.
