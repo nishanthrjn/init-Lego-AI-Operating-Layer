@@ -195,17 +195,19 @@ with all six symlink boundary tests passing; see the
 - See the engineering README "CR-2a qualification evidence". The §6.3 items on the
   closed image set and the fixed resource profile are closed.
 
-**CR-2b IMPLEMENTED — LOCAL DOCKER VALIDATION PENDING (2026-09-29):**
+**CR-2b COMPLETE — LOCALLY DOCKER-QUALIFIED (2026-09-29):**
 - `SandboxedEngineeringChecks` realizes the unchanged `EngineeringCheckPort`
   over `RepositoryWorkspacePort` and `SandboxExecutionPort`.
 - Host and sandbox share one private command table.
 - `CheckInputPolicy` is bounded.
 - The adapter adds four sandbox-only `CheckFailure` members.
 - There is no host fallback.
-- It is not qualified until `validate_consumer_readiness_cr2b.py` passes locally.
-  See the engineering README "CR-2b".
+- All 20 phases of `validate_consumer_readiness_cr2b.py` passed against the
+  recorded CR-2a image. See the engineering README "CR-2b qualification evidence".
+- A sandboxed pass is contained, not proven correct.
+- Input identity is deferred to CR-3 or ForgeAI-1.
 
-ForgeAI-1 remains blocked by CR-2b local validation and CR-3. Where the ADR differs
+ForgeAI-1 remains blocked by CR-3. Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
@@ -463,7 +465,7 @@ check found no need for a generic app builder.
 | CR-1b | Core runtime | `legoai.runtime.api` + `legoai.runtime.local.open_local_host`; migrate engineering examples and DocuMind | **Yes** |
 | CR-1c | Generative media | Migrate `local_host.prepare_local` to the public host | No |
 | CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Done 2026-09-29** (Docker-qualified) |
-| CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Implemented 2026-09-29**; local Docker validation pending |
+| CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Done 2026-09-29** (Docker-qualified) |
 | CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Yes** |
 | CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | No (recommended with ForgeAI-1) |
 
