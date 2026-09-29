@@ -1,0 +1,18 @@
+{
+  "decision": "accept",
+  "summary": "reserve now rejects negative stock, non-positive requests and over-requests, and the tests cover each rejected input and the boundary.",
+  "findings": [
+    {
+      "category": "testing",
+      "severity": "info",
+      "message": "The parametrized test covers every rejected input class.",
+      "evidence_refs": [
+        "file-2",
+        "checks"
+      ],
+      "required_action": null
+    }
+  ],
+  "risks": [],
+  "unknowns": []
+}

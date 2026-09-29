@@ -1,33 +1,55 @@
 """RepositoryTaskWorker: one fixed, visible sequence per run; no retries.
 
-The worker depends only on public LegoAI Ports, the Coding Agent and values.
+The worker depends only on public LegoAI Ports, the two Agents and values.
 The composition root chooses every adapter. The model proposes once; changes
 are applied only through the authorized mutation Port and verified only
-through the authorized (sandboxed) check Port.
+through the authorized (sandboxed) check Port. Only a candidate that passed
+every deterministic gate is reviewed, once, by the independent reviewer; its
+opinion can withhold success but never authorizes, edits or reruns anything.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
+from legoai.execution.agent.values import AgentId
 from legoai.execution.values import ExecutionContext
-from legoai_engineering.analyst.values import AcquisitionFailure
+from legoai.runtime.api import HostError
+from legoai_engineering.analyst.api import RepositoryEvidencePort
+from legoai_engineering.analyst.values import (
+    AcquisitionFailure,
+    EvidenceAcquisitionError,
+)
 from legoai_engineering.authorization import EffectAuthorizationError
 from legoai_engineering.checks.errors import CheckError
 from legoai_engineering.checks.ports import EngineeringCheckPort
 from legoai_engineering.checks.values import CheckOutcome, CheckRequest
 from legoai_engineering.coding.api import CodingAgent
-from legoai_engineering.coding.values import CodingRequest, CodingStatus
+from legoai_engineering.coding.values import (
+    CodingProposal,
+    CodingRequest,
+    CodingStatus,
+)
 from legoai_engineering.git.errors import GitError
 from legoai_engineering.git.ports import GitRepositoryPort
 from legoai_engineering.git.values import GitRepositoryState
 from legoai_engineering.repository.errors import WorkspaceError
+from legoai_engineering.repository.mutation import digest_text
 from legoai_engineering.repository.mutation_errors import (
     MutationApplyError,
     MutationConflict,
 )
 from legoai_engineering.repository.mutation_ports import RepositoryMutationPort
+from legoai_engineering.reviewer.api import IndependentReviewer
+from legoai_engineering.reviewer.values import (
+    ReviewDecision,
+    ReviewRequest,
+    ReviewStatus,
+    SubmissionFailure,
+)
 
 from forgeai.domain import (
     CheckRecord,
+    ReviewInputFailure,
     TaskDisposition,
     TaskEvidence,
     TaskFailure,
@@ -35,6 +57,12 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.review import (
+    checks_material,
+    file_material,
+    material_ids,
+    render_proposal,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +76,10 @@ class RepositoryTaskWorker:
     mutation: RepositoryMutationPort = field(repr=False)
     checks: EngineeringCheckPort = field(repr=False)
     check_plan: tuple[CheckRequest, ...]
+    reviewer: IndependentReviewer = field(repr=False)
+    reader: RepositoryEvidencePort = field(repr=False)
+    review_criteria: tuple[str, ...]
+    review_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -69,6 +101,18 @@ class RepositoryTaskWorker:
             or any(type(item) is not CheckRequest for item in self.check_plan)
         ):
             raise ValueError("worker requires one to eight configured checks")
+        if type(self.reviewer) is not IndependentReviewer:
+            raise TypeError("worker requires IndependentReviewer")
+        if not callable(getattr(self.reader, "acquire", None)):
+            raise TypeError("worker requires a RepositoryEvidencePort")
+        if (
+            type(self.review_criteria) is not tuple
+            or not 1 <= len(self.review_criteria) <= 8
+            or any(type(item) is not str for item in self.review_criteria)
+        ):
+            raise ValueError("worker requires one to eight review criteria")
+        if not callable(self.review_context):
+            raise TypeError("worker requires a review context factory")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -232,7 +276,111 @@ class RepositoryTaskWorker:
             for record in records
         ):
             return self._stop(task, TaskFailure.CHECKS_FAILED, evidence)
-        # 9. Success: applied, every configured check passed, HEAD intact.
+        # 9. Independent review, only after every deterministic gate passed.
+        assert evidence.gates_passed
+        return await self._review(
+            task, context, coding.proposal, agent.definition.agent_id, evidence
+        )
+
+    async def _review(
+        self,
+        task: TaskRequest,
+        context: ExecutionContext,
+        proposal: CodingProposal,
+        producer: AgentId,
+        evidence: TaskEvidence,
+    ) -> TaskResult:
+        materials = material_ids(evidence.changed_paths)
+        evidence = replace(evidence, review_materials=materials)
+        # Final applied contents, through the same authorized read boundary.
+        try:
+            read = await self.reader.acquire(
+                tuple(path for _, path in materials), context.tenant_context
+            )
+        except EvidenceAcquisitionError as error:
+            reason = (
+                ReviewInputFailure.READ_DENIED
+                if error.reason is AcquisitionFailure.DENIED
+                else ReviewInputFailure.READ_UNAVAILABLE
+            )
+            return self._stop(
+                task,
+                TaskFailure.REVIEW_INPUT_FAILED,
+                replace(evidence, review_input_failure=reason),
+            )
+        texts = {file.path: file.text for file in read.files}
+        assert evidence.applied is not None
+        if any(
+            change.after is not None
+            and digest_text(texts.get(change.path.value, "")) != change.after
+            for change in evidence.applied.applied
+        ):
+            # The reviewed text must be exactly the applied text.
+            return self._stop(task, TaskFailure.UNEXPECTED_CHANGES, evidence)
+        try:
+            proposal_text = render_proposal(proposal, materials)
+            supporting = (
+                checks_material(evidence.checks),
+                *(
+                    file_material(material, path, texts[path.value])
+                    for material, path in materials
+                ),
+            )
+            # Validate the full request before any context is minted.
+            ReviewRequest(
+                producer,
+                task.objective,
+                self.review_criteria,
+                proposal_text,
+                supporting,
+                context,
+            )
+        except ValueError:
+            return self._stop(
+                task,
+                TaskFailure.REVIEW_INPUT_FAILED,
+                replace(
+                    evidence, review_input_failure=ReviewInputFailure.MATERIAL_BOUNDS
+                ),
+            )
+        # A fresh governed Chat execution; the Coding context is never reused.
+        try:
+            review_context = self.review_context(context)
+        except HostError:
+            return self._stop(task, TaskFailure.REVIEW_FAILED, evidence)
+        result = await self.reviewer.review(
+            ReviewRequest(
+                producer,
+                task.objective,
+                self.review_criteria,
+                proposal_text,
+                supporting,
+                review_context,
+            )
+        )
+        evidence = replace(evidence, review=result)
+        if result.status is ReviewStatus.INVALID_SUBMISSION:
+            budget = result.submission_failure is SubmissionFailure.CONTEXT_BUDGET
+            reason = (
+                ReviewInputFailure.CONTEXT_BUDGET
+                if budget
+                else ReviewInputFailure.MATERIAL_BOUNDS
+            )
+            return self._stop(
+                task,
+                TaskFailure.REVIEW_INPUT_FAILED,
+                replace(evidence, review_input_failure=reason),
+            )
+        if result.status is ReviewStatus.MODEL_FAILURE:
+            return self._stop(task, TaskFailure.REVIEW_FAILED, evidence)
+        if result.status is ReviewStatus.OUTPUT_INVALID:
+            return self._stop(task, TaskFailure.REVIEW_OUTPUT_INVALID, evidence)
+        decision = evidence.review_decision
+        if decision is ReviewDecision.CHANGES_REQUIRED:
+            return self._stop(task, TaskFailure.REVIEW_CHANGES_REQUIRED, evidence)
+        if decision is ReviewDecision.INSUFFICIENT_EVIDENCE:
+            return self._stop(task, TaskFailure.REVIEW_INSUFFICIENT_EVIDENCE, evidence)
+        # 10. Success: every deterministic gate passed and the review accepted.
         return TaskResult(task, TaskDisposition.SUCCEEDED, None, evidence)
 
 

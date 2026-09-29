@@ -25,6 +25,9 @@ from forgeai.domain import TaskRequest
 
 GIT_EXECUTABLE = shutil.which("git")
 PROPOSAL = (FIXTURE / "proposal.json").read_text(encoding="utf-8")
+REVIEW_ACCEPT = (FIXTURE / "review_accept.json").read_text(encoding="utf-8")
+REVIEW_CHANGES = (FIXTURE / "review_changes_required.json").read_text(encoding="utf-8")
+REVIEW_INSUFFICIENT = (FIXTURE / "review_insufficient.json").read_text(encoding="utf-8")
 
 
 def git_executable() -> Path:
@@ -48,6 +51,16 @@ def proposal(**changes: object) -> str:
     value = json.loads(PROPOSAL)
     value.update(changes)
     return json.dumps(value)
+
+
+def replay(
+    output: str | None = None, review: str | Exception | None = None
+) -> ReplayModel:
+    """Recorded outputs in call order: Coding Agent proposal, then review."""
+    return ReplayModel(
+        output if output is not None else proposal(),
+        review if review is not None else REVIEW_ACCEPT,
+    )
 
 
 def config(

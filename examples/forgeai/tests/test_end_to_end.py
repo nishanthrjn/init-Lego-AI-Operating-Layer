@@ -2,7 +2,7 @@
 
 Public host -> replay ModelPort contribution -> Coding Agent -> authorized
 mutation -> authorized SandboxedEngineeringChecks on the qualified image ->
-Git -> TaskResult. Windows + Docker Desktop reference scope; fails, never
+Git -> replay IndependentReviewer (ACCEPT) -> TaskResult. Windows + Docker Desktop reference scope; fails, never
 skips, when Docker is missing there.
 """
 
@@ -14,7 +14,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from forgeai_support import config, proposal, repository, task
+from forgeai_support import config, proposal, replay, repository, task
 from legoai_engineering.checks.errors import CheckFailure
 from legoai_engineering.checks.values import CheckKind, CheckOutcome
 from legoai_engineering.repository.mutation import (
@@ -22,6 +22,7 @@ from legoai_engineering.repository.mutation import (
     RepositoryMutationResult,
 )
 from legoai_engineering.repository.mutation_ports import RepositoryMutationPort
+from legoai_engineering.reviewer.values import ReviewDecision, ReviewStatus
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
     DockerSandboxConfig,
@@ -33,7 +34,6 @@ from legoai_engineering.sandbox.values import (
     SandboxResult,
 )
 
-from forgeai.cli import ReplayModel
 from forgeai.composition import ForgeAIConfig, prepare_run
 from forgeai.domain import TaskDisposition, TaskFailure, TaskResult
 from forgeai.guard import WorkspaceGuard
@@ -88,11 +88,11 @@ def run(
 
 def test_fixture_task_succeeds_in_the_real_sandbox(tmp_path: Path) -> None:
     root = repository(tmp_path)
-    model = ReplayModel(proposal())
+    model = replay()
     result, sandbox, mutation = run(config(root, model, docker=docker()))
     evidence = result.evidence
     assert result.disposition is TaskDisposition.SUCCEEDED, result
-    assert model.calls == 1 and mutation.calls == 1 and sandbox.calls == 3
+    assert model.calls == 2 and mutation.calls == 1 and sandbox.calls == 3
     assert [r.request.kind for r in evidence.checks] == [
         CheckKind.RUFF_CHECK,
         CheckKind.MYPY,
@@ -107,15 +107,20 @@ def test_fixture_task_succeeds_in_the_real_sandbox(tmp_path: Path) -> None:
     for change in evidence.proposal.changeset.changes:
         assert (root / change.path.value).read_text(encoding="utf-8") == change.text
     assert not list(root.rglob("__pycache__")), "checks must not run on the host"
+    review = evidence.review
+    assert review is not None and review.status is ReviewStatus.COMPLETED
+    assert evidence.review_decision is ReviewDecision.ACCEPT
 
 
 def test_sandbox_finding_fails_the_task(tmp_path: Path) -> None:
     root = repository(tmp_path)
     changes = proposal_with_wrong_test()
-    result, sandbox, _ = run(config(root, ReplayModel(changes), docker=docker()))
+    result, sandbox, _ = run(config(root, replay(changes), docker=docker()))
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.CHECKS_FAILED
     assert sandbox.calls == 3
+    # A real sandbox finding stops the run before the reviewer is called.
+    assert result.evidence.review is None
     outcomes = {
         r.request.kind: r.result.outcome for r in result.evidence.checks if r.result
     }
@@ -126,7 +131,7 @@ def test_sandbox_finding_fails_the_task(tmp_path: Path) -> None:
 def test_missing_docker_is_check_infrastructure_error(tmp_path: Path) -> None:
     root = repository(tmp_path)
     missing = tmp_path / "missing" / "docker.exe"
-    result, _, _ = run(config(root, ReplayModel(proposal()), docker=missing))
+    result, _, _ = run(config(root, replay(), docker=missing))
     assert result.failure is TaskFailure.CHECK_ERROR
     assert [r.error for r in result.evidence.checks] == [CheckFailure.UNAVAILABLE]
     assert result.evidence.applied is not None

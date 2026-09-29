@@ -1,10 +1,10 @@
-"""ForgeAI-1 command line: one task on one clean local repository.
+"""ForgeAI command line: one reviewed task on one clean local repository.
 
 Presentation and operator composition only. Task input is the objective and
 targets; everything else is operator configuration from flags. The `replay`
-binding is a deterministic offline ModelPort that returns one recorded model
-output; `ollama` uses LegoAI's built-in local Ollama provider. Switching them
-changes configuration only, never ForgeAI code.
+binding is a deterministic offline ModelPort that returns recorded model
+outputs in call order (Coding Agent, then reviewer); `ollama` uses LegoAI's
+built-in local Ollama provider. Switching them changes configuration only.
 """
 
 import argparse
@@ -44,17 +44,27 @@ _MAX_LISTED = 20
 
 
 class ReplayModel:
-    """Deterministic offline ModelPort: every chat returns the recorded output."""
+    """Deterministic offline ModelPort: call N returns recorded output N.
 
-    def __init__(self, output: str) -> None:
-        self.output = output
+    An Exception in the sequence is raised instead (a provider failure). A
+    call beyond the recorded outputs fails loudly; nothing is ever reused.
+    """
+
+    def __init__(self, *outputs: str | Exception) -> None:
+        if not outputs:
+            raise ValueError("replay requires at least one recorded output")
+        self.outputs = outputs
         self.calls = 0
 
     async def chat(self, request: ChatRequest) -> ChatResult:
+        index = self.calls
         self.calls += 1
-        return ChatResult(
-            self.output, ModelId("replay"), ProviderId("forgeai-replay"), None
-        )
+        if index >= len(self.outputs):
+            raise RuntimeError("replay model received an unrecorded call")
+        output = self.outputs[index]
+        if isinstance(output, Exception):
+            raise output
+        return ChatResult(output, ModelId("replay"), ProviderId("forgeai-replay"), None)
 
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResult:
         raise NotImplementedError("the replay model supports chat only")
@@ -116,6 +126,19 @@ def summarize(result: TaskResult) -> str:
         lines.append(f"final HEAD: {head}; working-tree changes: {len(paths)}")
     elif evidence.final_failure is not None:
         lines.append("final Git state: unavailable")
+    review = evidence.review
+    if review is not None and review.review is not None:
+        lines.append(f"review: {review.review.decision.value}")
+        lines.append(f"review summary: {review.review.summary[:200]}")
+        for finding in review.review.findings:
+            lines.append(
+                f"review finding ({finding.severity.value}, "
+                f"{finding.category.value}): {finding.message[:200]}"
+            )
+    elif review is not None:
+        lines.append(f"review: not completed ({review.status.value})")
+    elif evidence.review_input_failure is not None:
+        lines.append(f"review: not run ({evidence.review_input_failure.value})")
     return "\n".join(lines)
 
 
@@ -136,7 +159,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--target", action="append", required=True, type=_target)
     parser.add_argument("--constraint", action="append", default=[])
     parser.add_argument("--binding", choices=("replay", "ollama"), default="replay")
-    parser.add_argument("--replay", type=Path, help="recorded model output (replay)")
+    parser.add_argument(
+        "--replay",
+        type=Path,
+        action="append",
+        default=[],
+        help="recorded model outputs in call order: coding, then review",
+    )
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--ollama-model", default="qwen2.5-coder:7b")
     parser.add_argument("--ollama-timeout", type=float, default=300.0)
@@ -146,9 +175,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.git is None or args.docker is None:
         parser.error("Git and Docker executables are required")
     if args.binding == "replay":
-        if args.replay is None:
+        if not args.replay:
             parser.error("--replay is required for the replay binding")
-        binding = replay_binding(ReplayModel(args.replay.read_text(encoding="utf-8")))
+        outputs = [path.read_text(encoding="utf-8") for path in args.replay]
+        binding = replay_binding(ReplayModel(*outputs))
     else:
         binding = ollama_binding(
             args.ollama_url, args.ollama_model, args.ollama_timeout

@@ -11,7 +11,7 @@ SOURCE = PACKAGE / "src" / "forgeai"
 REPOSITORY = PACKAGE.parents[1]
 
 # Domain and application layers: values, Ports and the Coding Agent only.
-INNER = {"domain", "worker", "guard"}
+INNER = {"domain", "worker", "guard", "review"}
 FORBIDDEN_INNER = (
     "legoai.runtime.local",
     "legoai.intelligence.model.ports",
@@ -37,7 +37,7 @@ FORBIDDEN_EVERYWHERE = (
     "openai",
     "docker",
 )
-STDLIB_INNER = {"dataclasses", "enum", "threading"}
+STDLIB_INNER = {"collections.abc", "dataclasses", "enum", "threading"}
 WRITES = {
     "write_text",
     "write_bytes",
@@ -77,13 +77,16 @@ def test_package_layout_is_the_expected_small_set() -> None:
         "__init__",
         "domain",
         "guard",
+        "review",
         "worker",
         "composition",
         "cli",
     }
 
 
-@pytest.mark.parametrize("name", ["domain", "guard", "worker", "composition", "cli"])
+@pytest.mark.parametrize(
+    "name", ["domain", "guard", "review", "worker", "composition", "cli"]
+)
 def test_public_legoai_only_and_no_private_names(name: str) -> None:
     for module, names in imports(modules()[name]):
         assert not module.startswith(FORBIDDEN_EVERYWHERE), (name, module)
@@ -97,7 +100,9 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
                 assert module != "threading" or name == "guard"
 
 
-@pytest.mark.parametrize("name", ["domain", "guard", "worker", "composition", "cli"])
+@pytest.mark.parametrize(
+    "name", ["domain", "guard", "review", "worker", "composition", "cli"]
+)
 def test_no_effects_grants_or_global_state(name: str) -> None:
     tree = modules()[name]
     for node in ast.walk(tree):
@@ -165,3 +170,50 @@ def test_dependencies_on_legoai_are_explicit() -> None:
         "legoai-reference==0.1.0.dev0",
         "legoai-engineering[analyst]==0.1.0.dev0",
     ]
+
+
+def test_review_material_never_renders_git_or_calls_agents() -> None:
+    # Git is operator-only; review.py is pure rendering over supplied values.
+    for module, _ in imports(modules()["review"]):
+        assert not module.startswith("legoai_engineering.git"), module
+        assert not module.endswith(".api"), module
+
+
+def test_review_stage_cannot_mutate_check_or_rework() -> None:
+    tree = modules()["worker"]
+    stage = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "_review"
+    )
+    calls = {
+        node.func.attr
+        for node in ast.walk(stage)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    }
+    assert not calls & {"apply", "check", "propose", "inspect"}, calls
+    assert "review" in calls and "acquire" in calls
+
+
+def test_reviewer_is_composed_from_the_agent_runtime_only() -> None:
+    constructions = [
+        node
+        for node in ast.walk(modules()["composition"])
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "IndependentReviewer"
+    ]
+    assert len(constructions) == 1
+    assert [ast.unparse(arg) for arg in constructions[0].args] == ["runtime"]
+    assert not constructions[0].keywords
+
+
+def test_no_workflow_team_or_locator_constructs() -> None:
+    for name, tree in modules().items():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                lowered = node.name.lower()
+                assert not any(
+                    word in lowered
+                    for word in ("workflow", "team", "orchestrat", "locator")
+                ), (name, node.name)

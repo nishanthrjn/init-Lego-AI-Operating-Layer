@@ -13,7 +13,7 @@ import pytest
 from forgeai_support import (
     FakeSandbox,
     config,
-    proposal,
+    replay,
     repository,
     snapshot,
     task,
@@ -77,7 +77,7 @@ def execute(
     sandbox: FakeSandbox | None = None,
     **options: object,
 ) -> tuple[TaskResult, ReplayModel, FakeSandbox]:
-    model = ReplayModel(output or proposal())
+    model = replay(output)
     sandbox = sandbox or FakeSandbox()
     result = run(prepared(config(root, model, **options), sandbox))  # type: ignore[arg-type]
     return result, model, sandbox
@@ -95,7 +95,7 @@ def test_success_applies_once_checks_in_order_and_records_state(tmp_path: Path) 
     result, model, sandbox = execute(root)
     evidence = result.evidence
     assert result.disposition is TaskDisposition.SUCCEEDED and result.failure is None
-    assert model.calls == 1 and sandbox.calls == 3
+    assert model.calls == 2 and sandbox.calls == 3
     assert [r.request.kind for r in evidence.checks] == [
         CheckKind.RUFF_CHECK,
         CheckKind.MYPY,
@@ -148,7 +148,7 @@ def test_non_repository_and_unborn_head_are_rejected(tmp_path: Path) -> None:
     assert model.calls == 0
 
     root = repository(tmp_path)
-    prepared_run = prepared(config(root, ReplayModel(proposal())), FakeSandbox())
+    prepared_run = prepared(config(root, replay()), FakeSandbox())
     unborn = GitRepositoryState(GitHead(GitHeadKind.UNBORN, "main", None), ())
     worker = replace(prepared_run.worker, git=StaticGit(unborn))
     result = run(prepared_run, worker)
@@ -194,7 +194,7 @@ def test_read_denial_and_out_of_scope_targets_are_rejected(tmp_path: Path) -> No
 
 def test_oversized_target_is_evidence_unavailable(tmp_path: Path) -> None:
     root = repository(tmp_path)
-    prepared_run = prepared(config(root, ReplayModel(proposal())), FakeSandbox())
+    prepared_run = prepared(config(root, replay()), FakeSandbox())
     (root / "src/inventory/stock.py").write_text("x = 1\n" * 2000, encoding="utf-8")
     start = GitRepositoryState(
         GitHead(GitHeadKind.ATTACHED, "main", GitCommitId("ab" * 20)), ()
@@ -253,7 +253,7 @@ def test_conflict_and_partial_apply_are_reported_without_retry(tmp_path: Path) -
     for index, (error, failure) in enumerate(cases):
         root = repository(tmp_path, f"repo{index}")
         sandbox = FakeSandbox()
-        prepared_run = prepared(config(root, ReplayModel(proposal())), sandbox)
+        prepared_run = prepared(config(root, replay()), sandbox)
         mutation = FailingMutation(error)
         result = run(prepared_run, replace(prepared_run.worker, mutation=mutation))
         assert result.failure is failure
@@ -269,7 +269,7 @@ def test_conflict_and_partial_apply_are_reported_without_retry(tmp_path: Path) -
 
 def test_real_stale_precondition_is_a_conflict(tmp_path: Path) -> None:
     root = repository(tmp_path)
-    prepared_run = prepared(config(root, ReplayModel(proposal())), FakeSandbox())
+    prepared_run = prepared(config(root, replay()), FakeSandbox())
     inner = prepared_run.worker.mutation
 
     class EditThenApply:
@@ -365,7 +365,7 @@ class ThenGit:
 @pytest.mark.parametrize("case", ["head", "extra", "unavailable"])
 def test_final_state_integrity(tmp_path: Path, case: str) -> None:
     root = repository(tmp_path)
-    prepared_run = prepared(config(root, ReplayModel(proposal())), FakeSandbox())
+    prepared_run = prepared(config(root, replay()), FakeSandbox())
     real = prepared_run.worker.git
     start = real.inspect()
     assert start.head.commit is not None
@@ -401,15 +401,15 @@ def test_final_state_integrity(tmp_path: Path, case: str) -> None:
 
 
 def test_binding_switch_is_configuration_only(tmp_path: Path) -> None:
-    first, second = ReplayModel(proposal()), ReplayModel(proposal())
+    first, second = replay(), replay()
     alternate = replace(replay_binding(second), binding_id="replay-alt")
     for name, model in (("replay", first), ("replay-alt", second)):
         root = repository(tmp_path, name)
         cfg = config(root, first, extra=(alternate,), binding=name)
         result = run(prepared(cfg, FakeSandbox()))
         assert result.disposition is TaskDisposition.SUCCEEDED
-        assert model.calls == 1
-    assert first.calls == 1 and second.calls == 1
+        assert model.calls == 2
+    assert first.calls == 2 and second.calls == 2
 
 
 # --- P/Q. Run isolation and same-workspace policy ---------------------------
@@ -418,7 +418,7 @@ def test_binding_switch_is_configuration_only(tmp_path: Path) -> None:
 def test_two_workspaces_run_concurrently_and_stay_isolated(tmp_path: Path) -> None:
     roots = [repository(tmp_path, f"w{index}") for index in range(2)]
     guard = WorkspaceGuard()
-    models = [ReplayModel(proposal()) for _ in roots]
+    models = [replay() for _ in roots]
     results: dict[int, TaskResult] = {}
     barrier = threading.Barrier(2)
 
@@ -435,13 +435,13 @@ def test_two_workspaces_run_concurrently_and_stay_isolated(tmp_path: Path) -> No
     assert set(results) == {0, 1}
     assert all(r.disposition is TaskDisposition.SUCCEEDED for r in results.values())
     assert results[0].evidence.run_id != results[1].evidence.run_id
-    assert [m.calls for m in models] == [1, 1]
+    assert [m.calls for m in models] == [2, 2]
 
 
 def test_same_workspace_second_run_is_refused(tmp_path: Path) -> None:
     root = repository(tmp_path)
     guard = WorkspaceGuard()
-    model = ReplayModel(proposal())
+    model = replay()
     prepared_run = prepared(config(root, model), FakeSandbox(), guard)
     assert guard.acquire(prepared_run.worker.workspace)
     before = snapshot(root)
@@ -457,6 +457,6 @@ def test_same_workspace_second_run_is_refused(tmp_path: Path) -> None:
 def test_guard_is_released_after_every_run(tmp_path: Path) -> None:
     root = repository(tmp_path)
     guard = WorkspaceGuard()
-    prepared_run = prepared(config(root, ReplayModel("invalid")), FakeSandbox(), guard)
+    prepared_run = prepared(config(root, replay("invalid")), FakeSandbox(), guard)
     assert run(prepared_run).failure is TaskFailure.PROPOSAL_INVALID
     assert guard.acquire(prepared_run.worker.workspace)
