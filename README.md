@@ -26,7 +26,7 @@ M1–M7 retain their qualified scopes. M8.2 Independent Reviewer is locally qual
 for bounded supplied-text review. See the
 [Reviewer contract and local commands](packages/legoai-engineering/README.md#m82--independent-reviewer).
 
-M8.3 Bounded Coding Agent implementation is complete with local validation pending.
+M8.3 Bounded Coding Agent is locally qualified for its documented scope.
 It proposes M4-compatible CREATE/UPDATE changesets after authorized bounded reads;
 it never applies or executes them. See the
 [Coding contract and validation script](packages/legoai-engineering/README.md#m83--bounded-coding-agent).
