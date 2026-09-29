@@ -197,14 +197,18 @@ class CodingResult:
             if {file.target for file in self.evidence.files} != set(
                 self.request.targets
             ):
-                raise ValueError("coding result evidence does not match requested scope")
+                raise ValueError(
+                    "coding result evidence does not match requested scope"
+                )
         if self.status is CodingStatus.INVALID_REQUEST:
             if (
                 type(self.acquisition_failure) is not AcquisitionFailure
                 or self.agent_result is not None
                 or self.proposal is not None
             ):
-                raise ValueError("invalid request cannot carry an invocation or proposal")
+                raise ValueError(
+                    "invalid request cannot carry an invocation or proposal"
+                )
             return
         if self.acquisition_failure is not None or self.evidence is None:
             raise ValueError("coding invocation requires acquired evidence")
@@ -237,7 +241,10 @@ class CodingResult:
             allowed = (
                 {AgentExecutionStatus.ROUTING_FAILED, AgentExecutionStatus.MODEL_FAILED}
                 if self.status is CodingStatus.MODEL_FAILURE
-                else {AgentExecutionStatus.SUCCEEDED, AgentExecutionStatus.OUTPUT_INVALID}
+                else {
+                    AgentExecutionStatus.SUCCEEDED,
+                    AgentExecutionStatus.OUTPUT_INVALID,
+                }
             )
             if agent.status not in allowed:
                 raise ValueError("coding status contradicts Agent outcome")

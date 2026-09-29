@@ -304,5 +304,7 @@ else:
         tmp_path,
     )
     assert result.stdout.splitlines() == [
-        "succeeded", "1 proposed change", "example.py update",
+        "succeeded",
+        "1 proposed change",
+        "example.py update",
     ]

@@ -26,17 +26,26 @@ def create_demo(
     model_allowed: bool = True,
 ) -> tuple[CodingAgent, CodingRequest, StaticModel]:
     analyst, source, model = create_analyst_demo(
-        root, output, route_count=route_count, read_allowed=read_allowed,
+        root,
+        output,
+        route_count=route_count,
+        read_allowed=read_allowed,
         model_allowed=model_allowed,
         targets=tuple(target.path for target in targets),
     )
     reads = analyst.evidence_reader
     assert isinstance(reads, AuthorizedRepositoryEvidence)
     request = CodingRequest(
-        "Change the greeting to hello LegoAI.", targets,
-        ("Return a proposal only; do not apply or execute it.",), source.context,
+        "Change the greeting to hello LegoAI.",
+        targets,
+        ("Return a proposal only; do not apply or execute it.",),
+        source.context,
     )
-    return CodingAgent(AuthorizedCodingEvidence(reads), analyst.agent_runtime), request, model
+    return (
+        CodingAgent(AuthorizedCodingEvidence(reads), analyst.agent_runtime),
+        request,
+        model,
+    )
 
 
 async def main() -> None:
@@ -48,16 +57,21 @@ async def main() -> None:
         output = json.dumps(
             {
                 "summary": "Update the greeting.",
-                "changes": [{
-                    "path": "example.py", "operation": "update",
-                    "content": "GREETING = 'hello LegoAI'\r\n",
-                    "reason": "Match the requested greeting.",
-                }],
-                "risks": [], "unknowns": ["Generated source was not executed."],
+                "changes": [
+                    {
+                        "path": "example.py",
+                        "operation": "update",
+                        "content": "GREETING = 'hello LegoAI'\r\n",
+                        "reason": "Match the requested greeting.",
+                    }
+                ],
+                "risks": [],
+                "unknowns": ["Generated source was not executed."],
             }
         )
         agent, request, model = create_demo(
-            root, output,
+            root,
+            output,
             (CodingTarget(RepositoryPath("example.py"), FileChangeKind.UPDATE),),
         )
         result = await agent.propose(request)

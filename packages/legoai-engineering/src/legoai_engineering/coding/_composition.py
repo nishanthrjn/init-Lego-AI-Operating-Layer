@@ -45,7 +45,9 @@ class AuthorizedCodingEvidence:
 
     def __post_init__(self) -> None:
         if type(self.reads) is not AuthorizedRepositoryEvidence:
-            raise TypeError("coding acquisition requires authorized repository composition")
+            raise TypeError(
+                "coding acquisition requires authorized repository composition"
+            )
 
     async def acquire(
         self, targets: tuple[CodingTarget, ...], tenant: TenantContext
