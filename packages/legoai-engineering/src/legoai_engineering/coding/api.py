@@ -164,7 +164,9 @@ class CodingAgent:
         assert agent.output is not None
         try:
             proposal = _parse(agent.output, evidence)
-            return CodingResult(CodingStatus.SUCCEEDED, request, evidence, agent, proposal)
+            return CodingResult(
+                CodingStatus.SUCCEEDED, request, evidence, agent, proposal
+            )
         except ValueError, TypeError, RecursionError, WorkspaceError:
             return CodingResult(
                 CodingStatus.OUTPUT_INVALID, request, evidence, agent, None

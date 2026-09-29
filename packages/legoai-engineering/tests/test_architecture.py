@@ -33,7 +33,8 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.workspace",
         },
         "coding.api": {
-            "json", "typing",
+            "json",
+            "typing",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
             "legoai.kernel.context",
@@ -302,7 +303,8 @@ def test_source_boundaries_and_inert_initializers() -> None:
         source = path.read_text(encoding="utf-8")
         module = (
             path.parent.name + "." + path.stem
-            if path.parent.name in {"git", "checks", "sandbox", "analyst", "reviewer", "coding"}
+            if path.parent.name
+            in {"git", "checks", "sandbox", "analyst", "reviewer", "coding"}
             else path.stem
         )
         assert not import_violations(source, module), path
@@ -366,22 +368,36 @@ def test_reviewer_effectful_imports_and_calls_are_forbidden(source: str) -> None
         assert import_violations(source, module)
 
 
-@pytest.mark.parametrize("source", [
-    "from legoai_engineering.repository.mutation_ports import RepositoryMutationPort",
-    "from legoai_engineering.repository.mutation_local import LocalRepositoryMutation",
-    "import legoai_engineering.repository.local",
-    "import legoai_engineering.checks.local",
-    "import legoai_engineering.sandbox.ports",
-    "import legoai_engineering.sandbox.docker",
-    "import legoai_engineering.git.local",
-    "import legoai_engineering.reviewer.api",
-    "from legoai.intelligence.model.ports import ModelPort",
-    "import legoai.reference.model", "import openai", "import langgraph",
-    "import subprocess", "writer.apply(changes)", "apply(changes)",
-    "checks.check(request)", "path.write_text('code')", "open('file', 'w')",
-])
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai_engineering.repository.mutation_ports import RepositoryMutationPort",
+        "from legoai_engineering.repository.mutation_local import LocalRepositoryMutation",
+        "import legoai_engineering.repository.local",
+        "import legoai_engineering.checks.local",
+        "import legoai_engineering.sandbox.ports",
+        "import legoai_engineering.sandbox.docker",
+        "import legoai_engineering.git.local",
+        "import legoai_engineering.reviewer.api",
+        "from legoai.intelligence.model.ports import ModelPort",
+        "import legoai.reference.model",
+        "import openai",
+        "import langgraph",
+        "import subprocess",
+        "writer.apply(changes)",
+        "apply(changes)",
+        "checks.check(request)",
+        "path.write_text('code')",
+        "open('file', 'w')",
+    ],
+)
 def test_coding_can_propose_but_cannot_apply_or_execute(source: str) -> None:
-    for module in ("coding.api", "coding.values", "coding.definition", "coding._composition"):
+    for module in (
+        "coding.api",
+        "coding.values",
+        "coding.definition",
+        "coding._composition",
+    ):
         assert import_violations(source, module)
 
 
