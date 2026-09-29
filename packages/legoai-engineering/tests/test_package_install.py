@@ -57,6 +57,8 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/sandbox/__init__.py",
         "legoai_engineering/sandbox/values.py",
         "legoai_engineering/sandbox/errors.py",
+        "legoai_engineering/checks/_commands.py",
+        "legoai_engineering/checks/sandboxed.py",
         "legoai_engineering/sandbox/ports.py",
         "legoai_engineering/sandbox/docker.py",
         "legoai_engineering/sandbox/_process.py",
@@ -115,6 +117,9 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         assert "tests/test_sandbox.py" in paths
         assert "tests/test_sandbox_docker.py" in paths
         assert "tests/test_sandbox_checks_docker.py" in paths
+        assert "tests/test_checks_sandboxed.py" in paths
+        assert "tests/test_checks_sandboxed_docker.py" in paths
+        assert "examples/python_checks_project.py" in paths
         assert "sandbox-images/python-checks/Dockerfile" in paths
         assert "sandbox-images/python-checks/requirements.txt" in paths
         assert "tests/test_checks.py" in paths

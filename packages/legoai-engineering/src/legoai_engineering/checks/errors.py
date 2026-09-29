@@ -9,6 +9,11 @@ class CheckFailure(Enum):
     TIMEOUT = "engineering process deadline exceeded"
     OUTPUT_LIMIT = "engineering process output limit exceeded"
     CLEANUP = "engineering process termination could not be confirmed"
+    # Sandboxed execution only (CR-2b); the host adapter never raises these.
+    CANCELLED = "engineering check cancellation requested"
+    RESOURCE_LIMIT = "engineering check memory limit terminated the workload"
+    INPUT_LIMIT = "engineering check inputs exceed the sandbox input bounds"
+    CONFINEMENT = "required sandbox confinement controls unsupported"
 
 
 class CheckError(RuntimeError):
