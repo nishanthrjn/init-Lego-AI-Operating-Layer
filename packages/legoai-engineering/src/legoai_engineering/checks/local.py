@@ -4,9 +4,9 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from legoai_engineering.checks._commands import _arguments, _tool
 from legoai_engineering.checks._process import _capture
 from legoai_engineering.checks.values import (
-    CheckKind,
     CheckPolicy,
     CheckRequest,
     CheckResult,
@@ -86,18 +86,15 @@ class LocalEngineeringChecks:
                 raise WorkspaceError(WorkspaceFailure.MISSING)
             # Absolute argv also neutralizes option-like names and @argfiles.
             targets.append(str(self._root.path / target.value))
-        if request.kind is CheckKind.PYTEST:
-            executable = self._tools.pytest
-            arguments = ["-q", "-o", "addopts=", "-p", "no:cacheprovider"]
-        elif request.kind is CheckKind.RUFF_CHECK:
-            executable = self._tools.ruff
-            arguments = ["check", "--no-fix", "--no-fix-only", "--no-cache"]
-        elif request.kind is CheckKind.RUFF_FORMAT_CHECK:
-            executable = self._tools.ruff
-            arguments = ["format", "--check", "--no-cache"]
-        else:
-            executable = self._tools.mypy
-            arguments = ["--no-incremental", "--cache-dir", os.devnull]
+        tool = _tool(request.kind)
+        executable = (
+            self._tools.pytest
+            if tool == "pytest"
+            else self._tools.mypy
+            if tool == "mypy"
+            else self._tools.ruff
+        )
+        arguments = _arguments(request.kind, os.devnull)
         code, stdout, stderr = _capture(
             executable, [*arguments, "--", *targets], self._root.path, self._policy
         )

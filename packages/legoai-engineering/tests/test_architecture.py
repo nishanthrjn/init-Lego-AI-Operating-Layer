@@ -177,9 +177,24 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.checks.errors",
             "legoai_engineering.checks.values",
         },
+        "checks._commands": {"legoai_engineering.checks.values"},
+        "checks.sandboxed": {
+            "base64",
+            "json",
+            "legoai_engineering.checks._commands",
+            "legoai_engineering.checks.errors",
+            "legoai_engineering.checks.values",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.ports",
+            "legoai_engineering.repository.workspace",
+            "legoai_engineering.sandbox.errors",
+            "legoai_engineering.sandbox.ports",
+            "legoai_engineering.sandbox.values",
+        },
         "checks.local": {
             "os",
             "pathlib",
+            "legoai_engineering.checks._commands",
             "legoai_engineering.checks._process",
             "legoai_engineering.checks.values",
             "legoai_engineering.repository.errors",
@@ -478,6 +493,28 @@ def test_examples_use_only_the_public_governed_host() -> None:
                 assert node.func.id not in {"Grant", "SecurityContext"}, path.name
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import subprocess",
+        "import os",
+        "import legoai_engineering.sandbox.docker",
+        "from legoai_engineering.sandbox.docker import DockerSandbox",
+        "import legoai_engineering.sandbox._process",
+        "import legoai_engineering.checks.local",
+        "import legoai_engineering.checks._process",
+        "from legoai.runtime._composition.agent import GovernedAgentChat",
+        "import legoai.reference.execution",
+        "import forgeai",
+        "import docker",
+    ],
+)
+def test_sandboxed_checks_depend_only_on_ports(source: str) -> None:
+    # CR-2b: the adapter composes Ports; the sandbox backend stays replaceable
+    # and no host process, Core internal or application import is reachable.
+    assert import_violations(source, "checks.sandboxed")
+
+
 def test_import_and_inspection_have_no_external_effects(tmp_path: Path) -> None:
     script = """
 import dataclasses, os, sys, threading, logging, pathlib, stat, enum, typing
@@ -645,7 +682,7 @@ def test_mutation_boundaries_and_public_surface() -> None:
 
 def test_check_surface_is_semantic_and_process_use_is_private() -> None:
     root = Path(__file__).resolve().parents[1] / "src" / "legoai_engineering"
-    for name in ("ports", "local"):
+    for name in ("ports", "local", "sandboxed"):
         tree = ast.parse((root / "checks" / (name + ".py")).read_text("utf-8"))
         public = [
             node

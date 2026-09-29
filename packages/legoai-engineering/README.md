@@ -1527,3 +1527,183 @@ with matching evidence: mypy about 67 MB, pytest 40–66 MB, Ruff about 10 MB,
 default temp-root cleanup then raised the Windows `PermissionError` described
 above, after the tests had finished. That is an environment issue, not a test
 result.
+
+## CR-2b — sandboxed engineering checks (implemented; local Docker validation pending)
+
+`legoai_engineering.checks.sandboxed.SandboxedEngineeringChecks` is a second
+adapter for the existing `EngineeringCheckPort`, which is unchanged. It runs
+the four M5 check kinds (`PYTEST`, `RUFF_CHECK`, `RUFF_FORMAT_CHECK`, `MYPY`)
+inside the M6 sandbox on the CR-2a `PYTHON_CHECKS` image. It depends only on
+`RepositoryWorkspacePort` and `SandboxExecutionPort`, never on Docker. This
+status is **not** a qualification claim. The slice is qualified only after the
+maintainer's `validate_consumer_readiness_cr2b.py` run passes.
+
+### When to use which adapter
+
+| Adapter | Target code runs | Use when |
+| --- | --- | --- |
+| `LocalEngineeringChecks` (M5) | On the host, as the host user | The repository is trusted, for example the maintainer's own tree |
+| `SandboxedEngineeringChecks` (CR-2b) | In one confined M6 container per check | The code under test is not trusted, for example agent-written or third-party changes |
+
+There is **no host fallback**. If the sandbox or the qualified toolchain is
+unavailable, the check fails with `UNAVAILABLE`; it never falls back to
+running on the host. Callers choose the adapter at the composition root.
+
+### Composition
+
+```python
+from legoai_engineering.checks.sandboxed import CheckInputPolicy, SandboxedEngineeringChecks
+from legoai_engineering.checks.values import CheckPolicy
+from legoai_engineering.repository.workspace import RepositoryPath
+from legoai_engineering.sandbox.docker import DockerSandbox, DockerSandboxConfig, SandboxImage
+from legoai_engineering.sandbox.values import SandboxPolicy
+
+checks = SandboxedEngineeringChecks(
+    workspace,  # any RepositoryWorkspacePort, e.g. LocalRepositoryWorkspace
+    DockerSandbox(
+        DockerSandboxConfig(docker_executable, SandboxImage.PYTHON_CHECKS),
+        SandboxPolicy(timeout_seconds=180, max_output_bytes=1_048_576),
+    ),
+    CheckInputPolicy(
+        roots=(RepositoryPath("src"), RepositoryPath("tests")),
+        files=(RepositoryPath("pyproject.toml"),),
+    ),
+    CheckPolicy(timeout_seconds=120),
+    cancellation,  # optional CancellationSignal bound to this instance
+)
+```
+
+The composition root must bind `SandboxImage.PYTHON_CHECKS`. The adapter does
+not name an image. Instead, its fixed runner checks the exact tool versions
+inside the container (pytest 9.1.1, Ruff 0.16.8, mypy 2.3.1), so any other
+image yields `UNAVAILABLE`.
+
+### Commands and runner
+
+Host and sandbox use one private command table, `checks/_commands.py`, so the
+options are the same:
+
+| Kind | Command |
+| --- | --- |
+| `PYTEST` | `pytest -q -o addopts= -p no:cacheprovider -- <targets>` |
+| `RUFF_CHECK` | `ruff check --no-fix --no-fix-only --no-cache -- <targets>` |
+| `RUFF_FORMAT_CHECK` | `ruff format --check --no-cache -- <targets>` |
+| `MYPY` | `mypy --no-incremental --cache-dir /dev/null -- <targets>` |
+
+Callers cannot supply a command, executable, argument or environment. Each check
+is exactly one sandbox execution of one constant runner script. The runner reads
+a data-only spec, runs the tool with `shell=False` and a fixed environment, and
+returns a fixed JSON envelope. The outcome derives from the tool's exit code,
+as in M5.
+
+### Input policy and limits
+
+`CheckInputPolicy` selects which repository files are copied into the
+sandbox:
+
+- `roots`: 1–16 directories, scanned deterministically.
+- `files`: 0–16 explicit files.
+- `max_scan_entries`: 1–65 536 directory entries.
+
+Only `.py`, `.pyi`, `.toml`, `.cfg`, `.ini` and `py.typed` files are selected.
+Hidden components, `__pycache__` and the reserved spec name are excluded.
+Every check target must lie within the selection; otherwise the check is refused
+with `WorkspaceError(EXCLUDED)`.
+
+The sandbox request allows at most 63 project files, one slot being reserved
+for the spec. Each file may be up to 256 KiB, and the total up to about 1 MiB.
+Exceeding any of these limits, a workspace read limit, or the scan limit raises
+`CheckError(INPUT_LIMIT)`. **Input is never truncated.** Missing or binary
+inputs fail closed with the workspace error.
+
+### Failure mapping
+
+The adapter adds four `CheckFailure` members: `CANCELLED`, `RESOURCE_LIMIT`,
+`INPUT_LIMIT` and `CONFINEMENT`. They are raised only by the sandboxed adapter;
+`LocalEngineeringChecks` never raises them.
+
+| Source | `CheckFailure` |
+| --- | --- |
+| `SandboxFailure.TIMEOUT`, or the tool exceeds `CheckPolicy.timeout_seconds` | `TIMEOUT` |
+| `SandboxFailure.CANCELLED` | `CANCELLED` |
+| `SandboxFailure.RESOURCE_LIMIT`, or a cgroup `oom_kill` during the tool run | `RESOURCE_LIMIT` |
+| `SandboxFailure.OUTPUT_LIMIT`, or tool output over `CheckPolicy.max_output_bytes` | `OUTPUT_LIMIT` |
+| `SandboxFailure.CLEANUP` | `CLEANUP` |
+| `SandboxFailure.UNSUPPORTED` | `CONFINEMENT` |
+| `SandboxFailure.RUNTIME_UNAVAILABLE` / `ENVIRONMENT_UNAVAILABLE`, or wrong toolchain | `UNAVAILABLE` |
+| `SandboxFailure.PREPARATION` / `CONTROL` / `ARTIFACT`, a non-zero runner exit, or a malformed envelope | `IO` |
+| Input over the bounds above | `INPUT_LIMIT` |
+
+Test failures, lint findings, format differences and type errors are
+`CheckResult` outcomes, not errors. The original `SandboxError` is kept as
+`__cause__`.
+
+### Cancellation
+
+A `CancellationSignal` is bound to each instance, because the port is
+unchanged. The signal is checked in three places:
+
+- before input acquisition;
+- after input acquisition, before dispatch;
+- during execution, through the M6 sandbox, which stops and removes the
+  container.
+
+Cancellation always surfaces as `CheckError(CANCELLED)` and never as a result.
+
+### Policy pairing
+
+The runner returns tool output base64-encoded in its envelope, so the two
+policies must be sized together:
+
+- **Output:** `SandboxPolicy.max_output_bytes` must be at least
+  8/3 × `CheckPolicy.max_output_bytes` plus a few KiB.
+- **Time:** `SandboxPolicy.timeout_seconds` must exceed
+  `CheckPolicy.timeout_seconds` by a margin for container start and teardown.
+
+If these are undersized, the sandbox limit trips first. It is still reported
+truthfully (`OUTPUT_LIMIT` or `TIMEOUT`), but less precisely.
+
+### Containment is not result integrity
+
+The sandbox *contains* the code under test: no network, no host filesystem,
+fixed resources, and source bytes on the host are never modified. It does not
+make the result *trustworthy*. Code under test runs in the same container as
+the tool and can influence it, for example by skipping tests, patching
+pytest, or exiting early with status 0. A sandboxed `PASSED` means only that
+this outcome was observed under containment. It is not evidence that the change
+is correct. Where a result must be trusted, it needs independent review
+(M8.2) or verification out of band.
+
+### Scope and known limitations
+
+- **Qualified platform:** Windows with the Docker Desktop Linux engine only,
+  the same platform as M6 and CR-2a. Other platforms are not qualified.
+- **No toolchain choice:** the tools are fixed to the CR-2a image. Project
+  plugins, third-party stubs and non-stdlib runtime dependencies are not
+  installed. Checks that need them report their real outcome, typically
+  `FAILED` or `INTERRUPTED`.
+- **Resource profile:** the fixed 128 MiB profile is qualified only for small
+  projects; see the CR-2a evidence. `RESOURCE_LIMIT` is a truthful failure.
+- **No input identity in results:** `CheckResult` does not yet record which
+  inputs were checked (for example a path and digest manifest). This is
+  deferred to CR-3 or ForgeAI-1, where results are bound to a reviewed change.
+
+### Local validation required
+
+```powershell
+uv run python .\validate_consumer_readiness_cr2b.py
+```
+
+This validator uses the recorded CR-2a image ID and never builds or pulls an
+image. Each pytest phase uses a fresh `--basetemp`. It runs these phases:
+
+1. The environment and the qualified image are present.
+2. Typing, Ruff lint and Ruff format checks pass.
+3. Deterministic adapter tests pass: failure contract, input bounds, command
+   parity, cancellation and result mapping.
+4. Real Docker tests pass: every pytest, Ruff and mypy outcome; timeout,
+   output, resource, cancellation and unavailable-toolchain cases; network
+   isolation, cleanup and adapter substitution.
+5. Regressions pass: M5, M6, CR-2a, architecture, and the wheel with a clean
+   install.
+6. `git diff --check` passes.
