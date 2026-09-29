@@ -1,0 +1,17 @@
+{
+  "category": "missing branch / edge case",
+  "objective": "Make units.temperature.to_celsius support Kelvin (\"K\"), accept unit letters case-insensitively, and raise ValueError for any other unit instead of treating it as Fahrenheit. Add tests for each case.",
+  "targets": [
+    {
+      "path": "src/units/temperature.py",
+      "operation": "update"
+    },
+    {
+      "path": "tests/test_temperature.py",
+      "operation": "update"
+    }
+  ],
+  "constraints": [
+    "Keep the function signature unchanged."
+  ]
+}

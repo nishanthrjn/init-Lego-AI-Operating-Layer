@@ -1,0 +1,30 @@
+{
+  "fixture_set": "forgeai-lq1",
+  "revision": "1",
+  "hidden_revision": "1",
+  "note": "Frozen evaluation fixtures. Change the revision (and hidden_revision for hidden tests) whenever content changes; digests are verified on load.",
+  "fixtures": [
+    {
+      "id": "stock-validation",
+      "fixture_digest": "sha256:470ca2bb30f2ba8ad589d46d77fcf37884b7731eb02c28a89c5fba042d6385c1",
+      "hidden_digest": "sha256:27821ba09cc81cdcbe08508dc450c57f3e926c680540e9cb648857c035b5d7c6"
+    },
+    {
+      "id": "pager-boundaries",
+      "fixture_digest": "sha256:593894492e932959b171b2d9724d47c5f58961f0cb6b1f58fd17a240d31cb58b",
+      "hidden_digest": "sha256:cad91a9cc1e6a665ada353bab89ddd4f5323ada0c9e3f505531b3874a16b5ce9"
+    },
+    {
+      "id": "temperature-units",
+      "fixture_digest": "sha256:36672515da4698d8b5f040bf8273cb51cbcdbf8859e074107648ce9f4e44250c",
+      "hidden_digest": "sha256:43f8b061eb742fff2dfe9c07ff903ebd80e0bf2087f0db1314fb1648cdd7930b"
+    },
+    {
+      "id": "text-slug",
+      "fixture_digest": "sha256:6893b0c5cce9e6c605a8916f6d0a8a403a136ed7077de3984d0b0da3349d4e59",
+      "hidden_digest": "sha256:8ed90bf414a7c806309860d3b23a8bf9e1d8b29d77ae071573e4a178674b5b36"
+    }
+  ],
+  "fixture_set_digest": "sha256:e547108c8c5fb1352a1da2af60d1fd6910d9f975887326e2434d1cd9e116b64c",
+  "hidden_set_digest": "sha256:556ed8e1e77954616b379ccde27123c51788cddebb036b4f15fe507cffee3ac1"
+}

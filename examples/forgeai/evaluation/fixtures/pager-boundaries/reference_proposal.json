@@ -1,0 +1,21 @@
+{
+  "summary": "Use 1-based page offsets and round page_count up for partial pages.",
+  "changes": [
+    {
+      "path": "src/pager/pages.py",
+      "operation": "update",
+      "content": "\"\"\"Page slicing for simple listings.\"\"\"\n\n\ndef page(items: list[str], number: int, size: int) -> list[str]:\n    \"\"\"Return page ``number`` (1-based) of ``items``, ``size`` items per page.\"\"\"\n    start = (number - 1) * size\n    return items[start : start + size]\n\n\ndef page_count(total: int, size: int) -> int:\n    \"\"\"Return how many pages are needed to show ``total`` items.\"\"\"\n    return (total + size - 1) // size\n",
+      "reason": "Fix both off-by-one errors."
+    },
+    {
+      "path": "tests/test_pages.py",
+      "operation": "update",
+      "content": "from pager.pages import page, page_count\n\nITEMS = [\"a\", \"b\", \"c\", \"d\", \"e\"]\n\n\ndef test_page_count_for_full_pages() -> None:\n    assert page_count(10, 5) == 2\n\n\ndef test_page_count_rounds_up_partial_pages() -> None:\n    assert page_count(5, 2) == 3\n\n\ndef test_first_page() -> None:\n    assert page(ITEMS, 1, 2) == [\"a\", \"b\"]\n\n\ndef test_last_partial_page() -> None:\n    assert page(ITEMS, 3, 2) == [\"e\"]\n",
+      "reason": "Cover first, last and partial pages."
+    }
+  ],
+  "risks": [],
+  "unknowns": [
+    "The proposal was not executed by the model."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "category": "input validation / error handling",
+  "objective": "Add input validation to inventory.stock.reserve: reject negative available stock, non-positive requests and requests above the available stock with ValueError, and update its tests.",
+  "targets": [
+    {
+      "path": "src/inventory/stock.py",
+      "operation": "update"
+    },
+    {
+      "path": "tests/test_stock.py",
+      "operation": "update"
+    }
+  ],
+  "constraints": [
+    "Keep the public function signature unchanged."
+  ]
+}

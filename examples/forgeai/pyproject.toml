@@ -33,12 +33,12 @@ packages = ["src/forgeai"]
 include = ["/src", "/tests", "/fixtures", "/demo.py", "/README.md", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
-pythonpath = [".", "tests"]
-testpaths = ["tests"]
+pythonpath = [".", "tests", "evaluation", "evaluation/tests"]
+testpaths = ["tests", "evaluation/tests"]
 addopts = "--import-mode=importlib -ra"
 
 [tool.mypy]
-mypy_path = [".", "tests"]
+mypy_path = [".", "tests", "evaluation", "evaluation/tests"]
 python_version = "3.14"
 strict = true
 warn_unused_ignores = true
@@ -46,6 +46,11 @@ warn_unused_ignores = true
 [tool.ruff]
 target-version = "py314"
 preview = false
+# Frozen evaluation fixtures are data: never lint or reformat them.
+extend-exclude = ["evaluation/fixtures", "evaluation/hidden"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["forgeai", "forgeai_eval"]

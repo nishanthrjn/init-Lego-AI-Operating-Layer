@@ -1,0 +1,17 @@
+{
+  "category": "create a new module",
+  "objective": "Create the module textkit.slug with a function slugify(text: str) -> str that lowercases the text, replaces each run of characters other than a-z and 0-9 with a single hyphen, and strips leading and trailing hyphens. Add tests for it in tests/test_slug.py.",
+  "targets": [
+    {
+      "path": "src/textkit/slug.py",
+      "operation": "create"
+    },
+    {
+      "path": "tests/test_slug.py",
+      "operation": "create"
+    }
+  ],
+  "constraints": [
+    "Use only the Python standard library."
+  ]
+}
