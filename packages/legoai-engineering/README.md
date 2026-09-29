@@ -1528,15 +1528,15 @@ default temp-root cleanup then raised the Windows `PermissionError` described
 above, after the tests had finished. That is an environment issue, not a test
 result.
 
-## CR-2b — sandboxed engineering checks (implemented; local Docker validation pending)
+## CR-2b — sandboxed engineering checks (locally qualified 2026-09-29)
 
 `legoai_engineering.checks.sandboxed.SandboxedEngineeringChecks` is a second
 adapter for the existing `EngineeringCheckPort`, which is unchanged. It runs
 the four M5 check kinds (`PYTEST`, `RUFF_CHECK`, `RUFF_FORMAT_CHECK`, `MYPY`)
 inside the M6 sandbox on the CR-2a `PYTHON_CHECKS` image. It depends only on
-`RepositoryWorkspacePort` and `SandboxExecutionPort`, never on Docker. This
-status is **not** a qualification claim. The slice is qualified only after the
-maintainer's `validate_consumer_readiness_cr2b.py` run passes.
+`RepositoryWorkspacePort` and `SandboxExecutionPort`, never on Docker. The
+slice is locally qualified for the reference scope only; see "CR-2b
+qualification evidence".
 
 ### When to use which adapter
 
@@ -1707,3 +1707,35 @@ image. Each pytest phase uses a fresh `--basetemp`. It runs these phases:
 5. Regressions pass: M5, M6, CR-2a, architecture, and the wheel with a clean
    install.
 6. `git diff --check` passes.
+
+### CR-2b qualification evidence
+
+On 2026-09-29 the maintainer ran `validate_consumer_readiness_cr2b.py` on
+Windows with Docker Desktop (context `desktop-linux`, linux/amd64), against the
+recorded image `sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df`.
+**All 20 phases passed.**
+
+| Area | Result |
+| --- | --- |
+| Static checks | mypy clean on 76 files plus the validator; Ruff lint and format clean |
+| Deterministic adapter tests | 59 passed |
+| Real Docker outcomes | 10 passed: pytest pass, fail, collection error and no tests; Ruff check and format, clean and finding; mypy clean and finding |
+| Timeout, output, resource, cancellation, unavailable toolchain | 5 passed |
+| Network isolation, adapter substitution, M6 confinement | 3 passed |
+| M5 regressions (`tests/test_checks.py`) | 40 passed |
+| M6 and CR-2a regressions | 58 passed |
+| Architecture | 84 passed |
+| Wheel and clean install | 1 passed |
+| `git diff --check` | clean |
+
+No sandbox containers or volumes remained after any real Docker test.
+
+The CR-2a re-check against the recorded ID, run with a fresh `--basetemp`, also
+passed all 16 tests, with no OOM kills. In one run mypy peaked at about 95 MB
+on the baseline fixture, against about 67 MB in the other runs. That is still
+within the 128 MiB limit, but headroom varies between runs, which reinforces
+the resource-profile limitation above.
+
+A separate re-check run without `--basetemp` hit the known Windows temp-root
+`PermissionError` after its tests had finished. That is an environment issue,
+not a test result.
