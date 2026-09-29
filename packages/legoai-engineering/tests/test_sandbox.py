@@ -248,10 +248,20 @@ def test_closed_image_set_and_stdlib_default(tmp_path: Path) -> None:
     assert config.image == STDLIB
 
 
-def test_unqualified_checks_image_fails_closed_before_docker(tmp_path: Path) -> None:
+def test_unqualified_image_fails_closed_before_docker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(docker_module, "_approved_image", lambda image: None)
     with patch.object(_Cli, "_run", side_effect=AssertionError("Docker invoked")):
         with pytest.raises(ValueError):
             DockerSandboxConfig(tmp_path / "docker.exe", SandboxImage.PYTHON_CHECKS)
+
+
+def test_checks_image_is_bound_to_the_qualified_id(tmp_path: Path) -> None:
+    config = DockerSandboxConfig(tmp_path / "docker.exe", SandboxImage.PYTHON_CHECKS)
+    assert config.image == (
+        "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
+    )
 
 
 def test_callers_cannot_supply_image_strings(tmp_path: Path) -> None:

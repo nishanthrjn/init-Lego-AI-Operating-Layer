@@ -1,9 +1,9 @@
 """CR-2a: real Docker qualification of the PYTHON_CHECKS image; never mocked away.
 
-Until the qualified image ID is recorded in `sandbox.docker._approved_image`,
-the operator-built candidate ID must be supplied in LEGOAI_SANDBOX_CHECKS_IMAGE
-(validate_consumer_readiness_cr2a.py sets it after building). The candidate is
-bound only inside this test process; production configuration stays fail-closed.
+Without LEGOAI_SANDBOX_CHECKS_IMAGE these tests re-check the recorded qualified
+image ID in `sandbox.docker._approved_image`. With it (set by
+validate_consumer_readiness_cr2a.py after a build), they qualify that candidate,
+bound only inside this test process; production accepts the recorded ID only.
 
 The harness below is trusted qualification code. It runs the M5 check tools with
 M5's fixed options and records whole-container cgroup memory evidence.
@@ -489,9 +489,12 @@ def checks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[DockerSa
     assert executable is not None, "CR-2a qualification requires Docker; no skip"
     approved = docker_module._approved_image(SandboxImage.PYTHON_CHECKS)
     candidate = os.environ.get(CANDIDATE_ENV)
-    if approved is None:
-        assert candidate, f"set {CANDIDATE_ENV} to the built image ID; no skip"
+    if candidate:
+        # An explicit candidate (a new build) is what gets qualified, bound only
+        # inside this test process. Production still accepts the recorded ID only.
         assert docker_module._immutable(candidate) and candidate.startswith("sha256:")
+        if candidate != approved:
+            print(f"\nCR2A-CANDIDATE {candidate} (recorded: {approved})")
         original = docker_module._approved_image
 
         def qualification_binding(image: SandboxImage) -> str | None:
@@ -500,8 +503,8 @@ def checks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[DockerSa
             return original(image)
 
         monkeypatch.setattr(docker_module, "_approved_image", qualification_binding)
-    elif candidate is not None:
-        assert candidate == approved, "candidate differs from the recorded image"
+    else:
+        assert approved is not None, f"set {CANDIDATE_ENV} to the built image ID"
     sandbox = DockerSandbox(
         DockerSandboxConfig(Path(executable), SandboxImage.PYTHON_CHECKS),
         SandboxPolicy(timeout_seconds=180),

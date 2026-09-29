@@ -28,8 +28,8 @@ class SandboxImage(Enum):
 
     Every image runs under the same fixed M6 resource and confinement profile.
     PYTHON_STDLIB is the original M6 image. PYTHON_CHECKS adds only the pinned M5
-    check tools (pytest, Ruff, mypy) and is fail-closed until its exact built
-    image ID is recorded after Docker qualification (CR-2a).
+    check tools (pytest, Ruff, mypy); it is bound to the exact local image ID that
+    passed CR-2a Docker qualification, and is never pulled.
     """
 
     PYTHON_STDLIB = "python-stdlib"
@@ -43,9 +43,10 @@ def _approved_image(image: SandboxImage) -> str | None:
             "python@sha256:"
             "82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
         )
-    # PYTHON_CHECKS: recorded only after the operator builds the image from
-    # sandbox-images/python-checks and its Docker qualification passes.
-    return None
+    # PYTHON_CHECKS: the local image ID built from sandbox-images/python-checks and
+    # qualified by validate_consumer_readiness_cr2a.py on 2026-09-29. Any rebuild
+    # yields a different ID and must be requalified before replacing this value.
+    return "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
 
 
 def _immutable(reference: str) -> bool:
