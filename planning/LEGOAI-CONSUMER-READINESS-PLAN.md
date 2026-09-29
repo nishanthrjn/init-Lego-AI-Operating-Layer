@@ -487,7 +487,7 @@ check found no need for a generic app builder.
 | CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Done 2026-09-29** (Docker-qualified) |
 | CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Done 2026-09-29** (Docker-qualified) |
 | CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Done 2026-09-29** (locally qualified) |
-| CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | No (recommended with ForgeAI-1) |
+| CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | **Done 2026-09-29**: all 12 phases of `validate_consumer_readiness_cr4.py` passed (docs only; no production change) |
 
 ## 15. Acceptance criteria per slice
 
