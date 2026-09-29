@@ -1,0 +1,21 @@
+{
+  "summary": "Validate reserve inputs and cover the rejected cases in tests.",
+  "changes": [
+    {
+      "path": "src/inventory/stock.py",
+      "operation": "update",
+      "content": "\"\"\"Stock reservation for a small inventory.\"\"\"\n\n\ndef reserve(available: int, requested: int) -> int:\n    \"\"\"Return the stock left after reserving ``requested`` units.\n\n    Raises ValueError when the available stock is negative, the request is not\n    positive, or the request exceeds the available stock.\n    \"\"\"\n    if available < 0:\n        raise ValueError(\"available stock must not be negative\")\n    if requested <= 0:\n        raise ValueError(\"requested units must be positive\")\n    if requested > available:\n        raise ValueError(\"requested units exceed available stock\")\n    return available - requested\n",
+      "reason": "Reject negative stock, non-positive and excessive requests."
+    },
+    {
+      "path": "tests/test_stock.py",
+      "operation": "update",
+      "content": "import pytest\n\nfrom inventory.stock import reserve\n\n\ndef test_reserve_reduces_stock() -> None:\n    assert reserve(10, 3) == 7\n\n\ndef test_reserve_allows_all_stock() -> None:\n    assert reserve(5, 5) == 0\n\n\n@pytest.mark.parametrize(\n    (\"available\", \"requested\"), [(-1, 1), (5, 0), (5, -2), (5, 6)]\n)\ndef test_reserve_rejects_invalid_requests(available: int, requested: int) -> None:\n    with pytest.raises(ValueError):\n        reserve(available, requested)\n",
+      "reason": "Test the accepted boundary and every rejected input."
+    }
+  ],
+  "risks": [],
+  "unknowns": [
+    "The proposal was not executed by the model."
+  ]
+}
