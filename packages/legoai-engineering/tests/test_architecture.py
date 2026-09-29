@@ -199,6 +199,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "sandbox.docker": {
             "base64",
+            "enum",
             "json",
             "os",
             "tempfile",

@@ -7,6 +7,7 @@ import tempfile
 import time
 import uuid
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import cast
 
@@ -22,18 +23,52 @@ from legoai_engineering.sandbox.values import (
 )
 
 
+class SandboxImage(Enum):
+    """Closed set of operator-qualified images; callers never supply image strings.
+
+    Every image runs under the same fixed M6 resource and confinement profile.
+    PYTHON_STDLIB is the original M6 image. PYTHON_CHECKS adds only the pinned M5
+    check tools (pytest, Ruff, mypy) and is fail-closed until its exact built
+    image ID is recorded after Docker qualification (CR-2a).
+    """
+
+    PYTHON_STDLIB = "python-stdlib"
+    PYTHON_CHECKS = "python-checks"
+
+
+def _approved_image(image: SandboxImage) -> str | None:
+    """The exact qualified immutable reference per image, or None if unqualified."""
+    if image is SandboxImage.PYTHON_STDLIB:
+        return (
+            "python@sha256:"
+            "82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
+        )
+    # PYTHON_CHECKS: recorded only after the operator builds the image from
+    # sandbox-images/python-checks and its Docker qualification passes.
+    return None
+
+
+def _immutable(reference: str) -> bool:
+    """Digest-pinned repository reference or a content-addressed local image ID."""
+    digest = reference.removeprefix("python@").removeprefix("sha256:")
+    return (
+        reference.startswith(("python@sha256:", "sha256:"))
+        and len(digest) == 64
+        and all(char in "0123456789abcdef" for char in digest)
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class DockerSandboxConfig:
     """Inert operator binding; supported environment is deliberately closed.
 
     The fixed endpoint corresponds to Desktop's local desktop-linux context.
     No context credentials, proxy settings or ambient Docker configuration load.
+    The image is selected only from the closed `SandboxImage` set.
     """
 
     executable: Path
-    image: str = (
-        "python@sha256:82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
-    )
+    profile: SandboxImage = SandboxImage.PYTHON_STDLIB
 
     def __post_init__(self) -> None:
         if not isinstance(self.executable, Path):
@@ -45,12 +80,19 @@ class DockerSandboxConfig:
             or self.executable.name.casefold() != "docker.exe"
         ):
             raise ValueError("explicit native absolute docker.exe path required")
-        # Other pinned images require a new operator qualification; no caller choice.
-        if type(self.image) is not str or self.image != (
-            "python@sha256:"
-            "82bc3c539b8813ada9d68c63b40158fa002f7f33de9bf3312a3dfdc0620dff56"
-        ):
+        if type(self.profile) is not SandboxImage:
+            raise TypeError("sandbox image requires SandboxImage")
+        # Unqualified or mutable references fail closed before any Docker call.
+        reference = _approved_image(self.profile)
+        if reference is None or not _immutable(reference):
             raise ValueError("unsupported reference environment")
+
+    @property
+    def image(self) -> str:
+        reference = _approved_image(self.profile)
+        if reference is None or not _immutable(reference):
+            raise ValueError("unsupported reference environment")
+        return reference
 
 
 @dataclass(frozen=True, slots=True)

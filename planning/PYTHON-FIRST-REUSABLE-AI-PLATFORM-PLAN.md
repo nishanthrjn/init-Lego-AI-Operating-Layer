@@ -20,7 +20,8 @@ M6.5 is complete for its documented scope: user-supplied evidence reports 1,425
 Core tests, two DocuMind tests, clean mypy/lint/format, build/fresh install and
 the routing example. M7 implementation and local qualification are complete;
 see the [M7 plan](M7-AGENT-PLAN.md) and [handoff](../docs/agent.md).
-M8 specialized engineering Agents remain unstarted.
+M8.1 Analyst, M8.2 Reviewer and M8.3 Coding Agent are locally qualified for their
+documented scopes (see their closure records below); M8.4 remains unstarted.
 See the [M6.5 design](M6.5-MODEL-ROUTING-PLAN.md) and
 [validation handoff](../docs/model-routing.md#local-validation-required).
 Other remaining Phase C and later work remains planned and unstarted.

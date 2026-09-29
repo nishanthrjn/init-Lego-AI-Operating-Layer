@@ -184,7 +184,14 @@ consumers; generative media remains a listed exception until CR-1c.
 **M8.3 closure is COMPLETE (2026-09-29):** it passed in a symlink-capable session
 with all six symlink boundary tests passing; see the
 [M8.3 completion report](M8.3-BOUNDED-CODING-PLAN.md#completion-report).
-ForgeAI-1 remains blocked by CR-2a, CR-2b and CR-3. Where the ADR differs
+**CR-2a IMPLEMENTED — DOCKER QUALIFICATION PENDING (2026-09-29):**
+- The closed `SandboxImage` set (PYTHON_STDLIB, and PYTHON_CHECKS fail-closed until
+  its qualified image ID is recorded) and the hash-locked
+  `sandbox-images/python-checks` image are in place.
+- The operator validator is `validate_consumer_readiness_cr2a.py`.
+- The 128 MiB memory question stays open until that run returns memory evidence.
+
+ForgeAI-1 remains blocked by CR-2a qualification, CR-2b and CR-3. Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
@@ -441,7 +448,7 @@ check found no need for a generic app builder.
 | CR-1a | Maintainer | Allocate and decide ADR-014 per §5 | **Yes** |
 | CR-1b | Core runtime | `legoai.runtime.api` + `legoai.runtime.local.open_local_host`; migrate engineering examples and DocuMind | **Yes** |
 | CR-1c | Generative media | Migrate `local_host.prepare_local` to the public host | No |
-| CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Yes** |
+| CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Yes** — implemented, Docker qualification pending |
 | CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Yes** |
 | CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Yes** |
 | CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | No (recommended with ForgeAI-1) |
