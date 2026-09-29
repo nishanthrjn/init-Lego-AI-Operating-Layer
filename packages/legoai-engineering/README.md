@@ -13,7 +13,8 @@ scope. M5 implementation and local validation are complete for the documented
 trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
 Linux workload scope documented below. M6.5 and M7 are locally qualified in Core.
 M8.1 and M8.2 are locally qualified for their documented scopes;
-M8.3 is locally qualified for its documented scope (2026-09-29); M8.4 is unstarted.
+M8.3 is locally qualified for its documented scope (2026-09-29); M8.4 is deferred
+([direction assessment](../../planning/FORGEAI-4-AND-M8.4-DIRECTION.md)).
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first

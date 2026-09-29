@@ -373,7 +373,11 @@ maturity labels, each backed by evidence:
 
 Columns: `Module | Real purpose | Public API | Typical uses | Configurable variation | Adapters | Qualification | Limitations | Consumer guide`.
 
-**Draft rows from current evidence:**
+**Superseded (2026-09-29, CR-4):** the canonical, current catalog is
+[docs/modules/MODULE-CATALOG.md](../docs/modules/MODULE-CATALOG.md). The draft
+rows below are kept as the planning-time snapshot; several are now out of date.
+
+**Draft rows from planning-time evidence (historical):**
 
 | Module | Real purpose | Public API | Typical uses | Configurable variation | Adapters | Qualification | Limitations | Guide |
 |---|---|---|---|---|---|---|---|---|
@@ -537,9 +541,21 @@ A LegoAI capability is **consumer-ready** when an independent application can:
 7. find a working example;
 8. know its current qualification status and limitations.
 
-By this standard, nothing on the Core governed path is consumer-ready today
-(criteria 1 and 4 fail). Engineering M1–M6 are close (they need 4 and 6 documented).
-Generative media is closest overall, but its internals fail 1 indirectly.
+At planning time, by this standard, nothing on the Core governed path was
+consumer-ready (criteria 1 and 4 failed). Engineering M1–M6 were close (they
+needed 4 and 6 documented), and generative media was closest overall, although
+its internals failed 1 indirectly.
+
+**Current (2026-09-29, CR-4):**
+- The Core governed path meets criteria 1 and 4 through the ADR-014 public
+  host (CR-1b).
+- The engineering governed path meets the standard: CR-3 public wiring,
+  `CONSUMING.md`, and clean-install and public-import tests. ForgeAI-1/2/3
+  and DocuMind are independent consumers.
+- Generative media still composes through private reference wiring, so it
+  does not meet criterion 1 until CR-1c.
+
+See [docs/modules/MODULE-CATALOG.md](../docs/modules/MODULE-CATALOG.md).
 
 ## 18. Explicit non-goals
 

@@ -7,7 +7,9 @@ run its user validation launcher before the manual camera smoke test.
 A narrow [configuration-selected Model composition proof](docs/model-composition.md)
 now builds on admitted Catalog contributions and existing governed invocation.
 It includes two adapter realizations with offline substitution tests; live-provider
-behavioral qualification and a public application-authoring facade remain future work.
+behavioral qualification remains future work. The public application entry point
+now exists: the [ADR-014 local governed host](adrs/ADR-014.md)
+(`legoai.runtime.api` / `legoai.runtime.local`) is locally qualified (CR-1b).
 
 LegoAI is a Python-first platform and reusable component ecosystem for composing
 governed AI applications. Reusable Python capabilities and the governed runtime
@@ -17,7 +19,11 @@ and [forward roadmap](planning/PYTHON-FIRST-REUSABLE-AI-PLATFORM-PLAN.md).
 Production-grade operation across the target catalog is the destination;
 [v0.1 qualification](planning/V0.1-RELEASE-READINESS.md) covers the documented
 local DocuMind scope. The minimal one-step Agent foundation is locally qualified
-for its documented scope; Workflows, Teams and ForgeAI remain planned.
+for its documented scope. [ForgeAI](examples/forgeai/README.md)-1/2/3, a consumer
+application, is locally qualified for its documented replay-model scope; generic
+Workflow and Team abstractions remain planned and are not currently justified.
+See the [Module Catalog](docs/modules/MODULE-CATALOG.md) and
+[Assembling applications](docs/ASSEMBLING-APPLICATIONS.md).
 
 M8.1 Repository Analyst is locally qualified for its documented scope.
 It composes authorized bounded file reads with the existing one-step Agent and
@@ -30,7 +36,7 @@ M8.3 Bounded Coding Agent is locally qualified for its documented scope.
 It proposes M4-compatible CREATE/UPDATE changesets after authorized bounded reads;
 it never applies or executes them. See the
 [Coding contract and validation script](packages/legoai-engineering/README.md#m83--bounded-coding-agent).
-M8.4 remains unstarted.
+M8.4 Test/Validation Agent is deferred ([direction assessment](planning/FORGEAI-4-AND-M8.4-DIRECTION.md)).
 
 Every governed capability
 invocation -- including calls to an external Model provider -- passes through
@@ -82,7 +88,7 @@ bindings without provider I/O or authorization; actual calls retain governed
 execution. [M7 Agent foundation](docs/agent.md) adds a single governed Chat step
 with bounded accepted output; implementation and local qualification are complete.
 M8.1 Analyst, M8.2 Reviewer and M8.3 Coding Agent are locally qualified for their
-documented scopes; M8.4 remains unstarted.
+documented scopes; M8.4 is deferred (see the direction assessment above).
 
 ## Quickstart: the DocuMind CLI
 
@@ -110,5 +116,7 @@ See [foundational ports and adapters](docs/ports-and-adapters.md) for existing c
 
 Local ComfyUI text-to-image integration is implemented in the optional
 [generative-media package](packages/legoai-generative-media/README.md).
-[Local validation is pending](planning/COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md);
-ComfyUI remains an external operator-managed runtime.
+It is [locally validated](planning/COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md)
+(deterministic suite and live generation, maintainer-run 2026-09-28);
+ComfyUI remains an external operator-managed runtime. The package still
+composes Core through private reference wiring (CR-1c debt).
