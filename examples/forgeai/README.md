@@ -11,7 +11,8 @@ task** against **one clean local Git repository**:
 It is assembled almost entirely from public LegoAI components. ForgeAI adds
 only the task vocabulary, the run sequence and the operator profile.
 
-**Status:** implemented; local validation pending (`validate_forgeai_1.py`).
+**Status:** locally qualified on 2026-09-29 for the Windows + Docker Desktop
+scope with the offline replay model; see "Qualification evidence".
 
 ## Workflow
 
@@ -197,3 +198,33 @@ present:
 ```powershell
 uv run python .\validate_forgeai_1.py
 ```
+
+## Qualification evidence
+
+On 2026-09-29 the maintainer ran `validate_forgeai_1.py` on Windows with
+Docker Desktop, using the recorded CR-2a image. **All 20 phases passed.**
+
+| Area | Result |
+| --- | --- |
+| Static checks | mypy clean on 14 files plus the validator; Ruff lint and format clean |
+| Domain contracts | 17 passed |
+| Clean-start gate | 3 passed |
+| Fake model and Coding Agent | 5 passed |
+| Authorized mutation | 3 passed |
+| Check orchestration | 2 passed |
+| Check infrastructure failures | 5 passed |
+| Final Git state | 3 passed |
+| Run isolation and same-workspace policy | 3 passed |
+| Architecture and import boundaries | 15 passed |
+| Real-sandbox end-to-end fixture task | 1 passed |
+| Real-Docker finding and missing-Docker paths | 2 passed |
+| Provider/config substitution and CLI | 6 passed |
+| Clean-install package | 1 passed |
+| LegoAI engineering regressions | 133 passed |
+| README demo | `succeeded`; Ruff, mypy and pytest passed; HEAD unchanged; 2 files changed |
+| `git diff --check` | clean |
+
+This qualifies the application composition, governance, mutation, sandboxed
+check and evidence flow **with a deterministic replay model**. It makes no
+claim about live-model proposal quality; the Ollama binding is configurable
+but unqualified. All the limitations listed above still apply.
