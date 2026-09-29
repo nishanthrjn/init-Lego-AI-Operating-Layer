@@ -1,0 +1,287 @@
+"""ForgeAI composition root: operator configuration to one run's adapters.
+
+The only ForgeAI module that names concrete LegoAI adapters or opens the
+public governed host. Each run opens its own host, binds exactly one
+workspace and gets a fresh ExecutionContext. Checks always run in the
+sandbox on the qualified checks image; there is no host check adapter here.
+"""
+
+import os
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+from legoai.execution.values import ExecutionContext
+from legoai.governance.values import GrantId, PolicyRef
+from legoai.kernel.identity import ApplicationId, PrincipalId, TenantId
+from legoai.kernel.references import (
+    ApplicationRef,
+    ConfigurationRef,
+    ConfigurationRevisionRef,
+    PrincipalRef,
+    ReferenceScope,
+)
+from legoai.kernel.versions import Version
+from legoai.runtime.api import (
+    LocalHostConfig,
+    ModelBindingConfig,
+    ModelPurpose,
+    OperatorGrant,
+)
+from legoai.runtime.local import open_local_host
+from legoai_engineering.analyst.authorized import (
+    REPOSITORY_READ_ACTION,
+    AuthorizedRepositoryEvidence,
+)
+from legoai_engineering.checks.authorized import (
+    ENGINEERING_CHECK_ACTION,
+    AuthorizedEngineeringChecks,
+)
+from legoai_engineering.checks.sandboxed import (
+    CheckInputPolicy,
+    SandboxedEngineeringChecks,
+)
+from legoai_engineering.checks.values import CheckKind, CheckPolicy, CheckRequest
+from legoai_engineering.coding.api import CodingAgent
+from legoai_engineering.coding.authorized import AuthorizedCodingEvidence
+from legoai_engineering.git.local import (
+    GitReadPolicy,
+    LocalGitExecutable,
+    LocalGitRepository,
+)
+from legoai_engineering.repository.local import (
+    LocalRepositoryWorkspace,
+    LocalWorkspaceRoot,
+)
+from legoai_engineering.repository.mutation_authorized import (
+    REPOSITORY_MUTATION_ACTION,
+    AuthorizedRepositoryMutation,
+)
+from legoai_engineering.repository.mutation_local import LocalRepositoryMutation
+from legoai_engineering.repository.workspace import RepositoryPath, WorkspacePolicy
+from legoai_engineering.sandbox.docker import (
+    DockerSandbox,
+    DockerSandboxConfig,
+    SandboxImage,
+)
+from legoai_engineering.sandbox.ports import SandboxExecutionPort
+from legoai_engineering.sandbox.values import SandboxPolicy
+
+from forgeai.domain import TaskRequest, TaskResult
+from forgeai.guard import WorkspaceGuard
+from forgeai.worker import RepositoryTaskWorker
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+@dataclass(frozen=True, slots=True)
+class ForgeAIConfig:
+    """Trusted operator configuration; never derived from task text.
+
+    The host configuration carries principal, tenant, policy, grants and model
+    bindings; the selection names one binding. Grants must cover the read,
+    mutation and check actions on `workspace_scope`, plus Chat invocation.
+    """
+
+    repository: Path
+    workspace_policy: WorkspacePolicy
+    editable_paths: tuple[RepositoryPath, ...]
+    git_executable: Path
+    git_policy: GitReadPolicy
+    docker_executable: Path
+    sandbox_policy: SandboxPolicy
+    check_inputs: CheckInputPolicy
+    check_policy: CheckPolicy
+    check_plan: tuple[CheckRequest, ...]
+    host: LocalHostConfig = field(repr=False)
+    model_selection: Mapping[str, object] = field(repr=False)
+    workspace_scope: str = "workspace"
+    sandbox_image: SandboxImage = SandboxImage.PYTHON_CHECKS
+
+    def __post_init__(self) -> None:
+        for value, expected in (
+            (self.workspace_policy, WorkspacePolicy),
+            (self.git_policy, GitReadPolicy),
+            (self.sandbox_policy, SandboxPolicy),
+            (self.check_inputs, CheckInputPolicy),
+            (self.check_policy, CheckPolicy),
+            (self.host, LocalHostConfig),
+            (self.sandbox_image, SandboxImage),
+        ):
+            if type(value) is not expected:
+                raise TypeError(f"ForgeAI configuration requires {expected.__name__}")
+        for path in (self.repository, self.git_executable, self.docker_executable):
+            if not isinstance(path, Path) or not path.is_absolute():
+                raise ValueError("ForgeAI configuration paths must be absolute")
+        if (
+            type(self.check_plan) is not tuple
+            or not 1 <= len(self.check_plan) <= 8
+            or any(type(item) is not CheckRequest for item in self.check_plan)
+        ):
+            raise ValueError("configure one to eight CheckRequest values")
+        if not isinstance(self.model_selection, Mapping):
+            raise TypeError("model selection must be a mapping")
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedRun:
+    worker: RepositoryTaskWorker
+    context: ExecutionContext
+
+
+def prepare_run(
+    config: ForgeAIConfig,
+    guard: WorkspaceGuard,
+    *,
+    clock: Callable[[], datetime] = utc_now,
+    sandbox: SandboxExecutionPort | None = None,
+) -> PreparedRun:
+    """Open a host and wire one workspace. `sandbox` replaces Docker only with
+    another SandboxExecutionPort backend; there is never a host fallback."""
+    if type(config) is not ForgeAIConfig:
+        raise TypeError("prepare_run requires ForgeAIConfig")
+    host = open_local_host(config.host, config.model_selection, clock=clock)
+    reference = replace(
+        config.host.configuration.configuration, instance=config.workspace_scope
+    )
+    scope = config.workspace_scope
+    root = LocalWorkspaceRoot(config.repository)
+    workspace = LocalRepositoryWorkspace(root, config.workspace_policy)
+    reads = AuthorizedRepositoryEvidence(
+        reference,
+        workspace,
+        host.security_context(reference, REPOSITORY_READ_ACTION, scope),
+        host.authorization,
+        config.editable_paths,
+        clock,
+    )
+    mutation = AuthorizedRepositoryMutation(
+        reference,
+        LocalRepositoryMutation(root, config.workspace_policy),
+        host.security_context(reference, REPOSITORY_MUTATION_ACTION, scope),
+        host.authorization,
+        clock,
+    )
+    checks = AuthorizedEngineeringChecks(
+        reference,
+        SandboxedEngineeringChecks(
+            workspace,
+            sandbox
+            if sandbox is not None
+            else DockerSandbox(
+                DockerSandboxConfig(config.docker_executable, config.sandbox_image),
+                config.sandbox_policy,
+            ),
+            config.check_inputs,
+            config.check_policy,
+        ),
+        host.security_context(reference, ENGINEERING_CHECK_ACTION, scope),
+        host.authorization,
+        clock,
+    )
+    worker = RepositoryTaskWorker(
+        os.path.normcase(str(config.repository.resolve())),
+        guard,
+        LocalGitRepository(
+            root, LocalGitExecutable(config.git_executable), config.git_policy
+        ),
+        CodingAgent(AuthorizedCodingEvidence(reads), host.agent_runtime()),
+        mutation,
+        checks,
+        config.check_plan,
+    )
+    return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
+
+
+async def run_task(
+    config: ForgeAIConfig,
+    task: TaskRequest,
+    guard: WorkspaceGuard,
+    *,
+    clock: Callable[[], datetime] = utc_now,
+    sandbox: SandboxExecutionPort | None = None,
+) -> TaskResult:
+    prepared = prepare_run(config, guard, clock=clock, sandbox=sandbox)
+    return await prepared.worker.run(task, prepared.context)
+
+
+REVISION = "forgeai-1"
+
+
+def local_profile(
+    repository: Path,
+    editable_paths: tuple[RepositoryPath, ...],
+    *,
+    bindings: tuple[ModelBindingConfig, ...],
+    binding: str,
+    git_executable: Path,
+    docker_executable: Path,
+    now: datetime,
+    grant_hours: int = 1,
+    denied_actions: frozenset[str] = frozenset(),
+) -> ForgeAIConfig:
+    """The ForgeAI-1 local operator profile for a src/tests Python repository.
+
+    Fixed check plan (Ruff, mypy, pytest) in the sandbox, one workspace, one
+    principal and grants for exactly the four actions a run needs. Grants in
+    `denied_actions` are configured already expired (operator denial).
+    """
+    tenant = TenantId("local")
+    configuration = ConfigurationRef(
+        ApplicationRef(ReferenceScope("operator", tenant), ApplicationId("forgeai")),
+        "forgeai",
+    )
+    scope = "workspace"
+    active = (now - timedelta(minutes=1), now + timedelta(hours=grant_hours))
+    expired = (now - timedelta(hours=2), now - timedelta(hours=1))
+    actions = (
+        ("invoke-capability", ModelPurpose.CHAT.capability_id.value),
+        (REPOSITORY_READ_ACTION, scope),
+        (REPOSITORY_MUTATION_ACTION, scope),
+        (ENGINEERING_CHECK_ACTION, scope),
+    )
+    grants = tuple(
+        OperatorGrant(
+            GrantId(f"forgeai-{index}"),
+            action,
+            resource,
+            *(expired if action in denied_actions else active),
+        )
+        for index, (action, resource) in enumerate(actions)
+    )
+    return ForgeAIConfig(
+        repository=repository,
+        workspace_policy=WorkspacePolicy(
+            262_144, 65_536, 4096, 32, (".git", ".venv", "__pycache__")
+        ),
+        editable_paths=editable_paths,
+        git_executable=git_executable,
+        git_policy=GitReadPolicy(20, 262_144, 256, 4096),
+        docker_executable=docker_executable,
+        sandbox_policy=SandboxPolicy(timeout_seconds=180, max_output_bytes=1_048_576),
+        check_inputs=CheckInputPolicy(
+            (RepositoryPath("src"), RepositoryPath("tests")),
+            (RepositoryPath("pyproject.toml"),),
+        ),
+        check_policy=CheckPolicy(timeout_seconds=120),
+        check_plan=(
+            CheckRequest(
+                CheckKind.RUFF_CHECK, (RepositoryPath("src"), RepositoryPath("tests"))
+            ),
+            CheckRequest(CheckKind.MYPY, (RepositoryPath("src"),)),
+            CheckRequest(CheckKind.PYTEST, (RepositoryPath("tests"),)),
+        ),
+        host=LocalHostConfig(
+            ConfigurationRevisionRef(configuration, REVISION, Version(1, 0, 0)),
+            PrincipalRef("operator", PrincipalId("forgeai")),
+            PolicyRef("operator", "forgeai", Version(1, 0, 0)),
+            grants,
+            bindings,
+            max_executions=16,
+        ),
+        model_selection={"revision": REVISION, "binding": binding},
+        workspace_scope=scope,
+    )

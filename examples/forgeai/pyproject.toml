@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling==1.32.3", "editables==0.5"]
+build-backend = "hatchling.build"
+
+[project]
+name = "forgeai"
+version = "0.1.0.dev0"
+description = "ForgeAI-1: a single governed repository task worker assembled from public LegoAI components"
+requires-python = ">=3.14,<3.15"
+dependencies = ["legoai-reference==0.1.0.dev0", "legoai-engineering[analyst]==0.1.0.dev0"]
+license = "Apache-2.0"
+
+[project.scripts]
+forgeai = "forgeai.cli:main"
+
+[tool.uv.sources]
+legoai-reference = { path = "../..", editable = true }
+legoai-engineering = { path = "../../packages/legoai-engineering", editable = true }
+
+[dependency-groups]
+dev = [
+    "hatchling==1.32.3",
+    "editables==0.5",
+    "pytest==9.1.1",
+    "mypy==2.3.1",
+    "ruff==0.16.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forgeai"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/fixtures", "/demo.py", "/README.md", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "tests"]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib -ra"
+
+[tool.mypy]
+mypy_path = [".", "tests"]
+python_version = "3.14"
+strict = true
+warn_unused_ignores = true
+
+[tool.ruff]
+target-version = "py314"
+preview = false
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
