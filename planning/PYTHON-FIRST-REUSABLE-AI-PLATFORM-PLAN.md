@@ -21,7 +21,8 @@ Core tests, two DocuMind tests, clean mypy/lint/format, build/fresh install and
 the routing example. M7 implementation and local qualification are complete;
 see the [M7 plan](M7-AGENT-PLAN.md) and [handoff](../docs/agent.md).
 M8.1 Analyst, M8.2 Reviewer and M8.3 Coding Agent are locally qualified for their
-documented scopes (see their closure records below); M8.4 remains unstarted.
+documented scopes (see their closure records below); M8.4 is deferred by the
+[direction assessment](FORGEAI-4-AND-M8.4-DIRECTION.md).
 See the [M6.5 design](M6.5-MODEL-ROUTING-PLAN.md) and
 [validation handoff](../docs/model-routing.md#local-validation-required).
 Other remaining Phase C and later work remains planned and unstarted.
@@ -156,6 +157,14 @@ K may precede later rows when an actual consumer makes it a prerequisite;
 it never bypasses security or authoring gates. G may supply a minimal
 deterministic harness before F only if F's evaluation consumer requires it;
 record a narrowed milestone rather than creating a second orchestration model.
+
+**Current note (2026-09-29, CR-4):** ForgeAI-1/2/3 showed that an
+application-owned fixed sequence can reach the H/J territory without a generic
+Workflow (G). That sequence is: gated stages, one independent review, and exactly
+one bounded rework. This is evidence about the *order*; it does **not** complete
+phases G, H or I. Workflow and Team remain unjustified until a second,
+materially different consumer needs the same semantics. See the
+[direction assessment](FORGEAI-4-AND-M8.4-DIRECTION.md) §11.
 
 ## L. ForgeAI dependency path
 
