@@ -77,8 +77,8 @@ text changesets with digest preconditions; implementation and local validation
 are complete for the documented trusted local scope. M5 adds typed pytest,
 Ruff check/format-check and mypy operations; implementation and local validation
 are complete for the documented scope. These execute trusted local code without isolation.
-Governed runtime publication, Git mutation and engineering Agents remain
-unimplemented. M6 adds a separate bounded Python sandbox capability targeting
+Governed runtime publication of engineering operations and Git mutation remain
+unimplemented; the M8.1–M8.3 engineering Agents now exist (see below). M6 adds a separate bounded Python sandbox capability targeting
 Docker Desktop Linux. Implementation and local qualification are complete for
 the documented bounded workload scope; see the [M6 completion report](planning/ENGINEERING-M6-IMPLEMENTATION.md#completion-report).
 Engineering workload isolation is distinct from Plugin isolation: ADR-012 remains
