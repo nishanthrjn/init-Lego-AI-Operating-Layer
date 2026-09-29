@@ -1,4 +1,4 @@
-"""ForgeAI-1 task vocabulary: immutable values only, no effects.
+"""ForgeAI task vocabulary (ForgeAI-2): immutable values only, no effects.
 
 A task carries intent only: objective, bounded targets and constraints. Every
 infrastructure choice (repository root, model, grants, sandbox, checks) is
@@ -20,6 +20,11 @@ from legoai_engineering.git.values import GitRepositoryState
 from legoai_engineering.repository.mutation import RepositoryMutationResult
 from legoai_engineering.repository.mutation_errors import MutationConflictReason
 from legoai_engineering.repository.workspace import RepositoryPath
+from legoai_engineering.reviewer.values import (
+    ReviewDecision,
+    ReviewResult,
+    ReviewStatus,
+)
 
 LIMITATIONS = (
     "Checks ran in the qualified sandbox; a pass is an observed contained "
@@ -27,6 +32,9 @@ LIMITATIONS = (
     "Check results do not identify exactly which files were copied into the "
     "sandbox; only the configured check requests are recorded.",
     "Git state is operator evidence only and was never disclosed to the model.",
+    "The independent review is a model opinion from a distinct Agent "
+    "definition on the same configured model binding; it is not proof of "
+    "correctness, independence of model weights, or authorization.",
 )
 
 
@@ -101,6 +109,20 @@ class TaskFailure(Enum):
     FINAL_STATE_UNAVAILABLE = "final Git state could not be observed"
     HEAD_CHANGED = "HEAD changed during the run"
     UNEXPECTED_CHANGES = "working tree differs from the applied changes"
+    # The review could not complete (execution failure, not an opinion).
+    REVIEW_INPUT_FAILED = "review material could not be assembled within bounds"
+    REVIEW_FAILED = "the review model call did not complete"
+    REVIEW_OUTPUT_INVALID = "the reviewer output was not a valid review"
+    # The review completed and withheld acceptance (opinion).
+    REVIEW_CHANGES_REQUIRED = "the independent review requires changes"
+    REVIEW_INSUFFICIENT_EVIDENCE = "the independent review found evidence insufficient"
+
+
+class ReviewInputFailure(Enum):
+    READ_DENIED = "authorized read of changed files was denied"
+    READ_UNAVAILABLE = "changed files could not be read within bounds"
+    MATERIAL_BOUNDS = "review material exceeds the reviewer contract bounds"
+    CONTEXT_BUDGET = "serialized review exceeds the reviewer context budget"
 
 
 _REJECTIONS = frozenset(
@@ -166,6 +188,9 @@ class TaskEvidence:
     checks: tuple[CheckRecord, ...] = ()
     final: GitRepositoryState | None = None
     final_failure: GitFailure | None = None
+    review_input_failure: ReviewInputFailure | None = None
+    review_materials: tuple[tuple[str, RepositoryPath], ...] = ()
+    review: ReviewResult | None = field(default=None, repr=False)
     limitations: tuple[str, ...] = LIMITATIONS
 
     def __post_init__(self) -> None:
@@ -179,6 +204,30 @@ class TaskEvidence:
             raise ValueError("check evidence must follow the configured order")
         if len(self.temporary_paths) > 128:
             raise ValueError("too many temporary paths")
+        if len(self.review_materials) > 8:
+            raise ValueError("too many review materials")
+        if self.review is not None and type(self.review) is not ReviewResult:
+            raise TypeError("review evidence requires ReviewResult")
+
+    @property
+    def gates_passed(self) -> bool:
+        """Every deterministic gate passed: applied, checks, HEAD and paths."""
+        return (
+            self.applied is not None
+            and self.start is not None
+            and self.final is not None
+            and bool(self.planned_checks)
+            and len(self.checks) == len(self.planned_checks)
+            and all(record.passed for record in self.checks)
+            and self.final.head == self.start.head
+            and {entry.path for entry in self.final.entries} == set(self.changed_paths)
+        )
+
+    @property
+    def review_decision(self) -> ReviewDecision | None:
+        if self.review is None or self.review.review is None:
+            return None
+        return self.review.review.decision
 
     @property
     def changed_paths(self) -> tuple[RepositoryPath, ...]:
@@ -202,19 +251,20 @@ class TaskResult:
         if type(self.evidence) is not TaskEvidence:
             raise TypeError("task result requires TaskEvidence")
         evidence = self.evidence
+        reviewed = evidence.review is not None or evidence.review_input_failure
+        if reviewed and not evidence.gates_passed:
+            raise ValueError("review evidence requires every deterministic gate")
         if self.disposition is TaskDisposition.SUCCEEDED:
             if self.failure is not None:
                 raise ValueError("a successful task carries no failure")
-            if (
-                evidence.applied is None
-                or evidence.final is None
-                or evidence.start is None
-                or len(evidence.checks) != len(evidence.planned_checks)
-                or not evidence.planned_checks
-                or not all(record.passed for record in evidence.checks)
-                or evidence.final.head != evidence.start.head
-            ):
+            if not evidence.gates_passed:
                 raise ValueError("success requires applied changes and passed checks")
+            if (
+                evidence.review is None
+                or evidence.review.status is not ReviewStatus.COMPLETED
+                or evidence.review_decision is not ReviewDecision.ACCEPT
+            ):
+                raise ValueError("success requires a completed ACCEPT review")
             return
         if type(self.failure) is not TaskFailure:
             raise TypeError("an unsuccessful task requires TaskFailure")

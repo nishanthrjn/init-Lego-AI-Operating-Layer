@@ -60,6 +60,7 @@ from legoai_engineering.repository.mutation_authorized import (
 )
 from legoai_engineering.repository.mutation_local import LocalRepositoryMutation
 from legoai_engineering.repository.workspace import RepositoryPath, WorkspacePolicy
+from legoai_engineering.reviewer.api import IndependentReviewer
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
     DockerSandboxConfig,
@@ -98,6 +99,7 @@ class ForgeAIConfig:
     check_plan: tuple[CheckRequest, ...]
     host: LocalHostConfig = field(repr=False)
     model_selection: Mapping[str, object] = field(repr=False)
+    review_criteria: tuple[str, ...] = field(repr=False)
     workspace_scope: str = "workspace"
     sandbox_image: SandboxImage = SandboxImage.PYTHON_CHECKS
 
@@ -124,6 +126,12 @@ class ForgeAIConfig:
             raise ValueError("configure one to eight CheckRequest values")
         if not isinstance(self.model_selection, Mapping):
             raise TypeError("model selection must be a mapping")
+        if (
+            type(self.review_criteria) is not tuple
+            or not 1 <= len(self.review_criteria) <= 8
+            or any(type(item) is not str for item in self.review_criteria)
+        ):
+            raise ValueError("configure one to eight review criteria")
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,16 +190,30 @@ def prepare_run(
         host.authorization,
         clock,
     )
+    runtime = host.agent_runtime()
+
+    def review_context(coding: ExecutionContext) -> ExecutionContext:
+        # A fresh Chat execution for the reviewer, correlated with the run.
+        return host.model_execution(
+            ModelPurpose.CHAT,
+            correlation=coding.correlation_id,
+            causation=coding.operation,
+        )
+
     worker = RepositoryTaskWorker(
         os.path.normcase(str(config.repository.resolve())),
         guard,
         LocalGitRepository(
             root, LocalGitExecutable(config.git_executable), config.git_policy
         ),
-        CodingAgent(AuthorizedCodingEvidence(reads), host.agent_runtime()),
+        CodingAgent(AuthorizedCodingEvidence(reads), runtime),
         mutation,
         checks,
         config.check_plan,
+        IndependentReviewer(runtime),
+        reads,
+        config.review_criteria,
+        review_context,
     )
     return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
 
@@ -209,6 +231,13 @@ async def run_task(
 
 
 REVISION = "forgeai-1"
+REVIEW_CRITERIA = (
+    "correctness: the change implements the objective without defects",
+    "requested behavior: every requirement stated in the objective is met",
+    "test adequacy: tests cover the new behavior, including rejected inputs",
+    "maintainability: the change is clear and consistent with the code",
+    "unintended changes: nothing beyond the objective was changed",
+)
 
 
 def local_profile(
@@ -225,8 +254,9 @@ def local_profile(
 ) -> ForgeAIConfig:
     """The ForgeAI-1 local operator profile for a src/tests Python repository.
 
-    Fixed check plan (Ruff, mypy, pytest) in the sandbox, one workspace, one
-    principal and grants for exactly the four actions a run needs. Grants in
+    Fixed check plan (Ruff, mypy, pytest) in the sandbox, fixed review
+    criteria, one workspace, one principal and grants for exactly the four
+    actions a run needs (the reviewer reuses the read and Chat grants). Grants in
     `denied_actions` are configured already expired (operator denial).
     """
     tenant = TenantId("local")
@@ -283,5 +313,6 @@ def local_profile(
             max_executions=16,
         ),
         model_selection={"revision": REVISION, "binding": binding},
+        review_criteria=REVIEW_CRITERIA,
         workspace_scope=scope,
     )

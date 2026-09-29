@@ -160,6 +160,9 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
         "tuple[CheckRequest, ...]",
         "tuple[CheckRecord, ...]",
         "tuple[str, ...]",
+        "ReviewInputFailure | None",
+        "tuple[tuple[str, RepositoryPath], ...]",
+        "ReviewResult | None",
     )
     annotations = annotationlib.get_annotations(
         TaskEvidence, format=annotationlib.Format.STRING
@@ -167,3 +170,54 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
     assert set(annotations) == {item.name for item in dataclasses.fields(TaskEvidence)}
     for name, annotation in annotations.items():
         assert annotation in allowed, name
+
+
+def passed_evidence(**changes: object) -> TaskEvidence:
+    from legoai_engineering.git.values import GitChange, GitStatusEntry
+    from legoai_engineering.repository.mutation import (
+        FileChangeKind as Kind,
+    )
+    from legoai_engineering.repository.mutation import (
+        FileChangeResult,
+        RepositoryMutationResult,
+        digest_text,
+    )
+
+    path = RepositoryPath("src/a.py")
+    applied = RepositoryMutationResult(
+        (FileChangeResult(path, Kind.UPDATE, digest_text("a"), digest_text("b")),)
+    )
+    entry = GitStatusEntry(path, GitChange.UNCHANGED, GitChange.MODIFIED, False)
+    return evidence(
+        start=GitRepositoryState(HEAD, ()),
+        final=GitRepositoryState(HEAD, (entry,)),
+        applied=applied,
+        checks=(CheckRecord(CHECK, CheckResult(CheckKind.PYTEST, 0, b"", b"")),),
+        **changes,
+    )
+
+
+def test_success_requires_a_completed_accept_review() -> None:
+    gated = passed_evidence()
+    assert gated.gates_passed and gated.review_decision is None
+    with pytest.raises(ValueError):
+        TaskResult(task(), TaskDisposition.SUCCEEDED, None, gated)
+
+
+def test_review_evidence_requires_every_deterministic_gate() -> None:
+    from forgeai.domain import ReviewInputFailure
+
+    failure = ReviewInputFailure.MATERIAL_BOUNDS
+    TaskResult(
+        task(),
+        TaskDisposition.FAILED,
+        TaskFailure.REVIEW_INPUT_FAILED,
+        passed_evidence(review_input_failure=failure),
+    )
+    with pytest.raises(ValueError):
+        TaskResult(
+            task(),
+            TaskDisposition.FAILED,
+            TaskFailure.REVIEW_INPUT_FAILED,
+            evidence(review_input_failure=failure),
+        )

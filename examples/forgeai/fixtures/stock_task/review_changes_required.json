@@ -1,0 +1,19 @@
+{
+  "decision": "changes_required",
+  "summary": "The validation is correct but the error messages are not tested.",
+  "findings": [
+    {
+      "category": "testing",
+      "severity": "blocking",
+      "message": "Tests assert ValueError without checking which rule failed.",
+      "evidence_refs": [
+        "file-2"
+      ],
+      "required_action": "Match the expected message in each rejected case."
+    }
+  ],
+  "risks": [
+    "Rules could be confused without a failing test."
+  ],
+  "unknowns": []
+}

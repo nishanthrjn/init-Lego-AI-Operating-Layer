@@ -1,0 +1,9 @@
+{
+  "decision": "insufficient_evidence",
+  "summary": "Callers of reserve were not supplied, so impact is unknown.",
+  "findings": [],
+  "risks": [],
+  "unknowns": [
+    "Whether existing callers rely on negative results."
+  ]
+}

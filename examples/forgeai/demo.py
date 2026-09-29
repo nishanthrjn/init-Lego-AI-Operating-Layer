@@ -1,9 +1,10 @@
-"""ForgeAI-1 offline demonstration: the fixture task end to end.
+"""ForgeAI offline demonstration: the reviewed fixture task end to end.
 
 Test-harness code, not part of the ForgeAI package. It provisions a fresh
 committed fixture repository (ForgeAI itself never creates, commits or
 cleans repositories), then runs the `forgeai` CLI with the deterministic
-replay model. Checks run in the real Docker sandbox. Usage:
+replay model (one Coding Agent output, one reviewer output). Checks run in
+the real Docker sandbox. Usage:
 
     python demo.py
 """
@@ -77,7 +78,9 @@ def main() -> int:
     with TemporaryDirectory(prefix="forgeai-demo-") as temporary:
         repository = create_repository(Path(temporary) / "repo", Path(executable))
         arguments = [str(repository), "--objective", OBJECTIVE, "--binding", "replay"]
+        # Recorded outputs in call order: the Coding Agent, then the reviewer.
         arguments += ["--replay", str(FIXTURE / "proposal.json")]
+        arguments += ["--replay", str(FIXTURE / "review_accept.json")]
         for target in TARGETS:
             arguments += ["--target", target]
         return forgeai(arguments)

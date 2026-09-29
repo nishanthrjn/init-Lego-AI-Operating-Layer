@@ -51,8 +51,16 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
         names = {n for n in wheel.namelist() if ".dist-info/" not in n}
         assert names == {
             f"forgeai/{m}.py"
-            for m in ("__init__", "domain", "guard", "worker", "composition", "cli")
-        }
+            for m in (
+                "__init__",
+                "domain",
+                "guard",
+                "review",
+                "worker",
+                "composition",
+                "cli",
+            )
+        } | {"forgeai/py.typed"}
         metadata = wheel.read(
             next(n for n in wheel.namelist() if n.endswith("METADATA"))
         ).decode()
@@ -76,7 +84,8 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
         + [str(w) for w in sorted(wheels.glob("*.whl"))],
         tmp_path,
     )
-    # The installed ForgeAI sources import only public LegoAI modules.
+    # The installed ForgeAI sources import only public LegoAI modules, and
+    # both Agents come from the installed engineering wheel.
     site = environment / "Lib" / "site-packages" / "forgeai"
     for path in site.glob("*.py"):
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
@@ -89,10 +98,20 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     shutil.copy2(PACKAGE / "demo.py", application / "demo.py")
     shutil.copytree(PACKAGE / "fixtures", application / "fixtures")
     probe = run(
-        [str(python), "-I", "-c", "import forgeai, sys; print(forgeai.__file__)"],
+        [
+            str(python),
+            "-I",
+            "-c",
+            "import forgeai, legoai_engineering.coding.api as c, "
+            "legoai_engineering.reviewer.api as r; "
+            "print(forgeai.__file__); print(c.__file__); print(r.__file__); "
+            "print(c.CodingAgent.__name__, r.IndependentReviewer.__name__)",
+        ],
         application,
     )
-    assert Path(probe.stdout.strip()).is_relative_to(environment)
+    *files, agents = probe.stdout.strip().splitlines()
+    assert all(Path(file).is_relative_to(environment) for file in files)
+    assert agents == "CodingAgent IndependentReviewer"
     # -I: no checkout, no PYTHONPATH, no user site; only the installed wheels.
     result = run([str(python), "-I", str(application / "demo.py")], application)
     lines = result.stdout.splitlines()
@@ -102,5 +121,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     assert "check mypy: passed" in lines
     assert "check pytest: passed" in lines
     assert any(line.startswith("final HEAD: unchanged") for line in lines)
+    # Two replay model calls: the Coding Agent, then the reviewer's ACCEPT.
+    assert "review: accept" in lines
     assert (environment / "Scripts" / "forgeai.exe").is_file()
     assert sys.prefix != str(environment)
