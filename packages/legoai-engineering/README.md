@@ -1512,6 +1512,18 @@ set):
 
 ```powershell
 Push-Location packages/legoai-engineering
-uv run --locked --no-sync python -m pytest -p no:cacheprovider -q -rs -s tests/test_sandbox_checks_docker.py
+$basetemp = Join-Path ([IO.Path]::GetTempPath()) ('legoai-cr2a-' + [guid]::NewGuid().ToString('N'))
+uv run --locked --no-sync python -m pytest -p no:cacheprovider --basetemp $basetemp -q -rs -s tests/test_sandbox_checks_docker.py
 Pop-Location
 ```
+
+A fresh `--basetemp` avoids pytest's shared Windows temp-root cleanup failure
+(`PermissionError` on `pytest-of-<user>\pytest-current` after the tests finish).
+
+**Post-enable confirmation (2026-09-29):** the maintainer re-ran all 16 Docker
+tests against the recorded ID, with no candidate variable set. All tests passed
+with matching evidence: mypy about 67 MB, pytest 40–66 MB, Ruff about 10 MB,
+`oom_kill` 0, and memory exhaustion reported as `RESOURCE_LIMIT`. pytest's
+default temp-root cleanup then raised the Windows `PermissionError` described
+above, after the tests had finished. That is an environment issue, not a test
+result.
