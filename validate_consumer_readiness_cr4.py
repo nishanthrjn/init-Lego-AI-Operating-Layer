@@ -208,6 +208,7 @@ def phase_stale_statuses() -> None:
         "Workflows, Teams and ForgeAI remain planned",
         "public application-authoring facade remain future work",
         "M8.4 remains unstarted",
+        "Git mutation and engineering Agents remain",
         "[Local validation is pending](planning/COMFYUI-TEXT-TO-IMAGE",
     ):
         if phrase in readme:
