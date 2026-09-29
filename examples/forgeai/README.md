@@ -15,8 +15,9 @@ the operator profile. This is a single fixed sequence, not an autonomous
 engineering team: there is no planner, rework loop, retry or memory.
 
 **Status:**
-- **ForgeAI-2** (independent review gate): implemented; local validation
-  pending (`validate_forgeai_2.py`).
+- **ForgeAI-2** (independent review gate): locally qualified on 2026-09-29
+  for the Windows + Docker Desktop scope with replay models; see
+  "ForgeAI-2 qualification evidence".
 - **ForgeAI-1** (single task worker without review): locally qualified on
   2026-09-29; see "ForgeAI-1 qualification evidence".
 
@@ -268,6 +269,47 @@ present:
 ```powershell
 uv run python .\validate_forgeai_2.py
 ```
+
+## ForgeAI-2 qualification evidence
+
+On 2026-09-29 the maintainer ran `validate_forgeai_2.py` on Windows with
+Docker Desktop, using the recorded CR-2a image. **All phases passed.**
+
+| Area | Result |
+| --- | --- |
+| Static checks | mypy clean on 16 files plus the validator; Ruff lint and format clean |
+| Domain-contract extensions | 19 passed |
+| Review input: construction, bounds, disclosure | 6 passed |
+| Reviewer gating and order | 5 passed |
+| ACCEPT path | 2 passed |
+| CHANGES_REQUIRED path | 1 passed |
+| INSUFFICIENT_EVIDENCE path | 1 passed |
+| Reviewer execution failures | 4 passed |
+| No rework and no retry | 3 passed |
+| Evidence and result invariants | 4 passed |
+| Architecture and import boundaries | 21 passed |
+| Replay + real-Docker ACCEPT end-to-end | 1 passed |
+| Real-Docker pre-review failure paths | 2 passed |
+| Clean-install execution | 1 passed |
+| M8.2 reviewer regressions | 33 passed |
+| ForgeAI-1 regressions | 30 passed |
+| README demo | `succeeded`; Ruff, mypy and pytest passed; HEAD unchanged; `review: accept` |
+| `git diff --check` | clean |
+
+This qualifies the reviewed application flow **with deterministic replay
+outputs for both model calls**:
+
+- review gating after the deterministic gates;
+- exactly two model calls;
+- the decision mapping;
+- the separation of execution failures from opinions;
+- no rework or rollback;
+- the disclosure boundary;
+- the evidence.
+
+It makes no claim about live-model proposal or review quality, and it does
+not show that the reviewer is independent beyond having a distinct Agent
+definition. All the limitations listed above still apply.
 
 ## ForgeAI-1 qualification evidence
 

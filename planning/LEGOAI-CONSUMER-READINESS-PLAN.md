@@ -573,8 +573,11 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
   `examples/forgeai/README.md`, "Qualification evidence".
 - Live-model quality is not qualified.
 
-**ForgeAI-2 IMPLEMENTED — LOCAL VALIDATION PENDING (2026-09-29):**
+**ForgeAI-2 COMPLETE — LOCALLY QUALIFIED (2026-09-29):**
 - It adds one independent review gate, the unchanged M8.2 `IndependentReviewer`.
 - The review runs after every deterministic gate: exactly two model calls, with no rework, retry or rollback.
 - No LegoAI change or platform gap was needed.
-- It is not qualified until `validate_forgeai_2.py` passes locally.
+- All phases of `validate_forgeai_2.py` passed. They used replay outputs for
+  both calls and real sandboxed checks; see `examples/forgeai/README.md`,
+  "ForgeAI-2 qualification evidence".
+- Live-model quality is not qualified.
