@@ -1,0 +1,15 @@
+{
+  "summary": "Assert the specific validation message in each rejected case.",
+  "changes": [
+    {
+      "path": "tests/test_stock.py",
+      "operation": "update",
+      "content": "import pytest\n\nfrom inventory.stock import reserve\n\n\ndef test_reserve_reduces_stock() -> None:\n    assert reserve(10, 3) == 7\n\n\ndef test_reserve_allows_all_stock() -> None:\n    assert reserve(5, 5) == 0\n\n\n@pytest.mark.parametrize(\n    (\"available\", \"requested\", \"message\"),\n    [\n        (-1, 1, \"available stock must not be negative\"),\n        (5, 0, \"requested units must be positive\"),\n        (5, -2, \"requested units must be positive\"),\n        (5, 6, \"requested units exceed available stock\"),\n    ],\n)\ndef test_reserve_rejects_invalid_requests(\n    available: int, requested: int, message: str\n) -> None:\n    with pytest.raises(ValueError, match=message):\n        reserve(available, requested)\n",
+      "reason": "Each rejected input now checks which rule reported it."
+    }
+  ],
+  "risks": [],
+  "unknowns": [
+    "The proposal was not executed by the model."
+  ]
+}

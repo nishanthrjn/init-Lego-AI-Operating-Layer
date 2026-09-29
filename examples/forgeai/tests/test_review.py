@@ -8,15 +8,21 @@ outputs are consumed in call order: Coding Agent first, reviewer second.
 import asyncio
 import json
 from dataclasses import replace
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 from forgeai_support import (
     REVIEW_CHANGES,
     REVIEW_INSUFFICIENT,
+    REWORK,
+    Clock,
     FakeSandbox,
+    LoggedMutation,
+    LoggedReplay,
+    SpyReader,
     config,
+    logged_run,
     proposal,
     replay,
     repository,
@@ -26,18 +32,11 @@ from legoai.intelligence.model.ports import (
     ModelPreflightError,
     ModelResponseUncertainError,
 )
-from legoai.intelligence.model.values import ChatRequest, ChatResult
 from legoai.kernel.effects import EffectExtent
 from legoai_engineering.analyst.authorized import REPOSITORY_READ_ACTION
-from legoai_engineering.analyst.values import RepositoryEvidence
 from legoai_engineering.coding.definition import coding_definition
 from legoai_engineering.git.errors import GitError, GitFailure
 from legoai_engineering.git.values import GitRepositoryState
-from legoai_engineering.repository.mutation import (
-    RepositoryChangeSet,
-    RepositoryMutationResult,
-)
-from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.reviewer.definition import reviewer_definition
 from legoai_engineering.reviewer.values import (
     FindingSeverity,
@@ -45,8 +44,7 @@ from legoai_engineering.reviewer.values import (
     ReviewStatus,
 )
 
-from forgeai.cli import ReplayModel
-from forgeai.composition import ForgeAIConfig, PreparedRun, prepare_run
+from forgeai.composition import prepare_run
 from forgeai.domain import (
     ReviewInputFailure,
     TaskDisposition,
@@ -54,106 +52,6 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
-from forgeai.worker import RepositoryTaskWorker
-
-
-class Clock:
-    def __init__(self) -> None:
-        self.now = datetime.now(UTC)
-
-    def __call__(self) -> datetime:
-        return self.now
-
-
-class LoggedReplay(ReplayModel):
-    """Replay model that logs call order and records each request."""
-
-    def __init__(
-        self,
-        log: list[str],
-        *outputs: str | Exception,
-        after_first: Clock | None = None,
-    ) -> None:
-        super().__init__(*outputs)
-        self.log = log
-        self.requests: list[ChatRequest] = []
-        self.after_first = after_first
-
-    async def chat(self, request: ChatRequest) -> ChatResult:
-        self.log.append("model")
-        self.requests.append(request)
-        try:
-            return await super().chat(request)
-        finally:
-            if self.after_first is not None and self.calls == 1:
-                self.after_first.now += timedelta(hours=2)
-
-
-class LoggedSandbox(FakeSandbox):
-    def __init__(self, log: list[str], exits: tuple[int, ...] = (0, 0, 0)) -> None:
-        super().__init__(exits)
-        self.log = log
-
-    def execute(self, request, cancellation=None):  # type: ignore[no-untyped-def]
-        self.log.append("check")
-        return super().execute(request, cancellation)
-
-
-class LoggedMutation:
-    def __init__(self, log: list[str], inner: object) -> None:
-        self.log = log
-        self.inner = inner
-        self.calls = 0
-
-    def apply(self, changeset: RepositoryChangeSet) -> RepositoryMutationResult:
-        self.log.append("apply")
-        self.calls += 1
-        return self.inner.apply(changeset)  # type: ignore[attr-defined,no-any-return]
-
-
-class SpyReader:
-    def __init__(self, inner: object) -> None:
-        self.inner = inner
-        self.requests: list[tuple[RepositoryPath, ...]] = []
-
-    async def acquire(self, targets, tenant):  # type: ignore[no-untyped-def]
-        self.requests.append(targets)
-        result: RepositoryEvidence = await self.inner.acquire(targets, tenant)  # type: ignore[attr-defined]
-        return result
-
-
-def logged_run(
-    root: Path,
-    *outputs: str | Exception,
-    exits: tuple[int, ...] = (0, 0, 0),
-    cfg: ForgeAIConfig | None = None,
-    clock: Clock | None = None,
-    advance: bool = False,
-) -> tuple[TaskResult, LoggedReplay, list[str], LoggedMutation, SpyReader]:
-    log: list[str] = []
-    model = LoggedReplay(log, *outputs, after_first=clock if advance else None)
-    base = cfg or config(root, model)
-    if cfg is not None:
-        base = replace(
-            base,
-            host=replace(
-                base.host,
-                bindings=config(root, model).host.bindings,
-            ),
-        )
-    prepared: PreparedRun = prepare_run(
-        base,
-        WorkspaceGuard(),
-        sandbox=LoggedSandbox(log, exits),
-        **({"clock": clock} if clock is not None else {}),
-    )
-    mutation = LoggedMutation(log, prepared.worker.mutation)
-    reader = SpyReader(prepared.worker.reader)
-    worker: RepositoryTaskWorker = replace(
-        prepared.worker, mutation=mutation, reader=reader
-    )
-    result = asyncio.run(worker.run(task(), prepared.context))
-    return result, model, log, mutation, reader
 
 
 def accept(
@@ -232,14 +130,18 @@ def test_no_review_when_final_git_integrity_fails(tmp_path: Path) -> None:
 # --- H/I. Review opinions stop the run: no rework, no rollback ---------------
 
 
-def test_changes_required_stops_without_rework_and_keeps_changes(
+def test_changes_required_after_rework_is_terminal_and_keeps_changes(
     tmp_path: Path,
 ) -> None:
+    # ForgeAI-3: review #1 CHANGES_REQUIRED starts the single rework; a second
+    # CHANGES_REQUIRED is terminal. Nothing is reverted.
     root = repository(tmp_path)
-    result, model, log, mutation, _ = logged_run(root, proposal(), REVIEW_CHANGES)
+    result, model, log, mutation, _ = logged_run(
+        root, proposal(), REVIEW_CHANGES, REWORK, REVIEW_CHANGES
+    )
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.REVIEW_CHANGES_REQUIRED
-    assert model.calls == 2 and mutation.calls == 1 and log.count("check") == 3
+    assert model.calls == 4 and mutation.calls == 2 and log.count("check") == 6
     assert log[-1] == "model"
     review = result.evidence.review
     assert review is not None and review.review is not None
@@ -250,6 +152,7 @@ def test_changes_required_stops_without_rework_and_keeps_changes(
     # Applied changes remain; ForgeAI never reverts them.
     text = (root / "src/inventory/stock.py").read_text(encoding="utf-8")
     assert "requested units exceed available stock" in text
+    assert "match=message" in (root / "tests/test_stock.py").read_text(encoding="utf-8")
     assert result.evidence.final is not None and len(result.evidence.final.entries) == 2
 
 

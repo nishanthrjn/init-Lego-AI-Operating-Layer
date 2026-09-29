@@ -123,5 +123,20 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     assert any(line.startswith("final HEAD: unchanged") for line in lines)
     # Two replay model calls: the Coding Agent, then the reviewer's ACCEPT.
     assert "review: accept" in lines
+    assert not any(line.startswith("attempts:") for line in lines)
+    # ForgeAI-3 bounded rework from the installed wheels: four replay calls
+    # (coding, review CHANGES_REQUIRED, rework, review ACCEPT), two authorized
+    # applies and two real sandboxed check passes.
+    rework = run(
+        [str(python), "-I", str(application / "demo.py"), "rework"], application
+    )
+    lines = rework.stdout.splitlines()
+    assert lines[0] == "disposition: succeeded", rework.stdout
+    assert "attempts: 2 (one rework after review #1 required changes)" in lines
+    assert "attempt 1 checks: ruff_check passed, mypy passed, pytest passed" in lines
+    assert "attempt 1 review: changes_required" in lines
+    assert "check pytest: passed" in lines
+    assert any(line.startswith("final HEAD: unchanged") for line in lines)
+    assert "review: accept" in lines
     assert (environment / "Scripts" / "forgeai.exe").is_file()
     assert sys.prefix != str(environment)

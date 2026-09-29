@@ -5,14 +5,22 @@ SandboxedEngineeringChecks adapter still maps every outcome; real Docker runs
 are in the separately marked end-to-end tests.
 """
 
+import asyncio
 import json
 import shutil
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from legoai.intelligence.model.values import ChatRequest, ChatResult
 from legoai.runtime.api import ModelBindingConfig
+from legoai_engineering.analyst.values import RepositoryEvidence
 from legoai_engineering.coding.values import CodingTarget
-from legoai_engineering.repository.mutation import FileChangeKind
+from legoai_engineering.repository.mutation import (
+    FileChangeKind,
+    RepositoryChangeSet,
+    RepositoryMutationResult,
+)
 from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.sandbox.errors import SandboxError
 from legoai_engineering.sandbox.ports import CancellationSignal
@@ -20,12 +28,15 @@ from legoai_engineering.sandbox.values import SandboxRequest, SandboxResult
 
 from demo import FIXTURE, OBJECTIVE, TARGETS, create_repository
 from forgeai.cli import ReplayModel, replay_binding
-from forgeai.composition import ForgeAIConfig, local_profile
-from forgeai.domain import TaskRequest
+from forgeai.composition import ForgeAIConfig, PreparedRun, local_profile, prepare_run
+from forgeai.domain import TaskRequest, TaskResult
+from forgeai.guard import WorkspaceGuard
+from forgeai.worker import RepositoryTaskWorker
 
 GIT_EXECUTABLE = shutil.which("git")
 PROPOSAL = (FIXTURE / "proposal.json").read_text(encoding="utf-8")
 REVIEW_ACCEPT = (FIXTURE / "review_accept.json").read_text(encoding="utf-8")
+REWORK = (FIXTURE / "proposal_rework.json").read_text(encoding="utf-8")
 REVIEW_CHANGES = (FIXTURE / "review_changes_required.json").read_text(encoding="utf-8")
 REVIEW_INSUFFICIENT = (FIXTURE / "review_insufficient.json").read_text(encoding="utf-8")
 
@@ -104,7 +115,7 @@ class FakeSandbox:
             raise self.error
         body = {
             "status": "completed",
-            "exit": self.exits[index],
+            "exit": self.exits[index % len(self.exits)],  # script repeats per batch
             "stdout": "",
             "stderr": "",
         }
@@ -117,3 +128,110 @@ def snapshot(root: Path) -> dict[str, bytes]:
         for path in sorted(root.rglob("*"))
         if path.is_file() and ".git" not in path.relative_to(root).parts
     }
+
+
+class Clock:
+    def __init__(self) -> None:
+        self.now = datetime.now(UTC)
+
+    def __call__(self) -> datetime:
+        return self.now
+
+
+class LoggedReplay(ReplayModel):
+    """Replay model that logs call order and records each request."""
+
+    def __init__(
+        self,
+        log: list[str],
+        *outputs: str | Exception,
+        after_first: Clock | None = None,
+        advance_after: int = 1,
+    ) -> None:
+        super().__init__(*outputs)
+        self.log = log
+        self.requests: list[ChatRequest] = []
+        self.after_first = after_first
+        self.advance_after = advance_after
+
+    async def chat(self, request: ChatRequest) -> ChatResult:
+        self.log.append("model")
+        self.requests.append(request)
+        try:
+            return await super().chat(request)
+        finally:
+            if self.after_first is not None and self.calls == self.advance_after:
+                self.after_first.now += timedelta(hours=2)
+
+
+class LoggedSandbox(FakeSandbox):
+    def __init__(self, log: list[str], exits: tuple[int, ...] = (0, 0, 0)) -> None:
+        super().__init__(exits)
+        self.log = log
+
+    def execute(self, request, cancellation=None):  # type: ignore[no-untyped-def]
+        self.log.append("check")
+        return super().execute(request, cancellation)
+
+
+class LoggedMutation:
+    def __init__(self, log: list[str], inner: object) -> None:
+        self.log = log
+        self.inner = inner
+        self.calls = 0
+
+    def apply(self, changeset: RepositoryChangeSet) -> RepositoryMutationResult:
+        self.log.append("apply")
+        self.calls += 1
+        return self.inner.apply(changeset)  # type: ignore[attr-defined,no-any-return]
+
+
+class SpyReader:
+    def __init__(self, inner: object) -> None:
+        self.inner = inner
+        self.requests: list[tuple[RepositoryPath, ...]] = []
+
+    async def acquire(self, targets, tenant):  # type: ignore[no-untyped-def]
+        self.requests.append(targets)
+        result: RepositoryEvidence = await self.inner.acquire(targets, tenant)  # type: ignore[attr-defined]
+        return result
+
+
+def logged_run(
+    root: Path,
+    *outputs: str | Exception,
+    exits: tuple[int, ...] = (0, 0, 0),
+    cfg: ForgeAIConfig | None = None,
+    clock: Clock | None = None,
+    advance: bool = False,
+    advance_after: int = 1,
+) -> tuple[TaskResult, LoggedReplay, list[str], LoggedMutation, SpyReader]:
+    log: list[str] = []
+    model = LoggedReplay(
+        log,
+        *outputs,
+        after_first=clock if advance else None,
+        advance_after=advance_after,
+    )
+    base = cfg or config(root, model)
+    if cfg is not None:
+        base = replace(
+            base,
+            host=replace(
+                base.host,
+                bindings=config(root, model).host.bindings,
+            ),
+        )
+    prepared: PreparedRun = prepare_run(
+        base,
+        WorkspaceGuard(),
+        sandbox=LoggedSandbox(log, exits),
+        **({"clock": clock} if clock is not None else {}),
+    )
+    mutation = LoggedMutation(log, prepared.worker.mutation)
+    reader = SpyReader(prepared.worker.reader)
+    worker: RepositoryTaskWorker = replace(
+        prepared.worker, mutation=mutation, reader=reader
+    )
+    result = asyncio.run(worker.run(task(), prepared.context))
+    return result, model, log, mutation, reader

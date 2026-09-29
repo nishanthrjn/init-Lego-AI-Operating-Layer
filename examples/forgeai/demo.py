@@ -6,7 +6,8 @@ cleans repositories), then runs the `forgeai` CLI with the deterministic
 replay model (one Coding Agent output, one reviewer output). Checks run in
 the real Docker sandbox. Usage:
 
-    python demo.py
+    python demo.py           # review #1 accepts (2 model calls)
+    python demo.py rework    # review #1 requires changes; one rework (4 calls)
 """
 
 import os
@@ -71,16 +72,30 @@ def create_repository(target: Path, executable: Path) -> Path:
     return target
 
 
-def main() -> int:
+SCENARIOS = {
+    "accept": ("proposal.json", "review_accept.json"),
+    "rework": (
+        "proposal.json",
+        "review_changes_required.json",
+        "proposal_rework.json",
+        "review_accept.json",
+    ),
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    scenario = (argv if argv is not None else sys.argv[1:]) or ["accept"]
+    if len(scenario) != 1 or scenario[0] not in SCENARIOS:
+        raise SystemExit("usage: python demo.py [accept|rework]")
     executable = shutil.which("git")
     if executable is None:
         raise SystemExit("Git is required")
     with TemporaryDirectory(prefix="forgeai-demo-") as temporary:
         repository = create_repository(Path(temporary) / "repo", Path(executable))
         arguments = [str(repository), "--objective", OBJECTIVE, "--binding", "replay"]
-        # Recorded outputs in call order: the Coding Agent, then the reviewer.
-        arguments += ["--replay", str(FIXTURE / "proposal.json")]
-        arguments += ["--replay", str(FIXTURE / "review_accept.json")]
+        # Recorded outputs in strict call order (Coding Agent, reviewer, ...).
+        for name in SCENARIOS[scenario[0]]:
+            arguments += ["--replay", str(FIXTURE / name)]
         for target in TARGETS:
             arguments += ["--target", target]
         return forgeai(arguments)

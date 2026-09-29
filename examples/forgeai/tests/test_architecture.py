@@ -217,3 +217,73 @@ def test_no_workflow_team_or_locator_constructs() -> None:
                     word in lowered
                     for word in ("workflow", "team", "orchestrat", "locator")
                 ), (name, node.name)
+
+
+def _calls(node: ast.AST, name: str) -> list[ast.Call]:
+    return [
+        item
+        for item in ast.walk(node)
+        if isinstance(item, ast.Call)
+        and isinstance(item.func, ast.Attribute)
+        and item.func.attr == name
+    ]
+
+
+def _method(tree: ast.Module, name: str) -> ast.AST:
+    return next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name == name
+    )
+
+
+def test_rework_is_structurally_bounded_to_one_cycle() -> None:
+    # ForgeAI-3: no loop can produce more than 2 proposals or 2 reviews. The
+    # attempt method is called once for attempt 1 and once for the rework.
+    tree = modules()["worker"]
+    assert not any(isinstance(node, ast.While) for node in ast.walk(tree))
+    assert len(_calls(tree, "_attempt")) == 2
+    assert len(_calls(tree, "_rework")) == 1
+    assert len(_calls(_method(tree, "_run"), "_rework")) == 1
+    assert len(_calls(tree, "propose")) == 1
+    assert len(_calls(tree, "review")) == 1
+    for name in ("_attempt", "_review", "_rework"):
+        assert not _calls(_method(tree, name), "_run"), name
+    assert not _calls(_method(tree, "_attempt"), "_attempt")
+    assert not _calls(_method(tree, "_review"), "_attempt")
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For) and not isinstance(node.iter, ast.Tuple):
+            assert ast.unparse(node.iter) in {
+                "self.check_plan",
+                "evidence.attempts",
+                "attempt.applied.applied",
+            }, ast.unparse(node.iter)
+
+
+def test_review_findings_never_drive_effects_directly() -> None:
+    worker = (SOURCE / "worker.py").read_text(encoding="utf-8")
+    assert "required_action" not in worker
+    review = modules()["review"]
+    uses = [
+        node
+        for node in ast.walk(review)
+        if isinstance(node, ast.Attribute) and node.attr == "required_action"
+    ]
+    # Only rendered into labeled constraint text.
+    assert len(uses) == 1
+
+
+def test_no_configurable_attempt_or_retry_count() -> None:
+    tree = modules()["composition"]
+    config = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and node.name == "ForgeAIConfig"
+    )
+    names = [
+        target.target.id
+        for target in config.body
+        if isinstance(target, ast.AnnAssign) and isinstance(target.target, ast.Name)
+    ]
+    assert not [n for n in names if "retr" in n or "attempt" in n or "cycle" in n]

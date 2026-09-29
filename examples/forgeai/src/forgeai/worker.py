@@ -1,11 +1,14 @@
 """RepositoryTaskWorker: one fixed, visible sequence per run; no retries.
 
 The worker depends only on public LegoAI Ports, the two Agents and values.
-The composition root chooses every adapter. The model proposes once; changes
-are applied only through the authorized mutation Port and verified only
-through the authorized (sandboxed) check Port. Only a candidate that passed
-every deterministic gate is reviewed, once, by the independent reviewer; its
-opinion can withhold success but never authorizes, edits or reruns anything.
+The composition root chooses every adapter. An attempt is: one Coding Agent
+proposal, authorized application, the configured sandboxed checks, a Git
+integrity check and, only if every deterministic gate passed, one independent
+review. A run has attempt 1 and, only when review #1 completed with
+CHANGES_REQUIRED, exactly one rework attempt 2 whose review is terminal. There
+is no loop: at most 2 proposals, 2 applies, 2 check batches and 2 reviews.
+Review findings reach the Coding Agent only as bounded labeled text; they
+never authorize, patch, apply or rerun anything themselves.
 """
 
 from collections.abc import Callable
@@ -33,12 +36,13 @@ from legoai_engineering.git.errors import GitError
 from legoai_engineering.git.ports import GitRepositoryPort
 from legoai_engineering.git.values import GitRepositoryState
 from legoai_engineering.repository.errors import WorkspaceError
-from legoai_engineering.repository.mutation import digest_text
+from legoai_engineering.repository.mutation import ContentDigest, digest_text
 from legoai_engineering.repository.mutation_errors import (
     MutationApplyError,
     MutationConflict,
 )
 from legoai_engineering.repository.mutation_ports import RepositoryMutationPort
+from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.reviewer.api import IndependentReviewer
 from legoai_engineering.reviewer.values import (
     ReviewDecision,
@@ -48,6 +52,7 @@ from legoai_engineering.reviewer.values import (
 )
 
 from forgeai.domain import (
+    AttemptEvidence,
     CheckRecord,
     ReviewInputFailure,
     TaskDisposition,
@@ -62,6 +67,8 @@ from forgeai.review import (
     file_material,
     material_ids,
     render_proposal,
+    rework_constraints,
+    rework_targets,
 )
 
 
@@ -79,7 +86,7 @@ class RepositoryTaskWorker:
     reviewer: IndependentReviewer = field(repr=False)
     reader: RepositoryEvidencePort = field(repr=False)
     review_criteria: tuple[str, ...]
-    review_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
+    fresh_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -111,8 +118,8 @@ class RepositoryTaskWorker:
             or any(type(item) is not str for item in self.review_criteria)
         ):
             raise ValueError("worker requires one to eight review criteria")
-        if not callable(self.review_context):
-            raise TypeError("worker requires a review context factory")
+        if not callable(self.fresh_context):
+            raise TypeError("worker requires a fresh Chat context factory")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -125,6 +132,7 @@ class RepositoryTaskWorker:
         if not self.guard.acquire(self.workspace):
             return _rejected(task, TaskFailure.WORKSPACE_BUSY, evidence)
         try:
+            # The guard is held for the whole run, including any rework.
             return await self._run(task, context, evidence)
         finally:
             self.guard.release(self.workspace)
@@ -146,16 +154,17 @@ class RepositoryTaskWorker:
     ) -> TaskResult:
         # After an effect, observe the final state (read-only) before stopping.
         final = self._observe()
+        item = evidence.latest
         if isinstance(final, GitRepositoryState):
-            evidence = replace(evidence, final=final)
+            item = replace(item, final=final)
         elif isinstance(final, GitError):
-            evidence = replace(evidence, final_failure=final.reason)
-        return TaskResult(task, TaskDisposition.FAILED, failure, evidence)
+            item = replace(item, final_failure=final.reason)
+        return self._stop(task, failure, _set(evidence, item))
 
     async def _run(
         self, task: TaskRequest, context: ExecutionContext, evidence: TaskEvidence
     ) -> TaskResult:
-        # 1-2. Initial Git state; ForgeAI-1 requires a committed, clean start.
+        # Initial Git state; a run requires a committed, clean start.
         start = self._observe()
         if not isinstance(start, GitRepositoryState):
             observed = start.reason if isinstance(start, GitError) else None
@@ -169,29 +178,85 @@ class RepositoryTaskWorker:
             return _rejected(task, TaskFailure.UNSUPPORTED_REPOSITORY, evidence)
         if start.entries:
             return _rejected(task, TaskFailure.DIRTY_START, evidence)
-
-        # 3-5. Authorized bounded evidence and exactly one Coding Agent call.
-        coding = await self.agent.propose(
-            CodingRequest(task.objective, task.targets, task.constraints, context)
-        )
-        evidence = replace(
+        first = await self._attempt(
+            task,
+            CodingRequest(task.objective, task.targets, task.constraints, context),
+            context,
             evidence,
+        )
+        if isinstance(first, TaskResult):
+            return first
+        # Review #1 completed with CHANGES_REQUIRED: exactly one rework.
+        return await self._rework(task, context, first)
+
+    async def _rework(
+        self, task: TaskRequest, context: ExecutionContext, evidence: TaskEvidence
+    ) -> TaskResult:
+        review = evidence.latest.review
+        assert review is not None and review.review is not None
+        try:
+            # Same scope and objective; current content is re-read by the
+            # Coding Agent's authorized evidence reader, never reused.
+            targets = rework_targets(task.targets, evidence.changed_paths)
+            constraints = rework_constraints(
+                task.constraints, review.review, evidence.latest.checks
+            )
+            CodingRequest(task.objective, targets, constraints, context)
+        except ValueError:
+            return self._stop(task, TaskFailure.REWORK_INPUT_FAILED, evidence)
+        try:
+            rework_context = self.fresh_context(context)
+        except HostError:
+            reworked = replace(
+                evidence, attempts=(*evidence.attempts, AttemptEvidence(2))
+            )
+            return self._stop(task, TaskFailure.MODEL_FAILED, reworked)
+        second = await self._attempt(
+            task,
+            CodingRequest(task.objective, targets, constraints, rework_context),
+            context,
+            evidence,
+        )
+        # Attempt 2 is terminal by construction: it never returns evidence.
+        assert isinstance(second, TaskResult)
+        return second
+
+    async def _attempt(
+        self,
+        task: TaskRequest,
+        request: CodingRequest,
+        context: ExecutionContext,
+        evidence: TaskEvidence,
+    ) -> TaskResult | TaskEvidence:
+        """One attempt. Returns evidence (not a result) only when this is
+        attempt 1 and its review completed with CHANGES_REQUIRED."""
+        number = len(evidence.attempts) + 1
+        evidence = replace(
+            evidence, attempts=(*evidence.attempts, AttemptEvidence(number))
+        )
+        start = evidence.start
+        assert start is not None
+        coding = await self.agent.propose(request)
+        item = replace(
+            evidence.latest,
             coding_status=coding.status,
             acquisition_failure=coding.acquisition_failure,
         )
+        evidence = _set(evidence, item)
         if coding.status is CodingStatus.INVALID_REQUEST:
             denied = coding.acquisition_failure is AcquisitionFailure.DENIED
-            return _rejected(
-                task,
+            failure = (
                 TaskFailure.EVIDENCE_DENIED
                 if denied
-                else TaskFailure.EVIDENCE_UNAVAILABLE,
-                evidence,
+                else TaskFailure.EVIDENCE_UNAVAILABLE
             )
+            if number == 1:
+                return _rejected(task, failure, evidence)
+            return self._stop(task, failure, evidence)
         agent = coding.agent_result
         assert agent is not None
-        evidence = replace(
-            evidence,
+        item = replace(
+            item,
             agent_status=agent.status,
             model_effect=(
                 agent.model_execution.effect
@@ -199,6 +264,7 @@ class RepositoryTaskWorker:
                 else None
             ),
         )
+        evidence = _set(evidence, item)
         if coding.status is not CodingStatus.SUCCEEDED or coding.proposal is None:
             failure = (
                 TaskFailure.PROPOSAL_INVALID
@@ -206,67 +272,67 @@ class RepositoryTaskWorker:
                 else TaskFailure.MODEL_FAILED
             )
             return self._stop(task, failure, evidence)
-        evidence = replace(evidence, proposal=coding.proposal)
+        item = replace(item, proposal=coding.proposal)
+        evidence = _set(evidence, item)
 
-        # 6. Apply through the authorized mutation Port; never retried.
+        # Apply through the authorized mutation Port; never retried.
         try:
             applied = self.mutation.apply(coding.proposal.changeset)
         except EffectAuthorizationError as error:
-            return self._finish(
-                task,
-                TaskFailure.MUTATION_DENIED,
-                replace(evidence, mutation_denial=error.reason),
-            )
+            item = replace(item, mutation_denial=error.reason)
+            return self._finish(task, TaskFailure.MUTATION_DENIED, _set(evidence, item))
         except MutationConflict as error:
+            item = replace(item, conflict=error.reason, conflict_path=error.path)
             return self._finish(
-                task,
-                TaskFailure.MUTATION_CONFLICT,
-                replace(evidence, conflict=error.reason, conflict_path=error.path),
+                task, TaskFailure.MUTATION_CONFLICT, _set(evidence, item)
             )
         except MutationApplyError as error:
-            return self._finish(
-                task,
-                TaskFailure.MUTATION_PARTIAL,
-                replace(
-                    evidence,
-                    applied=error.completed,
-                    uncertain=error.uncertain,
-                    temporary_paths=error.temporary_paths,
-                ),
+            item = replace(
+                item,
+                applied=error.completed,
+                uncertain=error.uncertain,
+                temporary_paths=error.temporary_paths,
             )
-        evidence = replace(evidence, applied=applied)
+            return self._finish(
+                task, TaskFailure.MUTATION_PARTIAL, _set(evidence, item)
+            )
+        item = replace(item, applied=applied)
+        evidence = _set(evidence, item)
 
-        # 7. Configured checks, in order, through the authorized Port. Findings
+        # Configured checks, in order, through the authorized Port. Findings
         # are results and later checks still run; any failure to run stops.
         records: list[CheckRecord] = []
-        for request in self.check_plan:
+        for check in self.check_plan:
             try:
-                result = self.checks.check(request)
+                result = self.checks.check(check)
             except EffectAuthorizationError as error:
-                records.append(CheckRecord(request, None, error.reason))
-                evidence = replace(evidence, checks=tuple(records))
-                return self._finish(task, TaskFailure.CHECK_DENIED, evidence)
+                records.append(CheckRecord(check, None, error.reason))
+                item = replace(item, checks=tuple(records))
+                return self._finish(
+                    task, TaskFailure.CHECK_DENIED, _set(evidence, item)
+                )
             except CheckError as error:
-                records.append(CheckRecord(request, None, error.reason))
-                evidence = replace(evidence, checks=tuple(records))
-                return self._finish(task, TaskFailure.CHECK_ERROR, evidence)
+                records.append(CheckRecord(check, None, error.reason))
+                item = replace(item, checks=tuple(records))
+                return self._finish(task, TaskFailure.CHECK_ERROR, _set(evidence, item))
             except WorkspaceError:
-                records.append(CheckRecord(request, None, workspace_error=True))
-                evidence = replace(evidence, checks=tuple(records))
-                return self._finish(task, TaskFailure.CHECK_ERROR, evidence)
-            records.append(CheckRecord(request, result))
-        evidence = replace(evidence, checks=tuple(records))
+                records.append(CheckRecord(check, None, workspace_error=True))
+                item = replace(item, checks=tuple(records))
+                return self._finish(task, TaskFailure.CHECK_ERROR, _set(evidence, item))
+            records.append(CheckRecord(check, result))
+        item = replace(item, checks=tuple(records))
+        evidence = _set(evidence, item)
 
-        # 8. Final Git state: HEAD must be unchanged and only applied paths differ.
+        # Git integrity: HEAD unchanged and only this run's applied paths differ.
         final = self._observe()
         if not isinstance(final, GitRepositoryState):
             observed = final.reason if isinstance(final, GitError) else None
+            item = replace(item, final_failure=observed)
             return self._stop(
-                task,
-                TaskFailure.FINAL_STATE_UNAVAILABLE,
-                replace(evidence, final_failure=observed),
+                task, TaskFailure.FINAL_STATE_UNAVAILABLE, _set(evidence, item)
             )
-        evidence = replace(evidence, final=final)
+        item = replace(item, final=final)
+        evidence = _set(evidence, item)
         if final.head != start.head:
             return self._stop(task, TaskFailure.HEAD_CHANGED, evidence)
         if {entry.path for entry in final.entries} != set(evidence.changed_paths):
@@ -276,7 +342,7 @@ class RepositoryTaskWorker:
             for record in records
         ):
             return self._stop(task, TaskFailure.CHECKS_FAILED, evidence)
-        # 9. Independent review, only after every deterministic gate passed.
+        # Independent review, only after every deterministic gate passed.
         assert evidence.gates_passed
         return await self._review(
             task, context, coding.proposal, agent.definition.agent_id, evidence
@@ -289,10 +355,13 @@ class RepositoryTaskWorker:
         proposal: CodingProposal,
         producer: AgentId,
         evidence: TaskEvidence,
-    ) -> TaskResult:
+    ) -> TaskResult | TaskEvidence:
+        number = len(evidence.attempts)
         materials = material_ids(evidence.changed_paths)
-        evidence = replace(evidence, review_materials=materials)
-        # Final applied contents, through the same authorized read boundary.
+        item = replace(evidence.latest, review_materials=materials)
+        evidence = _set(evidence, item)
+        # Final contents of every file changed in this run, through the same
+        # authorized read boundary.
         try:
             read = await self.reader.acquire(
                 tuple(path for _, path in materials), context.tenant_context
@@ -303,24 +372,26 @@ class RepositoryTaskWorker:
                 if error.reason is AcquisitionFailure.DENIED
                 else ReviewInputFailure.READ_UNAVAILABLE
             )
+            item = replace(item, review_input_failure=reason)
             return self._stop(
-                task,
-                TaskFailure.REVIEW_INPUT_FAILED,
-                replace(evidence, review_input_failure=reason),
+                task, TaskFailure.REVIEW_INPUT_FAILED, _set(evidence, item)
             )
         texts = {file.path: file.text for file in read.files}
-        assert evidence.applied is not None
+        expected: dict[RepositoryPath, ContentDigest | None] = {}
+        for attempt in evidence.attempts:
+            if attempt.applied is not None:
+                for change in attempt.applied.applied:
+                    expected[change.path] = change.after
         if any(
-            change.after is not None
-            and digest_text(texts.get(change.path.value, "")) != change.after
-            for change in evidence.applied.applied
+            digest is not None and digest_text(texts.get(path.value, "")) != digest
+            for path, digest in expected.items()
         ):
             # The reviewed text must be exactly the applied text.
             return self._stop(task, TaskFailure.UNEXPECTED_CHANGES, evidence)
         try:
-            proposal_text = render_proposal(proposal, materials)
+            proposal_text = render_proposal(proposal, materials, number)
             supporting = (
-                checks_material(evidence.checks),
+                checks_material(item.checks),
                 *(
                     file_material(material, path, texts[path.value])
                     for material, path in materials
@@ -336,16 +407,15 @@ class RepositoryTaskWorker:
                 context,
             )
         except ValueError:
-            return self._stop(
-                task,
-                TaskFailure.REVIEW_INPUT_FAILED,
-                replace(
-                    evidence, review_input_failure=ReviewInputFailure.MATERIAL_BOUNDS
-                ),
+            item = replace(
+                item, review_input_failure=ReviewInputFailure.MATERIAL_BOUNDS
             )
-        # A fresh governed Chat execution; the Coding context is never reused.
+            return self._stop(
+                task, TaskFailure.REVIEW_INPUT_FAILED, _set(evidence, item)
+            )
+        # A fresh governed Chat execution; no earlier context is reused.
         try:
-            review_context = self.review_context(context)
+            review_context = self.fresh_context(context)
         except HostError:
             return self._stop(task, TaskFailure.REVIEW_FAILED, evidence)
         result = await self.reviewer.review(
@@ -358,7 +428,8 @@ class RepositoryTaskWorker:
                 review_context,
             )
         )
-        evidence = replace(evidence, review=result)
+        item = replace(item, review=result)
+        evidence = _set(evidence, item)
         if result.status is ReviewStatus.INVALID_SUBMISSION:
             budget = result.submission_failure is SubmissionFailure.CONTEXT_BUDGET
             reason = (
@@ -366,10 +437,9 @@ class RepositoryTaskWorker:
                 if budget
                 else ReviewInputFailure.MATERIAL_BOUNDS
             )
+            item = replace(item, review_input_failure=reason)
             return self._stop(
-                task,
-                TaskFailure.REVIEW_INPUT_FAILED,
-                replace(evidence, review_input_failure=reason),
+                task, TaskFailure.REVIEW_INPUT_FAILED, _set(evidence, item)
             )
         if result.status is ReviewStatus.MODEL_FAILURE:
             return self._stop(task, TaskFailure.REVIEW_FAILED, evidence)
@@ -377,11 +447,18 @@ class RepositoryTaskWorker:
             return self._stop(task, TaskFailure.REVIEW_OUTPUT_INVALID, evidence)
         decision = evidence.review_decision
         if decision is ReviewDecision.CHANGES_REQUIRED:
+            if number == 1:
+                return evidence  # the caller may start the single rework
             return self._stop(task, TaskFailure.REVIEW_CHANGES_REQUIRED, evidence)
         if decision is ReviewDecision.INSUFFICIENT_EVIDENCE:
             return self._stop(task, TaskFailure.REVIEW_INSUFFICIENT_EVIDENCE, evidence)
-        # 10. Success: every deterministic gate passed and the review accepted.
+        # Success: every deterministic gate passed and the review accepted.
         return TaskResult(task, TaskDisposition.SUCCEEDED, None, evidence)
+
+
+def _set(evidence: TaskEvidence, item: AttemptEvidence) -> TaskEvidence:
+    """Replace the latest attempt's record."""
+    return replace(evidence, attempts=(*evidence.attempts[:-1], item))
 
 
 def _rejected(

@@ -198,7 +198,7 @@ def main() -> int:
                 "9 CHANGES_REQUIRED path",
                 *select(
                     "test_review",
-                    "test_changes_required_stops_without_rework_and_keeps_changes",
+                    "test_changes_required_after_rework_is_terminal_and_keeps_changes",
                 ),
             )
             tests(

@@ -192,8 +192,8 @@ def prepare_run(
     )
     runtime = host.agent_runtime()
 
-    def review_context(coding: ExecutionContext) -> ExecutionContext:
-        # A fresh Chat execution for the reviewer, correlated with the run.
+    def fresh_context(coding: ExecutionContext) -> ExecutionContext:
+        # A fresh Chat execution per later model call, correlated with the run.
         return host.model_execution(
             ModelPurpose.CHAT,
             correlation=coding.correlation_id,
@@ -213,7 +213,7 @@ def prepare_run(
         IndependentReviewer(runtime),
         reads,
         config.review_criteria,
-        review_context,
+        fresh_context,
     )
     return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
 
