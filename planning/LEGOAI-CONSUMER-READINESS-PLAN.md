@@ -47,6 +47,7 @@ consumer-ready**. The gap is in the *assembly layer*, not in capability semantic
   and an application-assembly guide are needed. None of them may introduce a registry.
 
 **Decision:** **FORGEAI-1 READY AFTER M8.3-closure + CR-1 + CR-2 + CR-3** (§18).
+**Status (2026-09-29):** all prerequisites are complete and locally qualified. **FORGEAI-1 READY.**
 
 ## 2. Why ForgeAI exposed platform reuse gaps
 
@@ -207,15 +208,22 @@ with all six symlink boundary tests passing; see the
 - A sandboxed pass is contained, not proven correct.
 - Input identity is deferred to CR-3 or ForgeAI-1.
 
-**CR-3 IMPLEMENTED — LOCAL VALIDATION PENDING (2026-09-29):**
+**CR-3 COMPLETE — LOCALLY QUALIFIED (2026-09-29):**
 - `AuthorizedRepositoryMutation` and `AuthorizedEngineeringChecks` decorate the
   unchanged Ports with per-effect current authorization.
 - One private helper is shared with the read composition.
 - The read composition is public (`analyst.authorized`, `coding.authorized`).
 - ADR-018 has an addendum, and `docs/CONSUMING.md` is written.
-- It is not complete until `validate_consumer_readiness_cr3.py` passes locally.
+- All 20 phases of `validate_consumer_readiness_cr3.py` passed, including the
+  real-Docker authorized sandboxed check, the clean-install consumer proof and
+  the structural readiness proof. See the engineering README "CR-3
+  qualification evidence".
 
-ForgeAI-1 remains blocked by CR-3 local validation. Where the ADR differs
+**FORGEAI-1 READY.** No new blocker was found. The known limitations carried
+into ForgeAI-1 are in `docs/CONSUMING.md` §17: no checked-input identity, one
+workspace per wrapper, unsupported approvals, and operator-only Git.
+
+Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
@@ -474,7 +482,7 @@ check found no need for a generic app builder.
 | CR-1c | Generative media | Migrate `local_host.prepare_local` to the public host | No |
 | CR-2a | legoai-engineering (M6) | Toolchain image profile: Dockerfile, hash-locked tools, closed image set, memory qualification | **Done 2026-09-29** (Docker-qualified) |
 | CR-2b | legoai-engineering | `SandboxedEngineeringChecks` plus additive `CheckFailure` members | **Done 2026-09-29** (Docker-qualified) |
-| CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Implemented 2026-09-29**; local validation pending |
+| CR-3 | legoai-engineering | Authorized mutation and check decorators; shared authorization helper; public (non-underscore) evidence wiring over the CR-1 host; ADR-018 addendum for actions; `CONSUMING.md` | **Done 2026-09-29** (locally qualified) |
 | CR-4 | Docs | `MODULE-CATALOG.md`, `ASSEMBLING-APPLICATIONS.md`, template; reconcile the root README generative-media status | No (recommended with ForgeAI-1) |
 
 ## 15. Acceptance criteria per slice
@@ -554,3 +562,4 @@ observation-profile config (ADR-013); no new sandbox backend; no ForgeAI source.
 ```
 
 **FORGEAI-1 READY AFTER:** M8.3-closure, CR-1a, CR-1b, CR-2a, CR-2b, CR-3.
+All six are complete (2026-09-29): **FORGEAI-1 READY.**

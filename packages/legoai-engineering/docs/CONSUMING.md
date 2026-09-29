@@ -347,7 +347,7 @@ uv run python .\validate_consumer_readiness_cr2b.py
 | M8.1–M8.3 (analyst, reviewer, coding agent) | Locally qualified | Engineering README |
 | CR-1b public governed host | Locally qualified | ADR-014 §12a |
 | CR-2a/2b sandboxed checks | Docker-qualified: Windows with Docker Desktop | Engineering README, CR-2b |
-| CR-3 authorized wrappers and this guide | Implemented; local validation pending | `validate_consumer_readiness_cr3.py` |
+| CR-3 authorized wrappers and this guide | Locally qualified (2026-09-29) | Engineering README, CR-3 |
 
 "Locally qualified" means it passed on the maintainer's reference machine. It
 is not a production or multi-platform claim.

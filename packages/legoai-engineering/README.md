@@ -1741,7 +1741,7 @@ A separate re-check run without `--basetemp` hit the known Windows temp-root
 `PermissionError` after its tests had finished. That is an environment issue,
 not a test result.
 
-## CR-3 — authorized engineering effects (implemented; local validation pending)
+## CR-3 — authorized engineering effects (locally qualified 2026-09-29)
 
 Two decorators add current authorization in front of the existing effect
 Ports, which are unchanged:
@@ -1778,8 +1778,36 @@ See [docs/CONSUMING.md](docs/CONSUMING.md) for the application guide and the
 the `analyst` extra (Core). Check results still do not record which inputs
 were checked, and no authorized Git or evidence wrapper exists.
 
-### CR-3 local validation required
+### CR-3 validation
 
 ```powershell
 uv run python .\validate_consumer_readiness_cr3.py
 ```
+
+### CR-3 qualification evidence
+
+On 2026-09-29 the maintainer ran `validate_consumer_readiness_cr3.py` on
+Windows with Docker Desktop, using the recorded CR-2a image.
+**All 20 phases passed.**
+
+| Area | Result |
+| --- | --- |
+| Static checks | mypy clean on 83 files plus the validator; Ruff lint and format clean |
+| Shared helper, mutation and check wrappers | 12 passed |
+| Denial-before-effect ordering | 4 passed |
+| Expiry, revocation, policy supersession | 3 passed |
+| Tenant and workspace scope | 2 passed |
+| Approvals fail closed | 1 passed |
+| Local and fake-sandbox substitution | 1 passed |
+| Real Docker authorized sandboxed check | 2 passed: allowed ran once; denied made zero sandbox calls |
+| M4 regressions | 48 passed |
+| M5 and CR-2b regressions | 99 passed |
+| M8.1–M8.3 regressions | 113 passed |
+| Public-import architecture | 106 passed |
+| Clean-install consumer proof | 1 passed |
+| ForgeAI structural readiness proof | 2 passed |
+| `git diff --check` | clean |
+
+This qualifies the authorization wrappers and public wiring for the reference
+scope only. It does not change the containment-versus-integrity or
+checked-input-identity limitations.
