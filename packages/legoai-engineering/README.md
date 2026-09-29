@@ -1371,9 +1371,10 @@ routing stays covered by Core M7 tests. Specialization contracts and the
 `analyst/_composition`/`coding/_composition` modules are unchanged (CR-3 owns them).
 See [ADR-014](../../adrs/ADR-014.md).
 
-## CR-2a — Python engineering-check sandbox image (Docker qualification pending)
+## CR-2a — Python engineering-check sandbox image (locally qualified 2026-09-29)
 
-**IMPLEMENTED — DOCKER QUALIFICATION PENDING.** This extends M6's closed image set;
+**COMPLETE — LOCALLY DOCKER-QUALIFIED** for the reference environment (see
+"CR-2a qualification evidence" below). This extends M6's closed image set;
 it does not add a second sandbox or change any runtime control. The
 `EngineeringCheckPort` adapter that uses this image belongs to CR-2b.
 
@@ -1382,9 +1383,11 @@ replaces the former free-form `image` string, and callers can no longer supply a
 image reference.
 - `SandboxImage.PYTHON_STDLIB` is the unchanged M6 image (`python@sha256:82bc…`),
   and it remains the default.
-- `SandboxImage.PYTHON_CHECKS` is **fail-closed**: configuring it raises
-  `ValueError` before any Docker call, until the exact qualified image ID is
-  recorded in `sandbox.docker._approved_image`.
+- `SandboxImage.PYTHON_CHECKS` is bound to the exact qualified local image ID
+  `sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df`,
+  recorded in `sandbox.docker._approved_image`. An unqualified identity fails
+  closed before any Docker call. The image is never pulled: on a machine without
+  that exact local image, execution fails with `ENVIRONMENT_UNAVAILABLE`.
 - Only immutable references are accepted: `python@sha256:<64 hex>` or a local
   image ID `sha256:<64 hex>`. Mutable tags are rejected.
 
@@ -1419,7 +1422,7 @@ downloads or installs anything.
 
 During qualification the candidate ID reaches the tests only through
 `LEGOAI_SANDBOX_CHECKS_IMAGE`, bound inside the test process. Production
-configuration stays fail-closed. A rebuild yields a new ID and needs
+configuration accepts only the recorded ID. A rebuild yields a new ID and needs
 requalification; bit-for-bit reproducibility is not claimed.
 
 **Memory measurement.** A trusted qualification harness runs each tool as a
@@ -1453,3 +1456,62 @@ Part B builds the image and qualifies it with real Docker:
 - mypy clean and finding, with memory rows;
 - timeout, output limit, PID limit, OOM and cleanup;
 - the existing stdlib M6 regression.
+
+### CR-2a qualification evidence
+
+Maintainer run of `validate_consumer_readiness_cr2a.py` on 2026-09-29 (Windows,
+CPython 3.14.5, uv 0.11.19, Docker Desktop Linux engine, cgroup v2): **all 20
+phases passed**.
+
+**Part A (deterministic):**
+- Engineering mypy clean on 71 files; Ruff lint and format clean.
+- Profile tests: 41 passed.
+- Architecture and packaging: 74 passed.
+
+**Part B (real Docker):**
+- Pinned base `python:3.14.7-slim-bookworm` present; image built in 21 s.
+- Qualified image ID
+  `sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df`.
+- Contents: Python 3.14.7, exactly the 12 locked distributions plus the base's
+  pip 26.2.1, no Git, tools at `/usr/local/bin/{pytest,ruff,mypy}`.
+- M6 confinement held under the new image: network, host secrets, host files,
+  privilege, read-only root and cgroup limits.
+- Timeout → `TIMEOUT`; output overflow → `OUTPUT_LIMIT`; the PID limit was
+  reached inside pytest; memory exhaustion → Docker-reported `RESOURCE_LIMIT`
+  (not a silent success).
+- Containers and volumes were cleaned up after every run.
+- Existing stdlib M6 regression: 20 passed.
+
+**Measured whole-container peak memory under the unchanged 128 MiB limit**
+(`memory.max` 134217728; `oom_kill` 0 in every row):
+
+| Tool | Fixture | Exit | Peak | Share of limit | Elapsed |
+|---|---|---|---|---|---|
+| pytest | baseline (11 passing tests) | 0 | 41.8 MB | 31% | 1.38 s |
+| pytest | failing test | 1 | 39.9 MB | 30% | 1.05 s |
+| pytest | collection error | 2 | 46.5 MB | 35% | 1.05 s |
+| pytest | no tests (`src`) | 5 | 39.7 MB | 30% | 0.93 s |
+| pytest | 31-process fork test | 0 | 65.8 MB | 49% | 1.00 s |
+| Ruff check | clean / finding | 0 / 1 | 9.4 / 10.0 MB | 7% | 0.01 s |
+| Ruff format check | clean / unformatted | 0 / 1 | 9.4 / 9.6 MB | 7% | 0.01 s |
+| mypy (strict) | clean / type error | 0 / 1 | 69.0 / 67.5 MB | 51% / 50% | 1.7 s |
+
+These measurements cover the qualified small fixture: 7 typed modules and
+3 test files, about 7.9 KB. mypy was the largest consumer, at about half the
+limit; most of its cost is loading the standard-library stubs, not project size.
+The remaining headroom is measured for this scope only. Larger projects, heavier
+imports or third-party stubs can raise the peak. **No general capacity is
+claimed, and the resource profile was not changed.** CR-2b must treat
+`RESOURCE_LIMIT` as a truthful failure, never a pass.
+
+**Re-qualification.** Re-running the validator rebuilds the image and qualifies
+the new build's ID. That ID may differ from the recorded one; the run prints
+`CR2A-CANDIDATE` when it does. Replace the recorded ID only after a new passing
+run. To re-check the recorded image without rebuilding (no candidate variable
+set):
+
+```powershell
+Push-Location packages/legoai-engineering
+uv run --locked --no-sync python -m pytest -p no:cacheprovider -q -rs -s tests/test_sandbox_checks_docker.py
+Pop-Location
+```
