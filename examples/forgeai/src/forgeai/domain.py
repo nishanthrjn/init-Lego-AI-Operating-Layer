@@ -1,4 +1,4 @@
-"""ForgeAI task vocabulary (ForgeAI-2): immutable values only, no effects.
+"""ForgeAI task vocabulary (ForgeAI-3): immutable values only, no effects.
 
 A task carries intent only: objective, bounded targets and constraints. Every
 infrastructure choice (repository root, model, grants, sandbox, checks) is
@@ -79,8 +79,11 @@ class TaskRequest:
             _text(constraint, 1024)
 
 
+MAX_ATTEMPTS = 2  # the initial proposal plus exactly one rework; not configurable
+
+
 class TaskDisposition(Enum):
-    """SUCCEEDED requires applied changes, all checks PASSED and an intact HEAD."""
+    """SUCCEEDED requires the latest attempt to pass every gate and review."""
 
     SUCCEEDED = "succeeded"
     # Refused before any model call or repository effect.
@@ -116,6 +119,8 @@ class TaskFailure(Enum):
     # The review completed and withheld acceptance (opinion).
     REVIEW_CHANGES_REQUIRED = "the independent review requires changes"
     REVIEW_INSUFFICIENT_EVIDENCE = "the independent review found evidence insufficient"
+    # Review #1 required changes but its findings did not fit a bounded rework.
+    REWORK_INPUT_FAILED = "review findings do not fit a bounded rework request"
 
 
 class ReviewInputFailure(Enum):
@@ -164,15 +169,13 @@ class CheckRecord:
 
 
 @dataclass(frozen=True, slots=True)
-class TaskEvidence:
-    """Bounded per-run record composed from existing LegoAI result values.
+class AttemptEvidence:
+    """One proposal attempt within a run: 1 = initial, 2 = the single rework.
 
-    Holds no exception objects, environment, host paths or runtime handles.
+    Holds that attempt's Coding, mutation, check, Git and review values only.
     """
 
-    run_id: str
-    start: GitRepositoryState | None = None
-    start_failure: GitFailure | None = None
+    number: int
     coding_status: CodingStatus | None = None
     acquisition_failure: AcquisitionFailure | None = None
     agent_status: AgentExecutionStatus | None = None
@@ -184,24 +187,18 @@ class TaskEvidence:
     conflict_path: RepositoryPath | None = None
     uncertain: RepositoryPath | None = None
     temporary_paths: tuple[RepositoryPath, ...] = ()
-    planned_checks: tuple[CheckRequest, ...] = ()
     checks: tuple[CheckRecord, ...] = ()
     final: GitRepositoryState | None = None
     final_failure: GitFailure | None = None
     review_input_failure: ReviewInputFailure | None = None
     review_materials: tuple[tuple[str, RepositoryPath], ...] = ()
     review: ReviewResult | None = field(default=None, repr=False)
-    limitations: tuple[str, ...] = LIMITATIONS
 
     def __post_init__(self) -> None:
-        _text(self.run_id, 256)
-        if len(self.planned_checks) > 8 or len(self.checks) > len(self.planned_checks):
+        if type(self.number) is not int or not 1 <= self.number <= MAX_ATTEMPTS:
+            raise ValueError("attempt number must be 1 or 2")
+        if len(self.checks) > 8:
             raise ValueError("check evidence exceeds the configured plan")
-        if any(
-            record.request != planned
-            for record, planned in zip(self.checks, self.planned_checks, strict=False)
-        ):
-            raise ValueError("check evidence must follow the configured order")
         if len(self.temporary_paths) > 128:
             raise ValueError("too many temporary paths")
         if len(self.review_materials) > 8:
@@ -210,30 +207,164 @@ class TaskEvidence:
             raise TypeError("review evidence requires ReviewResult")
 
     @property
-    def gates_passed(self) -> bool:
-        """Every deterministic gate passed: applied, checks, HEAD and paths."""
-        return (
-            self.applied is not None
-            and self.start is not None
-            and self.final is not None
-            and bool(self.planned_checks)
-            and len(self.checks) == len(self.planned_checks)
-            and all(record.passed for record in self.checks)
-            and self.final.head == self.start.head
-            and {entry.path for entry in self.final.entries} == set(self.changed_paths)
-        )
-
-    @property
     def review_decision(self) -> ReviewDecision | None:
         if self.review is None or self.review.review is None:
             return None
         return self.review.review.decision
 
+
+@dataclass(frozen=True, slots=True)
+class TaskEvidence:
+    """Bounded per-run record composed from existing LegoAI result values.
+
+    One run id for the whole task; `attempts` holds at most two attempts. The
+    single-value properties below report the latest attempt. Holds no
+    exception objects, environment, host paths or runtime handles.
+    """
+
+    run_id: str
+    start: GitRepositoryState | None = None
+    start_failure: GitFailure | None = None
+    planned_checks: tuple[CheckRequest, ...] = ()
+    attempts: tuple[AttemptEvidence, ...] = ()
+    limitations: tuple[str, ...] = LIMITATIONS
+
+    def __post_init__(self) -> None:
+        _text(self.run_id, 256)
+        if len(self.planned_checks) > 8:
+            raise ValueError("check evidence exceeds the configured plan")
+        if type(self.attempts) is not tuple or len(self.attempts) > MAX_ATTEMPTS:
+            raise ValueError("a run has at most two attempts")
+        for index, attempt in enumerate(self.attempts, 1):
+            if type(attempt) is not AttemptEvidence or attempt.number != index:
+                raise ValueError("attempts must be numbered 1 and 2 in order")
+            if len(attempt.checks) > len(self.planned_checks) or any(
+                record.request != planned
+                for record, planned in zip(
+                    attempt.checks, self.planned_checks, strict=False
+                )
+            ):
+                raise ValueError("check evidence must follow the configured order")
+        if len(self.attempts) == MAX_ATTEMPTS and (
+            self.attempts[0].review_decision is not ReviewDecision.CHANGES_REQUIRED
+        ):
+            raise ValueError("rework requires review #1 to require changes")
+
+    @property
+    def latest(self) -> AttemptEvidence:
+        return self.attempts[-1] if self.attempts else AttemptEvidence(1)
+
+    @property
+    def reworked(self) -> bool:
+        return len(self.attempts) == MAX_ATTEMPTS
+
+    def changed_through(self, attempt: int) -> tuple[RepositoryPath, ...]:
+        """Paths applied by attempts 1..attempt, in first-application order."""
+        paths: list[RepositoryPath] = []
+        for item in self.attempts[:attempt]:
+            if item.applied is not None:
+                for change in item.applied.applied:
+                    if change.path not in paths:
+                        paths.append(change.path)
+        return tuple(paths)
+
+    def gates_passed_for(self, attempt: int) -> bool:
+        """Every deterministic gate passed for that attempt's candidate."""
+        if not 1 <= attempt <= len(self.attempts):
+            return False
+        item = self.attempts[attempt - 1]
+        return (
+            item.applied is not None
+            and self.start is not None
+            and item.final is not None
+            and bool(self.planned_checks)
+            and len(item.checks) == len(self.planned_checks)
+            and all(record.passed for record in item.checks)
+            and item.final.head == self.start.head
+            and {entry.path for entry in item.final.entries}
+            == set(self.changed_through(attempt))
+        )
+
+    @property
+    def gates_passed(self) -> bool:
+        return self.gates_passed_for(len(self.attempts))
+
     @property
     def changed_paths(self) -> tuple[RepositoryPath, ...]:
-        if self.applied is None:
-            return ()
-        return tuple(change.path for change in self.applied.applied)
+        return self.changed_through(len(self.attempts))
+
+    # Latest-attempt views (ForgeAI-1/2 vocabulary).
+    @property
+    def coding_status(self) -> CodingStatus | None:
+        return self.latest.coding_status
+
+    @property
+    def acquisition_failure(self) -> AcquisitionFailure | None:
+        return self.latest.acquisition_failure
+
+    @property
+    def agent_status(self) -> AgentExecutionStatus | None:
+        return self.latest.agent_status
+
+    @property
+    def model_effect(self) -> EffectExtent | None:
+        return self.latest.model_effect
+
+    @property
+    def proposal(self) -> CodingProposal | None:
+        return self.latest.proposal
+
+    @property
+    def applied(self) -> RepositoryMutationResult | None:
+        return self.latest.applied
+
+    @property
+    def mutation_denial(self) -> EffectAuthorizationFailure | None:
+        return self.latest.mutation_denial
+
+    @property
+    def conflict(self) -> MutationConflictReason | None:
+        return self.latest.conflict
+
+    @property
+    def conflict_path(self) -> RepositoryPath | None:
+        return self.latest.conflict_path
+
+    @property
+    def uncertain(self) -> RepositoryPath | None:
+        return self.latest.uncertain
+
+    @property
+    def temporary_paths(self) -> tuple[RepositoryPath, ...]:
+        return self.latest.temporary_paths
+
+    @property
+    def checks(self) -> tuple[CheckRecord, ...]:
+        return self.latest.checks
+
+    @property
+    def final(self) -> GitRepositoryState | None:
+        return self.latest.final
+
+    @property
+    def final_failure(self) -> GitFailure | None:
+        return self.latest.final_failure
+
+    @property
+    def review_input_failure(self) -> ReviewInputFailure | None:
+        return self.latest.review_input_failure
+
+    @property
+    def review_materials(self) -> tuple[tuple[str, RepositoryPath], ...]:
+        return self.latest.review_materials
+
+    @property
+    def review(self) -> ReviewResult | None:
+        return self.latest.review
+
+    @property
+    def review_decision(self) -> ReviewDecision | None:
+        return self.latest.review_decision
 
 
 @dataclass(frozen=True, slots=True)
@@ -251,9 +382,10 @@ class TaskResult:
         if type(self.evidence) is not TaskEvidence:
             raise TypeError("task result requires TaskEvidence")
         evidence = self.evidence
-        reviewed = evidence.review is not None or evidence.review_input_failure
-        if reviewed and not evidence.gates_passed:
-            raise ValueError("review evidence requires every deterministic gate")
+        for number, attempt in enumerate(evidence.attempts, 1):
+            reviewed = attempt.review is not None or attempt.review_input_failure
+            if reviewed and not evidence.gates_passed_for(number):
+                raise ValueError("review evidence requires every deterministic gate")
         if self.disposition is TaskDisposition.SUCCEEDED:
             if self.failure is not None:
                 raise ValueError("a successful task carries no failure")
@@ -268,13 +400,27 @@ class TaskResult:
             return
         if type(self.failure) is not TaskFailure:
             raise TypeError("an unsuccessful task requires TaskFailure")
-        rejected = self.failure in _REJECTIONS
-        if rejected != (self.disposition is TaskDisposition.REJECTED):
-            raise ValueError("disposition does not match the failure step")
-        if rejected and (
-            evidence.agent_status is not None
-            or evidence.proposal is not None
-            or evidence.applied is not None
-            or evidence.checks
+        if self.failure is TaskFailure.REWORK_INPUT_FAILED and (
+            len(evidence.attempts) != 1
+            or evidence.latest.review_decision is not ReviewDecision.CHANGES_REQUIRED
         ):
-            raise ValueError("a rejected task cannot carry model or effect evidence")
+            raise ValueError("rework input failure follows review #1 only")
+        if self.disposition is TaskDisposition.REJECTED:
+            if self.failure not in _REJECTIONS:
+                raise ValueError("disposition does not match the failure step")
+            if len(evidence.attempts) > 1 or (
+                evidence.agent_status is not None
+                or evidence.proposal is not None
+                or evidence.applied is not None
+                or evidence.checks
+            ):
+                raise ValueError(
+                    "a rejected task cannot carry model or effect evidence"
+                )
+        elif self.failure in _REJECTIONS and not (
+            evidence.reworked
+            and self.failure
+            in {TaskFailure.EVIDENCE_DENIED, TaskFailure.EVIDENCE_UNAVAILABLE}
+        ):
+            # Pre-effect refusals are REJECTED, except the rework's own reads.
+            raise ValueError("disposition does not match the failure step")

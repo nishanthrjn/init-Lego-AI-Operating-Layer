@@ -1,265 +1,300 @@
-# ForgeAI: reviewed single repository task worker
+# ForgeAI: reviewed repository task worker with one bounded rework
 
 ForgeAI is an application built on LegoAI. It runs **one bounded coding task**
 against **one clean local Git repository**:
 
-1. one model proposal;
+1. a model proposal;
 2. authorized application of that proposal;
 3. contained deterministic verification;
-4. **one independent review** of the verified candidate;
-5. an evidence-backed result.
+4. **an independent review** of the verified candidate;
+5. **at most one rework** if that review requires changes;
+6. an evidence-backed result.
 
 It is assembled almost entirely from public LegoAI components. ForgeAI adds
-only the task vocabulary, the run sequence, deterministic review material and
-the operator profile. This is a single fixed sequence, not an autonomous
-engineering team: there is no planner, rework loop, retry or memory.
+only the task vocabulary, the fixed run sequence, deterministic review and
+rework material, and the operator profile. **This is not a self-healing or
+autonomous team.** It has no planner, no open-ended loop, no retry and no
+memory.
 
 **Status:**
-- **ForgeAI-2** (independent review gate): locally qualified on 2026-09-29
-  for the Windows + Docker Desktop scope with replay models; see
-  "ForgeAI-2 qualification evidence".
+- **ForgeAI-3** (bounded one-cycle rework): implemented; local validation
+  pending (`validate_forgeai_3.py`).
+- **ForgeAI-2** (independent review gate): locally qualified on 2026-09-29.
+  Its "CHANGES_REQUIRED stops the run" behavior is superseded by ForgeAI-3's
+  single rework.
 - **ForgeAI-1** (single task worker without review): locally qualified on
-  2026-09-29; see "ForgeAI-1 qualification evidence".
+  2026-09-29.
 
 ## Workflow
 
-`RepositoryTaskWorker.run(task, context)` performs these steps, in this order,
-once per run. Nothing is hidden, and nothing is retried.
+`RepositoryTaskWorker.run(task, context)` claims the workspace, checks the
+initial Git state, and then runs **attempt 1**. Only when attempt 1's review
+*completed* with `CHANGES_REQUIRED` does it run **attempt 2**, the single
+rework. There is never an attempt 3.
 
 1. **Claim the workspace.** The in-process `WorkspaceGuard` refuses a second
-   concurrent run on the same repository.
-2. **Observe Git** through `GitRepositoryPort`. The repository must have a
-   commit and no changes, not even untracked files. Otherwise the run is
-   rejected. ForgeAI never stashes, resets, cleans or commits.
-3. **Propose** (model call 1). `CodingAgent.propose` is called **exactly
-   once**. It performs the authorized, bounded reads of the target files, then
-   one governed model call, and returns a validated M4 change set. The model
-   proposes; it never applies.
-4. **Apply** through `AuthorizedRepositoryMutation`, which wraps
-   `LocalRepositoryMutation`. Authority is checked immediately before the
-   write, and the digest preconditions are enforced.
-5. **Check.** The configured checks run in order (Ruff check, mypy, pytest)
-   through `AuthorizedEngineeringChecks` over `SandboxedEngineeringChecks` on
-   `SandboxImage.PYTHON_CHECKS`. There is no host check adapter and no
-   fallback.
-6. **Observe Git again.** HEAD must be unchanged, and the working-tree changes
-   must be exactly the applied paths.
-7. **Review** (model call 2). This step runs **only if steps 3–6 all passed**:
-   1. The final content of the applied files is read through the same
-      `AuthorizedRepositoryEvidence` (the `read-for-model-analysis` grant), and
-      each file is verified against its applied digest.
-   2. ForgeAI renders deterministic review material and mints a **fresh**
-      Chat `ExecutionContext` from the host.
-   3. The unchanged `IndependentReviewer` is called **exactly once**.
-8. **Return a `TaskResult`** built from this run's evidence.
+   concurrent run on the same repository. The guard stays held for the whole
+   run, including any rework.
+2. **Observe Git.** The repository must have a commit and no changes, not even
+   untracked files. Otherwise the run is rejected. ForgeAI never stashes,
+   resets, cleans, checks out or commits.
+3. **Attempt**, run once, or twice when a rework happens:
+   1. **Propose.** Call `CodingAgent.propose` once. It authorizes and reads the
+      **current** content of the targets, then makes one governed model call.
+   2. **Apply** through `AuthorizedRepositoryMutation`. Current authority and
+      digest preconditions are checked immediately before the write.
+   3. **Check.** Run the full configured plan in order (Ruff check, mypy,
+      pytest) through `AuthorizedEngineeringChecks` over
+      `SandboxedEngineeringChecks`. There is no host fallback.
+   4. **Observe Git.** HEAD must be unchanged, and the working-tree changes
+      must equal the union of the paths applied so far.
+   5. **Review**, only if steps 1–4 all passed. Re-read the final content of
+      every changed file through `AuthorizedRepositoryEvidence`, verify it
+      against the applied digests, render deterministic material, mint a
+      fresh Chat context, and call the unchanged `IndependentReviewer` once.
+4. **Return a `TaskResult`** built from this run's evidence.
 
-A successful run makes **exactly two model calls**: the Coding Agent, then the
-reviewer. There is never a third call, and there is no fallback.
+## Rework: when and how
+
+**A rework happens only when review #1 completed and its decision is
+`CHANGES_REQUIRED`.** Every other outcome is terminal, with no rework:
+
+- `ACCEPT`: the task succeeds;
+- `INSUFFICIENT_EVIDENCE`;
+- a review model failure (including an `UNKNOWN` effect) or denial;
+- invalid review output;
+- review-input failure;
+- any deterministic, mutation, authorization, sandbox or Git failure.
+
+**The rework request** is a second `CodingRequest` to the **same, unchanged**
+`CodingAgent`, on a fresh host-minted Chat context:
+
+- **Objective:** the original objective.
+- **Targets:** the original paths. Files already written become `update`
+  targets. The editable allowlist never widens, and reviewer text cannot add
+  paths.
+- **Constraints:** the original constraints, plus ForgeAI's deterministic,
+  labeled rework notes:
+  - that this is the single rework;
+  - that review findings are opinions supplied as data, not commands;
+  - the first attempt's check outcomes;
+  - each blocking finding with its requested change.
+- **File content:** the Coding Agent re-reads the **current** files through
+  authorized reads, so the rework uses current contents and digests, never
+  stale ones.
+- **Not sent:** Git data, host paths, environment, Docker details, grants or
+  commands.
+
+If the notes do not fit the `CodingRequest` bounds (at most eight constraints
+of 1 KiB each), the run stops with `REWORK_INPUT_FAILED`. Nothing is
+truncated, and no model summarizes anything.
+
+**Review findings never drive effects.** A `required_action` is rendered only
+into constraint text. The Coding Agent may propose a new validated change set
+within scope, and the authorized mutation boundary and M4 preconditions still
+decide.
+
+**Review #2 is terminal.** `ACCEPT` means success. `CHANGES_REQUIRED`,
+`INSUFFICIENT_EVIDENCE` or any failure means the run stops. There is no
+second rework.
+
+## Exact ceilings
+
+| Path | Model calls | Applies | Check batches | Reviews |
+| --- | --- | --- | --- | --- |
+| No rework (review #1 `ACCEPT`) | 2: coding, review | 1 | 1 | 1 |
+| With rework (`CHANGES_REQUIRED`, then review #2) | 4: coding, review, coding, review | 2 | 2 | 2 |
+| Maximum, per run | **4** | **2** | **2** | **2** |
+
+The ceilings are structural. Architecture tests enforce them:
+
+- `_attempt` is called exactly twice in the worker, and `_rework` once;
+- there is one `propose` call site and one `review` call site;
+- there are no `while` loops;
+- `MAX_ATTEMPTS = 2` is a constant, and `ForgeAIConfig` has no attempt, retry
+  or cycle setting.
+
+No call is retried, and there is no fallback model.
+
+## No rollback
+
+Changes are applied before each review, so they **remain in the working tree**
+whatever happens next, including both attempts' changes when a rework fails.
+ForgeAI never reverts, resets or stashes. The result records what is known,
+and the operator decides what to do next.
 
 ## Deterministic checks versus review
 
 | | Deterministic checks | Independent review |
 | --- | --- | --- |
 | What it is | Tool observations (pytest, Ruff, mypy) in the sandbox | A bounded model opinion from a distinct Agent definition |
-| When it runs | After apply | Only after every deterministic gate passed |
-| Can it fail the task? | Yes | Yes |
-| Can it make the task succeed on its own? | No: review `ACCEPT` is also required | No: an `ACCEPT` can never override a failed check, a Git integrity failure, a denial or an infrastructure error |
-| Authority | None | None: it is not authorization, and it never edits, applies or reruns anything |
-
-## Review decisions
-
-| Reviewer outcome | ForgeAI result |
-| --- | --- |
-| `ACCEPT` | `SUCCEEDED`, provided every deterministic gate passed |
-| `CHANGES_REQUIRED` | `FAILED` / `REVIEW_CHANGES_REQUIRED`. The blocking findings and their required actions are recorded as text only |
-| `INSUFFICIENT_EVIDENCE` | `FAILED` / `REVIEW_INSUFFICIENT_EVIDENCE`. The reviewer's unknowns are recorded |
-
-**No rework.** On `CHANGES_REQUIRED` the run **stops**. It does not call the
-Coding Agent again, patch files from `required_action`, rerun checks or rerun
-the review.
-
-**No rollback.** The review happens after the changes were applied, so they
-**remain in the working tree**. The result records:
-
-- the applied paths and digests;
-- the check results;
-- the final Git state;
-- the full review.
-
-The operator decides what to do next.
+| When it runs | After every apply | Only after every deterministic gate of that attempt passed |
+| Can it make the task succeed on its own? | No: review `ACCEPT` is also required | No: an `ACCEPT` never overrides a failed check, a Git integrity failure, a denial or an infrastructure error |
+| Authority | None | None: its findings are text, never authorization or effects |
 
 ## Review input
 
-ForgeAI builds the existing M8.2 `ReviewRequest`, whose limits are unchanged:
+Each review uses the existing M8.2 `ReviewRequest`, with unchanged limits:
 
-- **Producer:** the Coding Agent's actual `AgentId` (`coding-agent`), taken
-  from its `AgentResult`. The reviewer is `independent-reviewer`.
-- **Objective:** the task objective.
-- **Criteria:** a fixed operator set in `ForgeAIConfig.review_criteria`:
-  correctness, requested behavior, test adequacy, maintainability and
-  unintended changes. Task and model output cannot change them. There are no
-  scores or rankings.
-- **Proposal:** a deterministic textual rendering of the validated
-  `CodingProposal`: summary, each change with its reason, risks and unknowns.
-- **Materials:** at most eight:
-  - `checks`: the deterministic check outcomes only, with no tool output;
-  - `file-1`, `file-2`, …: the final content of each applied file, in apply
-    order. The mapping from material ID to path is kept in `TaskEvidence`.
-    Material IDs are labels, not paths or canonical Evidence.
+- **Producer:** the Coding Agent's actual `AgentId` (`coding-agent`). The
+  reviewer is `independent-reviewer`.
+- **Criteria:** the fixed operator criteria in
+  `ForgeAIConfig.review_criteria`.
+- **Proposal:** a deterministic rendering of that attempt's proposal. Review
+  #2's rendering is labeled as the rework.
+- **Materials:**
+  - `checks`: that attempt's check outcomes;
+  - `file-1…n`: the final content of **every** file changed in the run, so
+    review #2 always sees the final candidate, never first-attempt contents.
 
-**Not disclosed to the reviewer:** Git data (branch, commit, status),
-unrelated files, hidden files and environment data.
+Git data is never disclosed. Input that does not fit fails with
+`REVIEW_INPUT_FAILED` (`READ_DENIED`, `READ_UNAVAILABLE`, `MATERIAL_BOUNDS` or
+`CONTEXT_BUDGET`), never truncated.
 
-**Nothing is ever truncated, summarized by a model or compressed.** Review
-input that does not fit fails with `REVIEW_INPUT_FAILED` and a
-`ReviewInputFailure`:
-- `READ_DENIED` or `READ_UNAVAILABLE`: the authorized re-read failed;
-- `MATERIAL_BOUNDS`: an M8.2 value bound was exceeded, for example a changed
-  file larger than 4 KiB or more than seven changed files;
-- `CONTEXT_BUDGET`: the serialized request exceeds the reviewer's input budget.
+## Authorization
+
+Every effect is evaluated against current authority at call time, including
+the rework's reads, write and checks. Nothing is cached from attempt 1. A
+grant that expires between the attempts fails closed:
+
+- an expired read grant gives `EVIDENCE_DENIED`;
+- an expired write grant gives `MUTATION_DENIED`.
+
+Tests cover both. All four model calls use the one Chat grant and the host's
+one configured binding; there is no per-attempt or per-Agent routing.
 
 ## Reused LegoAI components
 
 | Concern | Component |
 | --- | --- |
-| Host, authorization and model routing | `legoai.runtime.local.open_local_host`, `legoai.runtime.api` (`LocalHostConfig`, `OperatorGrant`, `ModelBindingConfig`, `OllamaSettings`, `TrustedModelContribution`, `HostError`), `GovernedHost.agent_runtime`, `model_execution` |
-| Authorized reads, proposal and review | `AuthorizedRepositoryEvidence`, `AuthorizedCodingEvidence`, `CodingAgent`, and `IndependentReviewer` with its `ReviewRequest` / `ReviewMaterial` / `ReviewResult` / `Review` / `ReviewDecision` values, all unchanged |
+| Host, authorization and model routing | `open_local_host`, `legoai.runtime.api` (`LocalHostConfig`, `OperatorGrant`, `ModelBindingConfig`, `OllamaSettings`, `TrustedModelContribution`, `HostError`), `agent_runtime`, `model_execution` |
+| Reads, proposal and review | `AuthorizedRepositoryEvidence`, `AuthorizedCodingEvidence`, `CodingAgent`, `IndependentReviewer` and its values, all unchanged |
 | Workspace and mutation | `LocalRepositoryWorkspace`, `LocalRepositoryMutation`, `AuthorizedRepositoryMutation` |
 | Checks and sandbox | `AuthorizedEngineeringChecks`, `SandboxedEngineeringChecks`, `CheckInputPolicy`, `DockerSandbox`, `SandboxImage.PYTHON_CHECKS` |
 | Git observation | `LocalGitRepository` / `GitRepositoryPort` (read-only, operator-only) |
 
-No LegoAI code was changed or copied for ForgeAI-1 or ForgeAI-2.
-
-**Both Agents use the host's one configured `engineering-reasoning` binding.**
-The public host pins one binding, so there is no per-Agent provider routing.
-Identity separation proves distinct Agent **definitions**. It does not prove
-distinct model weights, providers or principals, or guaranteed independence.
+**No LegoAI code was changed for ForgeAI-1, ForgeAI-2 or ForgeAI-3.** One
+application with one bounded rework is not evidence for a general Workflow
+abstraction, so none was added.
 
 ## ForgeAI-owned code (`src/forgeai`)
 
 | Module | Layer | Contents |
 | --- | --- | --- |
-| `domain.py` | Domain | `TaskRequest`, `TaskDisposition`, `TaskFailure`, `ReviewInputFailure`, `CheckRecord`, `TaskEvidence`, `TaskResult` |
-| `review.py` | Application | Pure, deterministic review-material rendering |
-| `worker.py` | Application | `RepositoryTaskWorker`, which depends on Ports, the two Agents and values only |
-| `guard.py` | Application | `WorkspaceGuard`, an in-process same-workspace refusal |
-| `composition.py` | Composition root | `ForgeAIConfig`, `local_profile`, `prepare_run`, `run_task`; the only module that opens the host or names adapters |
-| `cli.py` | Presentation | the `forgeai` command, the bounded `summarize`, and the `replay` and `ollama` bindings |
+| `domain.py` | Domain | `TaskRequest`, `TaskDisposition`, `TaskFailure`, `ReviewInputFailure`, `CheckRecord`, `AttemptEvidence`, `TaskEvidence`, `TaskResult`, `MAX_ATTEMPTS` |
+| `review.py` | Application | Pure rendering: review material, rework targets and rework constraints |
+| `worker.py` | Application | `RepositoryTaskWorker`: the fixed sequence of attempt 1 plus at most one rework |
+| `guard.py` | Application | `WorkspaceGuard` |
+| `composition.py` | Composition root | `ForgeAIConfig`, `local_profile`, `prepare_run`, `run_task` |
+| `cli.py` | Presentation | `forgeai`, `summarize`, and the `replay` and `ollama` bindings |
 
 ## Configuration boundary
 
-`TaskRequest` holds **intent only**:
-- `objective`;
-- 1–8 `CodingTarget`s (path plus create or update);
-- up to 8 constraints.
+`TaskRequest` holds intent only: the objective, 1–8 `CodingTarget`s and up to
+8 constraints.
 
-It never carries a repository root, model, provider, URL, key, grant,
-executable, image, command or review policy.
+`ForgeAIConfig` holds all operator configuration:
 
-Operator configuration is `ForgeAIConfig`. It covers:
-
-- the repository root and `WorkspacePolicy`, and the editable-path allowlist;
-- the Git executable and `GitReadPolicy`;
-- host principal, tenant, policy and grants for exactly four actions:
-  - `invoke-capability` for Chat, covering both model calls;
-  - `read-for-model-analysis`, covering the Coding reads and the review re-reads;
-  - `apply-repository-changes`;
-  - `run-engineering-check`;
+- the repository root and workspace policy;
+- the editable allowlist;
+- Git;
+- grants for four actions: Chat, read, write, check;
 - model bindings and the selection;
-- the Docker executable, the `SandboxPolicy` and the closed `SandboxImage`;
-- `CheckInputPolicy`, `CheckPolicy` and the ordered check plan;
+- the sandbox;
+- the check policies and ordered check plan;
 - the review criteria.
 
-**Switching providers is configuration-only.** Changing the selected binding
-changes no ForgeAI code. A provider LegoAI does not support still needs a new
-adapter, written in code.
-
-## Supported scope
-
-- **Tasks:** update or create 1–8 files of at most 8 KiB each, solvable by one
-  proposal. Deleting files is not supported. To be **reviewable**, each
-  changed file must fit a 4 KiB review material, and at most seven files may
-  change.
-- **Repositories:** a local, non-bare Git repository with a commit, in the
-  `src/` + `tests/` + `pyproject.toml` layout, small enough for the qualified
-  sandbox.
-- **Platform:** Windows with the Docker Desktop Linux engine.
+There is no attempt, retry or rework-count setting. Switching providers is
+configuration-only.
 
 ## Dispositions and failures
 
 | Disposition | Meaning | `TaskFailure` reasons |
 | --- | --- | --- |
-| `SUCCEEDED` | Every deterministic gate passed **and** the review completed with `ACCEPT` | — |
-| `REJECTED` | Refused before any model call or repository effect | `WORKSPACE_BUSY`, `REPOSITORY_UNAVAILABLE`, `UNSUPPORTED_REPOSITORY`, `DIRTY_START`, `EVIDENCE_DENIED`, `EVIDENCE_UNAVAILABLE` |
-| `FAILED` (before review) | Work started; a deterministic gate failed, so no review was run | `MODEL_FAILED`, `PROPOSAL_INVALID`, `MUTATION_DENIED`, `MUTATION_CONFLICT`, `MUTATION_PARTIAL`, `CHECK_DENIED`, `CHECK_ERROR`, `CHECKS_FAILED`, `FINAL_STATE_UNAVAILABLE`, `HEAD_CHANGED`, `UNEXPECTED_CHANGES` |
-| `FAILED` (review could not complete) | Execution failure, not an opinion | `REVIEW_INPUT_FAILED`, `REVIEW_FAILED` (the review model call was denied or failed; the effect extent is kept, including `UNKNOWN`), `REVIEW_OUTPUT_INVALID` (malformed output, or findings that cite unsupplied material) |
-| `FAILED` (review withheld acceptance) | The review completed with an opinion | `REVIEW_CHANGES_REQUIRED`, `REVIEW_INSUFFICIENT_EVIDENCE` |
+| `SUCCEEDED` | The latest attempt passed every deterministic gate **and** its review completed with `ACCEPT` | — |
+| `REJECTED` | Refused before any model call or repository effect | `WORKSPACE_BUSY`, `REPOSITORY_UNAVAILABLE`, `UNSUPPORTED_REPOSITORY`, `DIRTY_START`, `EVIDENCE_DENIED`, `EVIDENCE_UNAVAILABLE` (attempt 1 only) |
+| `FAILED`: deterministic step | Work started; a gate failed, so there is no review for that attempt | `MODEL_FAILED`, `PROPOSAL_INVALID`, `MUTATION_DENIED`, `MUTATION_CONFLICT`, `MUTATION_PARTIAL`, `CHECK_DENIED`, `CHECK_ERROR`, `CHECKS_FAILED`, `FINAL_STATE_UNAVAILABLE`, `HEAD_CHANGED`, `UNEXPECTED_CHANGES`, and for the rework's own reads `EVIDENCE_DENIED` / `EVIDENCE_UNAVAILABLE` |
+| `FAILED`: review could not complete | Execution failure, not an opinion | `REVIEW_INPUT_FAILED`, `REVIEW_FAILED`, `REVIEW_OUTPUT_INVALID` |
+| `FAILED`: review withheld acceptance | Opinion; after attempt 2, or `INSUFFICIENT_EVIDENCE` after attempt 1 | `REVIEW_CHANGES_REQUIRED`, `REVIEW_INSUFFICIENT_EVIDENCE` |
+| `FAILED`: rework not started | Review #1 findings did not fit a bounded rework request | `REWORK_INPUT_FAILED` |
 
-**Tool findings versus infrastructure failures.** Tool findings are
-`CheckResult`s, so the run reports `CHECKS_FAILED`, and every configured check
-still runs. Infrastructure failures are reported as `CHECK_ERROR`, and the
-remaining checks do not run.
-
-**After a failure.** Applied changes stay applied. There is no rollback,
-reset, retry or recovery. After any failure that follows a write, the final
-Git state is still observed (read-only) and recorded.
+**Which attempt failed.** The failure applies to the **latest attempt**. The
+result shows where the run stopped through `evidence.attempts` (1 or 2) and
+`evidence.reworked`, so the failure vocabulary does not need rework-specific
+copies.
 
 ## Evidence
 
-`TaskEvidence` is bounded and composed only from existing LegoAI values:
+`TaskEvidence` holds:
 
-- the run id;
-- the starting and final Git state, or the Git failure;
-- the Coding status, Agent status and model effect;
-- the proposal and the applied mutation result;
-- for a failed write: the denial, conflict, or uncertain and temporary paths;
-- the planned checks and each check's record;
-- the review material mapping;
-- the review-input failure, or the complete typed `ReviewResult`: request,
-  reviewer attribution and model execution, decision, findings, risks and
-  unknowns;
-- the fixed limitation statements.
+- one run id;
+- the start Git state;
+- the planned checks;
+- `attempts`, a tuple of one or two `AttemptEvidence` values;
+- the fixed limitations.
 
-It holds no exceptions, environment, host paths or runtime objects.
+Each `AttemptEvidence` records that attempt's number and:
+
+- its Coding, Agent and model-effect status;
+- its proposal and applied mutation result, or its denial, conflict, or
+  uncertain and temporary paths;
+- its check records;
+- its final Git state;
+- its review material mapping;
+- its review-input failure or its full typed `ReviewResult`.
+
+Single-value views such as `evidence.review` and `evidence.checks` report the
+latest attempt. `evidence.changed_paths` is the union of paths across
+attempts. The evidence holds no exceptions, environment, host paths or
+runtime objects.
 
 ## Known limitations
 
-- **A pass is not proof of correctness.** Neither a sandboxed `PASSED` nor a
-  review `ACCEPT` proves the change is correct. The review is an unverified
-  model opinion over the supplied text.
-- **The reviewer shares the Coding Agent's model binding and principal.**
-  Independence is by Agent definition only.
-- **No rework, retry or rollback.** `CHANGES_REQUIRED` leaves the applied
-  changes in place for the operator.
-- **No checked-input identity.** The evidence records the configured check
-  requests, not the exact files copied into the sandbox.
-- **Git state is operator-only** and is never disclosed to either model.
-- **Review bounds are the M8.2 bounds.** Larger changes cannot be reviewed and
-  are reported, never truncated.
-- **One run per workspace.** Same-workspace concurrency is refused in-process
-  only.
-- **The CLI's editable allowlist is the task targets**, because the local CLI
-  user is also the operator.
-- **Synchronous steps block** their thread.
-- **Volatile, single-shot runs.** No durable run store, no resume and no
-  commits.
-- **Qualification uses replay models only.** `ollama` is configurable but
-  unqualified, and live-model proposal and review quality is unqualified.
+- **Passes are not proof.** Neither a sandboxed `PASSED` nor a review `ACCEPT`
+  proves correctness. A rework accepted by the same Agent definitions on the
+  same model binding is still an unverified opinion.
+- **Findings reach the Coding Agent as constraint text.** It is labeled
+  review data, but a model may still treat it as instruction; scope and
+  authorization bound what can happen.
+- **Exactly one rework.** A second `CHANGES_REQUIRED` stops the run.
+- **No rollback.** Failed runs leave both attempts' changes in place.
+- **Union-based Git check.** If a rework restores a file to its committed
+  content, that file no longer appears changed, and the run reports
+  `UNEXPECTED_CHANGES`.
+- **No checked-input identity.** The evidence does not record which files
+  were copied into the sandbox.
+- **Operator-only Git.** Git data is never disclosed to either model.
+- **Bounded review input.** The M8.2 review bounds apply to the final
+  candidate.
+- **In-process guard.** Same-workspace refusal is in-process only.
+- **Blocking steps.** Synchronous steps block their thread.
+- **Volatile runs.** No durable run store, resume or commits.
+- **Replay-only qualification.** `ollama` is configurable but unqualified,
+  and live-model proposal, review and rework quality is unqualified.
 
 ## Running
 
 ```powershell
 cd examples/forgeai
 uv sync --locked
-uv run python demo.py            # fixture task, replay models, real Docker checks
-uv run forgeai <repo> --objective "..." --target src/pkg/mod.py --target tests/test_mod.py --replay coding.json --replay review.json
+uv run python demo.py            # review #1 accepts: 2 model calls
+uv run python demo.py rework     # review #1 requires changes, one rework: 4 model calls
+uv run forgeai <repo> --objective "..." --target src/pkg/mod.py --target tests/test_mod.py --replay coding-1.json --replay review-1.json [--replay coding-2.json --replay review-2.json]
 ```
 
-`demo.py` is a test harness. It copies `fixtures/stock_task/repository` into a
-temporary directory, commits it, and replays two recorded outputs in call
-order: `proposal.json` (the Coding Agent) and `review_accept.json` (the
-reviewer). The fixture also includes `review_changes_required.json` and
-`review_insufficient.json`.
+`demo.py` is a test harness. It commits the fixture into a temporary
+repository and replays recorded outputs **strictly in call order**. A call
+beyond the recorded outputs fails loudly.
+
+Fixtures in `fixtures/stock_task/`:
+
+| File | Role |
+| --- | --- |
+| `proposal.json` | Coding proposal #1 |
+| `review_changes_required.json` | Review `CHANGES_REQUIRED` (review #1, or a terminal review #2) |
+| `proposal_rework.json` | Rework proposal |
+| `review_accept.json` | Review `ACCEPT` (review #1 or #2) |
+| `review_insufficient.json` | Review `INSUFFICIENT_EVIDENCE` |
 
 ## Validation
 
@@ -267,7 +302,7 @@ From the repository root, on Windows with Docker Desktop and the CR-2a image
 present:
 
 ```powershell
-uv run python .\validate_forgeai_2.py
+uv run python .\validate_forgeai_3.py
 ```
 
 ## ForgeAI-2 qualification evidence
@@ -310,6 +345,10 @@ outputs for both model calls**:
 It makes no claim about live-model proposal or review quality, and it does
 not show that the reviewer is independent beyond having a distinct Agent
 definition. All the limitations listed above still apply.
+
+That qualification predates ForgeAI-3. Its "`CHANGES_REQUIRED` stops the run"
+behavior is superseded by the single rework. The ForgeAI-2 tests remain in the
+suite, updated for that rework.
 
 ## ForgeAI-1 qualification evidence
 

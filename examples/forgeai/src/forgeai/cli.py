@@ -103,6 +103,16 @@ def summarize(result: TaskResult) -> str:
         lines.append(f"start HEAD: {evidence.start.head.commit.value[:12]}")
     if evidence.proposal is not None:
         lines.append(f"proposal: {evidence.proposal.summary[:200]}")
+    if evidence.reworked:
+        first = evidence.attempts[0]
+        outcomes = ", ".join(
+            f"{r.request.kind.value} {r.result.outcome.value if r.result else 'error'}"
+            for r in first.checks
+        )
+        decision = first.review_decision
+        lines.append("attempts: 2 (one rework after review #1 required changes)")
+        lines.append(f"attempt 1 checks: {outcomes}")
+        lines.append(f"attempt 1 review: {decision.value if decision else 'none'}")
     changed = [path.value for path in evidence.changed_paths]
     lines.append(f"changed files: {', '.join(changed[:_MAX_LISTED]) or 'none'}")
     for record in evidence.checks:
@@ -164,7 +174,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         action="append",
         default=[],
-        help="recorded model outputs in call order: coding, then review",
+        help=(
+            "recorded model outputs in call order: coding, review; after a "
+            "CHANGES_REQUIRED review, also the rework coding and final review"
+        ),
     )
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--ollama-model", default="qwen2.5-coder:7b")

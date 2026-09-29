@@ -17,6 +17,7 @@ from legoai_engineering.repository.mutation import FileChangeKind
 from legoai_engineering.repository.workspace import RepositoryPath
 
 from forgeai.domain import (
+    AttemptEvidence,
     CheckRecord,
     TaskDisposition,
     TaskEvidence,
@@ -81,10 +82,21 @@ def test_task_request_types() -> None:
         TaskRequest("fix", [TARGET])  # type: ignore[arg-type]
 
 
+_RUN_FIELDS = {"start", "start_failure"}
+
+
 def evidence(**changes: object) -> TaskEvidence:
+    """Run-level fields go to TaskEvidence; the rest to attempt 1."""
+    run = {k: v for k, v in changes.items() if k in _RUN_FIELDS}
+    attempt = {k: v for k, v in changes.items() if k not in _RUN_FIELDS}
+    attempts = (
+        (dataclasses.replace(AttemptEvidence(1), **attempt),)  # type: ignore[arg-type]
+        if attempt
+        else ()
+    )
     return dataclasses.replace(
-        TaskEvidence("run-1", planned_checks=(CHECK,)),
-        **changes,  # type: ignore[arg-type]
+        TaskEvidence("run-1", planned_checks=(CHECK,), attempts=attempts),
+        **run,  # type: ignore[arg-type]
     )
 
 
@@ -132,7 +144,14 @@ def test_evidence_is_bounded_and_ordered() -> None:
         TaskEvidence(
             "run",
             planned_checks=(CHECK,),
-            checks=(CheckRecord(other, CheckResult(CheckKind.MYPY, 0, b"", b"")),),
+            attempts=(
+                AttemptEvidence(
+                    1,
+                    checks=(
+                        CheckRecord(other, CheckResult(CheckKind.MYPY, 0, b"", b"")),
+                    ),
+                ),
+            ),
         )
     with pytest.raises(ValueError):
         TaskEvidence("", planned_checks=(CHECK,))
@@ -163,13 +182,16 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
         "ReviewInputFailure | None",
         "tuple[tuple[str, RepositoryPath], ...]",
         "ReviewResult | None",
+        "int",
+        "tuple[AttemptEvidence, ...]",
     )
-    annotations = annotationlib.get_annotations(
-        TaskEvidence, format=annotationlib.Format.STRING
-    )
-    assert set(annotations) == {item.name for item in dataclasses.fields(TaskEvidence)}
-    for name, annotation in annotations.items():
-        assert annotation in allowed, name
+    for kind in (TaskEvidence, AttemptEvidence):
+        annotations = annotationlib.get_annotations(
+            kind, format=annotationlib.Format.STRING
+        )
+        assert set(annotations) == {item.name for item in dataclasses.fields(kind)}
+        for name, annotation in annotations.items():
+            assert annotation in allowed, (kind.__name__, name)
 
 
 def passed_evidence(**changes: object) -> TaskEvidence:
