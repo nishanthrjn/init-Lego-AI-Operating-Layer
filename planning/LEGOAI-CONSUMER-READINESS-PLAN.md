@@ -582,9 +582,12 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
   "ForgeAI-2 qualification evidence".
 - Live-model quality is not qualified.
 
-**ForgeAI-3 IMPLEMENTED — LOCAL VALIDATION PENDING (2026-09-29):**
+**ForgeAI-3 COMPLETE — LOCALLY QUALIFIED (2026-09-29):**
 - It adds exactly one bounded rework, only after review #1 completes with `CHANGES_REQUIRED`.
 - Ceilings: at most 4 model calls, 2 applies, 2 check batches and 2 reviews; the second review is terminal.
 - There is no retry, rollback or Workflow abstraction.
 - No LegoAI change or platform gap was needed.
-- It is not qualified until `validate_forgeai_3.py` passes locally.
+- All phases of `validate_forgeai_3.py` passed. They used replay outputs for
+  all four calls, real sandboxed checks for both attempts, and a clean install;
+  see `examples/forgeai/README.md`, "ForgeAI-3 qualification evidence".
+- Live-model quality is not qualified.

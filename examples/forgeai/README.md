@@ -17,8 +17,9 @@ autonomous team.** It has no planner, no open-ended loop, no retry and no
 memory.
 
 **Status:**
-- **ForgeAI-3** (bounded one-cycle rework): implemented; local validation
-  pending (`validate_forgeai_3.py`).
+- **ForgeAI-3** (bounded one-cycle rework): locally qualified on 2026-09-29
+  for the Windows + Docker Desktop scope with replay models; see
+  "ForgeAI-3 qualification evidence".
 - **ForgeAI-2** (independent review gate): locally qualified on 2026-09-29.
   Its "CHANGES_REQUIRED stops the run" behavior is superseded by ForgeAI-3's
   single rework.
@@ -304,6 +305,52 @@ present:
 ```powershell
 uv run python .\validate_forgeai_3.py
 ```
+
+## ForgeAI-3 qualification evidence
+
+On 2026-09-29 the maintainer ran `validate_forgeai_3.py` on Windows with
+Docker Desktop, using the recorded CR-2a image. **All phases passed.**
+
+| Area | Result |
+| --- | --- |
+| No LegoAI source change in this slice | `git diff --exit-code HEAD -- src/legoai packages` clean |
+| Static checks | mypy clean on 17 files plus the validator; Ruff lint and format clean |
+| Domain and evidence invariants | 19 passed |
+| Rework context: rendering, bounds, scope | 3 passed |
+| Review #1 gating (no rework unless `CHANGES_REQUIRED`) | 9 passed |
+| No-rework `ACCEPT` path | 2 passed |
+| `CHANGES_REQUIRED` → rework path | 2 passed |
+| Terminal second-review paths | 5 passed |
+| Rework proposal failures | 2 passed |
+| Second mutation failure | 1 passed |
+| Second check and Git integrity failures | 2 passed |
+| Authorization re-evaluated for the rework | 2 passed |
+| Call and attempt ceilings, guard | 5 passed |
+| Architecture and import boundaries | 24 passed |
+| Real-Docker rework `ACCEPT`, and second-pass failure | 2 passed |
+| Clean-install execution (accept and rework scenarios) | 1 passed |
+| ForgeAI-1/2 regressions | 50 passed |
+| M8.2 and M8.3 engineering regressions | 84 passed |
+| Demos | `accept`: succeeded, 1 attempt. `rework`: succeeded, 2 attempts (attempt 1 review `changes_required`, final review `accept`) |
+| `git diff --check` | clean |
+
+This qualifies the bounded one-cycle rework **with deterministic replay outputs
+for all four model calls**:
+
+- the rework trigger;
+- current-content rework input;
+- the unchanged scope;
+- the structural ceilings (4 model calls, 2 applies, 2 check batches, 2
+  reviews);
+- the terminal second review;
+- authorization re-evaluated per effect;
+- the guard held for the whole run;
+- no rollback;
+- per-attempt evidence.
+
+It makes no claim about live-model proposal, review or rework quality, or
+about reviewer independence beyond a distinct Agent definition. All the
+limitations listed above still apply.
 
 ## ForgeAI-2 qualification evidence
 
