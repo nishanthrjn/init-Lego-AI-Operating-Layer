@@ -733,3 +733,10 @@ See [plan](M8.3-BOUNDED-CODING-PLAN.md),
 [contract](../packages/legoai-engineering/README.md#m83--bounded-coding-agent), and
 [local script](../CODING_AGENT_M8_3_test.ps1).
 `CODING_AGENT_M8_3_COMPLETE = NO` pending local qualification.
+
+**Closure (2026-09-29):** the maintainer's symlink-capable run of the M8.3 script
+passed. The Engineering suite had 408 passed and 1 POSIX-only skip. All six
+Windows symlink boundary tests ran and passed. Typing and Ruff were clean, and
+the three examples printed their expected output. Core regressions had 153
+passed. See the [completion report](M8.3-BOUNDED-CODING-PLAN.md#completion-report).
+`CODING_AGENT_M8_3_COMPLETE = YES`. M8.4 remains unstarted.

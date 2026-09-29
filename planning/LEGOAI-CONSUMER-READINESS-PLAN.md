@@ -180,9 +180,11 @@ was accepted by the maintainer, and its §13 decisions are resolved. CR-1b adds
 `legoai.runtime.api`/`legoai.runtime.local` and migrates two existing consumers,
 the engineering Agent examples and DocuMind, with no private imports. All 20
 validator phases passed; see ADR-014 §12a for the evidence. B1 is closed for these
-consumers; generative media remains a listed exception until CR-1c. ForgeAI-1
-remains blocked by M8.3 closure (including its Windows symlink checks), CR-2a/2b
-and CR-3. Where the ADR differs
+consumers; generative media remains a listed exception until CR-1c.
+**M8.3 closure is COMPLETE (2026-09-29):** it passed in a symlink-capable session
+with all six symlink boundary tests passing; see the
+[M8.3 completion report](M8.3-BOUNDED-CODING-PLAN.md#completion-report).
+ForgeAI-1 remains blocked by CR-2a, CR-2b and CR-3. Where the ADR differs
 from the sketch in this section and §4.2, the ADR is authoritative:
 - `model_execution(purpose)` replaces a generic `new_execution`;
 - `agent_runtime()` takes no argument;
@@ -435,7 +437,7 @@ check found no need for a generic app builder.
 
 | Slice | Owner | Scope | Blocks ForgeAI-1 |
 |---|---|---|---|
-| M8.3-closure | legoai-engineering | Run `CODING_AGENT_M8_3_test.ps1`; close symlink tests | **Yes** |
+| M8.3-closure | legoai-engineering | Run `CODING_AGENT_M8_3_test.ps1`; close symlink tests | **Done 2026-09-29** |
 | CR-1a | Maintainer | Allocate and decide ADR-014 per §5 | **Yes** |
 | CR-1b | Core runtime | `legoai.runtime.api` + `legoai.runtime.local.open_local_host`; migrate engineering examples and DocuMind | **Yes** |
 | CR-1c | Generative media | Migrate `local_host.prepare_local` to the public host | No |

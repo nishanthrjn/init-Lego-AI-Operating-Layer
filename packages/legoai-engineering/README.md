@@ -13,7 +13,7 @@ scope. M5 implementation and local validation are complete for the documented
 trusted-local scope. M6 is locally qualified for the bounded Windows Docker Desktop
 Linux workload scope documented below. M6.5 and M7 are locally qualified in Core.
 M8.1 and M8.2 are locally qualified for their documented scopes;
-M8.3 implementation is complete with local validation pending; M8.4 is unstarted.
+M8.3 is locally qualified for its documented scope (2026-09-29); M8.4 is unstarted.
 Earlier milestone handoff notes below retain their chronology.
 
 The [repository intake example](examples/repository_intake.py) is its first
@@ -1226,7 +1226,7 @@ M8.3 Coding and M8.4 Test/Validation Agents remain unstarted.
 
 ## M8.3 — Bounded Coding Agent
 
-**IMPLEMENTATION COMPLETE — LOCAL VALIDATION PENDING**
+**COMPLETE for the documented local scope** (qualified 2026-09-29; see closure below).
 
 `coding.api.CodingAgent.propose` receives an immutable `CodingRequest`: objective,
 1–8 `CodingTarget` values (RepositoryPath plus existing M4 CREATE/UPDATE kind),
@@ -1332,6 +1332,27 @@ on Windows are expected. Do not rerun Docker or unrelated application suites.
 Classify failures as CODE, TEST, ENVIRONMENT, CONFIGURATION or TOOLCHAIN/DEPENDENCY
 DEFECT and request only the smallest necessary rerun.
 `CODING_AGENT_M8_3_COMPLETE = NO` until local evidence is green. M8.4 is unstarted.
+
+### M8.3 local qualification closure
+
+Maintainer evidence (2026-09-29, symlink-capable Windows session):
+- Core focused regressions: 153 passed.
+- Ruff lint and format and mypy: clean, 70 files.
+- Engineering suite, excluding Docker: **408 passed, 1 skipped**. The skip is the
+  POSIX special-file test, which doesn't apply on Windows.
+- All six symlink boundary tests passed:
+  - Coding CREATE/UPDATE target or parent;
+  - Analyst;
+  - M2 workspace;
+  - M4 mutation;
+  - M5 checks.
+- All three examples printed exactly their expected output.
+
+Qualification includes the CR-1b public-host composition of the examples. It also
+includes one corrected test expectation: CPython 3.13+ raises `TypeError` for
+`replace` on the init-disabled digest. See the
+[completion report](../../planning/M8.3-BOUNDED-CODING-PLAN.md#completion-report).
+`CODING_AGENT_M8_3_COMPLETE = YES`. M8.4 is unstarted.
 
 ## ADR-014 public governed host (CR-1b; locally qualified 2026-09-28)
 
