@@ -8,6 +8,7 @@ from legoai.execution.agent.ports import AgentRequest, AgentResult, AgentRuntime
 from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.kernel.context import TenantContext
 
+from legoai_engineering._json_document import json_document
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,
@@ -71,7 +72,7 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 
 def _parse(output: str, evidence: CodingEvidence) -> CodingProposal:
-    value: object = json.loads(output, object_pairs_hook=_unique_object)
+    value: object = json.loads(json_document(output), object_pairs_hook=_unique_object)
     obj = _object(value, {"summary", "changes", "risks", "unknowns"})
     files = {file.target.path.value: file for file in evidence.files}
     changes = []

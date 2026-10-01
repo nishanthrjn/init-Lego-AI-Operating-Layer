@@ -41,8 +41,22 @@
   and *which* Ruff rules or pytest failure kinds failed; see
   [Failure diagnostics](#failure-diagnostics-lq12). Validation used replay and
   local HTTP stubs only; no live model was contacted. The three recorded
-  baselines (schema 1) predate LQ1.2 and stay unchanged. **No diagnostic live
-  evidence exists yet;** it requires new live runs.
+  baselines (schema 1) predate LQ1.2 and stay unchanged.
+- **Diagnostic live measurement** (2026-10-01, `qwen2.5-coder:7b`, schema 2,
+  not committed):
+  - Coding: 11 of 12 replies `response_not_json`, all 11 Markdown-fenced; the
+    one unfenced reply was `valid`.
+  - Reviewer: the single reply was fenced, `response_not_json`.
+  - 0 classifier disagreements.
+
+  This evidence led to [ADR-021](../../../adrs/ADR-021.md).
+- **ENG-JSON-1 (ADR-021) implemented; local validation pending.** Engineering
+  Agents now also accept one exact Markdown fence (label `json` or none)
+  around the JSON document. The harness mirrors that stage and reports
+  `representation` and `fence_label`. **Reports move to schema 3:**
+  `response_not_json` no longer includes exactly fenced documents, so schema-2
+  and schema-3 rates are not comparable. Schema-1 and schema-2 reports stay
+  unchanged.
 - An earlier attempt requested a model that was not installed in the local
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
@@ -178,9 +192,24 @@ or an import-order lint from a failing assertion. A later structured-output
 or check-policy decision needs that distinction as evidence, not as a guess.
 
 **What it measures.** LQ1.2 measures the **existing** contracts. It changes no
-prompt, parser, schema, gate, retry or model setting. A reply wrapped in a
-Markdown fence is recorded as `response_not_json`, exactly as ForgeAI rejects
-it; the fence is only flagged (`markdown_fence`), never stripped.
+prompt, parser, schema, gate, retry or model setting.
+
+**Representation (ADR-021, schema 3).** The classifier mirrors the
+engineering decoder exactly:
+- one exact fence (opening line ` ``` ` or ` ```json `, closing line ` ``` `)
+  is decoded, and the enclosed document is classified;
+- every other fenced or prose reply is `response_not_json`, exactly as
+  ForgeAI rejects it.
+
+Each reply records three representation features:
+- `representation`: `raw`, `fenced` (an exact ADR-021 envelope) or `none` (a
+  fence that is not ADR-021's);
+- `fence_label`: `json`, `none` or `other`, or null when the reply is not
+  fenced;
+- `markdown_fence`: whether the reply starts with a fence.
+
+Schema-2 reports predate ADR-021: there, every fenced reply was
+`response_not_json`.
 
 **Coding reply categories.** These are the first stage that rejected the
 reply, in the CodingAgent's own order:
@@ -243,11 +272,18 @@ rule or kind identifiers only. They contain no reply text, generated code,
 prompts, repository source, hidden-test content, Ruff or pytest messages,
 test names, tracebacks or host paths. Sentinel tests enforce this.
 
-**Report schema 2.** Schema 2 adds a per-run `diagnostics` record and a
-top-level `diagnostics` aggregate. The aggregate is computed only by folding
+**Report schemas 2 and 3.** Schema 2 added a per-run `diagnostics` record and
+a top-level `diagnostics` aggregate. The aggregate is computed only by folding
 the run records (`fold`), so it can always be re-derived from the report
-itself. Every schema-1 field is unchanged. Schema-1 reports are historical
-evidence; the harness never reads or rewrites them.
+itself.
+
+Schema 3 (ADR-021):
+- changes the meaning of `response_not_json`;
+- adds the `representation` and `fence_label` features;
+- adds `representation_counts` and `fence_label_counts` per Agent.
+
+Every schema-1 field is unchanged. Schema-1 and schema-2 reports are
+historical evidence; the harness never reads or rewrites them.
 
 **Diagnostics do not change behavior.** Tests run ForgeAI's real Ollama
 adapter against a scripted Ollama, direct and through the observer, and

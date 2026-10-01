@@ -34,6 +34,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "coding.api": {
             "json",
+            "legoai_engineering._json_document",
             "typing",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
@@ -69,6 +70,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "reviewer.api": {
             "json",
+            "legoai_engineering._json_document",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
             "legoai_engineering.reviewer.definition",
@@ -83,6 +85,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "analyst.api": {
             "json",
+            "legoai_engineering._json_document",
             "typing",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
@@ -106,6 +109,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.workspace",
         },
         "authorization": {"enum"},
+        "_json_document": set(),
         "_authority": {
             "collections.abc",
             "datetime",

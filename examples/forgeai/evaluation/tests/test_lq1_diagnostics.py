@@ -48,10 +48,10 @@ def runs(tmp_path: Path) -> tuple[FixtureSet, tuple[FixtureRun, ...]]:
     garbage = ((1, f"garbage {SENTINEL}"), (0, ""), (0, ""))
     cases = [
         ((good, REVIEW_ACCEPT), failing),
-        ((coding["fenced-json"][0], REVIEW_ACCEPT), None),
+        ((coding["fenced-other-label"][0], REVIEW_ACCEPT), None),
         ((coding["prose"][0], REVIEW_ACCEPT), None),
         ((coding["path-outside-targets"][0], REVIEW_ACCEPT), None),
-        ((good, review["fenced-json"][0]), None),
+        ((good, review["fenced-other-label"][0]), None),
         ((good, REVIEW_ACCEPT), garbage),
     ]
     found = []
@@ -88,6 +88,8 @@ def test_aggregate_is_the_fold_of_the_run_rows(tmp_path: Path) -> None:
             STOCK: {"path_not_requested_target": 1, "response_not_json": 2, "valid": 3}
         },
         "markdown_fence_replies": 1,
+        "representation_counts": {"none": 1, "raw": 5},
+        "fence_label_counts": {"other": 1},
     }
     assert diagnostics["reviewer_output"]["counts_by_category"] == {
         "response_not_json": 1
@@ -135,9 +137,9 @@ def test_reports_carry_no_model_prompt_source_or_tool_content(tmp_path: Path) ->
         assert leaked not in text, leaked
 
 
-def test_schema_2_keeps_every_schema_1_metric(tmp_path: Path) -> None:
+def test_schema_3_keeps_every_schema_1_metric(tmp_path: Path) -> None:
     report, markdown = written(tmp_path)
-    assert SCHEMA == report["schema"] == "forgeai-lq1-report/2"
+    assert SCHEMA == report["schema"] == "forgeai-lq1-report/3"
     metrics = report["metrics"]
     assert isinstance(metrics, dict)
     assert set(metrics) == SCHEMA_1_METRICS

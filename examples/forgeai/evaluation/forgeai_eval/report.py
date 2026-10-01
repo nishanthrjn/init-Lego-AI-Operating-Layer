@@ -5,9 +5,12 @@ rendered only from the JSON dictionary, so it cannot compute different
 numbers. Reports hold identifiers, enums, counts and timings: no source text,
 prompts, model output, environment or host paths.
 
-Schema 2 (LQ1.2) adds a per-run `diagnostics` record and a top-level
+Schema 2 (LQ1.2) added a per-run `diagnostics` record and a top-level
 `diagnostics` aggregate folded from those records; every schema-1 field is
-unchanged. Schema-1 reports stay as recorded; the harness never reads them.
+unchanged. Schema 3 (ADR-021) changes the meaning of `response_not_json`
+(an exact json-labelled or unlabelled fence is now decoded) and adds the
+`representation` and `fence_label` features and their counts. Schema-1 and
+schema-2 reports stay as recorded; the harness never reads them.
 """
 
 import json
@@ -27,7 +30,7 @@ from forgeai_eval.metrics import (
 )
 from forgeai_eval.runner import FixtureRun, RunMetadata
 
-SCHEMA = "forgeai-lq1-report/2"
+SCHEMA = "forgeai-lq1-report/3"
 LIMITATIONS = (
     "THIS IS NOT A PRODUCTION BENCHMARK. Results describe the frozen fixture set "
     "only, on the recorded model, hardware and revisions.",
@@ -252,8 +255,10 @@ def render_markdown(report: dict[str, object]) -> str:
         "",
         "## Failure diagnostics (LQ1.2)",
         "",
-        "Content-free categories of the existing contracts; fenced JSON is "
-        "`response_not_json`. Diagnostics observe; they never change behavior.",
+        "Content-free categories of the existing contracts. Per ADR-021 one "
+        "exact fence (label `json` or none) is decoded; any other fenced or "
+        "prose reply is `response_not_json`. Diagnostics observe; they never "
+        "change behavior.",
     ]
     for title, key in (
         ("Coding output", "coding_output"),

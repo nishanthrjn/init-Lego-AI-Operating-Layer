@@ -41,7 +41,8 @@ from forgeai_eval.runner import FixtureRun
 DIAGNOSTIC_DEFINITIONS: dict[str, str] = {
     "diagnostics.coding_output": "per Coding invocation, the first stage of "
     "the existing contract that rejected the reply (or valid / model_failure); "
-    "content-free; fenced JSON is response_not_json",
+    "content-free; representation (raw | fenced | none) and fence_label follow "
+    "ADR-021: only one exact json-labelled or unlabelled fence is decoded",
     "diagnostics.reviewer_output": "per Reviewer invocation, the first "
     "rejecting stage of the existing review contract",
     "diagnostics.ruff": "rule-code counts of failed ruff_check runs; "
@@ -205,6 +206,15 @@ def _sum_counts(entries: list[dict[str, object]], key: str) -> dict[str, int]:
     return dict(sorted(total.items()))
 
 
+def _feature_counts(entries: list[dict[str, object]], name: str) -> dict[str, int]:
+    found: list[str] = []
+    for entry in entries:
+        features = entry["features"]
+        if isinstance(features, dict) and features[name] is not None:
+            found.append(str(features[name]))
+    return _counts(found)
+
+
 def fold(rows: list[dict[str, object]]) -> dict[str, object]:
     """Aggregate diagnostics from report run rows ({"fixture", "diagnostics"})."""
     per_run = [(str(row["fixture"]), row["diagnostics"]) for row in rows]
@@ -264,6 +274,8 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
                 for e in coding
                 if isinstance(e["features"], dict) and e["features"]["markdown_fence"]
             ),
+            "representation_counts": _feature_counts(coding, "representation"),
+            "fence_label_counts": _feature_counts(coding, "fence_label"),
         },
         "reviewer_output": {
             "counts_by_category": _counts([str(e["category"]) for e in reviews]),
@@ -272,6 +284,8 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
                 for fixture in fixtures
                 if categories("review", fixture)
             },
+            "representation_counts": _feature_counts(reviews, "representation"),
+            "fence_label_counts": _feature_counts(reviews, "fence_label"),
         },
         "ruff": check_part(CheckKind.RUFF_CHECK, "rule_counts"),
         CheckKind.PYTEST.value: check_part(CheckKind.PYTEST, "kind_counts"),
