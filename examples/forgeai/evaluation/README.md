@@ -22,12 +22,27 @@
   runs now verify the serving Ollama before fixture 1 and record the
   *observed* server version; see [Live-run preflight](#live-run-preflight-lq11).
   The recorded `llama3.2` baseline predates LQ1.1.
-- **LQ1.2 content-free failure diagnostics implemented; local validation
-  pending.** New reports (schema 2) say *why* a Coding or Reviewer reply was
-  rejected and *which* Ruff rules or pytest failure kinds failed; see
-  [Failure diagnostics](#failure-diagnostics-lq12). The three recorded
-  baselines (schema 1) predate LQ1.2 and stay unchanged; diagnostic evidence
-  requires new live runs.
+- **LQ1.2 content-free failure diagnostics validated** (2026-10-01). All 42
+  phases of `validate_forgeai_lq1.py` passed, including the new phases 13e–13m
+  and 14c:
+  - 13e: the closed taxonomy;
+  - 13f/13h: every Coding and Reviewer category, each agreeing with ForgeAI's
+    own parser verdict;
+  - 13g: fenced JSON remains rejected;
+  - 13i/13j: Ruff rule and pytest failure-kind extraction;
+  - 13k: the aggregate is the fold of the run rows, and schema 2 keeps every
+    schema-1 metric;
+  - 13l: sentinel privacy;
+  - 13m: observer non-interference (equal `TaskResult`, byte-identical
+    requests);
+  - 14c: extraction from real check-image output in Docker.
+
+  New reports (schema 2) say *why* a Coding or Reviewer reply was rejected
+  and *which* Ruff rules or pytest failure kinds failed; see
+  [Failure diagnostics](#failure-diagnostics-lq12). Validation used replay and
+  local HTTP stubs only; no live model was contacted. The three recorded
+  baselines (schema 1) predate LQ1.2 and stay unchanged. **No diagnostic live
+  evidence exists yet;** it requires new live runs.
 - An earlier attempt requested a model that was not installed in the local
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
