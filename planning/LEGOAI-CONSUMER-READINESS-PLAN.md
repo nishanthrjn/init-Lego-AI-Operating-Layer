@@ -620,3 +620,22 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
 - **Erratum:** the report records Ollama `0.34.4`, but `0.35.0` served the run.
 - See `examples/forgeai/evaluation/README.md`, "Recorded baseline".
 - No ForgeAI or LegoAI runtime change was made.
+
+**ForgeAI-LQ1.1 LIVE-RUN METADATA PREFLIGHT VALIDATED (2026-10-01):**
+- **Preflight:** before fixture 1, live mode makes two read-only requests,
+  `GET /api/version` and `GET /api/tags`. It verifies:
+  - the server is reachable;
+  - an installed model has exactly the requested name;
+  - that model's full digest equals the requested digest.
+- **On failure** (`OLLAMA_UNREACHABLE`, `OLLAMA_RESPONSE_INVALID`,
+  `MODEL_NOT_INSTALLED` or `MODEL_DIGEST_MISMATCH`) it exits 3, runs zero
+  ForgeAI tasks and writes no report. There is no retry, fallback, pull or
+  other Ollama mutation.
+- **Version:** `--ollama-version` is removed. The report records the observed
+  server version and the verified digest; the operator still supplies the
+  hardware class.
+- **Validation:** all 32 phases of `validate_forgeai_lq1.py` passed, including
+  phases 13b–13d, which use a local HTTP stub; no live model was contacted.
+- **Unchanged:** runtime, fixtures, hidden tests, prompts and metrics.
+- **Residual gap:** identity is checked once, before the run; a change to
+  Ollama during a run is not detected.

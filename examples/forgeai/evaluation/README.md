@@ -11,9 +11,17 @@
 - **Live baseline recorded** (2026-10-01) for `llama3.2:latest`, as a
   measurement, not a pass/fail result. See [Recorded baseline](#recorded-baseline-llama32latest-2026-10-01),
   including its metadata erratum.
-- **LQ1.1 live-run preflight implemented, local validation pending.** Live
+- **LQ1.1 live-run preflight validated** (2026-10-01). All 32 phases of
+  `validate_forgeai_lq1.py` passed, including the new phases 13b–13d:
+  - 13b: preflight success and recording of the observed version;
+  - 13c: unreachable server, missing model and digest mismatch fail closed,
+    with zero runs and no report;
+  - 13d: replay mode needs no preflight.
+
+  These ran against a local HTTP stub; no live model was contacted. Live
   runs now verify the serving Ollama before fixture 1 and record the
   *observed* server version; see [Live-run preflight](#live-run-preflight-lq11).
+  The recorded `llama3.2` baseline predates LQ1.1.
 - An earlier attempt requested a model that was not installed in the local
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
