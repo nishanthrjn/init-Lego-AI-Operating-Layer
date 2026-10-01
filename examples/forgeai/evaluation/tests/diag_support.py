@@ -77,7 +77,16 @@ def coding_samples() -> dict[str, tuple[str, C]]:
         "blank": ("   \n", C.OUTPUT_TEXT_INVALID),
         "over-output-limit": ("x" * 40_000, C.OUTPUT_LIMIT),
         "prose": (f"I updated the module. {SENTINEL}", C.RESPONSE_NOT_JSON),
-        "fenced-json": ("```json\n" + good + "\n```", C.RESPONSE_NOT_JSON),
+        "fenced-json": ("```json\n" + good + "\n```", C.VALID),
+        "fenced-unlabelled": ("```\n" + good + "\n```", C.VALID),
+        "fenced-other-label": (
+            "```python\n" + good + "\n```",
+            C.RESPONSE_NOT_JSON,
+        ),
+        "fence-with-prose": (
+            "Here:\n```json\n" + good + "\n```",
+            C.RESPONSE_NOT_JSON,
+        ),
         "duplicate-key": (
             '{"summary":"dup",' + good.lstrip()[1:],
             C.DUPLICATE_JSON_KEY,
@@ -145,7 +154,12 @@ def review_samples() -> dict[str, tuple[str, R]]:
         "valid": (REVIEW_ACCEPT, R.VALID),
         "blank": (" ", R.OUTPUT_TEXT_INVALID),
         "over-output-limit": ("x" * 17_000, R.OUTPUT_LIMIT),
-        "fenced-json": ("```json\n" + REVIEW_ACCEPT + "\n```", R.RESPONSE_NOT_JSON),
+        "prose": ("The change looks fine.", R.RESPONSE_NOT_JSON),
+        "fenced-json": ("```json\n" + REVIEW_ACCEPT + "\n```", R.VALID),
+        "fenced-other-label": (
+            "```markdown\n" + REVIEW_ACCEPT + "\n```",
+            R.RESPONSE_NOT_JSON,
+        ),
         "missing-field": (v(_drop("top", "risks")), R.SCHEMA_INVALID),
         "finding-invalid": (v(findings=[bad_finding]), R.FINDING_INVALID),
         "decision-invalid": (v(decision="approve"), R.DECISION_INVALID),

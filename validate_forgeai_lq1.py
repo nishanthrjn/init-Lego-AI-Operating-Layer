@@ -246,11 +246,15 @@ def main() -> int:
                 ),
             )
             tests(
-                "13g fenced JSON remains rejected",
+                "13g ADR-021 representation (exact fence decoded, others rejected)",
                 *select(
                     "test_lq1_outputs",
-                    "test_fenced_json_remains_rejected_and_is_only_flagged",
+                    "test_fenced_representation_follows_adr_021",
                     "test_coding_classifier_agrees_with_the_runtime[fenced-json]",
+                    "test_coding_classifier_agrees_with_the_runtime[fenced-unlabelled]",
+                    "test_coding_classifier_agrees_with_the_runtime[fenced-other-label]",
+                    "test_coding_classifier_agrees_with_the_runtime[fence-with-prose]",
+                    "test_review_classifier_agrees_with_the_runtime[fenced-json]",
                 ),
             )
             tests(
@@ -279,11 +283,11 @@ def main() -> int:
                 ),
             )
             tests(
-                "13k per-run -> aggregate derivation; schema 2 keeps metrics",
+                "13k per-run -> aggregate derivation; schema 3 keeps metrics",
                 *select(
                     "test_lq1_diagnostics",
                     "test_aggregate_is_the_fold_of_the_run_rows",
-                    "test_schema_2_keeps_every_schema_1_metric",
+                    "test_schema_3_keeps_every_schema_1_metric",
                     "test_replay_command_reports_valid_observed_replies",
                 ),
             )

@@ -1812,3 +1812,40 @@ Windows with Docker Desktop, using the recorded CR-2a image.
 This qualifies the authorization wrappers and public wiring for the reference
 scope only. It does not change the containment-versus-integrity or
 checked-input-identity limitations.
+
+## ENG-JSON-1 — JSON document representation (ADR-021; local validation pending)
+
+[ADR-021](../../adrs/ADR-021.md) (Accepted 2026-10-02) defines how the three
+structured-output Agents (`RepositoryAnalyst`, `IndependentReviewer`,
+`CodingAgent`) read a model reply. A reply is accepted in exactly one of two
+representations:
+
+- **Raw:** one JSON document. It reaches the parser byte for byte, as before.
+- **Fenced:** after trimming JSON whitespace, the first line is exactly
+  ` ``` ` or ` ```json `, the last line is exactly ` ``` `, and the lines
+  between are the document.
+
+Everything else is still output-invalid with the existing status:
+- prose before or after a fence;
+- any other label (`JSON`, `jsonc`, `python`);
+- text after the label, or JSON on the fence line;
+- single-line, missing, two or nested fences, or an empty fence;
+- malformed JSON, two documents, or trailing text.
+
+**How it works.** The private `legoai_engineering._json_document.json_document`
+only recognizes that outer envelope. It never parses, searches, repairs or
+retries. Each Agent's existing `json.loads` (duplicate keys rejected) and
+every field, path, target, operation, content-limit and decision validator
+then run unchanged on the decoded text.
+
+**What is unchanged:**
+- The Agent runtime's output contract still bounds the **whole** reply,
+  fence included.
+- Public APIs, values and statuses.
+- Agent definitions and their versions; the instructions still ask for JSON
+  only.
+- Model effects, and the Core and Model contracts.
+- It is provider-neutral: no Ollama `format` and no provider branch.
+
+**Validation:** `uv run python .\validate_engineering_json_document.py` from
+the repository root.

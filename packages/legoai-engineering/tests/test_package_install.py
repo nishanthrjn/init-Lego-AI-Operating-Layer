@@ -78,6 +78,7 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
         "legoai_engineering/coding/authorized.py",
         "legoai_engineering/authorization.py",
         "legoai_engineering/_authority.py",
+        "legoai_engineering/_json_document.py",
         "legoai_engineering/repository/mutation_authorized.py",
         "legoai_engineering/checks/authorized.py",
     }

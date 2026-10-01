@@ -24,9 +24,10 @@ accepted by the maintainer on 2026-09-28. Register gap: ADR-017, ADR-018 and
 ADR-019 exist as Proposed decision records but are not yet entered in this
 register. They are excluded from these counts pending the maintainer's
 registration decision. [ADR-021](ADR-021.md) (JSON document representation for
-engineering Agent outputs) was allocated on 2026-10-02 as Proposed, on the
-evidence of the ForgeAI-LQ1.2 diagnostics; it is in the same unregistered
-state and is excluded from the counts.
+engineering Agent outputs) was allocated on 2026-10-02 on the evidence of the
+ForgeAI-LQ1.2 diagnostics and accepted by the maintainer the same day
+(implementation slice ENG-JSON-1). Like ADR-017 to ADR-019 it is not yet
+entered in the register table and is excluded from these counts.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.

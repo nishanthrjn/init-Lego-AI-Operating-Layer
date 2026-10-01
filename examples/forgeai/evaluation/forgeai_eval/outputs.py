@@ -1,7 +1,10 @@
-"""Content-free classification of Coding and Reviewer replies (LQ1.2).
+"""Content-free classification of Coding and Reviewer replies (LQ1.2, ADR-021).
 
-This measures the EXISTING output contract. It never repairs, strips fences,
-normalizes or re-parses leniently: a fenced reply is RESPONSE_NOT_JSON.
+This measures the existing output contract and never repairs, normalizes or
+re-parses leniently. Since ADR-021 the contract accepts one raw JSON document
+or one exact Markdown fence (label `json` or none) enclosing it; this module
+mirrors that representation stage (`_document`) exactly, so a fence with
+prose, another label or any other shape is still RESPONSE_NOT_JSON.
 
 The accept/reject verdict always comes from the real public validators
 (`AgentOutputContract`, `RepositoryPath`, `FileChangeKind`, `FileChange`,
@@ -49,6 +52,10 @@ FINDING_FIELDS = frozenset(
     {"category", "severity", "message", "evidence_refs", "required_action"}
 )
 MAX_ITEMS = 8
+# ADR-021 representation (mirrors legoai_engineering._json_document).
+_WHITESPACE = " \t\r\n"  # JSON whitespace
+_FENCE = "```"
+_OPENING_LINES = frozenset({_FENCE, _FENCE + "json"})
 
 Targets = Mapping[str, tuple[FileChangeKind, ContentDigest | None]]
 
@@ -112,6 +119,8 @@ class OutputFeatures:
     response_characters: int
     output_limit_hit: bool
     markdown_fence: bool
+    representation: str  # raw | fenced | none (a fence that is not ADR-021's)
+    fence_label: str | None  # json | none | other; None when not fenced
     json_parse_succeeded: bool
     top_level_type: str
     item_count: int | None = None
@@ -174,7 +183,8 @@ class _Builder:
         self.bytes = _size(output)
         self.characters = len(output)
         self.limit = self.characters > max_bytes or self.bytes > max_bytes
-        self.fence = output.lstrip().startswith("```")
+        self.document, self.representation, self.label = _document(output)
+        self.fence = self.representation != "raw"
         self.parsed = False
         self.shape = "none"
         self.items: int | None = None
@@ -195,6 +205,8 @@ class _Builder:
                 self.characters,
                 self.limit,
                 self.fence,
+                self.representation,
+                self.label,
                 self.parsed,
                 self.shape,
                 self.items,
@@ -205,6 +217,20 @@ class _Builder:
             ),
             fingerprint,
         )
+
+
+def _document(reply: str) -> tuple[str, str, str | None]:
+    """ADR-021 decoding: (document text, representation, fence label)."""
+    trimmed = reply.strip(_WHITESPACE)
+    if not trimmed.startswith(_FENCE):
+        return reply, "raw", None
+    lines = trimmed.split("\n")
+    opening = lines[0].removesuffix("\r")
+    label = opening.removeprefix(_FENCE)
+    fence_label = "none" if label == "" else "json" if label == "json" else "other"
+    if len(lines) < 3 or opening not in _OPENING_LINES or lines[-1] != _FENCE:
+        return reply, "none", fence_label
+    return "\n".join(lines[1:-1]), "fenced", fence_label
 
 
 def _digest(*parts: object) -> str:
@@ -280,7 +306,7 @@ def classify_coding(output: str, targets: Targets) -> Diagnosis:
     except TypeError, ValueError:
         return built.done(C.OUTPUT_LIMIT if built.limit else C.OUTPUT_TEXT_INVALID)
     try:
-        value: object = json.loads(output, object_pairs_hook=_unique)
+        value: object = json.loads(built.document, object_pairs_hook=_unique)
     except _DuplicateKey:
         return built.done(C.DUPLICATE_JSON_KEY)
     except ValueError, RecursionError:
@@ -397,7 +423,7 @@ def classify_review(output: str) -> Diagnosis:
     except TypeError, ValueError:
         return built.done(R.OUTPUT_LIMIT if built.limit else R.OUTPUT_TEXT_INVALID)
     try:
-        value: object = json.loads(output, object_pairs_hook=_unique)
+        value: object = json.loads(built.document, object_pairs_hook=_unique)
     except _DuplicateKey:
         return built.done(R.SCHEMA_INVALID)
     except ValueError, RecursionError:

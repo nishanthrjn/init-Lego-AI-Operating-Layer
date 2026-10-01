@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from legoai.execution.agent.ports import AgentRequest, AgentResult, AgentRuntimePort
 from legoai.execution.agent.values import AgentExecutionStatus
 
+from legoai_engineering._json_document import json_document
 from legoai_engineering.reviewer.definition import reviewer_definition
 from legoai_engineering.reviewer.values import (
     FindingCategory,
@@ -48,7 +49,7 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 
 def _parse(output: str) -> Review:
-    value: object = json.loads(output, object_pairs_hook=_unique_object)
+    value: object = json.loads(json_document(output), object_pairs_hook=_unique_object)
     obj = _object(value, {"decision", "summary", "findings", "risks", "unknowns"})
     findings = []
     for item in _array(obj["findings"]):

@@ -90,12 +90,25 @@ def test_create_and_synthetic_coding_classification() -> None:
     assert classify_coding(reply, targets).category == "proposal_constraint_invalid"  # type: ignore[arg-type]
 
 
-def test_fenced_json_remains_rejected_and_is_only_flagged() -> None:
-    reply, _ = CODING["fenced-json"]
-    diagnosis = classify_coding(reply, targets_of("stock-validation"))
-    assert diagnosis.category == CodingDiagnostic.RESPONSE_NOT_JSON
-    assert diagnosis.features.markdown_fence is True
-    assert diagnosis.features.json_parse_succeeded is False
+def test_fenced_representation_follows_adr_021() -> None:
+    targets = targets_of("stock-validation")
+    expected = {
+        "fenced-json": ("valid", "fenced", "json", True),
+        "fenced-unlabelled": ("valid", "fenced", "none", True),
+        "fenced-other-label": ("response_not_json", "none", "other", False),
+        "fence-with-prose": ("response_not_json", "raw", None, False),
+        "prose": ("response_not_json", "raw", None, False),
+    }
+    for case, (category, representation, label, parsed) in expected.items():
+        diagnosis = classify_coding(CODING[case][0], targets)
+        features = diagnosis.features
+        assert diagnosis.category == category, case
+        assert (features.representation, features.fence_label) == (
+            representation,
+            label,
+        ), case
+        assert features.markdown_fence is (representation != "raw"), case
+        assert features.json_parse_succeeded is parsed, case
     plain = classify_coding(
         reference(fixture("stock-validation")), targets_of("stock-validation")
     )
@@ -117,6 +130,10 @@ def test_features_are_content_free() -> None:
         for name, value in features.items():
             if name == "top_level_type":
                 assert value in SHAPES
+            elif name == "representation":
+                assert value in {"raw", "fenced", "none"}
+            elif name == "fence_label":
+                assert value in {"json", "none", "other", None}
             else:
                 assert value is None or type(value) in {int, bool}, name
         assert SENTINEL not in repr(diagnosis)
