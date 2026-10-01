@@ -639,3 +639,26 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
 - **Unchanged:** runtime, fixtures, hidden tests, prompts and metrics.
 - **Residual gap:** identity is checked once, before the run; a change to
   Ollama during a run is not detected.
+
+**ForgeAI-LQ1.2 CONTENT-FREE FAILURE DIAGNOSTICS VALIDATED (2026-10-01):**
+- **Why:** across the llama3.2, qwen2.5-coder:3b and qwen2.5-coder:7b live
+  measurements, 27 of 36 Coding calls ended `PROPOSAL_INVALID`, and those
+  reports could not say why.
+- **What it adds:** schema-2 reports classify each Coding and Reviewer reply
+  by the first rejecting stage of the existing contract (fenced JSON stays
+  `response_not_json`). They also record Ruff rule codes and pytest failure
+  kinds. Reports carry no content.
+- **Observation:** live replies pass through a local observer between
+  ForgeAI's unchanged Ollama adapter and Ollama. LegoAI has no public seam to
+  wrap the admitted Ollama ModelPort, so the maintainer chose this
+  evaluation-only transport observer.
+- **Documented deviation:** an Ollama refusal mid-run records an UNKNOWN
+  instead of NONE model effect; it is reported as `upstream_unreachable`.
+- **Validation:** all 42 phases of `validate_forgeai_lq1.py` passed, including:
+  - runtime agreement for every category;
+  - observer non-interference;
+  - sentinel privacy;
+  - real-Docker Ruff/pytest extraction.
+- **Unchanged:** runtime, prompts, parsers, gates, fixtures and hidden tests.
+  Historical reports are unchanged.
+- **Not yet available:** diagnostic live evidence, which needs new live runs.
