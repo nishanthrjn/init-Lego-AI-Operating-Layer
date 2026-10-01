@@ -2,7 +2,8 @@
 
 ForgeAI is consumed exactly as an external application would: through
 `forgeai.composition.local_profile` / `run_task` and the public LegoAI host.
-The harness adds only timing and the post-run hidden acceptance tests.
+The harness adds only timing, the post-run hidden acceptance tests and, when
+an observation log is configured, the content-free LQ1.2 reply observations.
 """
 
 import asyncio
@@ -31,6 +32,7 @@ from forgeai.domain import TaskResult
 from forgeai.guard import WorkspaceGuard
 from forgeai_eval.fixtures import Fixture, FixtureSet, provision
 from forgeai_eval.hidden import HiddenOutcome, HiddenResult, run_hidden
+from forgeai_eval.observer import Observation, ObservationLog
 
 REQUIRED_METADATA = (
     "mode",
@@ -94,6 +96,10 @@ class FixtureRun:
     hidden: HiddenResult
     run_seconds: float
     hidden_seconds: float
+    # LQ1.2: None when the run was not observed; else whether every call of
+    # this run was captured before the run closed.
+    observations: tuple[Observation, ...] = ()
+    observation_complete: bool | None = None
 
 
 BindingFactory = Callable[[Fixture], tuple[tuple[ModelBindingConfig, ...], str]]
@@ -110,6 +116,10 @@ class RunSettings:
     hidden_policy: CheckPolicy = CheckPolicy(timeout_seconds=120)
     forgeai_sandbox: SandboxExecutionPort | None = None
     hidden_sandbox: Callable[[], SandboxExecutionPort] | None = None
+    observations: ObservationLog | None = None
+    # Bounded wait for a call still in flight after ForgeAI returned (only
+    # after the adapter's own timeout); should exceed the observer's margin.
+    observation_wait_seconds: float = 30.0
 
     def oracle_sandbox(self) -> SandboxExecutionPort:
         if self.hidden_sandbox is not None:
@@ -136,6 +146,8 @@ def evaluate_run(
         docker_executable=settings.docker,
         now=datetime.now(UTC),
     )
+    if settings.observations is not None:
+        settings.observations.drain()  # nothing earlier belongs to this run
     started = time.perf_counter()
     result = asyncio.run(
         run_task(
@@ -143,6 +155,12 @@ def evaluate_run(
         )
     )
     run_seconds = time.perf_counter() - started
+    observations: tuple[Observation, ...] = ()
+    complete: bool | None = None
+    if settings.observations is not None:
+        observations, complete = settings.observations.drain(
+            settings.observation_wait_seconds
+        )
     hidden_started = time.perf_counter()
     if result.evidence.changed_paths:
         hidden = run_hidden(
@@ -160,6 +178,8 @@ def evaluate_run(
         hidden,
         run_seconds,
         time.perf_counter() - hidden_started,
+        observations,
+        complete,
     )
 
 

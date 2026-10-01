@@ -68,11 +68,16 @@ def test_hidden_tests_never_execute_on_the_host() -> None:
 def test_harness_names_only_read_only_ollama_endpoints() -> None:
     # The live chat path belongs to ForgeAI's binding; the harness itself only
     # observes the server (LQ1.1 preflight), and never pulls or mutates it.
+    # The LQ1.2 observer forwards the adapter's own /api/chat request and never
+    # originates one (test_lq1_observer.py proves the bytes are unchanged).
     for path in HARNESS:
+        allowed = {"/api/version", "/api/tags"}
+        if path.name == "observer.py":
+            allowed.add("/api/chat")
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 if node.value.startswith("/api/"):
-                    assert node.value in {"/api/version", "/api/tags"}, path.name
+                    assert node.value in allowed, path.name
 
 
 def test_no_target_discovery_workflow_team_or_new_agent() -> None:

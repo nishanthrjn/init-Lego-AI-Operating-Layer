@@ -22,6 +22,12 @@
   runs now verify the serving Ollama before fixture 1 and record the
   *observed* server version; see [Live-run preflight](#live-run-preflight-lq11).
   The recorded `llama3.2` baseline predates LQ1.1.
+- **LQ1.2 content-free failure diagnostics implemented; local validation
+  pending.** New reports (schema 2) say *why* a Coding or Reviewer reply was
+  rejected and *which* Ruff rules or pytest failure kinds failed; see
+  [Failure diagnostics](#failure-diagnostics-lq12). The three recorded
+  baselines (schema 1) predate LQ1.2 and stay unchanged; diagnostic evidence
+  requires new live runs.
 - An earlier attempt requested a model that was not installed in the local
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
@@ -65,7 +71,7 @@ installed `forgeai` wheel.
 | `fixtures/<id>/reference_proposal.json` | Known-good Coding output, for **replay self-tests only**; never given to a live model |
 | `hidden/<id>/test_acceptance.py` | Hidden acceptance tests, the operator-held oracle |
 | `replay/review_accept.json` | Recorded reviewer output for replay mode |
-| `forgeai_eval/` | Harness: fixtures, hidden tests, runner, metrics, report, live-run preflight |
+| `forgeai_eval/` | Harness: fixtures, hidden tests, runner, metrics, report, live-run preflight, reply observers and failure diagnostics |
 | `run.py` | Command for replay self-demo and the live baseline |
 | `tests/` | Harness self-tests |
 
@@ -148,6 +154,91 @@ parsed from CLI text.** Exact definitions are in every report, and in
 - **Rates carry their counts.** Every rate records its numerator and
   denominator; an empty denominator is reported explicitly as unavailable.
 
+## Failure diagnostics (LQ1.2)
+
+**Why.** The first three live measurements ended mostly in
+`PROPOSAL_INVALID` (27 of 36 Coding calls) and `CHECKS_FAILED`. Those labels
+are opaque: they cannot tell a Markdown-fenced reply from a wrong field name,
+or an import-order lint from a failing assertion. A later structured-output
+or check-policy decision needs that distinction as evidence, not as a guess.
+
+**What it measures.** LQ1.2 measures the **existing** contracts. It changes no
+prompt, parser, schema, gate, retry or model setting. A reply wrapped in a
+Markdown fence is recorded as `response_not_json`, exactly as ForgeAI rejects
+it; the fence is only flagged (`markdown_fence`), never stripped.
+
+**Coding reply categories.** These are the first stage that rejected the
+reply, in the CodingAgent's own order:
+
+| Stage | Categories |
+| --- | --- |
+| Agent output contract | `output_limit`, `output_text_invalid` (empty, blank or not UTF-8) |
+| JSON | `response_not_json`, `duplicate_json_key`, `top_level_not_object`, `top_level_fields_invalid` |
+| Changes | `changes_not_bounded_array`, `change_entry_not_object`, `change_fields_invalid`, `path_invalid`, `operation_invalid`, `path_not_requested_target`, `operation_target_mismatch`, `content_invalid`, `reason_invalid` |
+| Change set | `changes_empty`, `duplicate_change_target`, `changeset_invalid` |
+| Narrative and limits | `summary_invalid`, `narrative_invalid` (risks/unknowns), `content_limit`, `proposal_constraint_invalid` |
+| Accepted | `valid` |
+
+**Reviewer reply categories:** `output_limit`, `output_text_invalid`,
+`response_not_json`, `schema_invalid`, `finding_invalid`, `decision_invalid`,
+`decision_inconsistent` (a decision that contradicts its blocking findings),
+`valid`.
+
+**Assigned when reconciling with ForgeAI's evidence:**
+- `model_failure`: ForgeAI recorded a model failure, whatever the transport
+  saw.
+- `classifier_disagreement`: the classification disagrees with ForgeAI's own
+  verdict, or with the parsed proposal or review (compared in memory by
+  one-way fingerprint). It is counted, never hidden.
+- `observation_unavailable`: the call could not be matched to evidence.
+
+**Check diagnostics.** These are parsed from the bounded check output ForgeAI
+already holds:
+- **Ruff:** rule codes only (`E501`, `I001`, `F401`, …, or `invalid-syntax`),
+  reconciled with Ruff's own `Found N errors.` total. Otherwise the check is
+  `RUFF_DIAGNOSTIC_UNAVAILABLE`.
+- **pytest:** failure kinds only: `assertion_failure`, `did_not_raise`,
+  `exception_failure`, `setup_error`, `import_error`, `collection_error`,
+  `no_tests`, `timeout`, `infrastructure_error`, `pytest_error`,
+  `unknown_test_failure`. They are reconciled with pytest's own failed and
+  error totals; otherwise `PYTEST_DIAGNOSTIC_UNAVAILABLE`.
+
+The patterns are pinned to the qualified image (ruff 0.16.8, pytest 9.1.1)
+and checked against it in real Docker. The metrics above remain typed-only;
+only these diagnostics read tool output.
+
+**How replies are observed.** No reply text enters ForgeAI evidence, and
+none is stored.
+- **Live:** LegoAI has no public seam to wrap the admitted Ollama ModelPort,
+  so a local `ChatObserver` sits between ForgeAI's **real, unchanged**
+  adapter and Ollama. It forwards `POST /api/chat` byte-for-byte and returns
+  Ollama's status and body unchanged. It never originates a request.
+- **Replay:** `ObservingModel` wraps the harness-owned model and returns the
+  original result object.
+- **Either way,** each reply is classified in memory, and only its category
+  and structural counts are kept.
+
+**One documented deviation.** If Ollama refuses connections mid-run, a
+direct call would record a NONE model effect. Through the observer it
+becomes UNKNOWN, which is more conservative, and is counted as an
+`upstream_unreachable` transport. The preflight makes this rare.
+
+**Content-free policy.** Reports hold categories, counts, booleans and closed
+rule or kind identifiers only. They contain no reply text, generated code,
+prompts, repository source, hidden-test content, Ruff or pytest messages,
+test names, tracebacks or host paths. Sentinel tests enforce this.
+
+**Report schema 2.** Schema 2 adds a per-run `diagnostics` record and a
+top-level `diagnostics` aggregate. The aggregate is computed only by folding
+the run records (`fold`), so it can always be re-derived from the report
+itself. Every schema-1 field is unchanged. Schema-1 reports are historical
+evidence; the harness never reads or rewrites them.
+
+**Diagnostics do not change behavior.** Tests run ForgeAI's real Ollama
+adapter against a scripted Ollama, direct and through the observer, and
+require an equal `TaskResult` projection and byte-identical requests. The
+scenarios are success, invalid replies, provider errors and adapter timeout.
+
 ## Replay self-test (harness validation, no model quality)
 
 ```powershell
@@ -165,6 +256,15 @@ The validator never contacts a live model. Its checks:
 - **Architecture** checks.
 - **Real Docker:** every fixture's template **fails** its hidden tests, and
   its reference solution **succeeds and passes** them.
+- **LQ1.2 diagnostics:**
+  - the closed taxonomy;
+  - every Coding and Reviewer category, each agreeing with ForgeAI's own
+    parser verdict;
+  - fenced JSON stays rejected;
+  - Ruff and pytest extraction, including real-Docker output;
+  - aggregate = fold of run rows;
+  - sentinel privacy tests;
+  - observer non-interference.
 - **ForgeAI-3 regressions.**
 
 A replay demo writes a report too. It is harness evidence only:
@@ -329,4 +429,9 @@ reviewer cannot be characterized. This baseline sets no threshold.
 - **Model invocations are counted from recorded evidence.** For replay they
   match the replay model's call counter.
 - **Targets are operator-supplied.** Target discovery is out of scope.
+- **Diagnostics name a stage, not an intent.** A category is the first
+  contract stage that rejected a reply. Stage *order* mirrors the private
+  parsers; the accept/reject verdict comes from the real public validators
+  and is cross-checked against ForgeAI on every live call. Mypy detail is not
+  collected (mypy passed every applied live change so far).
 - **Windows + Docker Desktop only**, the qualified sandbox scope.

@@ -4,12 +4,19 @@
 rendered only from the JSON dictionary, so it cannot compute different
 numbers. Reports hold identifiers, enums, counts and timings: no source text,
 prompts, model output, environment or host paths.
+
+Schema 2 (LQ1.2) adds a per-run `diagnostics` record and a top-level
+`diagnostics` aggregate folded from those records; every schema-1 field is
+unchanged. Schema-1 reports stay as recorded; the harness never reads them.
 """
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
+from legoai_engineering.checks.values import CheckKind
+
+from forgeai_eval.diagnostics import DIAGNOSTIC_DEFINITIONS, fold, run_diagnostics
 from forgeai_eval.fixtures import FixtureSet
 from forgeai_eval.metrics import (
     DEFINITIONS,
@@ -20,7 +27,7 @@ from forgeai_eval.metrics import (
 )
 from forgeai_eval.runner import FixtureRun, RunMetadata
 
-SCHEMA = "forgeai-lq1-report/1"
+SCHEMA = "forgeai-lq1-report/2"
 LIMITATIONS = (
     "THIS IS NOT A PRODUCTION BENCHMARK. Results describe the frozen fixture set "
     "only, on the recorded model, hardware and revisions.",
@@ -32,6 +39,10 @@ LIMITATIONS = (
     "estimates, and are not comparable across models or revisions.",
     "Per-model-call latency is unavailable in LQ1; timings are harness wall-clock.",
     "Replay-mode reports exercise the harness only and are not live-model evidence.",
+    "Failure diagnostics name the first stage of the existing contract that "
+    "rejected a reply or check; they are not a judgment of model intent. If "
+    "Ollama refuses connections mid-run, the live observer turns a NONE model "
+    "effect into UNKNOWN; such calls are counted as upstream_* transports.",
 )
 
 
@@ -75,6 +86,10 @@ def build_report(
     ) != len(expected):
         raise ReportError("runs do not cover every fixture x repetition exactly once")
     summaries = [summarize_run(run) for run in runs]
+    rows = [
+        {**_row(summary), "diagnostics": run_diagnostics(run)}
+        for summary, run in zip(summaries, runs, strict=True)
+    ]
     return {
         "schema": SCHEMA,
         "labels": {
@@ -105,8 +120,9 @@ def build_report(
             )
             for fixture in fixtures.fixtures
         },
-        "runs": [_row(summary) for summary in summaries],
-        "definitions": DEFINITIONS,
+        "diagnostics": fold(rows),
+        "runs": rows,
+        "definitions": {**DEFINITIONS, **DIAGNOSTIC_DEFINITIONS},
         "limitations": list(LIMITATIONS),
     }
 
@@ -217,8 +233,8 @@ def render_markdown(report: dict[str, object]) -> str:
         "## Runs",
         "",
         "| Fixture | Rep | Disposition | Failure | Attempts | Reviews | Hidden | "
-        "Model invocations | Run s |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "Model invocations | Run s | Coding diagnostics |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     runs = report["runs"]
     assert isinstance(runs, list)
@@ -227,8 +243,28 @@ def render_markdown(report: dict[str, object]) -> str:
             f"| {run['fixture']} | {run['repetition']} | {run['disposition']} | "
             f"{run['failure'] or '—'} | {run['attempts']} | "
             f"{', '.join(run['reviews']) or '—'} | {run['hidden']} | "
-            f"{run['model_invocations']} | {run['run_seconds']} |"
+            f"{run['model_invocations']} | {run['run_seconds']} | "
+            f"{', '.join(e['category'] for e in run['diagnostics']['coding']) or '—'} |"
         )
+    diagnostics = report["diagnostics"]
+    assert isinstance(diagnostics, dict)
+    lines += [
+        "",
+        "## Failure diagnostics (LQ1.2)",
+        "",
+        "Content-free categories of the existing contracts; fenced JSON is "
+        "`response_not_json`. Diagnostics observe; they never change behavior.",
+    ]
+    for title, key in (
+        ("Coding output", "coding_output"),
+        ("Reviewer output", "reviewer_output"),
+        ("Ruff rules (failed ruff_check runs)", "ruff"),
+        ("pytest failure kinds (failed pytest runs)", CheckKind.PYTEST.value),
+        ("Observation", "observation"),
+    ):
+        section = diagnostics[key]
+        assert isinstance(section, dict)
+        lines += ["", f"### {title}", "", *_table(section)]
     limitations = report["limitations"]
     definitions = report["definitions"]
     assert isinstance(limitations, list) and isinstance(definitions, dict)

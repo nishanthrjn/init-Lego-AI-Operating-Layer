@@ -4,7 +4,9 @@ Live execution is always an explicit maintainer action; the validator never
 runs it. The operator names the model and its expected digest; a read-only
 preflight verifies both against the serving Ollama and observes the server
 version before any fixture runs. A failed preflight exits 3, runs nothing and
-writes no report.
+writes no report. Model replies are observed content-free (LQ1.2): live calls
+pass through a local `ChatObserver`, replay models are wrapped in
+`ObservingModel`; neither changes what ForgeAI receives.
 
     uv run python evaluation/run.py replay --output lq1-replay
     uv run python evaluation/run.py live --model <name> --model-digest <digest> \\
@@ -24,12 +26,16 @@ from legoai.runtime.api import ModelBindingConfig
 
 from forgeai.cli import ReplayModel, ollama_binding, replay_binding
 from forgeai_eval.fixtures import EVALUATION, Fixture, FixtureSet, load_fixture_set
+from forgeai_eval.observer import ChatObserver, ObservationLog, ObservingModel
 from forgeai_eval.preflight import PreflightError, verify_ollama
 from forgeai_eval.report import build_report, write_report
 from forgeai_eval.runner import BindingFactory, RunMetadata, RunSettings, evaluate
 
 REVIEW_ACCEPT = EVALUATION / "replay" / "review_accept.json"
 PREFLIGHT_FAILED = 3
+# The observer waits slightly longer than the adapter, so the adapter's own
+# timeout is what ForgeAI records; the run then waits for the observer.
+OBSERVER_MARGIN_SECONDS = 5.0
 
 
 def forgeai_commit(git: Path) -> str:
@@ -64,12 +70,16 @@ def forgeai_commit(git: Path) -> str:
     return head + ("+dirty-runtime" if dirty else "")
 
 
-def replay_bindings(fixture: Fixture) -> tuple[tuple[ModelBindingConfig, ...], str]:
+def replay_bindings(
+    fixture: Fixture, log: ObservationLog | None = None
+) -> tuple[tuple[ModelBindingConfig, ...], str]:
     """Fresh replay model per run: the fixture's reference proposal, then accept."""
     model = ReplayModel(
         fixture.reference_proposal.read_text(encoding="utf-8"),
         REVIEW_ACCEPT.read_text(encoding="utf-8"),
     )
+    if log is not None:
+        return (replay_binding(ObservingModel(model, log)),), "replay"
     return (replay_binding(model),), "replay"
 
 
@@ -89,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.git is None or args.docker is None:
         parser.error("Git and Docker executables are required")
     fixtures: FixtureSet = load_fixture_set()
+    log = ObservationLog()
+    observer: ChatObserver | None = None
     if args.mode == "live":
         missing = [
             flag
@@ -112,14 +124,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"live preflight failed: {error}", file=sys.stderr)
             print("no fixture was run and no report was written", file=sys.stderr)
             return PREFLIGHT_FAILED
-        binding = ollama_binding(
-            args.ollama_url, identity.model_name, args.ollama_timeout
+        # The real adapter reaches Ollama through the local observer, which
+        # is started only for the evaluation itself.
+        observer = ChatObserver(
+            args.ollama_url, args.ollama_timeout + OBSERVER_MARGIN_SECONDS, log
         )
+        live = observer
+        model_name, timeout = identity.model_name, args.ollama_timeout
 
         def live_bindings(
             fixture: Fixture,
         ) -> tuple[tuple[ModelBindingConfig, ...], str]:
-            return (binding,), "ollama"
+            return (ollama_binding(live.url, model_name, timeout),), "ollama"
 
         factory: BindingFactory = live_bindings
         # Observed and verified values only; operator text never overrides them.
@@ -130,7 +146,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         provider, binding_name = "ollama", "ollama"
     else:
-        factory = replay_bindings
+
+        def observed_replay(
+            fixture: Fixture,
+        ) -> tuple[tuple[ModelBindingConfig, ...], str]:
+            return replay_bindings(fixture, log)
+
+        factory = observed_replay
         metadata_model = ("replay", "replay:reference-proposals", "not-applicable")
         provider, binding_name = "replay", "replay"
     repetitions = args.repetitions or 1
@@ -155,13 +177,21 @@ def main(argv: list[str] | None = None) -> int:
     if metadata.missing():
         parser.error("missing metadata: " + ", ".join(metadata.missing()))
     with TemporaryDirectory(prefix="forgeai-lq1-") as temporary:
+        if observer is not None:
+            observer.start()
         settings = RunSettings(
             bindings=factory,
             git=args.git.resolve(),
             docker=args.docker.resolve(),
             workdir=Path(temporary),
+            observations=log,
+            observation_wait_seconds=OBSERVER_MARGIN_SECONDS * 2,
         )
-        runs, seconds = evaluate(fixtures, repetitions, settings)
+        try:
+            runs, seconds = evaluate(fixtures, repetitions, settings)
+        finally:
+            if observer is not None:
+                observer.close()
     json_path, markdown_path = write_report(
         build_report(metadata, fixtures, runs, seconds), args.output
     )
