@@ -607,3 +607,16 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
   all four calls, real sandboxed checks for both attempts, and a clean install;
   see `examples/forgeai/README.md`, "ForgeAI-3 qualification evidence".
 - Live-model quality is not qualified.
+
+**ForgeAI-LQ1 HARNESS VALIDATED; BASELINE RECORDED (2026-10-01):**
+- **Harness:** all phases of `validate_forgeai_lq1.py` passed, including
+  real-Docker fixture validity.
+- **Baseline:** one live run of `llama3.2:latest` (3.2B, CPU), 4 fixtures × 3
+  repetitions. This is a measurement, not pass/fail.
+  - Succeeded 0/12 and hidden pass 0/12.
+  - Coding output was invalid in 10/12 runs, and reviewer output in 1/1.
+  - Rework was never invoked.
+  - One change passed every visible check but failed the hidden tests.
+- **Erratum:** the report records Ollama `0.34.4`, but `0.35.0` served the run.
+- See `examples/forgeai/evaluation/README.md`, "Recorded baseline".
+- No ForgeAI or LegoAI runtime change was made.
