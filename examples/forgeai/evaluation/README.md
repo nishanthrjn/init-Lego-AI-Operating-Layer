@@ -11,6 +11,9 @@
 - **Live baseline recorded** (2026-10-01) for `llama3.2:latest`, as a
   measurement, not a pass/fail result. See [Recorded baseline](#recorded-baseline-llama32latest-2026-10-01),
   including its metadata erratum.
+- **LQ1.1 live-run preflight implemented, local validation pending.** Live
+  runs now verify the serving Ollama before fixture 1 and record the
+  *observed* server version; see [Live-run preflight](#live-run-preflight-lq11).
 - An earlier attempt requested a model that was not installed in the local
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
@@ -54,7 +57,7 @@ installed `forgeai` wheel.
 | `fixtures/<id>/reference_proposal.json` | Known-good Coding output, for **replay self-tests only**; never given to a live model |
 | `hidden/<id>/test_acceptance.py` | Hidden acceptance tests, the operator-held oracle |
 | `replay/review_accept.json` | Recorded reviewer output for replay mode |
-| `forgeai_eval/` | Harness: fixtures, hidden tests, runner, metrics, report |
+| `forgeai_eval/` | Harness: fixtures, hidden tests, runner, metrics, report, live-run preflight |
 | `run.py` | Command for replay self-demo and the live baseline |
 | `tests/` | Harness self-tests |
 
@@ -166,26 +169,64 @@ uv run python evaluation/run.py replay --output lq1-replay
 ## Live baseline procedure (maintainer only)
 
 1. Start Docker Desktop and Ollama, and pull the chosen model.
-2. Record the model's immutable identity yourself, for example the digest
-   from `ollama show <model>` or `ollama list`. The harness never infers it.
+2. State the model you intend to measure: its exact installed name (with
+   tag, as `ollama list` shows it) and its full digest as
+   `sha256:<64 hex digits>`. Read the digest from Ollama's
+   `GET /api/tags` (`ollama list` shows only a 12-character prefix).
 3. From `examples/forgeai`, run:
 
    ```powershell
    uv run python evaluation/run.py live `
-     --model <model-name> --model-digest <digest> --ollama-version <version> `
+     --model <model-name:tag> --model-digest sha256:<64-hex> `
      --hardware "<cpu/gpu/ram class>" --repetitions 3 --output lq1-baseline
    ```
 
-   Use at least 3 repetitions (N ≥ 3). Missing metadata aborts before any
-   run.
+   Use at least 3 repetitions (N ≥ 3). Missing or malformed arguments abort
+   with exit code 2 before any request or run. There is no
+   `--ollama-version`: the harness observes the version itself.
 4. Share `lq1-baseline/report.json` and `report.md`. They contain
    identifiers, enums, counts and timings only: no source, prompts, model
    output, environment or host paths.
 
-**What a report records:** mode, provider, binding, model name and digest,
-Ollama version, ForgeAI commit (marked `+dirty-runtime` if runtime sources
-are modified), fixture and hidden-test revisions and digests, hardware class,
-platform, start time and N.
+**What a report records:** mode, provider, binding, the verified model name
+and digest, the **observed** Ollama server version, ForgeAI commit (marked
+`+dirty-runtime` if runtime sources are modified), fixture and hidden-test
+revisions and digests, hardware class (operator-supplied), platform, start
+time and N.
+
+## Live-run preflight (LQ1.1)
+
+Before fixture 1, live mode asks the local Ollama server what is actually
+serving. It is read-only and Ollama-specific (the only live binding LQ1
+uses):
+
+| Request | Verified |
+| --- | --- |
+| `GET /api/version` | The server is reachable and reports a version; that **observed** version goes into the report |
+| `GET /api/tags` | An installed model has **exactly** the requested name, and its full digest equals `--model-digest` |
+
+The preflight never pulls, creates, deletes, generates or chats, and never
+uses a proxy. It does not retry and has no fallback. Matching is exact:
+no tag completion (`llama3.2` is not `llama3.2:latest`), no substitute tag
+or quantization, and no partial-digest match.
+
+**On failure**, the command prints the reason to stderr, exits **3**, runs
+**zero** ForgeAI tasks and writes **no** `report.json` or `report.md`:
+
+| Failure | Meaning |
+| --- | --- |
+| `OLLAMA_UNREACHABLE` | No HTTP answer from `--ollama-url` (refused, timed out, network error) |
+| `OLLAMA_RESPONSE_INVALID` | An answer that is not the expected JSON: HTTP error, no version, no models list, a duplicated or non-64-hex digest, or over 1 MiB |
+| `MODEL_NOT_INSTALLED` | No installed model has exactly the requested name |
+| `MODEL_DIGEST_MISMATCH` | The named model is installed with a different digest |
+
+These are evaluation-harness setup failures, not ForgeAI `TaskFailure`
+values; ForgeAI never starts. Real provider failures during the run itself
+are still recorded per run as `MODEL_FAILED`.
+
+**Residual gap.** The check happens once, before fixture 1. If the operator
+upgrades or swaps the model while the run is in progress, the preflight
+cannot see it. Do not change Ollama during a baseline.
 
 ## Recorded baseline: `llama3.2:latest` (2026-10-01)
 
@@ -211,8 +252,8 @@ so `report.json` records that value. However, Ollama's server log shows it
 was upgraded and restarted as `0.35.0` at 13:20 local time (11:20 UTC), and
 the run started at 12:13:08 UTC. The run was therefore served by **0.35.0**.
 The report file is evidence and is left unedited; this README carries the
-correction. The harness does not query the server version; that is a known
-gap. A re-run with the correct value would produce a clean record.
+correction. At the time, the harness did not query the server version; the
+LQ1.1 preflight closes that gap. A re-run with the correct value would produce a clean record.
 
 **Results** (counts are numerator/denominator)
 
