@@ -8,7 +8,9 @@ desktop-linux, with the CR-2a PYTHON_CHECKS image already built locally):
 No live model is contacted: replay outputs drive ForgeAI, and the
 unreachable-provider case uses a closed local port. The LQ1.1 live-run
 preflight is exercised against an in-process recording HTTP stub of the
-read-only Ollama endpoints, never a real Ollama. Real Docker is used for
+read-only Ollama endpoints, never a real Ollama. The LQ1.2 diagnostics are
+exercised with replay replies, a scripted in-process Ollama behind ForgeAI's
+real adapter (observer non-interference), and the real check image. Real Docker is used for
 fixture validity (hidden tests fail on templates and pass on reference
 solutions). Every pytest phase uses a fresh --basetemp. Streams output, stops
 at the first failed phase and exits non-zero on failure.
@@ -228,6 +230,79 @@ def main() -> int:
                 *select("test_lq1_preflight", "test_replay_mode_skips_the_preflight"),
             )
             tests(
+                "13e LQ1.2 diagnostic taxonomy",
+                *select(
+                    "test_lq1_outputs",
+                    "test_taxonomy_is_closed_and_every_parser_category_is_exercised",
+                ),
+            )
+            tests(
+                "13f Coding classifications (agree with the runtime parser)",
+                *select(
+                    "test_lq1_outputs",
+                    "test_coding_classification",
+                    "test_create_and_synthetic_coding_classification",
+                    "test_coding_classifier_agrees_with_the_runtime",
+                ),
+            )
+            tests(
+                "13g fenced JSON remains rejected",
+                *select(
+                    "test_lq1_outputs",
+                    "test_fenced_json_remains_rejected_and_is_only_flagged",
+                    "test_coding_classifier_agrees_with_the_runtime[fenced-json]",
+                ),
+            )
+            tests(
+                "13h Reviewer classifications (agree with the runtime parser)",
+                *select(
+                    "test_lq1_outputs",
+                    "test_review_classification",
+                    "test_review_classifier_agrees_with_the_runtime",
+                ),
+            )
+            tests(
+                "13i Ruff rule extraction",
+                *select(
+                    "test_lq1_checkdiag",
+                    "test_ruff_rule_codes_are_extracted_and_reconciled",
+                    "test_ruff_output_that_cannot_be_reconciled_is_unavailable",
+                ),
+            )
+            tests(
+                "13j pytest failure-kind extraction",
+                *select(
+                    "test_lq1_checkdiag",
+                    "test_pytest_failure_kinds_are_extracted_and_reconciled",
+                    "test_pytest_output_that_cannot_be_reconciled_is_unavailable",
+                    "test_check_records_map_to_content_free_details",
+                ),
+            )
+            tests(
+                "13k per-run -> aggregate derivation; schema 2 keeps metrics",
+                *select(
+                    "test_lq1_diagnostics",
+                    "test_aggregate_is_the_fold_of_the_run_rows",
+                    "test_schema_2_keeps_every_schema_1_metric",
+                    "test_replay_command_reports_valid_observed_replies",
+                ),
+            )
+            tests(
+                "13l privacy / content exclusion (sentinels)",
+                *select(
+                    "test_lq1_diagnostics",
+                    "test_reports_carry_no_model_prompt_source_or_tool_content",
+                ),
+                *select(
+                    "test_lq1_checkdiag", "test_extracted_details_carry_no_tool_text"
+                ),
+                *select("test_lq1_outputs", "test_features_are_content_free"),
+            )
+            tests(
+                "13m observer non-interference (same reply -> same TaskResult)",
+                "evaluation/tests/test_lq1_observer.py",
+            )
+            tests(
                 "14 architecture / public imports",
                 "evaluation/tests/test_lq1_architecture.py",
                 "tests/test_architecture.py",
@@ -235,6 +310,10 @@ def main() -> int:
             tests(
                 "14b real-Docker fixture validity (templates fail, references pass)",
                 "evaluation/tests/test_lq1_fixtures_docker.py",
+            )
+            tests(
+                "14c real-Docker check diagnostics (live ruff/pytest output)",
+                "evaluation/tests/test_lq1_diagnostics_docker.py",
             )
             project(
                 "15 mypy",
@@ -302,6 +381,8 @@ def main() -> int:
                 "MODEL-JUDGE MEASUREMENT",
                 "/api/version",
                 "/api/tags",
+                "LQ1.2",
+                "response_not_json",
             ):
                 if text not in readme:
                     raise RuntimeError(f"evaluation README lacks: {text}")
@@ -320,9 +401,9 @@ def main() -> int:
     for item in completed:
         print("PASS " + item)
     print(
-        "FORGEAI-LQ1 HARNESS VALIDATION PASSED (including the LQ1.1 live-run "
-        "preflight) - replay and a local HTTP stub only; no live model was "
-        "contacted"
+        "FORGEAI-LQ1 HARNESS VALIDATION PASSED (including the LQ1.1 preflight and "
+        "LQ1.2 diagnostics) - replay and local HTTP stubs only; no live model "
+        "was contacted"
     )
     return 0
 
