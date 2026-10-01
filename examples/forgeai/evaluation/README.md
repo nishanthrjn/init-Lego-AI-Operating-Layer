@@ -4,8 +4,16 @@
 > application on a small frozen fixture set, with the recorded model, hardware
 > and revisions only.
 
-**Status:** harness implemented; harness validation pending
-(`validate_forgeai_lq1.py`). **No live baseline has been recorded.**
+**Status:**
+- **Harness validated** (2026-10-01). All `validate_forgeai_lq1.py` phases
+  passed, including real-Docker fixture validity: every template fails its
+  hidden tests, and every reference solution succeeds and passes them.
+- **Live baseline recorded** (2026-10-01) for `llama3.2:latest`, as a
+  measurement, not a pass/fail result. See [Recorded baseline](#recorded-baseline-llama32latest-2026-10-01),
+  including its metadata erratum.
+- An earlier attempt requested a model that was not installed in the local
+  Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
+  configuration, not model behavior, so it is not a baseline.
 
 ## Purpose
 
@@ -178,6 +186,86 @@ uv run python evaluation/run.py replay --output lq1-replay
 Ollama version, ForgeAI commit (marked `+dirty-runtime` if runtime sources
 are modified), fixture and hidden-test revisions and digests, hardware class,
 platform, start time and N.
+
+## Recorded baseline: `llama3.2:latest` (2026-10-01)
+
+> **MEASUREMENT, NOT PASS/FAIL. NOT A PRODUCTION BENCHMARK.** One small
+> local model on four frozen tasks, N = 3. It is not comparable across
+> models, revisions or hardware.
+
+**Identity**
+
+| Key | Value |
+| --- | --- |
+| Model | `llama3.2:latest`, digest `sha256:a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72` (3.2B, Q4_K_M) |
+| Provider | Ollama, native `/api/chat`, no JSON `format` constraint, server-default context of 4096 tokens |
+| Ollama | **0.35.0 served the run**; the report records `0.34.4` (see the erratum) |
+| ForgeAI commit | `cde17fbcf69c90aa41d40ef0b5e72a68cc29b61f` (no `+dirty-runtime`) |
+| Fixture set | `forgeai-lq1` revision 1 (`sha256:e547108c…6b64c`), hidden revision 1 (`sha256:556ed8e1…e3ac1`) |
+| Hardware / platform | Intel x86-64 laptop CPU, 16 GB RAM, no discrete GPU; Windows 11 (AMD64) |
+| Runs | 4 fixtures × 3 repetitions = 12; total 1345 s |
+| Report | `report.json` SHA-256 `70e4a87d4e4df06b51c5e8c65b8ffa0c62da7ba5c304c440399485241fa4f3f6` (kept by the maintainer; not committed) |
+
+**Erratum: Ollama version.** The operator passed `--ollama-version 0.34.4`,
+so `report.json` records that value. However, Ollama's server log shows it
+was upgraded and restarted as `0.35.0` at 13:20 local time (11:20 UTC), and
+the run started at 12:13:08 UTC. The run was therefore served by **0.35.0**.
+The report file is evidence and is left unedited; this README carries the
+correction. The harness does not query the server version; that is a known
+gap. A re-run with the correct value would produce a clean record.
+
+**Results** (counts are numerator/denominator)
+
+| Metric | Value |
+| --- | --- |
+| Disposition | SUCCEEDED 0/12, REJECTED 0/12, FAILED 12/12 |
+| Hidden pass rate | 0/12. Outcomes: `not_run` 10, `failed` 2 |
+| Succeeded and hidden pass | 0/12 |
+| Succeeded but hidden fail | unavailable (0 succeeded runs) |
+| Coding output invalid | 10/12 Coding invocations |
+| Reviewer output invalid | 1/1 review invocations |
+| Review 1 distribution | `not_completed:output_invalid` 1, `not_run` 11; no `accept`, `changes_required` or `insufficient_evidence` |
+| Reviewer vs hidden (MODEL-JUDGE MEASUREMENT) | One observation: `output_invalid` × hidden `failed`. No ACCEPT occurred, so `accept_but_hidden_fail` is 0 by absence, not by evidence |
+| Rework | Invocation 0/12; recovery unavailable (0/0) |
+| Failure histogram | `PROPOSAL_INVALID` 10, `CHECKS_FAILED` 1, `REVIEW_OUTPUT_INVALID` 1; `MODEL_FAILED` 0 |
+| Model invocations | 13 in total (1–2 per run); `UNKNOWN` model effects 0 |
+| Run wall-clock | min 35.8 s, mean 110.9 s, max 215.7 s; per-call latency unavailable |
+| Hidden-test wall-clock | 4.5 s and 5.4 s for the two executed oracles |
+| M8.4 signals (MODEL-JUDGE MEASUREMENT) | Testing findings 0; hidden fail without a testing blocker 2 |
+
+**Per fixture**
+
+| Fixture | Failures | Note |
+| --- | --- | --- |
+| `stock-validation` | `PROPOSAL_INVALID` ×2, `CHECKS_FAILED` ×1 | The one valid proposal failed the visible `ruff_check` and `pytest` (mypy passed); the hidden tests failed |
+| `pager-boundaries` | `PROPOSAL_INVALID` ×3 | No change applied |
+| `temperature-units` | `PROPOSAL_INVALID` ×2, `REVIEW_OUTPUT_INVALID` ×1 | The one valid proposal passed every visible check, but the hidden tests failed; the reviewer output was invalid |
+| `text-slug` | `PROPOSAL_INVALID` ×3 | No change applied (CREATE task) |
+
+**Observations** (descriptive only)
+
+1. **Structured output is the dominant failure.** Ten of twelve runs ended
+   before any effect, because the Coding output did not validate as a
+   proposal. Reports carry no model output by design, so the reason within
+   each output is not recorded.
+2. **The context window is excluded as the cause.** Ollama's log shows no
+   truncation for any chat request in the run window: `truncated = 0`, with
+   at most 1,051 tokens per request against the 4096-token context.
+3. **The visible checks are not a sufficient oracle.** In `temperature-units`
+   rep 2, a change passed `ruff_check`, `mypy` and `pytest` yet failed the
+   hidden tests. The reviewer, the only remaining gate, produced invalid
+   output, so the run correctly ended FAILED rather than SUCCEEDED.
+4. **Rework was never reached.** By design, ForgeAI-3 reworks only after a
+   completed review returns `CHANGES_REQUIRED`. Here, every run stopped
+   earlier (invalid proposal, failed checks or invalid review), so this
+   baseline gives no evidence about rework behavior.
+5. **Fail-closed behavior held.** No run succeeded with failing hidden
+   tests, and no `UNKNOWN` model effect or harness crash occurred.
+
+**Limitations of this baseline.** It covers a single 3B quantized model, CPU
+only and N = 3. The Ollama version is misrecorded in the report (see the
+erratum). It has no per-call latency. Because no review completed, the
+reviewer cannot be characterized. This baseline sets no threshold.
 
 ## Limitations
 
