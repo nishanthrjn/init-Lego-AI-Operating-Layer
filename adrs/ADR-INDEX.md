@@ -23,7 +23,10 @@ P2 = 4, P3 = 2, P4 = 0; A = 3, B = 9, C = 4, D = 1, E = 0. ADR-020 was
 accepted by the maintainer on 2026-09-28. Register gap: ADR-017, ADR-018 and
 ADR-019 exist as Proposed decision records but are not yet entered in this
 register. They are excluded from these counts pending the maintainer's
-registration decision.
+registration decision. [ADR-021](ADR-021.md) (JSON document representation for
+engineering Agent outputs) was allocated on 2026-10-02 as Proposed, on the
+evidence of the ForgeAI-LQ1.2 diagnostics; it is in the same unregistered
+state and is excluded from the counts.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.
