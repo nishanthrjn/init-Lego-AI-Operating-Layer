@@ -6,7 +6,9 @@ desktop-linux, with the CR-2a PYTHON_CHECKS image already built locally):
     uv run python .\\validate_forgeai_lq1.py
 
 No live model is contacted: replay outputs drive ForgeAI, and the
-unreachable-provider case uses a closed local port. Real Docker is used for
+unreachable-provider case uses a closed local port. The LQ1.1 live-run
+preflight is exercised against an in-process recording HTTP stub of the
+read-only Ollama endpoints, never a real Ollama. Real Docker is used for
 fixture validity (hidden tests fail on templates and pass on reference
 solutions). Every pytest phase uses a fresh --basetemp. Streams output, stops
 at the first failed phase and exits non-zero on failure.
@@ -202,6 +204,30 @@ def main() -> int:
                 "evaluation/tests/test_lq1_unreachable.py",
             )
             tests(
+                "13b live preflight: success and observed-version recording",
+                *select(
+                    "test_lq1_preflight",
+                    "test_matching_server_yields_the_observed_identity",
+                    "test_live_report_records_the_observed_server_version",
+                    "test_operator_cannot_supply_the_ollama_version",
+                ),
+            )
+            tests(
+                "13c live preflight: unreachable / missing model / digest "
+                "mismatch fail closed (zero runs, no report)",
+                *select(
+                    "test_lq1_preflight",
+                    "test_unreachable_server_fails_closed",
+                    "test_mismatched_server_fails_closed",
+                    "test_failed_preflight_runs_nothing_and_writes_no_report",
+                    "test_malformed_requested_digest_is_refused_before_any_request",
+                ),
+            )
+            tests(
+                "13d replay mode needs no preflight",
+                *select("test_lq1_preflight", "test_replay_mode_skips_the_preflight"),
+            )
+            tests(
                 "14 architecture / public imports",
                 "evaluation/tests/test_lq1_architecture.py",
                 "tests/test_architecture.py",
@@ -274,9 +300,13 @@ def main() -> int:
                 "uv run python evaluation/run.py live",
                 "--model-digest",
                 "MODEL-JUDGE MEASUREMENT",
+                "/api/version",
+                "/api/tags",
             ):
                 if text not in readme:
                     raise RuntimeError(f"evaluation README lacks: {text}")
+            if "--ollama-version <" in readme:
+                raise RuntimeError("evaluation README still documents --ollama-version")
             completed.append(phase)
             run("20 git diff --check", [git, "diff", "--check"])
         except Exception as error:
@@ -290,8 +320,9 @@ def main() -> int:
     for item in completed:
         print("PASS " + item)
     print(
-        "FORGEAI-LQ1 HARNESS VALIDATION PASSED - replay only; no live model was "
-        "contacted; live baseline still pending"
+        "FORGEAI-LQ1 HARNESS VALIDATION PASSED (including the LQ1.1 live-run "
+        "preflight) - replay and a local HTTP stub only; no live model was "
+        "contacted"
     )
     return 0
 

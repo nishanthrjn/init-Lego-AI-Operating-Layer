@@ -1,12 +1,14 @@
 """ForgeAI-LQ1 evaluation command: replay self-demo or explicit live baseline.
 
 Live execution is always an explicit maintainer action; the validator never
-runs it. The operator supplies the model identity; nothing is inferred.
+runs it. The operator names the model and its expected digest; a read-only
+preflight verifies both against the serving Ollama and observes the server
+version before any fixture runs. A failed preflight exits 3, runs nothing and
+writes no report.
 
     uv run python evaluation/run.py replay --output lq1-replay
     uv run python evaluation/run.py live --model <name> --model-digest <digest> \\
-        --ollama-version <version> --hardware "<class>" --repetitions 3 \\
-        --output lq1-baseline
+        --hardware "<class>" --repetitions 3 --output lq1-baseline
 """
 
 import argparse
@@ -22,10 +24,12 @@ from legoai.runtime.api import ModelBindingConfig
 
 from forgeai.cli import ReplayModel, ollama_binding, replay_binding
 from forgeai_eval.fixtures import EVALUATION, Fixture, FixtureSet, load_fixture_set
+from forgeai_eval.preflight import PreflightError, verify_ollama
 from forgeai_eval.report import build_report, write_report
 from forgeai_eval.runner import BindingFactory, RunMetadata, RunSettings, evaluate
 
 REVIEW_ACCEPT = EVALUATION / "replay" / "review_accept.json"
+PREFLIGHT_FAILED = 3
 
 
 def forgeai_commit(git: Path) -> str:
@@ -76,7 +80,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repetitions", type=int, default=None)
     parser.add_argument("--model")
     parser.add_argument("--model-digest")
-    parser.add_argument("--ollama-version")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--ollama-timeout", type=float, default=600.0)
     parser.add_argument("--hardware")
@@ -92,7 +95,6 @@ def main(argv: list[str] | None = None) -> int:
             for flag, value in (
                 ("--model", args.model),
                 ("--model-digest", args.model_digest),
-                ("--ollama-version", args.ollama_version),
                 ("--hardware", args.hardware),
                 ("--repetitions", args.repetitions),
             )
@@ -102,7 +104,17 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("live mode requires " + ", ".join(missing))
         if args.repetitions < 3:
             parser.error("live baselines require --repetitions >= 3")
-        binding = ollama_binding(args.ollama_url, args.model, args.ollama_timeout)
+        try:
+            identity = verify_ollama(args.ollama_url, args.model, args.model_digest)
+        except ValueError as error:
+            parser.error(str(error))
+        except PreflightError as error:
+            print(f"live preflight failed: {error}", file=sys.stderr)
+            print("no fixture was run and no report was written", file=sys.stderr)
+            return PREFLIGHT_FAILED
+        binding = ollama_binding(
+            args.ollama_url, identity.model_name, args.ollama_timeout
+        )
 
         def live_bindings(
             fixture: Fixture,
@@ -110,7 +122,12 @@ def main(argv: list[str] | None = None) -> int:
             return (binding,), "ollama"
 
         factory: BindingFactory = live_bindings
-        metadata_model = (args.model, args.model_digest, args.ollama_version)
+        # Observed and verified values only; operator text never overrides them.
+        metadata_model = (
+            identity.model_name,
+            identity.model_digest,
+            identity.ollama_version,
+        )
         provider, binding_name = "ollama", "ollama"
     else:
         factory = replay_bindings
