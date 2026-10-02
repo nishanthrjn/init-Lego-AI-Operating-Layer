@@ -1813,7 +1813,7 @@ This qualifies the authorization wrappers and public wiring for the reference
 scope only. It does not change the containment-versus-integrity or
 checked-input-identity limitations.
 
-## ENG-JSON-1 — JSON document representation (ADR-021; local validation pending)
+## ENG-JSON-1 — JSON document representation (ADR-021; locally qualified 2026-10-02)
 
 [ADR-021](../../adrs/ADR-021.md) (Accepted 2026-10-02) defines how the three
 structured-output Agents (`RepositoryAnalyst`, `IndependentReviewer`,
@@ -1849,3 +1849,20 @@ then run unchanged on the decoded text.
 
 **Validation:** `uv run python .\validate_engineering_json_document.py` from
 the repository root.
+
+**Qualification (2026-10-02):** all 30 phases of
+`validate_engineering_json_document.py` passed:
+- slice scope, measured from the commit before the decoder existed:
+  - no Core or ForgeAI runtime change;
+  - only the ADR-021 files changed;
+  - each Agent changes only the decoder import and its `json.loads` call;
+- the decoder contract;
+- all three Agents through their public APIs;
+- the M8.1–M8.3 suites;
+- the full Engineering suite: 655 passed, including real Docker;
+- the LQ1 schema-3 harness: 193 passed, including real Docker;
+- ForgeAI-3 regressions, mypy and Ruff.
+
+`validate_forgeai_1.py`, `validate_forgeai_2.py` and `validate_forgeai_3.py`
+also passed after the slice was committed. No live model was contacted;
+live behavior after ADR-021 is not yet measured.

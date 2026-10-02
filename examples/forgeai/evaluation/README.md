@@ -50,7 +50,9 @@
   - 0 classifier disagreements.
 
   This evidence led to [ADR-021](../../../adrs/ADR-021.md).
-- **ENG-JSON-1 (ADR-021) implemented; local validation pending.** Engineering
+- **ENG-JSON-1 (ADR-021) locally qualified** (2026-10-02;
+  `validate_engineering_json_document.py`, all 30 phases, including the full
+  LQ1 harness suite, 193 tests). Engineering
   Agents now also accept one exact Markdown fence (label `json` or none)
   around the JSON document. The harness mirrors that stage and reports
   `representation` and `fence_label`. **Reports move to schema 3:**
