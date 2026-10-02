@@ -140,14 +140,21 @@ def main() -> int:
                     "uv run python .\\validate_engineering_json_document.py"
                 )
             assert uv is not None and git is not None and docker is not None
+            # The slice is measured from the commit before the decoder existed,
+            # so the scope phases hold before and after ENG-JSON-1 is committed.
+            added = git_text(
+                "log", "--diff-filter=A", "--format=%H", "--", DECODER
+            ).split()
+            slice_base = f"{added[-1]}^" if added else "HEAD"
+            print(f"slice base: {slice_base}", flush=True)
             run(
-                "1 no Core or ForgeAI runtime change (tracked)",
+                "1 no Core or ForgeAI runtime change in the slice (tracked)",
                 [
                     git,
                     "diff",
                     "--exit-code",
                     "--stat",
-                    "HEAD",
+                    slice_base,
                     "--",
                     "src/legoai",
                     "examples/forgeai/src",
@@ -165,12 +172,13 @@ def main() -> int:
                 "1b no Core or ForgeAI runtime change (untracked)",
                 f"untracked runtime files:\n{untracked}" if untracked else None,
             )
-            changed = {
-                line[3:].strip().strip('"')
-                for line in git_text(
-                    "status", "--porcelain", "--untracked-files=all", "--", "packages"
-                ).splitlines()
-            }
+            changed = set(
+                git_text("diff", "--name-only", slice_base, "--", "packages").split()
+            ) | set(
+                git_text(
+                    "ls-files", "--others", "--exclude-standard", "--", "packages"
+                ).split()
+            )
             unexpected = sorted(changed - ALLOWED_PACKAGE_CHANGES)
             check(
                 "1c package changes limited to the ADR-021 slice",
@@ -180,7 +188,9 @@ def main() -> int:
             for path in CALL_SITES:
                 lines = {
                     (line[0], line[1:].strip())
-                    for line in git_text("diff", "-U0", "HEAD", "--", path).splitlines()
+                    for line in git_text(
+                        "diff", "-U0", slice_base, "--", path
+                    ).splitlines()
                     if line[:1] in {"+", "-"} and line[:3] not in {"+++", "---"}
                 }
                 if lines != CALL_SITE_LINES:
