@@ -306,6 +306,25 @@ def main() -> int:
                 "13m observer non-interference (same reply -> same TaskResult)",
                 "evaluation/tests/test_lq1_observer.py",
             )
+            for label, name, selection in (
+                ("13n LQ1.3 taxonomy", "test_taxonomy", ""),
+                ("13o missing fields", "test_change_fields", "missing_only"),
+                ("13p unexpected fields", "test_change_fields", "unexpected_only"),
+                ("13q combined fields", "test_change_fields", "missing_and_unexpected"),
+                ("13r multi-change first failure", "test_first_failure", ""),
+                ("13s CREATE/UPDATE exact fields", "test_change_fields", "valid"),
+                (
+                    "13t rework identity / aggregate / privacy",
+                    "test_rework_aggregate_privacy",
+                    "",
+                ),
+                ("13u observer non-interference", "test_noninterference", ""),
+            ):
+                tests(
+                    label,
+                    *select("test_lq1_change_fields", name),
+                    *(["-k", selection] if selection else []),
+                )
             tests(
                 "14 architecture / public imports",
                 "evaluation/tests/test_lq1_architecture.py",
@@ -406,7 +425,7 @@ def main() -> int:
         print("PASS " + item)
     print(
         "FORGEAI-LQ1 HARNESS VALIDATION PASSED (including the LQ1.1 preflight and "
-        "LQ1.2 diagnostics) - replay and local HTTP stubs only; no live model "
+        "LQ1.2/LQ1.3 diagnostics) - replay and local HTTP stubs only; no live model "
         "was contacted"
     )
     return 0

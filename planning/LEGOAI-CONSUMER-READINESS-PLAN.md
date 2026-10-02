@@ -682,8 +682,27 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
   - all 30 phases of `validate_engineering_json_document.py` passed;
   - `validate_forgeai_1.py`, `validate_forgeai_2.py` and
     `validate_forgeai_3.py` passed after the commit;
-  - the `validate_forgeai_lq1.py` run was reported only up to phase 14b, so
-    its final result is not recorded here. Its test suites passed inside the
-    ENG-JSON-1 validator.
-- **Next:** the maintainer reruns the same `qwen2.5-coder:7b` schema-3 live
-  measurement and compares failure shape descriptively.
+  - the operator subsequently confirmed the full post-ENG-JSON-1
+    `validate_forgeai_lq1.py` pass.
+- **Follow-up:** the same `qwen2.5-coder:7b` schema-3 live measurement
+  is now complete; see the measurement and LQ1.3 records below.
+
+**Post-ADR-021 measurement (2026-10-02):** complete, representation blocker
+removed. Schema 3, qwen2.5-coder:7b, Ollama 0.35.0, fixture/hidden revisions
+1, N=3, 12 runs. Coding: 8 valid / 5 change_fields_invalid; Reviewer: 3 valid /
+1 finding_invalid. Hidden passes: 8; successful + hidden-pass runs: 2;
+CHECKS_FAILED: 4. One live rework failed at its second Coding attempt with
+change_fields_invalid. No implementation defect established. This is a
+measurement, not a benchmark or pass/fail verdict; raw reports stay immutable
+and uncommitted.
+
+**ForgeAI-LQ1.3 — implemented, local validation pending:** evaluation-only
+change-entry field counts and first-rejection index, preserving attempt
+identity, existing categories and schema 3. Exact key equality is unchanged;
+CREATE/UPDATE share four required keys. No runtime, prompt, provider, retry,
+gate or rework changes. Closed subcategories describe missing-only,
+unexpected-only or combined mismatch. Old records without detail remain
+unknown (`other` when folded), never inferred from top-level counters.
+Focused validation extends `validate_forgeai_lq1.py`; no live model needed.
+Next: qualify the diagnostics before any further live measurement or decision
+about contract handling.

@@ -90,6 +90,8 @@ def test_aggregate_is_the_fold_of_the_run_rows(tmp_path: Path) -> None:
         "markdown_fence_replies": 1,
         "representation_counts": {"none": 1, "raw": 5},
         "fence_label_counts": {"other": 1},
+        "change_field_failures": {},
+        "per_fixture_change_field_failures": {},
     }
     assert diagnostics["reviewer_output"]["counts_by_category"] == {
         "response_not_json": 1

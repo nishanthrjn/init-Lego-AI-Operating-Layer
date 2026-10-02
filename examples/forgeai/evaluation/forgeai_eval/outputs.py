@@ -111,6 +111,14 @@ class ReviewDiagnostic(StrEnum):
     CLASSIFIER_DISAGREEMENT = "classifier_disagreement"
 
 
+class ChangeFieldFailure(StrEnum):
+    """Set differences at the existing exact-key rejection stage only."""
+
+    MISSING_ONLY = "missing_only"
+    UNEXPECTED_ONLY = "unexpected_only"
+    MISSING_AND_UNEXPECTED = "missing_and_unexpected"
+
+
 @dataclass(frozen=True, slots=True)
 class OutputFeatures:
     """Structural facts about one reply: no text, keys or values from it."""
@@ -128,6 +136,12 @@ class OutputFeatures:
     unexpected_fields: int | None = None
     content_bytes_max: int | None = None
     content_bytes_total: int | None = None
+    change_field_failure: str | None = None
+    change_entry_index: int | None = None
+    missing_required_field_count: int | None = None
+    unexpected_field_count: int | None = None
+    expected_field_count: int | None = None
+    actual_field_count: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +205,11 @@ class _Builder:
         self.missing: int | None = None
         self.unexpected: int | None = None
         self.content: list[int] = []
+        self.change_failure: ChangeFieldFailure | None = None
+        self.change_index: int | None = None
+        self.change_missing: int | None = None
+        self.change_unexpected: int | None = None
+        self.change_actual: int | None = None
 
     def fields(self, value: dict[str, object], expected: frozenset[str]) -> bool:
         self.missing = len(expected - set(value))
@@ -214,6 +233,12 @@ class _Builder:
                 self.unexpected,
                 max(self.content) if self.content else None,
                 sum(self.content) if self.content else None,
+                self.change_failure.value if self.change_failure is not None else None,
+                self.change_index,
+                self.change_missing,
+                self.change_unexpected,
+                len(CHANGE_FIELDS) if self.change_failure is not None else None,
+                self.change_actual,
             ),
             fingerprint,
         )
@@ -324,10 +349,21 @@ def classify_coding(output: str, targets: Targets) -> Diagnosis:
         return built.done(C.CHANGES_NOT_BOUNDED_ARRAY)
     changes: list[FileChange] = []
     reasons: list[str] = []
-    for raw in raw_changes:
+    for index, raw in enumerate(raw_changes):
         if type(raw) is not dict:
             return built.done(C.CHANGE_ENTRY_NOT_OBJECT)
         if set(raw) != CHANGE_FIELDS:
+            built.change_index = index
+            built.change_missing = len(CHANGE_FIELDS - set(raw))
+            built.change_unexpected = len(set(raw) - CHANGE_FIELDS)
+            built.change_actual = len(raw)
+            built.change_failure = (
+                ChangeFieldFailure.MISSING_AND_UNEXPECTED
+                if built.change_missing and built.change_unexpected
+                else ChangeFieldFailure.MISSING_ONLY
+                if built.change_missing
+                else ChangeFieldFailure.UNEXPECTED_ONLY
+            )
             return built.done(C.CHANGE_FIELDS_INVALID)
         if type(raw["path"]) is not str:
             return built.done(C.PATH_INVALID)

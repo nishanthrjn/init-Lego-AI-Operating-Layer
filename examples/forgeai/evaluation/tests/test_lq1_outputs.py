@@ -132,6 +132,13 @@ def test_features_are_content_free() -> None:
                 assert value in SHAPES
             elif name == "representation":
                 assert value in {"raw", "fenced", "none"}
+            elif name == "change_field_failure":
+                assert value in {
+                    "missing_only",
+                    "unexpected_only",
+                    "missing_and_unexpected",
+                    None,
+                }
             elif name == "fence_label":
                 assert value in {"json", "none", "other", None}
             else:
