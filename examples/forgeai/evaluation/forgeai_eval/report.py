@@ -270,6 +270,28 @@ def render_markdown(report: dict[str, object]) -> str:
         section = diagnostics[key]
         assert isinstance(section, dict)
         lines += ["", f"### {title}", "", *_table(section)]
+    details = []
+    for row in runs:
+        for entry in row["diagnostics"]["coding"]:
+            features = entry["features"]
+            if isinstance(features, dict) and features.get("change_field_failure"):
+                details.append(
+                    f"| {row['fixture']} | {row['repetition']} | {entry['attempt']} | "
+                    f"{features['change_entry_index']} | {features['change_field_failure']} | "
+                    f"{features['missing_required_field_count']} | {features['unexpected_field_count']} | "
+                    f"{features['expected_field_count']} | {features['actual_field_count']} |"
+                )
+    if details:
+        lines += [
+            "",
+            "### Change-entry field failures (LQ1.3)",
+            "",
+            "Entry indices are zero-based; only the first rejected entry is described.",
+            "",
+            "| Fixture | Rep | Attempt | Entry | Failure | Missing | Unexpected | Expected | Actual |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            *details,
+        ]
     limitations = report["limitations"]
     definitions = report["definitions"]
     assert isinstance(limitations, list) and isinstance(definitions, dict)

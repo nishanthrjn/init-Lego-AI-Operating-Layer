@@ -63,6 +63,47 @@
   Ollama. Every run was a provider-side `MODEL_FAILED`, which measured
   configuration, not model behavior, so it is not a baseline.
 
+## Post-ADR-021 measurement and LQ1.3
+
+The operator confirmed the full post-ENG-JSON-1 `validate_forgeai_lq1.py`
+pass. The 2026-10-02 schema-3 measurement used `qwen2.5-coder:7b`, Ollama
+0.35.0, commit `5bad993`, fixture/hidden revisions 1, N=3 (12 runs).
+The representation blocker was removed: Coding had 8 valid and 5
+`change_fields_invalid` replies; Reviewer had 3 valid and 1 `finding_invalid`.
+Eight runs passed hidden tests, but only two succeeded and passed hidden
+tests. Four runs ended in `CHECKS_FAILED`. One live rework reached a second
+Coding attempt, rejected as `change_fields_invalid`. No implementation defect
+was established. This is a failure-shape measurement, not a benchmark or
+qualification verdict. Raw reports remain uncommitted and immutable.
+
+**ForgeAI-LQ1.3: implemented, local validation pending.** Evaluation-only
+change-entry diagnostics retain the existing `change_fields_invalid` category
+and schema 3. Additive features record `change_field_failure` (missing_only,
+unexpected_only, missing_and_unexpected), zero-based `change_entry_index`,
+`missing_required_field_count`, `unexpected_field_count`,
+`expected_field_count`, and `actual_field_count`. They are null outside this
+failure stage. Existing `missing_fields` / `unexpected_fields` remain
+top-level counts. The invocation's existing `attempt` preserves rework identity.
+
+Both CREATE and UPDATE require exactly path, operation, content and reason;
+no keys are optional. The observer records counts only at the first rejected
+entry, before validating its path or operation; later entries are not examined.
+Value-type failures retain their existing categories. No operation context or
+model-generated key names are recorded. Aggregates `change_field_failures`
+and `per_fixture_change_field_failures` fold invocation records only. `other`
+means an old record lacks detail, not a new parser stage. Historical reports
+cannot reveal the five past failures more precisely and are never backfilled.
+
+Reviewer diagnostics stay unchanged: `finding_invalid` combines key equality
+and constructor validation, so the same technique could describe only its
+key-set subset in a separately scoped follow-up. No contract relaxation,
+runtime, prompt, provider, gate or retry change is part of LQ1.3.
+
+Focused assistant checks passed: 23 LQ1.3 tests and 92 existing output/report
+regression tests; Ruff lint/format and mypy passed. Full local/Docker
+qualification remains pending via `uv run python .\validate_forgeai_lq1.py`.
+No additional live measurement was run.
+
 ## Purpose
 
 ForgeAI-1/2/3 are **architecture-qualified with replay models**. That proves

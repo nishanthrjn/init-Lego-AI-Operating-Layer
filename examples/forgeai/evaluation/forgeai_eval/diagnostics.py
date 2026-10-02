@@ -39,6 +39,10 @@ from forgeai_eval.outputs import (
 from forgeai_eval.runner import FixtureRun
 
 DIAGNOSTIC_DEFINITIONS: dict[str, str] = {
+    "diagnostics.change_field_failures": "LQ1.3: missing_only, unexpected_only "
+    "or missing_and_unexpected at the first change-entry exact-key rejection; "
+    "zero-based index and counts only, preserving invocation attempt; other "
+    "means a historical record has no detail; top-level field counts unchanged",
     "diagnostics.coding_output": "per Coding invocation, the first stage of "
     "the existing contract that rejected the reply (or valid / model_failure); "
     "content-free; representation (raw | fenced | none) and fence_label follow "
@@ -243,6 +247,20 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
     def categories(part: str, fixture: str) -> list[str]:
         return [str(e["category"]) for e in entries(part, fixture)]
 
+    def change_fields(found: list[dict[str, object]]) -> dict[str, int]:
+        labels = []
+        for entry in found:
+            if entry["category"] != CodingDiagnostic.CHANGE_FIELDS_INVALID:
+                continue
+            features = entry["features"]
+            label = (
+                features.get("change_field_failure")
+                if isinstance(features, dict)
+                else None
+            )
+            labels.append(str(label) if label is not None else "other")
+        return _counts(labels)
+
     def check_part(kind: CheckKind, key: str) -> dict[str, object]:
         unavailable_status = (
             RUFF_DIAGNOSTIC_UNAVAILABLE
@@ -276,6 +294,12 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
             ),
             "representation_counts": _feature_counts(coding, "representation"),
             "fence_label_counts": _feature_counts(coding, "fence_label"),
+            "change_field_failures": change_fields(coding),
+            "per_fixture_change_field_failures": {
+                fixture: change_fields(entries("coding", fixture))
+                for fixture in fixtures
+                if change_fields(entries("coding", fixture))
+            },
         },
         "reviewer_output": {
             "counts_by_category": _counts([str(e["category"]) for e in reviews]),
