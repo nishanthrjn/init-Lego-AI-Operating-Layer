@@ -662,3 +662,28 @@ All six are complete (2026-09-29): **FORGEAI-1 READY.**
 - **Unchanged:** runtime, prompts, parsers, gates, fixtures and hidden tests.
   Historical reports are unchanged.
 - **Not yet available:** diagnostic live evidence, which needs new live runs.
+
+**ENG-JSON-1 (ADR-021) LOCALLY QUALIFIED (2026-10-02):**
+- **Why:** LQ1.2 live diagnostics showed that all 12 structured-output
+  failures in the `qwen2.5-coder:7b` schema-2 run were Markdown-fenced
+  replies. ADR-021 was accepted by the maintainer.
+- **What changed:**
+  - A private, provider-neutral decoder (`legoai_engineering._json_document`)
+    accepts a raw JSON document or exactly one Markdown fence, labelled
+    `json` or unlabelled.
+  - RepositoryAnalyst, IndependentReviewer and CodingAgent apply it before
+    their unchanged `json.loads` and validators. Each Agent's change is two
+    lines.
+  - No change to public APIs, Agent definitions or versions, Core, adapters,
+    prompts or retries.
+- **LQ1 harness:** mirrors the stage and adds `representation` and
+  `fence_label`; reports move to schema 3.
+- **Validation:**
+  - all 30 phases of `validate_engineering_json_document.py` passed;
+  - `validate_forgeai_1.py`, `validate_forgeai_2.py` and
+    `validate_forgeai_3.py` passed after the commit;
+  - the `validate_forgeai_lq1.py` run was reported only up to phase 14b, so
+    its final result is not recorded here. Its test suites passed inside the
+    ENG-JSON-1 validator.
+- **Next:** the maintainer reruns the same `qwen2.5-coder:7b` schema-3 live
+  measurement and compares failure shape descriptively.
