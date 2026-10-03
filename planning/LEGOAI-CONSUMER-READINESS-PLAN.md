@@ -774,3 +774,36 @@ No implementation authorized here. The existing prompt already lists all keys;
 the proposed clarification defines the explanation and makes the shape explicit.
 Reviewer investigation remains separate. See [decision recommendation](ENG-CODING-PROMPT-1-DECISION.md) for the source trace,
 alternatives, governance/version rationale and qualification/live identity plan.
+
+
+## ENG-CODING-PROMPT-1 — implemented, local validation pending
+
+Maintainer approved the decision recommendation on 2026-10-03. Coding Agent
+behavior version is now 1.0.1 (previously 1.0.0); ID, public API types and
+package version are unchanged. This exact version triple is not an inferred
+SemVer compatibility promise. Only coding/definition.py changes production behavior.
+Every change MUST include exactly path, operation, content and reason; none is
+optional. The guidance defines reason as a brief explanation of how that change
+addresses the supplied objective/constraints, not authorization, evidence of
+checks or verified correctness. A single placeholder-only object illustrates
+the shape; no task-specific or source-code examples are included.
+
+Parser, proposal values, bounds, authority, mutation, effects, Reviewer, Analyst,
+ForgeAI sequencing and rework are unchanged. No new ADR, metadata fields,
+provider-specific structured output, retry, repair, default or synthesis.
+This is a controlled prompt-contract experiment, not a demonstrated live fix.
+
+Operator qualification: `uv run python .\validate_engineering_coding_prompt.py`.
+The validator pins the pre-slice commit 9aa272ee057e205123c562bf0ab39e59b3d6472c
+and runs the ForgeAI regression suites directly: old standalone validator
+HEAD-relative package guards reject an uncommitted Engineering change. Their
+runtime scope protections are covered here by a slice-wide allowlist; the old
+validators are not modified. Full operator qualification remains pending.
+
+A later live run must use a committed clean runtime and a NEW PROMPT-CONTRACT
+CONDITION. Record the eventual exact commit-to-coding-agent-1.0.1 mapping here
+before running; no final implementation commit exists yet. Existing LQ1 commit
+metadata identifies the definition; no new report fields. Fixture/hidden
+revisions stay 1 and schema stays 3. Historical reports remain immutable.
+No live measurement was run for this implementation. Reviewer finding_invalid
+remains a separate follow-up; no other deferred capabilities resume.
