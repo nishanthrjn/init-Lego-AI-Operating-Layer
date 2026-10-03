@@ -547,7 +547,7 @@ successful + hidden-pass: 0; rework: 0. No implementation defect established.
 Ollama changed from 0.35.0 to 0.35.1, so aggregate differences cannot be
 attributed solely to harness revisions. This is a measurement, not a benchmark.
 
-**ForgeAI-LQ1.4 implemented — local validation pending.** Evaluation-only
+**ForgeAI-LQ1.4 locally qualified (operator-confirmed 2026-10-03).** Evaluation-only
 `missing_required_fields` adds a JSON array selected solely from the
 repository-owned required-key vocabulary, ordered path, operation, content,
 reason. It is null outside exact-key rejection, and empty for unexpected-only
@@ -566,4 +566,11 @@ measurement or contract change is authorized by this slice.
 Focused assistant verification: 140 tests passed (25 new LQ1.4 cases plus
 115 existing diagnostic cases), using replay and local HTTP stubs. Mypy,
 Ruff lint/format, runtime-source diff guard and git diff --check passed.
-Full operator local/Docker validation remains pending.
+The operator supplied the full `uv run python .\validate_forgeai_lq1.py`
+pass, ending in `FORGEAI-LQ1 HARNESS VALIDATION PASSED` with LQ1.4 included.
+All phases passed: LQ1.4 phases 13v-13ad, existing harness phases, runtime
+source guards, architecture checks, real-Docker fixture validity and check
+diagnostics, mypy, Ruff lint/format, and 89 ForgeAI regression tests.
+The validator used replay and local HTTP stubs; it contacted no live model.
+This qualifies the harness. Which required fields the live model omits
+remains unmeasured with LQ1.4; historical reports cannot be backfilled.
