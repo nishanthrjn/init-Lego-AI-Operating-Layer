@@ -574,3 +574,25 @@ diagnostics, mypy, Ruff lint/format, and 89 ForgeAI regression tests.
 The validator used replay and local HTTP stubs; it contacted no live model.
 This qualifies the harness. Which required fields the live model omits
 remains unmeasured with LQ1.4; historical reports cannot be backfilled.
+
+
+## Post-LQ1.4 measurement — Coding contract decision
+
+The 2026-10-03 measurement used qwen2.5-coder:7b, Ollama 0.35.1,
+fixture/hidden revision 1, N=3 / 12 runs, commit
+2b2255a54bcf84216ed56fc640c9e574e88a7f7c. Coding: 7 valid and 5
+change_fields_invalid; all five first rejected entries omitted only `reason`.
+Path/operation/content omissions: 0. Seven hidden passes, three CHECKS_FAILED,
+four REVIEW_OUTPUT_INVALID, zero successes and zero rework. Reviewer:
+finding_invalid 4/4; all four corresponding hidden outcomes passed.
+Representation was non-blocking; no implementation defect established.
+Matching Ollama/model/fixture/hardware identity strengthens comparison, but
+LQ1.4 is evaluation-only and does not explain model-quality changes.
+Raw reports remain immutable and uncommitted.
+
+Recommendation only: ENG-CODING-PROMPT-1, explicit per-change contract guidance
+and a new Coding behavior version, preserving required reason and all validation.
+No implementation authorized here. The existing prompt already lists all keys;
+the proposed clarification defines the explanation and makes the shape explicit.
+Reviewer investigation remains separate. See [decision recommendation](../../../planning/ENG-CODING-PROMPT-1-DECISION.md) for the source trace,
+alternatives, governance/version rationale and qualification/live identity plan.
