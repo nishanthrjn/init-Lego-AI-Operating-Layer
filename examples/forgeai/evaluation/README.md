@@ -76,7 +76,7 @@ Coding attempt, rejected as `change_fields_invalid`. No implementation defect
 was established. This is a failure-shape measurement, not a benchmark or
 qualification verdict. Raw reports remain uncommitted and immutable.
 
-**ForgeAI-LQ1.3: implemented, local validation pending.** Evaluation-only
+**ForgeAI-LQ1.3: locally qualified (operator-confirmed 2026-10-02).** Evaluation-only
 change-entry diagnostics retain the existing `change_fields_invalid` category
 and schema 3. Additive features record `change_field_failure` (missing_only,
 unexpected_only, missing_and_unexpected), zero-based `change_entry_index`,
@@ -100,9 +100,13 @@ key-set subset in a separately scoped follow-up. No contract relaxation,
 runtime, prompt, provider, gate or retry change is part of LQ1.3.
 
 Focused assistant checks passed: 23 LQ1.3 tests and 92 existing output/report
-regression tests; Ruff lint/format and mypy passed. Full local/Docker
-qualification remains pending via `uv run python .\validate_forgeai_lq1.py`.
-No additional live measurement was run.
+regression tests; Ruff lint/format and mypy passed. The operator subsequently
+provided the complete `uv run python .\validate_forgeai_lq1.py` output, ending
+in `FORGEAI-LQ1 HARNESS VALIDATION PASSED`. All phases passed, including
+LQ1.3 phases 13n-13u, architecture checks, real-Docker fixture validity and
+check diagnostics, mypy, Ruff, and 89 ForgeAI regression tests. Runtime source
+change guards passed. The validator used replay and local HTTP stubs; it did
+not contact a live model. This qualifies the harness, not live model quality.
 
 ## Purpose
 
