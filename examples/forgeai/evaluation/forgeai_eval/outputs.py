@@ -14,7 +14,7 @@ IndependentReviewer parsers, so a category names the first stage that
 rejected the reply. Live classifications are cross-checked against ForgeAI's
 own verdict (`diagnostics.py`); any disagreement is reported, never hidden.
 
-A `Diagnosis` holds enums, counts and booleans only. Its fingerprint is a
+A `Diagnosis` holds closed vocabulary, counts and booleans only. Its fingerprint is a
 one-way hash used in memory to confirm agreement and is never reported.
 """
 
@@ -46,7 +46,8 @@ from legoai_engineering.reviewer.values import (
 
 # The exact field sets the runtime parsers require.
 CODING_FIELDS = frozenset({"summary", "changes", "risks", "unknowns"})
-CHANGE_FIELDS = frozenset({"path", "operation", "content", "reason"})
+REQUIRED_CHANGE_FIELDS = ("path", "operation", "content", "reason")
+CHANGE_FIELDS = frozenset(REQUIRED_CHANGE_FIELDS)
 REVIEW_FIELDS = frozenset({"decision", "summary", "findings", "risks", "unknowns"})
 FINDING_FIELDS = frozenset(
     {"category", "severity", "message", "evidence_refs", "required_action"}
@@ -121,7 +122,7 @@ class ChangeFieldFailure(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class OutputFeatures:
-    """Structural facts about one reply: no text, keys or values from it."""
+    """Structural facts: no model text or arbitrary keys; required keys are closed."""
 
     response_bytes: int
     response_characters: int
@@ -142,6 +143,7 @@ class OutputFeatures:
     unexpected_field_count: int | None = None
     expected_field_count: int | None = None
     actual_field_count: int | None = None
+    missing_required_fields: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,6 +212,7 @@ class _Builder:
         self.change_missing: int | None = None
         self.change_unexpected: int | None = None
         self.change_actual: int | None = None
+        self.missing_names: tuple[str, ...] | None = None
 
     def fields(self, value: dict[str, object], expected: frozenset[str]) -> bool:
         self.missing = len(expected - set(value))
@@ -239,6 +242,7 @@ class _Builder:
                 self.change_unexpected,
                 len(CHANGE_FIELDS) if self.change_failure is not None else None,
                 self.change_actual,
+                self.missing_names,
             ),
             fingerprint,
         )
@@ -353,6 +357,9 @@ def classify_coding(output: str, targets: Targets) -> Diagnosis:
         if type(raw) is not dict:
             return built.done(C.CHANGE_ENTRY_NOT_OBJECT)
         if set(raw) != CHANGE_FIELDS:
+            built.missing_names = tuple(
+                key for key in REQUIRED_CHANGE_FIELDS if key not in raw
+            )
             built.change_index = index
             built.change_missing = len(CHANGE_FIELDS - set(raw))
             built.change_unexpected = len(set(raw) - CHANGE_FIELDS)

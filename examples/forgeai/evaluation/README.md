@@ -533,3 +533,37 @@ reviewer cannot be characterized. This baseline sets no threshold.
   and is cross-checked against ForgeAI on every live call. Mypy detail is not
   collected (mypy passed every applied live change so far).
 - **Windows + Docker Desktop only**, the qualified sandbox scope.
+
+
+## Post-LQ1.3 measurement and LQ1.4
+
+The 2026-10-03 live measurement used qwen2.5-coder:7b, Ollama 0.35.1,
+fixture/hidden revisions 1, N=3 (12 runs). Coding: 4 valid,
+6 change_fields_invalid, 2 response_not_json. All six field failures were
+missing_only, entry 0, one missing, zero unexpected, expected 4 / actual 3:
+stock-validation 2, pager-boundaries 2, text-slug 2, temperature-units 0.
+Reviewer: 2 finding_invalid. CHECKS_FAILED: 2. Hidden: 4 passed, 8 not_run;
+successful + hidden-pass: 0; rework: 0. No implementation defect established.
+Ollama changed from 0.35.0 to 0.35.1, so aggregate differences cannot be
+attributed solely to harness revisions. This is a measurement, not a benchmark.
+
+**ForgeAI-LQ1.4 implemented — local validation pending.** Evaluation-only
+`missing_required_fields` adds a JSON array selected solely from the
+repository-owned required-key vocabulary, ordered path, operation, content,
+reason. It is null outside exact-key rejection, and empty for unexpected-only
+failures. Only the first rejected entry is described; index and attempt are
+preserved. Unexpected names are never recorded, only their count.
+`missing_required_field_counts` and `per_fixture_missing_required_field_counts`
+fold invocation records (each omitted field once per invocation); zero counts
+are omitted. Markdown adds a Missing required fields column. Schema stays 3.
+Historical absent detail means unavailable, not no omissions; reports are
+immutable and cannot be backfilled. Runtime, parser, prompts, Reviewer,
+provider settings, checks and rework are unchanged. No dependencies added.
+Validate with `uv run python .\validate_forgeai_lq1.py`; focused LQ1.4 phases
+13v-13ad preserve all earlier phases and require no live model. No new live
+measurement or contract change is authorized by this slice.
+
+Focused assistant verification: 140 tests passed (25 new LQ1.4 cases plus
+115 existing diagnostic cases), using replay and local HTTP stubs. Mypy,
+Ruff lint/format, runtime-source diff guard and git diff --check passed.
+Full operator local/Docker validation remains pending.

@@ -132,6 +132,13 @@ def test_features_are_content_free() -> None:
                 assert value in SHAPES
             elif name == "representation":
                 assert value in {"raw", "fenced", "none"}
+            elif name == "missing_required_fields":
+                assert value is None or set(value) <= {
+                    "path",
+                    "operation",
+                    "content",
+                    "reason",
+                }
             elif name == "change_field_failure":
                 assert value in {
                     "missing_only",
