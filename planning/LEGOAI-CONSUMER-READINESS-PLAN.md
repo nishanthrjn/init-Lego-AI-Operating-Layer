@@ -696,13 +696,18 @@ change_fields_invalid. No implementation defect established. This is a
 measurement, not a benchmark or pass/fail verdict; raw reports stay immutable
 and uncommitted.
 
-**ForgeAI-LQ1.3 — implemented, local validation pending:** evaluation-only
+**ForgeAI-LQ1.3 — locally qualified (operator-confirmed 2026-10-02):** evaluation-only
 change-entry field counts and first-rejection index, preserving attempt
 identity, existing categories and schema 3. Exact key equality is unchanged;
 CREATE/UPDATE share four required keys. No runtime, prompt, provider, retry,
 gate or rework changes. Closed subcategories describe missing-only,
 unexpected-only or combined mismatch. Old records without detail remain
 unknown (`other` when folded), never inferred from top-level counters.
-Focused validation extends `validate_forgeai_lq1.py`; no live model needed.
-Next: qualify the diagnostics before any further live measurement or decision
-about contract handling.
+The operator supplied the full `validate_forgeai_lq1.py` pass: all LQ1.3
+phases 13n-13u, existing harness phases, architecture checks, real-Docker
+fixture/check diagnostics, mypy, Ruff, 89 ForgeAI regression tests and
+runtime source guards passed. Final verdict: `FORGEAI-LQ1 HARNESS VALIDATION
+PASSED`. The validator contacted no live model; this is harness qualification.
+Next: review authorization for a fresh, separately named LQ1.3 measurement
+before drawing conclusions about live change-entry mismatches or contract
+handling. Historical reports cannot be backfilled.
