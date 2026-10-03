@@ -90,6 +90,8 @@ def test_aggregate_is_the_fold_of_the_run_rows(tmp_path: Path) -> None:
         "markdown_fence_replies": 1,
         "representation_counts": {"none": 1, "raw": 5},
         "fence_label_counts": {"other": 1},
+        "missing_required_field_counts": {},
+        "per_fixture_missing_required_field_counts": {},
         "change_field_failures": {},
         "per_fixture_change_field_failures": {},
     }

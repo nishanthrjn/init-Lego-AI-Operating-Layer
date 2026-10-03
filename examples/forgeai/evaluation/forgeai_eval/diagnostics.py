@@ -31,6 +31,7 @@ from forgeai_eval.checkdiag import (
 )
 from forgeai_eval.observer import Observation, Stage
 from forgeai_eval.outputs import (
+    REQUIRED_CHANGE_FIELDS,
     CodingDiagnostic,
     ReviewDiagnostic,
     proposal_fingerprint,
@@ -39,6 +40,10 @@ from forgeai_eval.outputs import (
 from forgeai_eval.runner import FixtureRun
 
 DIAGNOSTIC_DEFINITIONS: dict[str, str] = {
+    "diagnostics.missing_required_field_counts": "LQ1.4: omitted repository-owned "
+    "change keys in canonical path, operation, content, reason order; counted "
+    "only from the first rejected entry per invocation; absent historical "
+    "detail is unknown, not evidence of no omissions",
     "diagnostics.change_field_failures": "LQ1.3: missing_only, unexpected_only "
     "or missing_and_unexpected at the first change-entry exact-key rejection; "
     "zero-based index and counts only, preserving invocation attempt; other "
@@ -247,6 +252,21 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
     def categories(part: str, fixture: str) -> list[str]:
         return [str(e["category"]) for e in entries(part, fixture)]
 
+    def missing_fields(found: list[dict[str, object]]) -> dict[str, int]:
+        counts: Counter[str] = Counter()
+        for entry in found:
+            if entry["category"] != CodingDiagnostic.CHANGE_FIELDS_INVALID:
+                continue
+            features = entry["features"]
+            names = (
+                features.get("missing_required_fields")
+                if isinstance(features, dict)
+                else None
+            )
+            if isinstance(names, (list, tuple)):
+                counts.update(key for key in REQUIRED_CHANGE_FIELDS if key in names)
+        return {key: counts[key] for key in REQUIRED_CHANGE_FIELDS if counts[key]}
+
     def change_fields(found: list[dict[str, object]]) -> dict[str, int]:
         labels = []
         for entry in found:
@@ -294,6 +314,12 @@ def fold(rows: list[dict[str, object]]) -> dict[str, object]:
             ),
             "representation_counts": _feature_counts(coding, "representation"),
             "fence_label_counts": _feature_counts(coding, "fence_label"),
+            "missing_required_field_counts": missing_fields(coding),
+            "per_fixture_missing_required_field_counts": {
+                fixture: missing_fields(entries("coding", fixture))
+                for fixture in fixtures
+                if missing_fields(entries("coding", fixture))
+            },
             "change_field_failures": change_fields(coding),
             "per_fixture_change_field_failures": {
                 fixture: change_fields(entries("coding", fixture))

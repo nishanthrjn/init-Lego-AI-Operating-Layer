@@ -28,6 +28,7 @@ from forgeai_eval.metrics import (
     aggregate,
     summarize_run,
 )
+from forgeai_eval.outputs import REQUIRED_CHANGE_FIELDS
 from forgeai_eval.runner import FixtureRun, RunMetadata
 
 SCHEMA = "forgeai-lq1-report/3"
@@ -275,11 +276,17 @@ def render_markdown(report: dict[str, object]) -> str:
         for entry in row["diagnostics"]["coding"]:
             features = entry["features"]
             if isinstance(features, dict) and features.get("change_field_failure"):
+                missing = features.get("missing_required_fields")
+                names = (
+                    ", ".join(key for key in REQUIRED_CHANGE_FIELDS if key in missing)
+                    if isinstance(missing, (list, tuple))
+                    else "unavailable"
+                )
                 details.append(
                     f"| {row['fixture']} | {row['repetition']} | {entry['attempt']} | "
                     f"{features['change_entry_index']} | {features['change_field_failure']} | "
                     f"{features['missing_required_field_count']} | {features['unexpected_field_count']} | "
-                    f"{features['expected_field_count']} | {features['actual_field_count']} |"
+                    f"{features['expected_field_count']} | {features['actual_field_count']} | {names} |"
                 )
     if details:
         lines += [
@@ -288,8 +295,8 @@ def render_markdown(report: dict[str, object]) -> str:
             "",
             "Entry indices are zero-based; only the first rejected entry is described.",
             "",
-            "| Fixture | Rep | Attempt | Entry | Failure | Missing | Unexpected | Expected | Actual |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Fixture | Rep | Attempt | Entry | Failure | Missing | Unexpected | Expected | Actual | Missing required fields |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             *details,
         ]
     limitations = report["limitations"]

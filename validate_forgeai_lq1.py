@@ -325,6 +325,26 @@ def main() -> int:
                     *select("test_lq1_change_fields", name),
                     *(["-k", selection] if selection else []),
                 )
+            for label, name, selection in (
+                ("13v LQ1.4 closed vocabulary", "test_closed_vocabulary", ""),
+                ("13w missing path", "test_missing_field", "path"),
+                ("13x missing operation", "test_missing_field", "operation"),
+                ("13y missing content", "test_missing_field", "content"),
+                ("13z missing reason", "test_missing_field", "reason"),
+                ("13aa multiple missing", "test_multiple_missing", ""),
+                ("13ab first-failure semantics", "test_first_failure", ""),
+                (
+                    "13ac missing + unexpected / attempt identity / fold / report consistency / privacy",
+                    "test_rework_fold_report_privacy",
+                    "",
+                ),
+                ("13ad non-interference", "test_noninterference", ""),
+            ):
+                tests(
+                    label,
+                    *select("test_lq1_missing_fields", name),
+                    *(["-k", selection] if selection else []),
+                )
             tests(
                 "14 architecture / public imports",
                 "evaluation/tests/test_lq1_architecture.py",
@@ -425,7 +445,7 @@ def main() -> int:
         print("PASS " + item)
     print(
         "FORGEAI-LQ1 HARNESS VALIDATION PASSED (including the LQ1.1 preflight and "
-        "LQ1.2/LQ1.3 diagnostics) - replay and local HTTP stubs only; no live model "
+        "LQ1.2/LQ1.3/LQ1.4 diagnostics) - replay and local HTTP stubs only; no live model "
         "was contacted"
     )
     return 0
