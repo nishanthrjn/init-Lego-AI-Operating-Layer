@@ -261,11 +261,98 @@ partial report. Rerunning requires a new output directory.
 The known inaccessible `examples/forgeai/.lq13-test-temp/` is untracked and is
 neither checked nor modified.
 
-## Results
+## Results (live measurement, 2026-10-04)
 
-Pending the operator's live measurement. No Analyst quality has been measured.
-The decision will be applied mechanically from the report using the rule above.
+**Condition** (from `condition.json`, written before call 1):
+- commit `2edc3f7e5911b60cd6a40108446eae5aeb01ecaf`, branch
+  `br-PyLLMComfy-CustomerRec-ForgeAI`, clean tracked tree;
+- RepositoryAnalyst 1.0.0, definition fingerprint `924bdaac…9b7`;
+- `qwen2.5-coder:7b` (`sha256:dae161e2…f4364`), Ollama 0.35.1, 600 s timeout,
+  provider-default sampling, no fallback or retry;
+- Intel x86-64 laptop CPU, 16 GB RAM, Windows 11;
+- all fixture digests equal the freeze.
+
+The report was not committed. Its file digests:
+- `report.json`: SHA-256 `f03d213f367e4fcbfbb445a3f67e12db7b5ea7d0ce15933d1fafa6725bbcb93d`;
+- `condition.json`: `60f6b0130bfef8c6dc630e6b25b9cd74fae9b5600a6aa912615d4d52b1b18329`;
+- condition digest: `2cdb9710…afbf`.
+
+**Integrity re-check.** The aggregates re-fold exactly from the 91 records, and
+the gates and decision re-derive. The condition equals the embedded condition
+and its digest.
+
+| Measurement | Held-out (72 calls) | CD-1 supporting (14) | CD-1 probes (5) |
+| --- | --- | --- | --- |
+| Structurally valid | 0/72 | 0/14 | 0/5 |
+| Category | `schema_invalid` 72 | `schema_invalid` 14 | `schema_invalid` 5 |
+| Model failures / classifier disagreements | 0 / 0 | 0 / 0 | 0 / 0 |
+| Precision, recall, acceptable set, insufficient correctness | not measurable (0 valid outputs) | same | same |
+| False-sufficient / catastrophic | 0 / 0 (no valid output to judge) | same | same |
+
+**Safety, over all 91 calls:** 0 accepted unknown paths, 0 out-of-evidence
+paths, 0 reads outside the confirmed subset, 0 output-to-authority conversions.
+These zeros hold vacuously for accepted paths: nothing was accepted.
+
+**Wall clock:** 3,859 s (64 min) in total; per call, mean 42.4 s and maximum
+79.4 s. No timeout occurred.
+
+### Interpretation
+
+- **Every reply was rejected.** All 91 replies were complete (no model failures)
+  and every one failed the Analyst's own top-level schema stage. The classifier
+  agreed with the Analyst's verdict on all 91, so this is the Analyst contract
+  rejecting the replies, not a harness artifact.
+- **No relevance quality was measured.** With zero valid outputs, nothing about
+  relevance quality, insufficient-evidence handling or injection resistance can
+  be concluded. This is not a quality failure (C) and not a quality success.
+- **The cause within the stage is not identified.** `schema_invalid` is
+  deliberately coarse. It covers a reply that is not a JSON object, a duplicate
+  key, a top-level field set that differs from the six required fields, a
+  non-string summary, and risks or unknowns that are not arrays of strings. This
+  harness does not record which, a design limitation of 1Q. ADR-021 fence
+  handling was applied first, so a fenced document alone does not explain the
+  result.
+- **Historical context only.** In LQ1.4 the same model, under its Coding
+  contract, most often omitted one required field (`reason`). That suggests,
+  but does not establish, a field-set mismatch here.
+
+### Decision
+
+**B. ANALYST OUTPUT CONTRACT IS THE PRIMARY BLOCKER.** This was applied
+mechanically:
+- safety, classifier disagreements and model failures passed;
+- validity was 0% against a 90% minimum.
+
+B and C are not combined. Bounded content discovery is not supported by
+evidence, and no ForgeAI integration follows.
+
+### Next step (recommendation only; not implemented)
+
+Following the B rule, do not modify the Analyst yet. First run a content-free
+**contract diagnostic** in the LQ1.3/LQ1.4 style, on the same frozen condition
+and cases:
+- split `schema_invalid` into its exact stages: top-level not an object,
+  duplicate key, field-set mismatch, summary type, risks/unknowns shape;
+- record which of the six **required** field names are missing (closed contract
+  names) and the *count* of unexpected keys (never their names);
+- record the JSON type of each required field.
+
+Keep the parser strict: no repair, defaults or retry. Only if that evidence
+isolates a prompt or schema clarity problem should a separately approved
+Analyst version change be proposed and then re-measured against this frozen
+oracle.
 
 ## Local qualification
 
-`uv run python .\validate_forgeai_content_discovery_1q.py`: pending operator run.
+All 27 phases of `uv run python .\validate_forgeai_content_discovery_1q.py`
+passed on 2026-10-04, before and after the live run:
+- the scope guard;
+- frozen inputs;
+- schemas, classifier, metrics, safety, privacy, replay, folding and rendering;
+- regressions: Analyst (90), evidence (25), DISCOVERY-1 (185),
+  DISCOVERY-2A/2A.1 and CONTENT-DISCOVERY-1 (229), ForgeAI architecture (41);
+- mypy, Ruff and `git diff --check`.
+
+No live model or Docker was used by the validator.
+
+**ANALYST OUTPUT CONTRACT IS THE PRIMARY BLOCKER**
