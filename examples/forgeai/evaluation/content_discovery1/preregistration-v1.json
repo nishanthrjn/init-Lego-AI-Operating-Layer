@@ -1,0 +1,28 @@
+{
+  "foundation": "ee045fed663fa40f2939eb7e16d78b45e5110fe0",
+  "predeclaration_digest": "0635e282caa91ddbbc83c381fe3bec060fe9299147cdbbf0892fa7f87a1ffc98",
+  "threshold_digest": "f82327c13e9c87805faf26eebcbf8abb85a6e4010716c2dc34619fc412b71a4a",
+  "frozen_inputs": {
+    "examples/forgeai/evaluation/discovery2a/baseline.py": "d7faeea71f4b125c4ee5a81e4a6e625dba6cabcb882d1c4bbc82a8b12d22387f",
+    "examples/forgeai/evaluation/discovery2a/evaluate.py": "be77046d82492863ab0e05197db690b9e79b41b9100d1781f93b13459ea77c0f",
+    "examples/forgeai/evaluation/discovery2a/fixtures-v1.json": "f3555d615363412b0bab8056182ac299bb48b5ddc46651c52e7a057a0610f8b2",
+    "examples/forgeai/evaluation/discovery2a/fixtures.py": "f2c8d10cb6a1fd2d03276779130a1f8bc9008f98d737475b97dfda120f80efa0",
+    "examples/forgeai/evaluation/discovery2a/results-v1.json": "fc1730159a1dfc96230d1443d61167e4cbec35ec0fef022a5ab06ca34f9461d0",
+    "examples/forgeai/evaluation/discovery2a/__init__.py": "578eadee746693c64acd12fd1692802e4425a32029f1f3f7b48a762460291db3",
+    "examples/forgeai/evaluation/discovery2a_holdout/data.py": "7fe0f3129dc602d79d7661b11440ea80fd1dab25986c1c585ddfaaf052104ce9",
+    "examples/forgeai/evaluation/discovery2a_holdout/evaluate.py": "1a0be1c4fa577c1eda77f52948515bcc98328572f8a7afb80cca5bd7fa0ad7a0",
+    "examples/forgeai/evaluation/discovery2a_holdout/fixtures-v1.json": "0b80fba810194d181b53a4baf4a64fe36920c8fbeacf5775d45bdb073f0ddf43",
+    "examples/forgeai/evaluation/discovery2a_holdout/manifest-v1.json": "0b4cfd4d1f9d4b42e7f53cc8b2af372bb36c445a53ab2fb7b618c62d7784f019",
+    "examples/forgeai/evaluation/discovery2a_holdout/metrics.py": "a05354fd25d0a0ec1e7293e8810ea6af8876e86590beaba3bae911afc2ac88fb",
+    "examples/forgeai/evaluation/discovery2a_holdout/preregistration-v1.json": "e6643034b29493b731bf05adbba58ef45d452869b237a9bc2d333c3443427ec6",
+    "examples/forgeai/evaluation/discovery2a_holdout/results-v1.json": "b49a0cff999b7b01d235c9102ee40944c1c1f66be06dd169fb8837f8854b5618",
+    "examples/forgeai/evaluation/discovery2a_holdout/results-v1.md": "1697cc53479a8e4581cab64d670c0f56300924aa48c33ef5cf6b839e0a306d40",
+    "examples/forgeai/evaluation/discovery2a_holdout/thresholds-v1.json": "99cdc6e6f4599293bee55e727c140aca06ecdb4bd0b37b5433a83e65f9c6fa7f",
+    "examples/forgeai/evaluation/discovery2a_holdout/truth-v1.json": "8090b246599729f71579006fa179a87d62e9512fb8113863ce51027209d0afa0",
+    "examples/forgeai/evaluation/discovery2a_holdout/__init__.py": "e33a0662076c3d6fc87be556099a926ce66a06f50e5f72f170349b6b7b6ae5c6",
+    "packages/legoai-engineering/src/legoai_engineering/analyst/api.py": "788b558908aa396741ed748c28b9bb26b595d2e84e6d7d354ca9e35c498f2cbb",
+    "packages/legoai-engineering/src/legoai_engineering/analyst/values.py": "968988925734a6146a638f85ed90e7772fd5575072e52028b9f51d9108763162",
+    "packages/legoai-engineering/src/legoai_engineering/analyst/authorized.py": "0ad15866d8e5870e7bc3618588270c83e518b123796a8dd614f14fad97cbb991"
+  },
+  "quality_mode": "scripted replay only; independent quality unmeasured"
+}
