@@ -1,0 +1,8 @@
+{
+  "namespace": "analyst-quality-1q",
+  "revision": 1,
+  "heldout-v1.json": "9c9245771f411dff4a10701bba712bbc75049c8c1368895ba3b538d9bcacbbaa",
+  "partition-v1.json": "8dc38732e6a95803ddda28e5da07faa477af6c8aa4f046cedfb6845c62a87f7e",
+  "thresholds-v1.json": "377d82248478654450296bede25cc6b2918a63512463bab46128fef300c97155",
+  "preregistration-v1.json": "5c63430ecd15ab504cd9db73026226ed34bbf20cab962bc4b8bcc5cd95ce74c0"
+}

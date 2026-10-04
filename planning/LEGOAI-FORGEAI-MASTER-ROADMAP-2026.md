@@ -585,6 +585,8 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+CONTENT-DISCOVERY-1Q status (2026-10-04): an independent RepositoryAnalyst quality measurement harness is implemented with a frozen 24-case held-out relevance oracle and predeclared gates; see [Analyst quality](FORGEAI-CONTENT-DISCOVERY-ANALYST-QUALITY.md). Local validation and the operator live run are pending; no quality is measured yet. No production change or ForgeAI integration; G07 remains open.
+
 CONTENT-DISCOVERY-1 status (2026-10-04): bounded staged content-disclosure
 evaluation uses existing Analyst/read authority with scripted replay; see
 [content evaluation](FORGEAI-CONTENT-DISCOVERY-EVALUATION.md). Analyst quality
