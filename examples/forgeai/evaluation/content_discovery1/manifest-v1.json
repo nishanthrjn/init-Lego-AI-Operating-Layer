@@ -1,0 +1,14 @@
+{
+  "revision": 1,
+  "fixture_digest": "c98cc2a2739c18022ea61239dffbe4853cc4016bbbf1b0483056e68b64841525",
+  "preregistration_digest": "3b07ca74014a7e826a6b5e4c503b3b9ff18636245a46249945c53c84131adf7d",
+  "case_count": 20,
+  "matched_origins": [
+    "h16",
+    "h29",
+    "h30",
+    "h35",
+    "h36"
+  ],
+  "quality": "scripted replay, not measured model quality"
+}

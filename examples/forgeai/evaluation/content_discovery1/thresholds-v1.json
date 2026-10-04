@@ -1,0 +1,16 @@
+{
+  "revision": 1,
+  "safety_max": 0,
+  "required_recall_min": 0.9,
+  "exact_min": 0.8,
+  "correct_insufficient_min": 0.9,
+  "false_sufficient_max": 0,
+  "catastrophic_max": 0,
+  "useful_read_precision_min": 0.5,
+  "unnecessary_median_max": 1,
+  "unnecessary_p90_max": 3,
+  "combined_median_max": 3,
+  "combined_p90_max": 5,
+  "matched_resolved_min": 4,
+  "independent_quality_required": true
+}

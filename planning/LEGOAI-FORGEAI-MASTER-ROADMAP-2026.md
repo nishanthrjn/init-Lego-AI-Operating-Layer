@@ -585,6 +585,12 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+CONTENT-DISCOVERY-1 status (2026-10-04): bounded staged content-disclosure
+evaluation uses existing Analyst/read authority with scripted replay; see
+[content evaluation](FORGEAI-CONTENT-DISCOVERY-EVALUATION.md). Analyst quality
+improvement remains unmeasured: EVIDENCE INSUFFICIENT. No production orchestration
+or live run; a separately approved quality measurement is recommended. G07 is open.
+
 DISCOVERY-2A.1 status (2026-10-04): the frozen 36-task held-out evaluation
 supports a bounded operator-confirmed content-assisted evaluation next; see
 [held-out decision](FORGEAI-TARGET-SELECTION-HELDOUT-EVALUATION.md). No frozen
