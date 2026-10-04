@@ -585,6 +585,16 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+DISCOVERY-1 status (2026-10-04): maintainer-approved bounded authorized structure
+acquisition is **IMPLEMENTED, local qualification pending**; see the
+[implementation record](FORGEAI-TARGET-DISCOVERY-DECISION.md#discovery-1-implementation-record--2026-10-04)
+and Engineering consuming guide. The distinct disclosure action, explicit bounds,
+two-pass check and confidential canonical map identity add no model call or write
+authority. Trusted local filesystem/composition limitations remain. G07 target
+selection, ForgeAI confirmation and end-to-end discovery remain deferred; no
+Coding/Reviewer live-quality gate is closed. Run
+`uv run python .\validate_engineering_discovery_1.py` for operator qualification.
+
 Decision-preparation update (2026-10-04):
 [target-discovery recommendation](FORGEAI-TARGET-DISCOVERY-DECISION.md) refines G07:
 reuse bounded workspace listings behind a distinct authorized structure facade;

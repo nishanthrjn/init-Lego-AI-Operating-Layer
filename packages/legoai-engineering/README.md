@@ -1899,3 +1899,27 @@ metadata identifies the definition; no new report fields. Fixture/hidden
 revisions stay 1 and schema stays 3. Historical reports remain immutable.
 No live measurement was run for this implementation. Reviewer finding_invalid
 remains a separate follow-up; no other deferred capabilities resume.
+
+## DISCOVERY-1 — implemented, operator local qualification pending
+
+Bounded authorized repository-structure acquisition now exists in
+`repository.structure` and `repository.structure_authorized`; see the
+[public contract and composition instructions](docs/CONSUMING.md#discovery-1--bounded-authorized-structure-acquisition).
+It reuses WorkspaceEntry/RepositoryWorkspacePort without changing M2, Core or Agents.
+The distinct action is `read-structure-for-model-analysis`, checked before each
+listing and final release. Two equal bounded passes are required; no atomic
+snapshot is claimed. Maps contain filtered relative paths/kinds only. SHA-256
+identity covers canonical policy/map bytes and grants no authority. No model call,
+contents, Git, mutation, target selection or ForgeAI behavior is added.
+
+Ceilings: 1–8 explicit directory roots, depth 6, 512 map entries, 64 listings/pass,
+exactly two passes, 16 KiB serialized map; paths ≤240 code points/960 UTF-8 bytes,
+components ≤128 code points, 32 extra names and 32 excluded subtrees. Mandatory
+dot/sensitive/generated/vendor exclusions cannot be disabled. Privacy filtering
+is not secret detection. Trusted adapter configuration and stable local filesystem
+assumptions remain explicit; see the consuming guide for details and limitations.
+
+Operator command from repository root:
+`uv run python .\validate_engineering_discovery_1.py`.
+No live model or Docker required. The validator includes local/replay regressions
+and clean wheel consumption; full operator qualification remains pending.

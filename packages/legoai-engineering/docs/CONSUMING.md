@@ -51,6 +51,8 @@ The table lists the whole supported surface. Modules or names beginning with
 | --- | --- | --- |
 | `legoai_engineering.repository.workspace` | `RepositoryPath`, `WorkspacePolicy`, `WorkspaceEntry`, `WorkspaceEntryKind` | base |
 | `legoai_engineering.repository.ports` | `RepositoryWorkspacePort` | base |
+| `legoai_engineering.repository.structure` | `RepositoryStructurePolicy`, `RepositoryStructure`, `StructureError`, `StructureFailure` | base |
+| `legoai_engineering.repository.structure_authorized` | `AuthorizedRepositoryStructure`, `REPOSITORY_STRUCTURE_ACTION` | `analyst` |
 | `legoai_engineering.repository.local` | `LocalWorkspaceRoot`, `LocalRepositoryWorkspace` | base |
 | `legoai_engineering.repository.errors` | `WorkspaceError`, `WorkspaceFailure` | base |
 | `legoai_engineering.repository.mutation` | `RepositoryChangeSet`, `FileChange`, `FileChangeKind`, `RepositoryMutationResult`, `digest_text` | base |
@@ -380,3 +382,102 @@ and the public names in §4 change only with a documented, additive change
 where possible. Internal modules may change at any time. Engineering and Core
 releases are pinned together: the `analyst` extra requires the matching
 `legoai-reference` version.
+
+## DISCOVERY-1 — bounded authorized structure acquisition
+
+Implemented; **operator local qualification pending**. This is deterministic
+acquisition, not target discovery/selection. No Agent, model, ForgeAI, content-read,
+Git, mutation or sandbox dependency is introduced. Base structure values require
+no Core; the authorized facade uses the existing `analyst` extra for governance.
+
+Use RepositoryStructurePolicy as trusted operator configuration. Roots are 1–8
+explicit relative directories, unique, non-overlapping, without case aliases;
+no None/whole-repository default or file roots. Hard ceilings (lower values allowed):
+
+| Bound | Ceiling / meaning |
+| --- | --- |
+| Depth | 6 components from workspace root; FILE at limit allowed; admitted DIRECTORY at limit fails, including empty directories. Roots must be shallower. |
+| Entries | 512 including roots; no truncation or partial release. |
+| Listing calls | 64/pass, exactly two successful equal passes; at most 128/acquisition. |
+| Serialized map | 16,384 strict UTF-8 bytes including fixed version/coverage envelope. |
+| Paths | RepositoryPath ≤240 code points; ≤960 UTF-8 bytes; components ≤128 code points; no normalization. Controls/format characters and invalid Unicode refused. |
+| Extra exclusions | ≤32 component names and ≤32 relative subtrees, case-insensitive; additive only. |
+
+Every dot-prefixed component is excluded, plus case-insensitive `secrets`,
+`credentials`, `private`, `node_modules`, `build`, `dist`, `generated`, `vendor`,
+`__pycache__`. Excluded directories are not traversed. `.gitignore` is not read;
+this does not guarantee all Git-ignored files are excluded. Benign-looking names
+such as `customer-acme-contract.py` may remain visible: this is not a secret
+classifier. Future operator preview and destination-specific authorization remain
+necessary before model disclosure.
+
+The composition root supplies a bound RepositoryWorkspacePort and workspace
+ConfigurationRef. Configure LocalRepositoryWorkspace with WorkspacePolicy.max_entries
+≤512, depth sufficient for the structure policy, and exclusions that are a subset
+of the structure policy. An empty adapter exclusion tuple is supported; structure
+filtering then happens after adapter safety validation. Never bind an adapter with
+undeclared extra exclusions and call the map complete under a different policy.
+The Port cannot inspect these settings: this is an explicit trusted-composition
+obligation. Raw scan work is at most 128 x 512 entries under that adapter profile;
+excluded entries count in its per-directory bound. The facade independently refuses
+returned tuples over 512 and validates every direct child before filtering/traversal.
+
+Public composition sketch (host, workspace, reference and clock are trusted
+operator-owned dependencies; the host already has an explicit OperatorGrant):
+
+```python
+from legoai_engineering.repository.structure import RepositoryStructurePolicy
+from legoai_engineering.repository.structure_authorized import (
+    AuthorizedRepositoryStructure, REPOSITORY_STRUCTURE_ACTION,
+)
+from legoai_engineering.repository.workspace import RepositoryPath
+
+policy = RepositoryStructurePolicy((RepositoryPath("src"), RepositoryPath("tests")))
+context = host.security_context(workspace_reference, REPOSITORY_STRUCTURE_ACTION,
+                                workspace_reference.instance)
+reader = AuthorizedRepositoryStructure(workspace_reference, workspace, context,
+                                      host.authorization, policy, clock)
+structure = reader.acquire(context.tenant_context)
+```
+
+The fixed action is `read-structure-for-model-analysis`, not named-file content
+authority. Synchronous acquire checks current authority with fresh time before
+each listing and final release. Wrong tenant/scope/action and approval-bearing
+contexts fail closed. Unavailable authority never becomes ALLOWED. No cached allow,
+partial release or retry; earlier authorized local I/O cannot be undone.
+
+RepositoryStructure reuses immutable WorkspaceEntry values. Traversal is bounded
+and deterministic; final entries are globally sorted. Two complete filtered maps
+must match or STRUCTURE_CHANGED is raised. No atomic snapshot, TOCTOU elimination,
+hostile namespace defense or hard synchronous I/O deadline is claimed. Existing
+LocalRepositoryWorkspace link/reparse/hardlink/containment/device/change checks stay
+unchanged; safety failure takes precedence over convenient filtering.
+
+`model_bytes()` explicitly serializes approved relative paths/kinds and fixed
+version/coverage text; it neither calls a model nor authorizes later disclosure.
+`identity_bytes()` additionally encodes sorted roots, filter profile/configuration
+and limits. `digest()` is SHA-256 of these versioned canonical bytes: not authority,
+anonymity, file-content integrity or snapshot identity. Digest is absent from the
+model envelope. Paths/filter/entry fields and bound dependencies are repr-excluded.
+Do not log explicit serialization without separate permission.
+
+StructureError.reason distinguishes CONFIGURATION_INVALID, AUTHORIZATION_DENIED,
+AUTHORITY_UNAVAILABLE, WORKSPACE_UNAVAILABLE, BOUNDARY_VIOLATION,
+STRUCTURE_LIMIT_EXCEEDED, UNSUPPORTED_ENTRY and STRUCTURE_CHANGED. The facade
+translates WorkspaceError and retains its cause for trusted diagnostics. Top-level
+messages/reprs contain no paths; raw traceback causes may contain confidential
+paths. Invalid dependency contracts can still raise programming errors, as with
+existing authorization wrappers; they never produce an allowed result.
+
+Run from repository root:
+
+```powershell
+uv run python .\validate_engineering_discovery_1.py
+```
+
+The validator checks scope, structure/security/failure tests, repository and Agent
+regressions, replay ForgeAI/LQ1 tests, isolated wheel public consumption, mypy and
+Ruff. No live model or Docker is required. Docker tests are excluded because no
+execution/check/sandbox/runtime dependency changed; this does not requalify those
+unchanged adapters. Full operator qualification is pending. Target selection and
+operator confirmation remain unimplemented.
