@@ -585,6 +585,14 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+Decision-preparation update (2026-10-04):
+[target-discovery recommendation](FORGEAI-TARGET-DISCOVERY-DECISION.md) refines G07:
+reuse bounded workspace listings behind a distinct authorized structure facade;
+initial model candidates are existing disclosed files, with manual CREATE and exact
+operator confirmation. It recommends an ADR-018 addendum and combines acquisition
+with authorization in the first future slice. Recommendation only: no implementation
+authority or maturity promotion; decision approval and live-quality gates remain.
+
 **Tactical closure:** the Coding 1.0.1 change needs its one controlled live
 measurement and analysis; this is closure work, not the next major architecture
 initiative. Use a committed clean runtime, new output directory, same model digest,
