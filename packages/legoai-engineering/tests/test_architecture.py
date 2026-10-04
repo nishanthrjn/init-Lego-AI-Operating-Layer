@@ -16,6 +16,26 @@ def import_violations(source: str, module: str = "") -> set[str]:
         "legoai_engineering.repository.values",
     }
     additions = {
+        "structure": {
+            "legoai_engineering.repository.errors",
+            "hashlib",
+            "json",
+            "unicodedata",
+            "enum",
+            "legoai_engineering.repository.workspace",
+        },
+        "structure_authorized": {
+            "collections.abc",
+            "datetime",
+            "legoai.governance.ports",
+            "legoai.kernel.context",
+            "legoai.kernel.references",
+            "legoai_engineering._authority",
+            "legoai_engineering.repository.errors",
+            "legoai_engineering.repository.ports",
+            "legoai_engineering.repository.structure",
+            "legoai_engineering.repository.workspace",
+        },
         "coding.definition": {
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",

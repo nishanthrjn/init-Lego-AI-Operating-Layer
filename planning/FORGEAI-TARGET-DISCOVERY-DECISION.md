@@ -619,3 +619,28 @@ to implemented or qualified by this recommendation.
 **Single recommended first implementation slice, after explicit decision approval:
 DISCOVERY-1 — bounded authorized repository-structure acquisition, with deterministic
 local tests and no model invocation.**
+
+## DISCOVERY-1 implementation record — 2026-10-04
+
+Maintainer approved this decision and the first slice. **Bounded authorized
+structure acquisition is implemented; operator local qualification pending.**
+The original recommendation remains historical. The narrow ADR-018 addendum was
+appended under that explicit approval; ADR status remains Proposed.
+
+Public Engineering `repository.structure` supplies immutable policy/result values,
+safe closed failures, canonical versioned representation and SHA-256 map identity;
+`repository.structure_authorized` supplies the distinct fixed action and two-pass
+acquisition. See the [consuming guide](../packages/legoai-engineering/docs/CONSUMING.md#discovery-1--bounded-authorized-structure-acquisition)
+for exact limits, privacy, failure translations and composition obligations.
+
+The unchanged workspace Port does not expose its adapter policy. Trusted composition
+must bind an adapter with ≤512 scanned entries/directory and no exclusions beyond
+the declared structure policy. This obligation is explicit; output validation does
+not pretend to attest an adapter's internal work. No lower Port or Core change.
+Two equal filtered passes and current final authority are required; no snapshot or
+atomic disclosure/revocation claim. No source content, Git, model, target selection,
+write authority or ForgeAI/operator-confirmation behavior is implemented.
+
+Operator validation: `uv run python .\validate_engineering_discovery_1.py` from root.
+Local filesystem, fake/replay and HTTP-stub tests only; no live model or Docker.
+DISCOVERY-2 remains unimplemented and is not authorized by this implementation.
