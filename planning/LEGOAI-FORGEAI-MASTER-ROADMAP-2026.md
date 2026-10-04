@@ -585,6 +585,12 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+DISCOVERY-2A.1 status (2026-10-04): the frozen 36-task held-out evaluation
+supports a bounded operator-confirmed content-assisted evaluation next; see
+[held-out decision](FORGEAI-TARGET-SELECTION-HELDOUT-EVALUATION.md). No frozen
+deterministic baseline meets all predeclared gates. No production selector,
+content-assisted runtime or live model was added; G07 remains open.
+
 DISCOVERY-2A status (2026-10-04): synthetic path-only evaluation completed; see
 [target-selection evaluation](FORGEAI-TARGET-SELECTION-EVALUATION.md). DISCOVERY-1
 is locally qualified by the operator run. Deterministic selection is useful, but

@@ -1,0 +1,550 @@
+{
+  "revision": 1,
+  "preregistration_digest": "e6643034b29493b731bf05adbba58ef45d452869b237a9bc2d333c3443427ec6",
+  "fixture_digest": "0b80fba810194d181b53a4baf4a64fe36920c8fbeacf5775d45bdb073f0ddf43",
+  "truth_digest": "8090b246599729f71579006fa179a87d62e9512fb8113863ce51027209d0afa0",
+  "order": "all 36 frozen before any held-out selector execution",
+  "independence": "procedural, not statistically independent",
+  "tasks": [
+    {
+      "id": "h01",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "948e2f75c0166626971e4e0ba329d2b5296fddd0110325c0fc9652837eda63c6",
+      "tree_digest": "10a401e25423387bab1035aca9b413a296b358fda79d9ecb0221c7ca38e3877f",
+      "truth_digest": "37a174dc71a43496284b5e4795e3b5c832b5a2173587d2dd546b76f95505b03c",
+      "fixture_digest": "87bb01bb5e6e483ce8ae76b4f355cffdd0ca81f16e69f1a2f32961d6328e35af"
+    },
+    {
+      "id": "h02",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "81e2f0f4e0c4d35d845468f7da12ebea1dfa9f43dd893cfd213d8d48e00783cc",
+      "tree_digest": "ca48653717dd437038132b80d1b711916a0557b44656cbd894644a6e161aeaef",
+      "truth_digest": "9be0308368a3386fca359e6ebd0c49596b6e302852ee7bc5f5b67271ca1660b5",
+      "fixture_digest": "ca4e4348a56f9281582b31337d0b8af47cb38117535abe5f9ef4db6d000c70ca"
+    },
+    {
+      "id": "h03",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "8ccd8a63baa9681a407b3eeceb7526fa2eb4fe1d90a42650d1b663985b169a66",
+      "tree_digest": "3f12cf282d148b61f56949e41b60bc6b41c271e26cd5db2a7b0cdfebd2b376a8",
+      "truth_digest": "327062354626cdf33ef904aee5c906d327638284451e2a237a98a35e0a036ebf",
+      "fixture_digest": "6d1ecb6b7fa0402a6bcbb77f4e56d51c60b9597ed54dada32864509156110742"
+    },
+    {
+      "id": "h04",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "8e65ee68d40161d24ab16e3336311aea8ffb7c89d28a498cce101aee19c6f357",
+      "tree_digest": "2dc4e1312dfad8ed02b27589a3d1980b87dcf05509883c4a4c3fdd76818b99b8",
+      "truth_digest": "610373700c203721507d965e1d8e3a56eb6bc89c8f2b5b033e5e065d50ae080b",
+      "fixture_digest": "b58255b61ac9e9355c30c4db3950c27139883aca24b0acd08f51cfd7da9cf9ca"
+    },
+    {
+      "id": "h05",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "be0dbc816f59796cf27cf5dba842e457923f16c119367b56daad9fa4fdaa12bc",
+      "tree_digest": "f94bc7da3b175df5fc4619cecfad7d113fc52f93ab005c6e602d577e60fa3efd",
+      "truth_digest": "ca2260e86b815a801b68c991599837f1373a1eccc6a7b2d5490edbbc13d3f5e2",
+      "fixture_digest": "89f4951e7114087eb6dd9beec32441e43861a99eadd734f4951e8a929b7d8163"
+    },
+    {
+      "id": "h06",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "e9429eeb39161b0eb7611cc05e45882db62f8a154c6faa3055bff4adc72f14d4",
+      "tree_digest": "86e9a6f080e78db34649f6767c94f5d84ace84f6d98b2d7e8453605fdaee7972",
+      "truth_digest": "3fdacd162574b28c2bb094301982468133e049504e6907c8d11e3cf77f08dbde",
+      "fixture_digest": "807e331488517ed3bf80a7b909c5e6cc039bd7495186f3a97e793873d3e7a1b7"
+    },
+    {
+      "id": "h07",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "5694a8f5f83c0bd54e70ec302d5205bd279818a30e5b75eefee664e022a0ac2f",
+      "tree_digest": "91c705e9b7386599e36e49ce8d925b0c4f532f30ab58c4b622068426bfdbc079",
+      "truth_digest": "9e65c3af52d4b1d67d4409bb99c2adba786feb3bd1917f391e473f30829ef01e",
+      "fixture_digest": "451975a85d1b52b452d6b559e344c120315e1fdf00445a9b6efccc77c936f67f"
+    },
+    {
+      "id": "h08",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "22295e22381b61869dcf3d1e6ac688cfaa5a860409206da02312e24e6a8c16a2",
+      "tree_digest": "c6108d34ec9cceead77fa8c55c4e40a0aab9d78e5b56cb541e2a002bca595bed",
+      "truth_digest": "6893156d9e3e40cde687b799000bdc631f7bee4249eca4292497fcd9843b589f",
+      "fixture_digest": "3952a9dde1d30675f61dc177d2475a9747d7e399ff44811289142effaf13a07c"
+    },
+    {
+      "id": "h09",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "45d025292dcb338c19a4d6940749f8d1392ad9411650a7447b85ef641842660b",
+      "tree_digest": "f3b50d2dddcb4b215f29dd69722bc1b0c272f6cd0c26e69a7292b2d4c4f2d699",
+      "truth_digest": "a59644f57d184772c86dec0d4e956e8fe8bcfeffd8f0e7aa6bfcccb7e3c4af61",
+      "fixture_digest": "605c2f873ba2ddd2c97519d10dbe051d4683cf6c2c7b2bc056146cde0641df82"
+    },
+    {
+      "id": "h10",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "ea8dab94e36d9c06b78b2764e4d4ddd24007e48a4e4eb7580cd8296e7b6fbfdf",
+      "tree_digest": "e0114855661d0811346f4038a7d0254cbc7a90c6af633b3d8638d53019234a09",
+      "truth_digest": "e80da63c7d9276148c5a67fd2c86d311b91bda487422ac1f274aa04433d04384",
+      "fixture_digest": "32871cc439b0dc59ac560827c54fe0b8510f8f7b2a1c8323fa3924352d1ca2cf"
+    },
+    {
+      "id": "h11",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "2805fda9acd92bfc33cf40dabb6c051925e3a5826beebe448bb43125e0ba982b",
+      "tree_digest": "6400b2c880b5c7810e5ba090e03a2187922a4a49f17693d61d58e79273a83591",
+      "truth_digest": "fb0db25a749c88454f32988d53142dcc8c7f37c58207c281b5bd0d7d78f92019",
+      "fixture_digest": "dad4e899bf26520cf17007d1243241ec05036112f17c93830f65c357bfc974ab"
+    },
+    {
+      "id": "h12",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "9177059ed717dd3e390abd63dfde593bd3c3b603b3b0d469811a12189f49d4ec",
+      "tree_digest": "21c5f816b2cbd4ff686d25537e3e1dea0b3072f34f653fd9e4591f75d1549bc8",
+      "truth_digest": "cc6de0b8c48226e17ec3e614b561208354b2c2dbd00f29a4f5418e6a73110b9e",
+      "fixture_digest": "e2296daa13eeea3a3943c6c221eadd4f10834cf237529f7c94653f27fcaf5f94"
+    },
+    {
+      "id": "h13",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "4091b50f2a49c533f43d556bee3bb019145340b63142134487bb533ffc71445b",
+      "tree_digest": "94a7026119e11ef92461ebbe66bd6bedd56cc47678e6869c687df25eb06e93ea",
+      "truth_digest": "67387de7b8b71ea966c00f4ec974a589e85e8df3a5017e4c6a5ce09fb5161b75",
+      "fixture_digest": "4e36dca28bdee5ae6819c0eab484f9321d60c59fceab445133bb61654cf3f8f4"
+    },
+    {
+      "id": "h14",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "4166ac78152af54345d7230e428b3a3375da22c65c683060de0062a5127bbd69",
+      "tree_digest": "2a4148b8149bdff8257d9de7e4b83056feaefc296bec4a35c0f143a3cf3fc298",
+      "truth_digest": "f67634dfa82941ad1b0ad77783c618358ec685f3ce0abbf9b011a7fcfaa1b224",
+      "fixture_digest": "356c3e705da72d100d335e37d11e85b9f51eacf726e38397c2572f1d0f155570"
+    },
+    {
+      "id": "h15",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "2195d8cc8f3c19ac8adfc65180aaabfb5624896615defb8e8e9133d58a44f930",
+      "tree_digest": "60350cdba60258cf68e5a698da53da4d575fd82103f6a5da381f211c415cdb62",
+      "truth_digest": "f063c7fdd83b4348463b41a62853bea831fbc75da6c09e5f162c10a2c9c79ac4",
+      "fixture_digest": "82996371f918b784c9f5b9da80099aef3a43d9b2953648e4265b16436b28ef22"
+    },
+    {
+      "id": "h16",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "5b3cc85a8cd719f7ce2a5eb872d464beed9f0311897f8577db62f390face51ae",
+      "tree_digest": "cfb1f6ebe057186ae27c9c918dd96b2c83743129afcd86e9d0de896778a3945c",
+      "truth_digest": "a90b6d46a6bc514aca1d4dc4264999cb315210abc4ec798c0d9b11e9c7b93cf4",
+      "fixture_digest": "c0988f2a9d5476657337f4bae0dbf39fa7e5dad409e1304ba294b0ac1b2851fe"
+    },
+    {
+      "id": "h17",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "5a9699d6d24882377989719006418dffa32a8fad562b61127fe390e7cfdea4a1",
+      "tree_digest": "5e16d97dd9593f77ce8609f4769fcf8a8d232f44bfe26f3916ffb58acf02ecb4",
+      "truth_digest": "434df349811f9282e8f335180e7ced92a6acceba64fe71e641779efd33ff2327",
+      "fixture_digest": "405907571e0ec042492652363187396dd2aeff93cba36db569e4d292ccc3f906"
+    },
+    {
+      "id": "h18",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "9b62a75357c53b3f7e584ef7077d3134ff32962fed708c2e270d05fca770403c",
+      "tree_digest": "5568a25578c9db89e13687a29eade60c5c3ce98d32b2213b97207b8039d44761",
+      "truth_digest": "23ed542fbfa81233ed36e7891dca5b6ee3eac82720dd55ce8490b67a37ce342f",
+      "fixture_digest": "01217ecc356d5e591705bc80052dd0c56c415ee33856a758a37649ba0fb719e3"
+    },
+    {
+      "id": "h19",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "e128be23652a1549543aab3eb5b650ed44f2c8c55cce3064701b607d8ceefc16",
+      "tree_digest": "07f729114f98ca665ae7d8835dc0294448339fa739c497677576b86252fe98ed",
+      "truth_digest": "311cbd1368bf6e9d1d7037934cae948d1903946b121b04dfcf6b8197e3ec9038",
+      "fixture_digest": "bda829e885be08c85a54d9035fda5c5565de4982c9740327b40ee0ffa583d290"
+    },
+    {
+      "id": "h20",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "f33c36affccad0369c54d546c24cfd4685bd6db4eeac2331b3e30781355a7f4f",
+      "tree_digest": "a5c23931b1af9811ac6310832c70a3a6c1e56d87512cfb9dc20f5efdae2b6c94",
+      "truth_digest": "87250b863c5cccb87db9567ea7126e201573ab96cd1e0b8344b7946c62501b1e",
+      "fixture_digest": "d9822e91d9bc24ef73a83c478e35d2e418f89a85338461bc431332c96f9ef993"
+    },
+    {
+      "id": "h21",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "7d2fc072db24b3203cb5d4341fb64985eb0a57c59c29d8f52a20168fcb5a4c15",
+      "tree_digest": "b9fef393c6d145493dc1f37babac91ba90a7e84cf2f36ccd858edf1315f12b43",
+      "truth_digest": "436b2ad21069d4378c8798cfa4f06115061ffa4abea1e32f3e40f973512bceb2",
+      "fixture_digest": "54e4c1debd1bda8b86caa9c0f2f9e41cb8cdbc8576b8fc405e9739d57c421958"
+    },
+    {
+      "id": "h22",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "73fb0fec69dd069a64e5fcd3b2f56e92698d7083d2145e3d610a3469575d873b",
+      "tree_digest": "43004cb12e698a145a4e0860f702c2a12dc4c5134ea643d84a6b338e9b9e50ff",
+      "truth_digest": "8f674a90ccbcf2a2d29c83098ccf682afcbf02f1ecd0d4c443acdc5549bb296c",
+      "fixture_digest": "bb074edee5b7a54f0790a1f99e220601bec20843c9de859e35f8575d702a762c"
+    },
+    {
+      "id": "h23",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "a85c23456c53221c5b3680e63f9062e368e5c01b44e2f07a2bf151db799d56f4",
+      "tree_digest": "8b6f79c0d5293fee86d293a4d83e4ad2642645c05ae398f43794a5948a70ea2d",
+      "truth_digest": "a96d547fc996df5d7b0231d6bbd61dcac42010182b05e876bd5ab8dbc509aa78",
+      "fixture_digest": "0f89d49f67298395fb1bc205f84748e24d42db64d11f85db918290ea8b00025a"
+    },
+    {
+      "id": "h24",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "f51185fefab649821afb30058e5171257f0fe8fd673ac3bf49870a13cee2ec11",
+      "tree_digest": "cf1b3260a47616122506002267866e20dd12e150e457d3cc7f5e1321b18158c9",
+      "truth_digest": "70e953ecd0aa970240ded2f24d2a36045f2f2bcf848566aa9f2f87f9e604fe81",
+      "fixture_digest": "10215d9a30c521583ee352e71bd278b07d1fc818eaf5cee89135ee608bec1645"
+    },
+    {
+      "id": "h25",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "4dd88ef999af0490dc2e5261aef0d4062bcb8cb07c328781a35e904563550139",
+      "tree_digest": "656ff098a45029cda676db2fae2e2d3c495dba3819f74f467b762b0a47794953",
+      "truth_digest": "ae540ede2cdf2408699c59d408bab60258b32242159e3f9e84ad7094cff9d060",
+      "fixture_digest": "fdd852c541f0d49e1fdc38d60e3529e3faf191f172c7ee021ef312d2787111eb"
+    },
+    {
+      "id": "h26",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "aa22528ce4c4bc28804c85eed35b4934f0413d1d9704e393c99daeb713274293",
+      "tree_digest": "a8f209ee85b047a22988ca4a7600cec83c9a7b4a8d96048a1393c3085c3e89a5",
+      "truth_digest": "8aaf9e89235a8c951306d5385a9ee3b7c471d7ee535ace652e9e33ca6b17e67e",
+      "fixture_digest": "afe5d765884c44808cd2634bd35d42b8c49b63e97e10f2aa55d7e6457b0de170"
+    },
+    {
+      "id": "h27",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "b241125952409a8cf0d43d5ffd56f1dcf0a6cc1b105e410ff4b85ba10bff9bb0",
+      "tree_digest": "fa5b2966c26014dd2ab4a6efdcd88f4fab0a112d32a124b1616eca880b64aa42",
+      "truth_digest": "464d99f46463abb6280ca9400e0a0ab7ed3568066dd7696cb40da4ff1a33a8c9",
+      "fixture_digest": "19852f8d30509ea025fd614f5af1b4cb4855181160984de892b186dbfb675d56"
+    },
+    {
+      "id": "h28",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "bc1ff611864ce22064517ebe3090bc1c6f1feefc38d6db8c62a1f93154bf85ae",
+      "tree_digest": "8f8c9d94e0ebf5f57a125776b93cf64ec43c7b698f6cc206e1d0271e98bd8ef7",
+      "truth_digest": "71cd319280e7bedfc9259726807f9cc09cbbe47e0c1009de48e7576a7e63b761",
+      "fixture_digest": "5914cd411bb1da61b7ba30e4af249c690359743a893e31484b6a4fc45d07cfd6"
+    },
+    {
+      "id": "h29",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "41bea0c6410394cf90d2f1dd9b6bfa07620c686aec4949752bbcab8257a727e4",
+      "tree_digest": "92b8a1d476f2c3cc34218ea81731334a53b6f60ca359b227a0c49d456d19f2b5",
+      "truth_digest": "94dbf0e785f3782a38d2a23e6f2f73f320cfc10127ac8761f592094186495482",
+      "fixture_digest": "0659c3e46f02eb7c62f6ddf83fdebfa176931b15d5180be8464c953da3a14291"
+    },
+    {
+      "id": "h30",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "3bea68170910bc98a15a70e9b89159c227541ff457fa554a223d989f006ccd6c",
+      "tree_digest": "dba5c8c89291aa4f6451a606b902a43212c49044930235228dbf9a84d396c21f",
+      "truth_digest": "1546d2cbe2e9a9cb05f0bef26b0e34a9b40fa74dd3422a40c545f693aae64324",
+      "fixture_digest": "a39baab4aa673359cbe94785505bbf137b16f4d089663af674791d8098d62ce0"
+    },
+    {
+      "id": "h31",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "f07ef8aa86e4b2180331b6ceefd83356dfe7cdd01348315ca2eb9e9ff9a715ac",
+      "tree_digest": "c32dd6ab57cdbe93ff921e95c35f3bc364e81bbad122ad6c9523919ffd2669b0",
+      "truth_digest": "6f41037317b68e56f219f555583b132d15a326a69dee884af64158a4ae908829",
+      "fixture_digest": "b79e7e98d446a81c46e9b67f29cc3a9481498b0f5b6dd43024786e59a8f074dc"
+    },
+    {
+      "id": "h32",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "a86e51d3d49076675a9b0ff9fdbcebd052d5b91e7cba5ef588046afa81285b2d",
+      "tree_digest": "68d39e693d5e34880817f4ee96e70ee9df773bafb31fe4463cfea93249900320",
+      "truth_digest": "de86ee95ec7989df3bb27a7dc0daed590be1e4637c19fb7a2cfd90e5bea6b595",
+      "fixture_digest": "115c38f463d4df5a06508d38ce831b82080a2cbf1c14e0f2a3c66d43ee68a0e2"
+    },
+    {
+      "id": "h33",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "93dd3817349a17a32129bba13fd59ed3390b8d415ec64a8a06bdf13dcb11a8a6",
+      "tree_digest": "04cc7a4fc742811f1ae49088221be102e2bfc54ab387c6784de405135e802e70",
+      "truth_digest": "3837006a35b5eb5b0ea44d57ffb9d93b5d70267ae8ab676395e5d38cc200466f",
+      "fixture_digest": "4b69609f40e22144588cd629e1535113321035ab17ffc3efc121bca94ee9b533"
+    },
+    {
+      "id": "h34",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "d0938f9b3702511240b7eb6df6e37c1ec9bb520b562ae9f7dacb58154d1351e2",
+      "tree_digest": "cbc4a951ac04df6cf5f50b7d758ab383062f15c97d8cc93a0ba0294bbc1bc5d4",
+      "truth_digest": "eae986f3a84f167fff2b11ca9efbbd2234866c9985e52b6426b9cb9580f9aeaa",
+      "fixture_digest": "e2ec28b4801f6a7363fe967558bd56d664d19b6926013edcbaa71adaa3a391ad"
+    },
+    {
+      "id": "h35",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "6ca867636e516a361aae52a196dc899000be00bd2b4581e6c5329f6d783c6700",
+      "tree_digest": "6ba2712776d1d3ab2ac82f646944b2ea51e049cc54c1d1572244a7470710890b",
+      "truth_digest": "c27243ce83749801745e74916803799003064bc087b87c95aec6550b81da1091",
+      "fixture_digest": "15c5e17267beaa6ff7602ccd7674f7a5d790556281beef97fdfa61687cdd30f4"
+    },
+    {
+      "id": "h36",
+      "steps": [
+        "objective",
+        "tree",
+        "ground_truth",
+        "difficulty",
+        "freeze",
+        "selector_execution_after_all_freezes"
+      ],
+      "objective_digest": "deb2ba7e413ce7c4917ce7fcbb4e288ba19daaf472d0d262e8c8737df6916f90",
+      "tree_digest": "bdba502d825781c70722c8e454cdd20ca8acf9ea702cf6d9bf7d3d991f1c56d6",
+      "truth_digest": "bde6426916c74e77ea2cef0bab2891af140fa96a856957bd51840ec755adc5dd",
+      "fixture_digest": "ae85a9bf25b9a96669916fb0be911534268bb180f778a6f255a26a1e85511466"
+    }
+  ]
+}

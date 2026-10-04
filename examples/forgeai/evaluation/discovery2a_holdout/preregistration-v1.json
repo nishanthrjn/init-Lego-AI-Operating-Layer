@@ -1,0 +1,23 @@
+{
+  "foundation": "6b9c44110edaea12be4906afd8547c36b0f3a3da",
+  "evaluation_revision": 1,
+  "namespace": "discovery2a_holdout_v1",
+  "predeclaration_digest": "dbb5f3134416db111882062c4f74e7ce8f86d69e60a731605b1f35f428ae9c16",
+  "threshold_digest": "99cdc6e6f4599293bee55e727c140aca06ecdb4bd0b37b5433a83e65f9c6fa7f",
+  "original_digests": {
+    "__init__.py": "578eadee746693c64acd12fd1692802e4425a32029f1f3f7b48a762460291db3",
+    "baseline.py": "d7faeea71f4b125c4ee5a81e4a6e625dba6cabcb882d1c4bbc82a8b12d22387f",
+    "evaluate.py": "be77046d82492863ab0e05197db690b9e79b41b9100d1781f93b13459ea77c0f",
+    "fixtures-v1.json": "f3555d615363412b0bab8056182ac299bb48b5ddc46651c52e7a057a0610f8b2",
+    "fixtures.py": "f2c8d10cb6a1fd2d03276779130a1f8bc9008f98d737475b97dfda120f80efa0",
+    "results-v1.json": "fc1730159a1dfc96230d1443d61167e4cbec35ec0fef022a5ab06ca34f9461d0"
+  },
+  "baseline_revision": 1,
+  "methods": [
+    "lexical",
+    "path_score",
+    "conservative"
+  ],
+  "authoring": "same AI system; procedural, not statistically independent",
+  "stage": "rules_frozen_before_fixture_authorship"
+}

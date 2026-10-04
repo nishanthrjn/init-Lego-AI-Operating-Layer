@@ -1,0 +1,1114 @@
+{
+  "revision": 1,
+  "cases": [
+    {
+      "id": "h01",
+      "required_paths": [
+        "commerce/subtotal.py"
+      ],
+      "acceptable_sets": [
+        [
+          "commerce/subtotal.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "commerce/cart_store.py",
+        "commerce/currency.py"
+      ],
+      "forbidden_paths": [
+        "commerce/.local/session.key",
+        "commerce/Secrets/access.key",
+        "commerce/vendor/shim.py",
+        "commerce/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h02",
+      "required_paths": [
+        "dates/calendar.py"
+      ],
+      "acceptable_sets": [
+        [
+          "dates/calendar.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "checks/calendar_cases.py",
+        "dates/clock_driver.py",
+        "dates/zone_table.py"
+      ],
+      "forbidden_paths": [
+        "checks/.local/session.key",
+        "checks/Secrets/access.key",
+        "checks/vendor/shim.py",
+        "checks/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h03",
+      "required_paths": [
+        "gateway/pagination.py",
+        "quality/regression/pagination_cases.py"
+      ],
+      "acceptable_sets": [
+        [
+          "gateway/pagination.py",
+          "quality/regression/pagination_cases.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "gateway/request.py",
+        "quality/helpers.py"
+      ],
+      "forbidden_paths": [
+        "gateway/.local/session.key",
+        "gateway/Secrets/access.key",
+        "gateway/vendor/shim.py",
+        "gateway/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h04",
+      "required_paths": [
+        "codec/checksum.py",
+        "verification/checksum_cases.py"
+      ],
+      "acceptable_sets": [
+        [
+          "codec/checksum.py",
+          "verification/checksum_cases.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "codec/decoder.py",
+        "verification/sample_loader.py"
+      ],
+      "forbidden_paths": [
+        "codec/.local/session.key",
+        "codec/Secrets/access.key",
+        "codec/vendor/shim.py",
+        "codec/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h05",
+      "required_paths": [
+        "checkout/receipt.py"
+      ],
+      "acceptable_sets": [
+        [
+          "checkout/receipt.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "checkout/receipt_legacy.py",
+        "checkout/receipt_preview.py",
+        "checkout/tax_table.py"
+      ],
+      "forbidden_paths": [
+        "checkout/.local/session.key",
+        "checkout/Secrets/access.key",
+        "checkout/vendor/shim.py",
+        "checkout/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h06",
+      "required_paths": [
+        "shipping/tracking.py"
+      ],
+      "acceptable_sets": [
+        [
+          "shipping/tracking.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "shipping/labels.py",
+        "shipping/tracking_demo.py",
+        "shipping/tracking_mock.py"
+      ],
+      "forbidden_paths": [
+        "shipping/.local/session.key",
+        "shipping/Secrets/access.key",
+        "shipping/vendor/shim.py",
+        "shipping/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h07",
+      "required_paths": [
+        "identity/authentication.py"
+      ],
+      "acceptable_sets": [
+        [
+          "identity/authentication.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "identity/profile.py",
+        "identity/roles.py",
+        "identity/session_store.py"
+      ],
+      "forbidden_paths": [
+        "identity/.local/session.key",
+        "identity/Secrets/access.key",
+        "identity/vendor/shim.py",
+        "identity/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h08",
+      "required_paths": [
+        "orders/inventory.py"
+      ],
+      "acceptable_sets": [
+        [
+          "orders/inventory.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "orders/customer.py",
+        "orders/delivery.py",
+        "orders/pricing.py"
+      ],
+      "forbidden_paths": [
+        "orders/.local/session.key",
+        "orders/Secrets/access.key",
+        "orders/vendor/shim.py",
+        "orders/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h09",
+      "required_paths": [
+        "assurance/socket_scenarios.py",
+        "transport/contracts.py",
+        "transport/options.py",
+        "transport/socket_client.py"
+      ],
+      "acceptable_sets": [
+        [
+          "transport/contracts.py",
+          "transport/socket_client.py",
+          "transport/options.py",
+          "assurance/socket_scenarios.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "assurance/test_helpers.py"
+      ],
+      "forbidden_paths": [
+        "assurance/.local/session.key",
+        "assurance/Secrets/access.key",
+        "assurance/vendor/shim.py",
+        "assurance/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h10",
+      "required_paths": [
+        "integration/notification_routes.py",
+        "messaging/publisher.py",
+        "messaging/subscriber_registry.py"
+      ],
+      "acceptable_sets": [
+        [
+          "messaging/publisher.py",
+          "messaging/subscriber_registry.py",
+          "integration/notification_routes.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "integration/fixtures.py",
+        "messaging/serialization.py"
+      ],
+      "forbidden_paths": [
+        "integration/.local/session.key",
+        "integration/Secrets/access.key",
+        "integration/vendor/shim.py",
+        "integration/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h11",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "exchange/csv_export.py",
+        "exchange/export_queue.py",
+        "exchange/pdf_export.py",
+        "exchange/progress.py"
+      ],
+      "forbidden_paths": [
+        "exchange/.local/session.key",
+        "exchange/Secrets/access.key",
+        "exchange/vendor/shim.py",
+        "exchange/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h12",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "catalog/display.py",
+        "catalog/search_api.py",
+        "catalog/search_filters.py",
+        "catalog/search_index.py"
+      ],
+      "forbidden_paths": [
+        "catalog/.local/session.key",
+        "catalog/Secrets/access.key",
+        "catalog/vendor/shim.py",
+        "catalog/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h13",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "accounts/login.py",
+        "accounts/logout.py",
+        "accounts/settings.py",
+        "accounts/validators.py"
+      ],
+      "forbidden_paths": [
+        "accounts/.local/session.key",
+        "accounts/Secrets/access.key",
+        "accounts/vendor/shim.py",
+        "accounts/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": true
+    },
+    {
+      "id": "h14",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "finance/journal.py",
+        "finance/payments.py",
+        "finance/receivables.py",
+        "finance/refunds.py"
+      ],
+      "forbidden_paths": [
+        "finance/.local/session.key",
+        "finance/Secrets/access.key",
+        "finance/vendor/shim.py",
+        "finance/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": true
+    },
+    {
+      "id": "h15",
+      "required_paths": [
+        "bookkeeping/journal.py"
+      ],
+      "acceptable_sets": [
+        [
+          "bookkeeping/journal.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "bookkeeping/audit.py",
+        "bookkeeping/balances.py",
+        "bookkeeping/ledger_deprecated.py"
+      ],
+      "forbidden_paths": [
+        "bookkeeping/.local/session.key",
+        "bookkeeping/Secrets/access.key",
+        "bookkeeping/vendor/shim.py",
+        "bookkeeping/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h16",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "conversion/component_r.py",
+        "conversion/component_s.py",
+        "conversion/component_t.py",
+        "conversion/dispatch.py"
+      ],
+      "forbidden_paths": [
+        "conversion/.local/session.key",
+        "conversion/Secrets/access.key",
+        "conversion/vendor/shim.py",
+        "conversion/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h17",
+      "required_paths": [],
+      "acceptable_sets": [
+        [
+          "handbook/onboarding_brief.md"
+        ],
+        [
+          "handbook/onboarding_complete.md"
+        ]
+      ],
+      "irrelevant_paths": [
+        "handbook/contributing.md",
+        "handbook/releases.md"
+      ],
+      "forbidden_paths": [
+        "handbook/.local/session.key",
+        "handbook/Secrets/access.key",
+        "handbook/vendor/shim.py",
+        "handbook/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h18",
+      "required_paths": [],
+      "acceptable_sets": [
+        [
+          "network/resilience_adapter.py",
+          "validation/resilience_cases.py"
+        ],
+        [
+          "network/request_wrapper.py",
+          "validation/request_cases.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "network/protocol.py"
+      ],
+      "forbidden_paths": [
+        "network/.local/session.key",
+        "network/Secrets/access.key",
+        "network/vendor/shim.py",
+        "network/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h19",
+      "required_paths": [
+        "publishing/slugify.py"
+      ],
+      "acceptable_sets": [
+        [
+          "publishing/slugify.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "publishing/assets/piece_000.dat",
+        "publishing/assets/piece_001.dat",
+        "publishing/assets/piece_002.dat",
+        "publishing/assets/piece_003.dat",
+        "publishing/assets/piece_004.dat",
+        "publishing/assets/piece_005.dat",
+        "publishing/assets/piece_006.dat",
+        "publishing/assets/piece_007.dat",
+        "publishing/assets/piece_008.dat",
+        "publishing/assets/piece_009.dat",
+        "publishing/assets/piece_010.dat",
+        "publishing/assets/piece_011.dat",
+        "publishing/assets/piece_012.dat",
+        "publishing/assets/piece_013.dat",
+        "publishing/assets/piece_014.dat",
+        "publishing/assets/piece_015.dat",
+        "publishing/assets/piece_016.dat",
+        "publishing/assets/piece_017.dat",
+        "publishing/assets/piece_018.dat",
+        "publishing/assets/piece_019.dat",
+        "publishing/assets/piece_020.dat",
+        "publishing/assets/piece_021.dat",
+        "publishing/assets/piece_022.dat",
+        "publishing/assets/piece_023.dat",
+        "publishing/assets/piece_024.dat",
+        "publishing/assets/piece_025.dat",
+        "publishing/assets/piece_026.dat",
+        "publishing/assets/piece_027.dat",
+        "publishing/assets/piece_028.dat",
+        "publishing/assets/piece_029.dat",
+        "publishing/assets/piece_030.dat",
+        "publishing/assets/piece_031.dat",
+        "publishing/assets/piece_032.dat",
+        "publishing/assets/piece_033.dat",
+        "publishing/assets/piece_034.dat",
+        "publishing/assets/piece_035.dat",
+        "publishing/assets/piece_036.dat",
+        "publishing/assets/piece_037.dat",
+        "publishing/assets/piece_038.dat",
+        "publishing/assets/piece_039.dat",
+        "publishing/assets/piece_040.dat",
+        "publishing/assets/piece_041.dat",
+        "publishing/assets/piece_042.dat",
+        "publishing/assets/piece_043.dat",
+        "publishing/assets/piece_044.dat",
+        "publishing/assets/piece_045.dat",
+        "publishing/assets/piece_046.dat",
+        "publishing/assets/piece_047.dat",
+        "publishing/assets/piece_048.dat",
+        "publishing/assets/piece_049.dat",
+        "publishing/assets/piece_050.dat",
+        "publishing/assets/piece_051.dat",
+        "publishing/assets/piece_052.dat",
+        "publishing/assets/piece_053.dat",
+        "publishing/assets/piece_054.dat",
+        "publishing/assets/piece_055.dat",
+        "publishing/assets/piece_056.dat",
+        "publishing/assets/piece_057.dat",
+        "publishing/assets/piece_058.dat",
+        "publishing/assets/piece_059.dat",
+        "publishing/assets/piece_060.dat",
+        "publishing/assets/piece_061.dat",
+        "publishing/assets/piece_062.dat",
+        "publishing/assets/piece_063.dat",
+        "publishing/assets/piece_064.dat",
+        "publishing/assets/piece_065.dat",
+        "publishing/assets/piece_066.dat",
+        "publishing/assets/piece_067.dat",
+        "publishing/assets/piece_068.dat",
+        "publishing/assets/piece_069.dat",
+        "publishing/assets/piece_070.dat",
+        "publishing/assets/piece_071.dat",
+        "publishing/assets/piece_072.dat",
+        "publishing/assets/piece_073.dat",
+        "publishing/assets/piece_074.dat",
+        "publishing/assets/piece_075.dat",
+        "publishing/assets/piece_076.dat",
+        "publishing/assets/piece_077.dat",
+        "publishing/assets/piece_078.dat",
+        "publishing/assets/piece_079.dat",
+        "publishing/assets/piece_080.dat",
+        "publishing/assets/piece_081.dat",
+        "publishing/assets/piece_082.dat",
+        "publishing/assets/piece_083.dat",
+        "publishing/assets/piece_084.dat",
+        "publishing/assets/piece_085.dat",
+        "publishing/assets/piece_086.dat",
+        "publishing/assets/piece_087.dat",
+        "publishing/assets/piece_088.dat",
+        "publishing/assets/piece_089.dat",
+        "publishing/assets/piece_090.dat",
+        "publishing/assets/piece_091.dat",
+        "publishing/assets/piece_092.dat",
+        "publishing/assets/piece_093.dat",
+        "publishing/assets/piece_094.dat",
+        "publishing/assets/piece_095.dat",
+        "publishing/assets/piece_096.dat",
+        "publishing/assets/piece_097.dat",
+        "publishing/assets/piece_098.dat",
+        "publishing/assets/piece_099.dat",
+        "publishing/assets/piece_100.dat",
+        "publishing/assets/piece_101.dat",
+        "publishing/assets/piece_102.dat",
+        "publishing/assets/piece_103.dat",
+        "publishing/assets/piece_104.dat",
+        "publishing/assets/piece_105.dat",
+        "publishing/assets/piece_106.dat",
+        "publishing/assets/piece_107.dat",
+        "publishing/assets/piece_108.dat",
+        "publishing/assets/piece_109.dat",
+        "publishing/assets/piece_110.dat",
+        "publishing/assets/piece_111.dat",
+        "publishing/assets/piece_112.dat",
+        "publishing/assets/piece_113.dat",
+        "publishing/assets/piece_114.dat",
+        "publishing/assets/piece_115.dat",
+        "publishing/assets/piece_116.dat",
+        "publishing/assets/piece_117.dat",
+        "publishing/assets/piece_118.dat",
+        "publishing/assets/piece_119.dat",
+        "publishing/editor.py"
+      ],
+      "forbidden_paths": [
+        "publishing/.local/session.key",
+        "publishing/Secrets/access.key",
+        "publishing/vendor/shim.py",
+        "publishing/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h20",
+      "required_paths": [
+        "graphics/interpolation.py",
+        "render_tests/interpolation_checks.py"
+      ],
+      "acceptable_sets": [
+        [
+          "graphics/interpolation.py",
+          "render_tests/interpolation_checks.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "graphics/palette.py",
+        "graphics/swatches/color_000.dat",
+        "graphics/swatches/color_001.dat",
+        "graphics/swatches/color_002.dat",
+        "graphics/swatches/color_003.dat",
+        "graphics/swatches/color_004.dat",
+        "graphics/swatches/color_005.dat",
+        "graphics/swatches/color_006.dat",
+        "graphics/swatches/color_007.dat",
+        "graphics/swatches/color_008.dat",
+        "graphics/swatches/color_009.dat",
+        "graphics/swatches/color_010.dat",
+        "graphics/swatches/color_011.dat",
+        "graphics/swatches/color_012.dat",
+        "graphics/swatches/color_013.dat",
+        "graphics/swatches/color_014.dat",
+        "graphics/swatches/color_015.dat",
+        "graphics/swatches/color_016.dat",
+        "graphics/swatches/color_017.dat",
+        "graphics/swatches/color_018.dat",
+        "graphics/swatches/color_019.dat",
+        "graphics/swatches/color_020.dat",
+        "graphics/swatches/color_021.dat",
+        "graphics/swatches/color_022.dat",
+        "graphics/swatches/color_023.dat",
+        "graphics/swatches/color_024.dat",
+        "graphics/swatches/color_025.dat",
+        "graphics/swatches/color_026.dat",
+        "graphics/swatches/color_027.dat",
+        "graphics/swatches/color_028.dat",
+        "graphics/swatches/color_029.dat",
+        "graphics/swatches/color_030.dat",
+        "graphics/swatches/color_031.dat",
+        "graphics/swatches/color_032.dat",
+        "graphics/swatches/color_033.dat",
+        "graphics/swatches/color_034.dat",
+        "graphics/swatches/color_035.dat",
+        "graphics/swatches/color_036.dat",
+        "graphics/swatches/color_037.dat",
+        "graphics/swatches/color_038.dat",
+        "graphics/swatches/color_039.dat",
+        "graphics/swatches/color_040.dat",
+        "graphics/swatches/color_041.dat",
+        "graphics/swatches/color_042.dat",
+        "graphics/swatches/color_043.dat",
+        "graphics/swatches/color_044.dat",
+        "graphics/swatches/color_045.dat",
+        "graphics/swatches/color_046.dat",
+        "graphics/swatches/color_047.dat",
+        "graphics/swatches/color_048.dat",
+        "graphics/swatches/color_049.dat",
+        "graphics/swatches/color_050.dat",
+        "graphics/swatches/color_051.dat",
+        "graphics/swatches/color_052.dat",
+        "graphics/swatches/color_053.dat",
+        "graphics/swatches/color_054.dat",
+        "graphics/swatches/color_055.dat",
+        "graphics/swatches/color_056.dat",
+        "graphics/swatches/color_057.dat",
+        "graphics/swatches/color_058.dat",
+        "graphics/swatches/color_059.dat",
+        "graphics/swatches/color_060.dat",
+        "graphics/swatches/color_061.dat",
+        "graphics/swatches/color_062.dat",
+        "graphics/swatches/color_063.dat",
+        "graphics/swatches/color_064.dat",
+        "graphics/swatches/color_065.dat",
+        "graphics/swatches/color_066.dat",
+        "graphics/swatches/color_067.dat",
+        "graphics/swatches/color_068.dat",
+        "graphics/swatches/color_069.dat",
+        "graphics/swatches/color_070.dat",
+        "graphics/swatches/color_071.dat",
+        "graphics/swatches/color_072.dat",
+        "graphics/swatches/color_073.dat",
+        "graphics/swatches/color_074.dat",
+        "graphics/swatches/color_075.dat",
+        "graphics/swatches/color_076.dat",
+        "graphics/swatches/color_077.dat",
+        "graphics/swatches/color_078.dat",
+        "graphics/swatches/color_079.dat",
+        "graphics/swatches/color_080.dat",
+        "graphics/swatches/color_081.dat",
+        "graphics/swatches/color_082.dat",
+        "graphics/swatches/color_083.dat",
+        "graphics/swatches/color_084.dat",
+        "graphics/swatches/color_085.dat",
+        "graphics/swatches/color_086.dat",
+        "graphics/swatches/color_087.dat",
+        "graphics/swatches/color_088.dat",
+        "graphics/swatches/color_089.dat",
+        "graphics/swatches/color_090.dat",
+        "graphics/swatches/color_091.dat",
+        "graphics/swatches/color_092.dat",
+        "graphics/swatches/color_093.dat",
+        "graphics/swatches/color_094.dat",
+        "graphics/swatches/color_095.dat",
+        "graphics/swatches/color_096.dat",
+        "graphics/swatches/color_097.dat",
+        "graphics/swatches/color_098.dat",
+        "graphics/swatches/color_099.dat",
+        "graphics/swatches/color_100.dat",
+        "graphics/swatches/color_101.dat",
+        "graphics/swatches/color_102.dat",
+        "graphics/swatches/color_103.dat",
+        "graphics/swatches/color_104.dat",
+        "graphics/swatches/color_105.dat",
+        "graphics/swatches/color_106.dat",
+        "graphics/swatches/color_107.dat",
+        "graphics/swatches/color_108.dat",
+        "graphics/swatches/color_109.dat",
+        "graphics/swatches/color_110.dat",
+        "graphics/swatches/color_111.dat",
+        "graphics/swatches/color_112.dat",
+        "graphics/swatches/color_113.dat",
+        "graphics/swatches/color_114.dat",
+        "graphics/swatches/color_115.dat",
+        "graphics/swatches/color_116.dat",
+        "graphics/swatches/color_117.dat",
+        "graphics/swatches/color_118.dat",
+        "graphics/swatches/color_119.dat",
+        "graphics/swatches/color_120.dat",
+        "graphics/swatches/color_121.dat",
+        "graphics/swatches/color_122.dat",
+        "graphics/swatches/color_123.dat",
+        "graphics/swatches/color_124.dat",
+        "graphics/swatches/color_125.dat",
+        "graphics/swatches/color_126.dat",
+        "graphics/swatches/color_127.dat",
+        "graphics/swatches/color_128.dat",
+        "graphics/swatches/color_129.dat",
+        "graphics/swatches/color_130.dat",
+        "graphics/swatches/color_131.dat",
+        "graphics/swatches/color_132.dat",
+        "graphics/swatches/color_133.dat",
+        "graphics/swatches/color_134.dat",
+        "graphics/swatches/color_135.dat",
+        "graphics/swatches/color_136.dat",
+        "graphics/swatches/color_137.dat",
+        "graphics/swatches/color_138.dat",
+        "graphics/swatches/color_139.dat",
+        "graphics/swatches/color_140.dat",
+        "graphics/swatches/color_141.dat",
+        "graphics/swatches/color_142.dat",
+        "graphics/swatches/color_143.dat",
+        "graphics/swatches/color_144.dat"
+      ],
+      "forbidden_paths": [
+        "graphics/.local/session.key",
+        "graphics/Secrets/access.key",
+        "graphics/vendor/shim.py",
+        "graphics/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h21",
+      "required_paths": [
+        "documents/markdown.py"
+      ],
+      "acceptable_sets": [
+        [
+          "documents/markdown.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "documents/html.py",
+        "documents/markdown_benchmark.py",
+        "documents/markdown_compat.py",
+        "documents/markdown_fixture.py",
+        "documents/markdown_sample.py",
+        "documents/plaintext.py",
+        "documents/templates.py"
+      ],
+      "forbidden_paths": [
+        "documents/.local/session.key",
+        "documents/Secrets/access.key",
+        "documents/vendor/shim.py",
+        "documents/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h22",
+      "required_paths": [
+        "crypto/certificate.py"
+      ],
+      "acceptable_sets": [
+        [
+          "crypto/certificate.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "crypto/certificate_bench.py",
+        "crypto/certificate_demo.py",
+        "crypto/certificate_old.py",
+        "crypto/certificate_samples.py",
+        "crypto/key_reader.py",
+        "crypto/signature.py"
+      ],
+      "forbidden_paths": [
+        "crypto/.local/session.key",
+        "crypto/Secrets/access.key",
+        "crypto/vendor/shim.py",
+        "crypto/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h23",
+      "required_paths": [
+        "store/promotions/coupons/redemption.py",
+        "store/promotions/coupons/validation.py"
+      ],
+      "acceptable_sets": [
+        [
+          "store/promotions/coupons/redemption.py",
+          "store/promotions/coupons/validation.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "store/basket/totals.py",
+        "store/promotions/offers/listing.py"
+      ],
+      "forbidden_paths": [
+        "store/.local/session.key",
+        "store/Secrets/access.key",
+        "store/vendor/shim.py",
+        "store/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h24",
+      "required_paths": [
+        "platform/jobs/retry/backoff.py",
+        "platform/jobs/retry/configuration.py"
+      ],
+      "acceptable_sets": [
+        [
+          "platform/jobs/retry/backoff.py",
+          "platform/jobs/retry/configuration.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "platform/health/probes.py",
+        "platform/jobs/scheduler.py"
+      ],
+      "forbidden_paths": [
+        "platform/.local/session.key",
+        "platform/Secrets/access.key",
+        "platform/vendor/shim.py",
+        "platform/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h25",
+      "required_paths": [
+        "packages/acme_payments/__init__.py",
+        "packages/acme_payments/exports.py"
+      ],
+      "acceptable_sets": [
+        [
+          "packages/acme_payments/__init__.py",
+          "packages/acme_payments/exports.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "packages/acme_money/currency.py",
+        "packages/acme_payments/processor.py"
+      ],
+      "forbidden_paths": [
+        "packages/.local/session.key",
+        "packages/Secrets/access.key",
+        "packages/vendor/shim.py",
+        "packages/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h26",
+      "required_paths": [
+        "libraries/date_tools/api.py",
+        "libraries/date_tools/timezone.py"
+      ],
+      "acceptable_sets": [
+        [
+          "libraries/date_tools/timezone.py",
+          "libraries/date_tools/api.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "libraries/date_tools/formatting.py",
+        "libraries/time_helpers/clock.py"
+      ],
+      "forbidden_paths": [
+        "libraries/.local/session.key",
+        "libraries/Secrets/access.key",
+        "libraries/vendor/shim.py",
+        "libraries/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h27",
+      "required_paths": [
+        "features/returns/service.py"
+      ],
+      "acceptable_sets": [
+        [
+          "features/returns/service.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "features/common/utils.py",
+        "features/exchanges/service.py",
+        "features/returns/handler.py"
+      ],
+      "forbidden_paths": [
+        "features/.local/session.key",
+        "features/Secrets/access.key",
+        "features/vendor/shim.py",
+        "features/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h28",
+      "required_paths": [
+        "components/transfer/manager.py"
+      ],
+      "acceptable_sets": [
+        [
+          "components/transfer/manager.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "components/archive/manager.py",
+        "components/shared/utils.py",
+        "components/transfer/core.py"
+      ],
+      "forbidden_paths": [
+        "components/.local/session.key",
+        "components/Secrets/access.key",
+        "components/vendor/shim.py",
+        "components/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h29",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "engine/a17.py",
+        "engine/b29.py",
+        "engine/c41.py",
+        "engine/entry.py"
+      ],
+      "forbidden_paths": [
+        "engine/.local/session.key",
+        "engine/Secrets/access.key",
+        "engine/vendor/shim.py",
+        "engine/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h30",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "kernel/bootstrap.py",
+        "kernel/unit_blue.py",
+        "kernel/unit_green.py",
+        "kernel/unit_red.py"
+      ],
+      "forbidden_paths": [
+        "kernel/.local/session.key",
+        "kernel/Secrets/access.key",
+        "kernel/vendor/shim.py",
+        "kernel/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h31",
+      "required_paths": [
+        "acceptance/credential_policy_scenarios.py",
+        "security/password_strength.py"
+      ],
+      "acceptable_sets": [
+        [
+          "security/password_strength.py",
+          "acceptance/credential_policy_scenarios.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "acceptance/login_flow.py",
+        "security/session_cookie.py"
+      ],
+      "forbidden_paths": [
+        "acceptance/.local/session.key",
+        "acceptance/Secrets/access.key",
+        "acceptance/vendor/shim.py",
+        "acceptance/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h32",
+      "required_paths": [
+        "fulfillment/weight_conversion.py",
+        "qa/dimensional_rules.py"
+      ],
+      "acceptable_sets": [
+        [
+          "fulfillment/weight_conversion.py",
+          "qa/dimensional_rules.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "fulfillment/packing.py",
+        "qa/address_rules.py"
+      ],
+      "forbidden_paths": [
+        "fulfillment/.local/session.key",
+        "fulfillment/Secrets/access.key",
+        "fulfillment/vendor/shim.py",
+        "fulfillment/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h33",
+      "required_paths": [
+        "persistence/document_store.py",
+        "persistence/storage_interface.py",
+        "settings/shared.py"
+      ],
+      "acceptable_sets": [
+        [
+          "persistence/document_store.py",
+          "persistence/storage_interface.py",
+          "settings/shared.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "persistence/connection.py"
+      ],
+      "forbidden_paths": [
+        "persistence/.local/session.key",
+        "persistence/Secrets/access.key",
+        "persistence/vendor/shim.py",
+        "persistence/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h34",
+      "required_paths": [
+        "configuration/defaults.py",
+        "configuration/schema.py",
+        "rest/listing.py"
+      ],
+      "acceptable_sets": [
+        [
+          "rest/listing.py",
+          "configuration/schema.py",
+          "configuration/defaults.py"
+        ]
+      ],
+      "irrelevant_paths": [
+        "configuration/logging.py",
+        "rest/routing.py"
+      ],
+      "forbidden_paths": [
+        "configuration/.local/session.key",
+        "configuration/Secrets/access.key",
+        "configuration/vendor/shim.py",
+        "configuration/generated/wire.py"
+      ],
+      "expected_status": "succeeded",
+      "manual_create": false
+    },
+    {
+      "id": "h35",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "pipeline/processor_one.py",
+        "pipeline/processor_three.py",
+        "pipeline/processor_two.py",
+        "pipeline/run.py"
+      ],
+      "forbidden_paths": [
+        "pipeline/.local/session.key",
+        "pipeline/Secrets/access.key",
+        "pipeline/vendor/shim.py",
+        "pipeline/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    },
+    {
+      "id": "h36",
+      "required_paths": [],
+      "acceptable_sets": [],
+      "irrelevant_paths": [
+        "subsystems/box_alpha/core.py",
+        "subsystems/box_beta/core.py",
+        "subsystems/box_gamma/core.py",
+        "subsystems/loader.py"
+      ],
+      "forbidden_paths": [
+        "subsystems/.local/session.key",
+        "subsystems/Secrets/access.key",
+        "subsystems/vendor/shim.py",
+        "subsystems/generated/wire.py"
+      ],
+      "expected_status": "insufficient_evidence",
+      "manual_create": false
+    }
+  ]
+}

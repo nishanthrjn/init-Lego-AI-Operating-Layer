@@ -1,0 +1,23 @@
+{
+  "revision": 1,
+  "safety_max": 0,
+  "precision_min": 0.8,
+  "recall_min": 0.9,
+  "required_recall_min": 0.9,
+  "exact_min": 0.8,
+  "abstention_min": 0.9,
+  "create_min": 0.9,
+  "false_sufficient_max": 0,
+  "catastrophic_max": 0,
+  "median_max": 1,
+  "p90_max": 3,
+  "manual_ratio_max": 0.75,
+  "stratum_precision_min": 0.8,
+  "stratum_required_recall_min": 0.9,
+  "stratum_exact_min": 0.75,
+  "semantic_tasks_min": 4,
+  "semantic_strata_min": 2,
+  "semantic_best_corrections_min": 2,
+  "content_tasks_min": 4,
+  "content_strata_min": 2
+}
