@@ -585,6 +585,13 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+DISCOVERY-2A status (2026-10-04): synthetic path-only evaluation completed; see
+[target-selection evaluation](FORGEAI-TARGET-SELECTION-EVALUATION.md). DISCOVERY-1
+is locally qualified by the operator run. Deterministic selection is useful, but
+model-selector justification remains evidence-insufficient. No production selector
+or confirmation is implemented; G07 remains open. Next recommendation is a held-out
+path-only evaluation with measured operator correction effort.
+
 DISCOVERY-1 status (2026-10-04): maintainer-approved bounded authorized structure
 acquisition is **IMPLEMENTED, local qualification pending**; see the
 [implementation record](FORGEAI-TARGET-DISCOVERY-DECISION.md#discovery-1-implementation-record--2026-10-04)
