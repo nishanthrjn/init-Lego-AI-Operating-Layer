@@ -1,0 +1,39 @@
+{
+  "namespace": "analyst-quality-1q",
+  "revision": 1,
+  "foundation": "ce3dfa787cabd68f5d64abac15864a7fe4698296",
+  "predeclaration_digest": "957626512d3c7ceeed0d02710bcc11b096f0222a301462145dad0de3de7c1cc4",
+  "definition_fingerprint": "924bdaac617c51341b56d27bb3aef53a7e37dd358d85e37f43bdf4e5c9a659b7",
+  "analyst": {
+    "agent_id": "repository-analyst",
+    "version": "1.0.0"
+  },
+  "analyst_sources": {
+    "packages/legoai-engineering/src/legoai_engineering/analyst/api.py": "788b558908aa396741ed748c28b9bb26b595d2e84e6d7d354ca9e35c498f2cbb",
+    "packages/legoai-engineering/src/legoai_engineering/analyst/values.py": "968988925734a6146a638f85ed90e7772fd5575072e52028b9f51d9108763162",
+    "packages/legoai-engineering/src/legoai_engineering/analyst/authorized.py": "0ad15866d8e5870e7bc3618588270c83e518b123796a8dd614f14fad97cbb991",
+    "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102"
+  },
+  "cd1_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6",
+  "model_condition": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:7b",
+    "digest": "sha256:dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+    "timeout_seconds": 600,
+    "fallback": "none",
+    "retries": "none",
+    "decoding": "provider defaults; no sampling options sent"
+  },
+  "repetitions": {
+    "heldout": 3,
+    "cd1": 1
+  },
+  "planned_calls": {
+    "heldout": 72,
+    "cd1_quality": 14,
+    "cd1_probe": 5,
+    "total": 91
+  },
+  "decision_rule": "D on safety/disagreement/model-failure gate failure; else B if validity < 0.9; else A if every quality gate passes; else C",
+  "quality_mode": "frozen before any live call; no result exists at freeze"
+}

@@ -1,0 +1,10 @@
+{
+  "namespace": "analyst-quality-1q-cd1-partition",
+  "revision": 1,
+  "source_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6",
+  "supporting_quality": ["c01", "c02", "c03", "c04", "c05", "c06", "c07", "c08", "c09", "c10", "c13", "c14", "c17", "c19"],
+  "contract_probes": ["c11", "c12", "c15", "c16", "c18", "c20"],
+  "no_analyst_call": ["c18"],
+  "oracle_derivation": "relevance from frozen CONTENT-DISCOVERY-1 read truth restricted to the confirmed subset; never from editable-target truth",
+  "gating": false
+}
