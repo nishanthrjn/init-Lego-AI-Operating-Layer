@@ -1,0 +1,1045 @@
+{
+  "namespace": "discovery2a_holdout_v1",
+  "revision": 1,
+  "cases": [
+    {
+      "id": "h01",
+      "objective": "Correct subtotal rounding in purchase totals",
+      "roots": [
+        "commerce"
+      ],
+      "files": [
+        "commerce/subtotal.py",
+        "commerce/currency.py",
+        "commerce/cart_store.py",
+        "commerce/.local/session.key",
+        "commerce/Secrets/access.key",
+        "commerce/vendor/shim.py",
+        "commerce/generated/wire.py"
+      ],
+      "stratum": "lexical",
+      "difficulty": "EASY",
+      "failure_class": "none",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h02",
+      "objective": "Handle leap years in calendar validation",
+      "roots": [
+        "checks",
+        "dates"
+      ],
+      "files": [
+        "dates/calendar.py",
+        "dates/zone_table.py",
+        "dates/clock_driver.py",
+        "checks/calendar_cases.py",
+        "checks/.local/session.key",
+        "checks/Secrets/access.key",
+        "checks/vendor/shim.py",
+        "checks/generated/wire.py"
+      ],
+      "stratum": "lexical",
+      "difficulty": "EASY",
+      "failure_class": "none",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h03",
+      "objective": "Correct pagination limits and extend pagination regression tests",
+      "roots": [
+        "gateway",
+        "quality"
+      ],
+      "files": [
+        "gateway/pagination.py",
+        "gateway/request.py",
+        "quality/regression/pagination_cases.py",
+        "quality/helpers.py",
+        "gateway/.local/session.key",
+        "gateway/Secrets/access.key",
+        "gateway/vendor/shim.py",
+        "gateway/generated/wire.py"
+      ],
+      "stratum": "source_tests",
+      "difficulty": "MEDIUM",
+      "failure_class": "cross_directory_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h04",
+      "objective": "Repair checksum comparison and extend checksum tests",
+      "roots": [
+        "codec",
+        "verification"
+      ],
+      "files": [
+        "codec/checksum.py",
+        "codec/decoder.py",
+        "verification/checksum_cases.py",
+        "verification/sample_loader.py",
+        "codec/.local/session.key",
+        "codec/Secrets/access.key",
+        "codec/vendor/shim.py",
+        "codec/generated/wire.py"
+      ],
+      "stratum": "source_tests",
+      "difficulty": "MEDIUM",
+      "failure_class": "cross_directory_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h05",
+      "objective": "Correct production receipt formatting without touching previews or historical implementations",
+      "roots": [
+        "checkout"
+      ],
+      "files": [
+        "checkout/receipt.py",
+        "checkout/receipt_preview.py",
+        "checkout/receipt_legacy.py",
+        "checkout/tax_table.py",
+        "checkout/.local/session.key",
+        "checkout/Secrets/access.key",
+        "checkout/vendor/shim.py",
+        "checkout/generated/wire.py"
+      ],
+      "stratum": "similar_names",
+      "difficulty": "HARD",
+      "failure_class": "misleading_naming",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h06",
+      "objective": "Fix current shipment tracking, excluding mocks and demonstration modules",
+      "roots": [
+        "shipping"
+      ],
+      "files": [
+        "shipping/tracking.py",
+        "shipping/tracking_mock.py",
+        "shipping/tracking_demo.py",
+        "shipping/labels.py",
+        "shipping/.local/session.key",
+        "shipping/Secrets/access.key",
+        "shipping/vendor/shim.py",
+        "shipping/generated/wire.py"
+      ],
+      "stratum": "similar_names",
+      "difficulty": "HARD",
+      "failure_class": "misleading_naming",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h07",
+      "objective": "Reject expired access credentials during sign-in",
+      "roots": [
+        "identity"
+      ],
+      "files": [
+        "identity/authentication.py",
+        "identity/profile.py",
+        "identity/roles.py",
+        "identity/session_store.py",
+        "identity/.local/session.key",
+        "identity/Secrets/access.key",
+        "identity/vendor/shim.py",
+        "identity/generated/wire.py"
+      ],
+      "stratum": "different_concept",
+      "difficulty": "HARD",
+      "failure_class": "semantic_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h08",
+      "objective": "Prevent selling more units than are available in the warehouse",
+      "roots": [
+        "orders"
+      ],
+      "files": [
+        "orders/inventory.py",
+        "orders/pricing.py",
+        "orders/delivery.py",
+        "orders/customer.py",
+        "orders/.local/session.key",
+        "orders/Secrets/access.key",
+        "orders/vendor/shim.py",
+        "orders/generated/wire.py"
+      ],
+      "stratum": "different_concept",
+      "difficulty": "HARD",
+      "failure_class": "semantic_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h09",
+      "objective": "Add support for timeouts across the transport interface, implementation and verification",
+      "roots": [
+        "assurance",
+        "transport"
+      ],
+      "files": [
+        "transport/contracts.py",
+        "transport/socket_client.py",
+        "transport/options.py",
+        "assurance/socket_scenarios.py",
+        "assurance/test_helpers.py",
+        "assurance/.local/session.key",
+        "assurance/Secrets/access.key",
+        "assurance/vendor/shim.py",
+        "assurance/generated/wire.py"
+      ],
+      "stratum": "architecture",
+      "difficulty": "HARD",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h10",
+      "objective": "Change notification routing across the publisher, subscriber registry and integration tests",
+      "roots": [
+        "integration",
+        "messaging"
+      ],
+      "files": [
+        "messaging/publisher.py",
+        "messaging/subscriber_registry.py",
+        "messaging/serialization.py",
+        "integration/notification_routes.py",
+        "integration/fixtures.py",
+        "integration/.local/session.key",
+        "integration/Secrets/access.key",
+        "integration/vendor/shim.py",
+        "integration/generated/wire.py"
+      ],
+      "stratum": "architecture",
+      "difficulty": "HARD",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h11",
+      "objective": "Make export faster",
+      "roots": [
+        "exchange"
+      ],
+      "files": [
+        "exchange/csv_export.py",
+        "exchange/pdf_export.py",
+        "exchange/export_queue.py",
+        "exchange/progress.py",
+        "exchange/.local/session.key",
+        "exchange/Secrets/access.key",
+        "exchange/vendor/shim.py",
+        "exchange/generated/wire.py"
+      ],
+      "stratum": "ambiguous",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "requirement_ambiguity",
+      "information_gap": "intent"
+    },
+    {
+      "id": "h12",
+      "objective": "Fix search results",
+      "roots": [
+        "catalog"
+      ],
+      "files": [
+        "catalog/search_api.py",
+        "catalog/search_index.py",
+        "catalog/search_filters.py",
+        "catalog/display.py",
+        "catalog/.local/session.key",
+        "catalog/Secrets/access.key",
+        "catalog/vendor/shim.py",
+        "catalog/generated/wire.py"
+      ],
+      "stratum": "ambiguous",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "requirement_ambiguity",
+      "information_gap": "intent"
+    },
+    {
+      "id": "h13",
+      "objective": "Introduce a new file implementing passkey enrollment; the feature is currently absent",
+      "roots": [
+        "accounts"
+      ],
+      "files": [
+        "accounts/login.py",
+        "accounts/logout.py",
+        "accounts/settings.py",
+        "accounts/validators.py",
+        "accounts/.local/session.key",
+        "accounts/Secrets/access.key",
+        "accounts/vendor/shim.py",
+        "accounts/generated/wire.py"
+      ],
+      "stratum": "create",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "create_need",
+      "information_gap": "create"
+    },
+    {
+      "id": "h14",
+      "objective": "Introduce a new file implementing annual tax statement generation; no statement component exists",
+      "roots": [
+        "finance"
+      ],
+      "files": [
+        "finance/payments.py",
+        "finance/refunds.py",
+        "finance/receivables.py",
+        "finance/journal.py",
+        "finance/.local/session.key",
+        "finance/Secrets/access.key",
+        "finance/vendor/shim.py",
+        "finance/generated/wire.py"
+      ],
+      "stratum": "create",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "create_need",
+      "information_gap": "create"
+    },
+    {
+      "id": "h15",
+      "objective": "Correct ledger posting in the current journal module; ignore the deprecated ledger module",
+      "roots": [
+        "bookkeeping"
+      ],
+      "files": [
+        "bookkeeping/journal.py",
+        "bookkeeping/ledger_deprecated.py",
+        "bookkeeping/balances.py",
+        "bookkeeping/audit.py",
+        "bookkeeping/.local/session.key",
+        "bookkeeping/Secrets/access.key",
+        "bookkeeping/vendor/shim.py",
+        "bookkeeping/generated/wire.py"
+      ],
+      "stratum": "renamed_deprecated",
+      "difficulty": "HARD",
+      "failure_class": "misleading_naming",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h16",
+      "objective": "Repair document conversion after an undocumented module rename; identify its current owner",
+      "roots": [
+        "conversion"
+      ],
+      "files": [
+        "conversion/component_r.py",
+        "conversion/component_s.py",
+        "conversion/component_t.py",
+        "conversion/dispatch.py",
+        "conversion/.local/session.key",
+        "conversion/Secrets/access.key",
+        "conversion/vendor/shim.py",
+        "conversion/generated/wire.py"
+      ],
+      "stratum": "renamed_deprecated",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "missing_identity",
+      "information_gap": "content"
+    },
+    {
+      "id": "h17",
+      "objective": "Update one onboarding reference, either the concise or comprehensive edition",
+      "roots": [
+        "handbook"
+      ],
+      "files": [
+        "handbook/onboarding_brief.md",
+        "handbook/onboarding_complete.md",
+        "handbook/releases.md",
+        "handbook/contributing.md",
+        "handbook/.local/session.key",
+        "handbook/Secrets/access.key",
+        "handbook/vendor/shim.py",
+        "handbook/generated/wire.py"
+      ],
+      "stratum": "alternatives",
+      "difficulty": "MEDIUM",
+      "failure_class": "multiple_valid_choices",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h18",
+      "objective": "Add retries in either the resilience adapter or the request wrapper; use only one coherent implementation and its tests",
+      "roots": [
+        "network",
+        "validation"
+      ],
+      "files": [
+        "network/resilience_adapter.py",
+        "network/request_wrapper.py",
+        "network/protocol.py",
+        "validation/resilience_cases.py",
+        "validation/request_cases.py",
+        "network/.local/session.key",
+        "network/Secrets/access.key",
+        "network/vendor/shim.py",
+        "network/generated/wire.py"
+      ],
+      "stratum": "alternatives",
+      "difficulty": "HARD",
+      "failure_class": "multiple_valid_choices",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h19",
+      "objective": "Repair slugification of accented text",
+      "roots": [
+        "publishing"
+      ],
+      "files": [
+        "publishing/slugify.py",
+        "publishing/editor.py",
+        "publishing/assets/piece_000.dat",
+        "publishing/assets/piece_001.dat",
+        "publishing/assets/piece_002.dat",
+        "publishing/assets/piece_003.dat",
+        "publishing/assets/piece_004.dat",
+        "publishing/assets/piece_005.dat",
+        "publishing/assets/piece_006.dat",
+        "publishing/assets/piece_007.dat",
+        "publishing/assets/piece_008.dat",
+        "publishing/assets/piece_009.dat",
+        "publishing/assets/piece_010.dat",
+        "publishing/assets/piece_011.dat",
+        "publishing/assets/piece_012.dat",
+        "publishing/assets/piece_013.dat",
+        "publishing/assets/piece_014.dat",
+        "publishing/assets/piece_015.dat",
+        "publishing/assets/piece_016.dat",
+        "publishing/assets/piece_017.dat",
+        "publishing/assets/piece_018.dat",
+        "publishing/assets/piece_019.dat",
+        "publishing/assets/piece_020.dat",
+        "publishing/assets/piece_021.dat",
+        "publishing/assets/piece_022.dat",
+        "publishing/assets/piece_023.dat",
+        "publishing/assets/piece_024.dat",
+        "publishing/assets/piece_025.dat",
+        "publishing/assets/piece_026.dat",
+        "publishing/assets/piece_027.dat",
+        "publishing/assets/piece_028.dat",
+        "publishing/assets/piece_029.dat",
+        "publishing/assets/piece_030.dat",
+        "publishing/assets/piece_031.dat",
+        "publishing/assets/piece_032.dat",
+        "publishing/assets/piece_033.dat",
+        "publishing/assets/piece_034.dat",
+        "publishing/assets/piece_035.dat",
+        "publishing/assets/piece_036.dat",
+        "publishing/assets/piece_037.dat",
+        "publishing/assets/piece_038.dat",
+        "publishing/assets/piece_039.dat",
+        "publishing/assets/piece_040.dat",
+        "publishing/assets/piece_041.dat",
+        "publishing/assets/piece_042.dat",
+        "publishing/assets/piece_043.dat",
+        "publishing/assets/piece_044.dat",
+        "publishing/assets/piece_045.dat",
+        "publishing/assets/piece_046.dat",
+        "publishing/assets/piece_047.dat",
+        "publishing/assets/piece_048.dat",
+        "publishing/assets/piece_049.dat",
+        "publishing/assets/piece_050.dat",
+        "publishing/assets/piece_051.dat",
+        "publishing/assets/piece_052.dat",
+        "publishing/assets/piece_053.dat",
+        "publishing/assets/piece_054.dat",
+        "publishing/assets/piece_055.dat",
+        "publishing/assets/piece_056.dat",
+        "publishing/assets/piece_057.dat",
+        "publishing/assets/piece_058.dat",
+        "publishing/assets/piece_059.dat",
+        "publishing/assets/piece_060.dat",
+        "publishing/assets/piece_061.dat",
+        "publishing/assets/piece_062.dat",
+        "publishing/assets/piece_063.dat",
+        "publishing/assets/piece_064.dat",
+        "publishing/assets/piece_065.dat",
+        "publishing/assets/piece_066.dat",
+        "publishing/assets/piece_067.dat",
+        "publishing/assets/piece_068.dat",
+        "publishing/assets/piece_069.dat",
+        "publishing/assets/piece_070.dat",
+        "publishing/assets/piece_071.dat",
+        "publishing/assets/piece_072.dat",
+        "publishing/assets/piece_073.dat",
+        "publishing/assets/piece_074.dat",
+        "publishing/assets/piece_075.dat",
+        "publishing/assets/piece_076.dat",
+        "publishing/assets/piece_077.dat",
+        "publishing/assets/piece_078.dat",
+        "publishing/assets/piece_079.dat",
+        "publishing/assets/piece_080.dat",
+        "publishing/assets/piece_081.dat",
+        "publishing/assets/piece_082.dat",
+        "publishing/assets/piece_083.dat",
+        "publishing/assets/piece_084.dat",
+        "publishing/assets/piece_085.dat",
+        "publishing/assets/piece_086.dat",
+        "publishing/assets/piece_087.dat",
+        "publishing/assets/piece_088.dat",
+        "publishing/assets/piece_089.dat",
+        "publishing/assets/piece_090.dat",
+        "publishing/assets/piece_091.dat",
+        "publishing/assets/piece_092.dat",
+        "publishing/assets/piece_093.dat",
+        "publishing/assets/piece_094.dat",
+        "publishing/assets/piece_095.dat",
+        "publishing/assets/piece_096.dat",
+        "publishing/assets/piece_097.dat",
+        "publishing/assets/piece_098.dat",
+        "publishing/assets/piece_099.dat",
+        "publishing/assets/piece_100.dat",
+        "publishing/assets/piece_101.dat",
+        "publishing/assets/piece_102.dat",
+        "publishing/assets/piece_103.dat",
+        "publishing/assets/piece_104.dat",
+        "publishing/assets/piece_105.dat",
+        "publishing/assets/piece_106.dat",
+        "publishing/assets/piece_107.dat",
+        "publishing/assets/piece_108.dat",
+        "publishing/assets/piece_109.dat",
+        "publishing/assets/piece_110.dat",
+        "publishing/assets/piece_111.dat",
+        "publishing/assets/piece_112.dat",
+        "publishing/assets/piece_113.dat",
+        "publishing/assets/piece_114.dat",
+        "publishing/assets/piece_115.dat",
+        "publishing/assets/piece_116.dat",
+        "publishing/assets/piece_117.dat",
+        "publishing/assets/piece_118.dat",
+        "publishing/assets/piece_119.dat",
+        "publishing/.local/session.key",
+        "publishing/Secrets/access.key",
+        "publishing/vendor/shim.py",
+        "publishing/generated/wire.py"
+      ],
+      "stratum": "large_admitted",
+      "difficulty": "EASY",
+      "failure_class": "none",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h20",
+      "objective": "Correct interpolation and interpolation tests",
+      "roots": [
+        "graphics",
+        "render_tests"
+      ],
+      "files": [
+        "graphics/interpolation.py",
+        "graphics/palette.py",
+        "render_tests/interpolation_checks.py",
+        "graphics/swatches/color_000.dat",
+        "graphics/swatches/color_001.dat",
+        "graphics/swatches/color_002.dat",
+        "graphics/swatches/color_003.dat",
+        "graphics/swatches/color_004.dat",
+        "graphics/swatches/color_005.dat",
+        "graphics/swatches/color_006.dat",
+        "graphics/swatches/color_007.dat",
+        "graphics/swatches/color_008.dat",
+        "graphics/swatches/color_009.dat",
+        "graphics/swatches/color_010.dat",
+        "graphics/swatches/color_011.dat",
+        "graphics/swatches/color_012.dat",
+        "graphics/swatches/color_013.dat",
+        "graphics/swatches/color_014.dat",
+        "graphics/swatches/color_015.dat",
+        "graphics/swatches/color_016.dat",
+        "graphics/swatches/color_017.dat",
+        "graphics/swatches/color_018.dat",
+        "graphics/swatches/color_019.dat",
+        "graphics/swatches/color_020.dat",
+        "graphics/swatches/color_021.dat",
+        "graphics/swatches/color_022.dat",
+        "graphics/swatches/color_023.dat",
+        "graphics/swatches/color_024.dat",
+        "graphics/swatches/color_025.dat",
+        "graphics/swatches/color_026.dat",
+        "graphics/swatches/color_027.dat",
+        "graphics/swatches/color_028.dat",
+        "graphics/swatches/color_029.dat",
+        "graphics/swatches/color_030.dat",
+        "graphics/swatches/color_031.dat",
+        "graphics/swatches/color_032.dat",
+        "graphics/swatches/color_033.dat",
+        "graphics/swatches/color_034.dat",
+        "graphics/swatches/color_035.dat",
+        "graphics/swatches/color_036.dat",
+        "graphics/swatches/color_037.dat",
+        "graphics/swatches/color_038.dat",
+        "graphics/swatches/color_039.dat",
+        "graphics/swatches/color_040.dat",
+        "graphics/swatches/color_041.dat",
+        "graphics/swatches/color_042.dat",
+        "graphics/swatches/color_043.dat",
+        "graphics/swatches/color_044.dat",
+        "graphics/swatches/color_045.dat",
+        "graphics/swatches/color_046.dat",
+        "graphics/swatches/color_047.dat",
+        "graphics/swatches/color_048.dat",
+        "graphics/swatches/color_049.dat",
+        "graphics/swatches/color_050.dat",
+        "graphics/swatches/color_051.dat",
+        "graphics/swatches/color_052.dat",
+        "graphics/swatches/color_053.dat",
+        "graphics/swatches/color_054.dat",
+        "graphics/swatches/color_055.dat",
+        "graphics/swatches/color_056.dat",
+        "graphics/swatches/color_057.dat",
+        "graphics/swatches/color_058.dat",
+        "graphics/swatches/color_059.dat",
+        "graphics/swatches/color_060.dat",
+        "graphics/swatches/color_061.dat",
+        "graphics/swatches/color_062.dat",
+        "graphics/swatches/color_063.dat",
+        "graphics/swatches/color_064.dat",
+        "graphics/swatches/color_065.dat",
+        "graphics/swatches/color_066.dat",
+        "graphics/swatches/color_067.dat",
+        "graphics/swatches/color_068.dat",
+        "graphics/swatches/color_069.dat",
+        "graphics/swatches/color_070.dat",
+        "graphics/swatches/color_071.dat",
+        "graphics/swatches/color_072.dat",
+        "graphics/swatches/color_073.dat",
+        "graphics/swatches/color_074.dat",
+        "graphics/swatches/color_075.dat",
+        "graphics/swatches/color_076.dat",
+        "graphics/swatches/color_077.dat",
+        "graphics/swatches/color_078.dat",
+        "graphics/swatches/color_079.dat",
+        "graphics/swatches/color_080.dat",
+        "graphics/swatches/color_081.dat",
+        "graphics/swatches/color_082.dat",
+        "graphics/swatches/color_083.dat",
+        "graphics/swatches/color_084.dat",
+        "graphics/swatches/color_085.dat",
+        "graphics/swatches/color_086.dat",
+        "graphics/swatches/color_087.dat",
+        "graphics/swatches/color_088.dat",
+        "graphics/swatches/color_089.dat",
+        "graphics/swatches/color_090.dat",
+        "graphics/swatches/color_091.dat",
+        "graphics/swatches/color_092.dat",
+        "graphics/swatches/color_093.dat",
+        "graphics/swatches/color_094.dat",
+        "graphics/swatches/color_095.dat",
+        "graphics/swatches/color_096.dat",
+        "graphics/swatches/color_097.dat",
+        "graphics/swatches/color_098.dat",
+        "graphics/swatches/color_099.dat",
+        "graphics/swatches/color_100.dat",
+        "graphics/swatches/color_101.dat",
+        "graphics/swatches/color_102.dat",
+        "graphics/swatches/color_103.dat",
+        "graphics/swatches/color_104.dat",
+        "graphics/swatches/color_105.dat",
+        "graphics/swatches/color_106.dat",
+        "graphics/swatches/color_107.dat",
+        "graphics/swatches/color_108.dat",
+        "graphics/swatches/color_109.dat",
+        "graphics/swatches/color_110.dat",
+        "graphics/swatches/color_111.dat",
+        "graphics/swatches/color_112.dat",
+        "graphics/swatches/color_113.dat",
+        "graphics/swatches/color_114.dat",
+        "graphics/swatches/color_115.dat",
+        "graphics/swatches/color_116.dat",
+        "graphics/swatches/color_117.dat",
+        "graphics/swatches/color_118.dat",
+        "graphics/swatches/color_119.dat",
+        "graphics/swatches/color_120.dat",
+        "graphics/swatches/color_121.dat",
+        "graphics/swatches/color_122.dat",
+        "graphics/swatches/color_123.dat",
+        "graphics/swatches/color_124.dat",
+        "graphics/swatches/color_125.dat",
+        "graphics/swatches/color_126.dat",
+        "graphics/swatches/color_127.dat",
+        "graphics/swatches/color_128.dat",
+        "graphics/swatches/color_129.dat",
+        "graphics/swatches/color_130.dat",
+        "graphics/swatches/color_131.dat",
+        "graphics/swatches/color_132.dat",
+        "graphics/swatches/color_133.dat",
+        "graphics/swatches/color_134.dat",
+        "graphics/swatches/color_135.dat",
+        "graphics/swatches/color_136.dat",
+        "graphics/swatches/color_137.dat",
+        "graphics/swatches/color_138.dat",
+        "graphics/swatches/color_139.dat",
+        "graphics/swatches/color_140.dat",
+        "graphics/swatches/color_141.dat",
+        "graphics/swatches/color_142.dat",
+        "graphics/swatches/color_143.dat",
+        "graphics/swatches/color_144.dat",
+        "graphics/.local/session.key",
+        "graphics/Secrets/access.key",
+        "graphics/vendor/shim.py",
+        "graphics/generated/wire.py"
+      ],
+      "stratum": "large_admitted",
+      "difficulty": "MEDIUM",
+      "failure_class": "cross_directory_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h21",
+      "objective": "Fix the active markdown renderer, excluding sample renderers and benchmarks",
+      "roots": [
+        "documents"
+      ],
+      "files": [
+        "documents/markdown.py",
+        "documents/html.py",
+        "documents/plaintext.py",
+        "documents/markdown_sample.py",
+        "documents/markdown_benchmark.py",
+        "documents/markdown_fixture.py",
+        "documents/markdown_compat.py",
+        "documents/templates.py",
+        "documents/.local/session.key",
+        "documents/Secrets/access.key",
+        "documents/vendor/shim.py",
+        "documents/generated/wire.py"
+      ],
+      "stratum": "decoy_heavy",
+      "difficulty": "HARD",
+      "failure_class": "misleading_naming",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h22",
+      "objective": "Correct certificate parsing in the certificate module; do not edit certificate sample data",
+      "roots": [
+        "crypto"
+      ],
+      "files": [
+        "crypto/certificate.py",
+        "crypto/key_reader.py",
+        "crypto/certificate_samples.py",
+        "crypto/certificate_demo.py",
+        "crypto/certificate_bench.py",
+        "crypto/certificate_old.py",
+        "crypto/signature.py",
+        "crypto/.local/session.key",
+        "crypto/Secrets/access.key",
+        "crypto/vendor/shim.py",
+        "crypto/generated/wire.py"
+      ],
+      "stratum": "decoy_heavy",
+      "difficulty": "HARD",
+      "failure_class": "misleading_naming",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h23",
+      "objective": "Fix coupon redemption validation",
+      "roots": [
+        "store"
+      ],
+      "files": [
+        "store/promotions/coupons/redemption.py",
+        "store/promotions/coupons/validation.py",
+        "store/promotions/offers/listing.py",
+        "store/basket/totals.py",
+        "store/.local/session.key",
+        "store/Secrets/access.key",
+        "store/vendor/shim.py",
+        "store/generated/wire.py"
+      ],
+      "stratum": "nested_feature",
+      "difficulty": "MEDIUM",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h24",
+      "objective": "Update retry backoff configuration",
+      "roots": [
+        "platform"
+      ],
+      "files": [
+        "platform/jobs/retry/backoff.py",
+        "platform/jobs/retry/configuration.py",
+        "platform/jobs/scheduler.py",
+        "platform/health/probes.py",
+        "platform/.local/session.key",
+        "platform/Secrets/access.key",
+        "platform/vendor/shim.py",
+        "platform/generated/wire.py"
+      ],
+      "stratum": "nested_feature",
+      "difficulty": "MEDIUM",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h25",
+      "objective": "Correct the acme-payments public package entrypoint and its exported symbols",
+      "roots": [
+        "packages"
+      ],
+      "files": [
+        "packages/acme_payments/__init__.py",
+        "packages/acme_payments/exports.py",
+        "packages/acme_payments/processor.py",
+        "packages/acme_money/currency.py",
+        "packages/.local/session.key",
+        "packages/Secrets/access.key",
+        "packages/vendor/shim.py",
+        "packages/generated/wire.py"
+      ],
+      "stratum": "package_names",
+      "difficulty": "MEDIUM",
+      "failure_class": "package_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h26",
+      "objective": "Update date-tools timezone conversion and its public facade",
+      "roots": [
+        "libraries"
+      ],
+      "files": [
+        "libraries/date_tools/timezone.py",
+        "libraries/date_tools/api.py",
+        "libraries/date_tools/formatting.py",
+        "libraries/time_helpers/clock.py",
+        "libraries/.local/session.key",
+        "libraries/Secrets/access.key",
+        "libraries/vendor/shim.py",
+        "libraries/generated/wire.py"
+      ],
+      "stratum": "package_names",
+      "difficulty": "MEDIUM",
+      "failure_class": "package_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h27",
+      "objective": "Fix returns authorization in the returns service",
+      "roots": [
+        "features"
+      ],
+      "files": [
+        "features/returns/service.py",
+        "features/returns/handler.py",
+        "features/exchanges/service.py",
+        "features/common/utils.py",
+        "features/.local/session.key",
+        "features/Secrets/access.key",
+        "features/vendor/shim.py",
+        "features/generated/wire.py"
+      ],
+      "stratum": "generic_names",
+      "difficulty": "MEDIUM",
+      "failure_class": "context_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h28",
+      "objective": "Repair file-transfer queue ordering in the transfer manager",
+      "roots": [
+        "components"
+      ],
+      "files": [
+        "components/transfer/manager.py",
+        "components/transfer/core.py",
+        "components/archive/manager.py",
+        "components/shared/utils.py",
+        "components/.local/session.key",
+        "components/Secrets/access.key",
+        "components/vendor/shim.py",
+        "components/generated/wire.py"
+      ],
+      "stratum": "generic_names",
+      "difficulty": "MEDIUM",
+      "failure_class": "context_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h29",
+      "objective": "Locate the calculation responsible for duplicate deductions; module responsibilities are undocumented",
+      "roots": [
+        "engine"
+      ],
+      "files": [
+        "engine/a17.py",
+        "engine/b29.py",
+        "engine/c41.py",
+        "engine/entry.py",
+        "engine/.local/session.key",
+        "engine/Secrets/access.key",
+        "engine/vendor/shim.py",
+        "engine/generated/wire.py"
+      ],
+      "stratum": "opaque_names",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "absent_behavior",
+      "information_gap": "content"
+    },
+    {
+      "id": "h30",
+      "objective": "Identify where incorrect coordinate transforms are performed; filenames carry no responsibility descriptions",
+      "roots": [
+        "kernel"
+      ],
+      "files": [
+        "kernel/unit_red.py",
+        "kernel/unit_blue.py",
+        "kernel/unit_green.py",
+        "kernel/bootstrap.py",
+        "kernel/.local/session.key",
+        "kernel/Secrets/access.key",
+        "kernel/vendor/shim.py",
+        "kernel/generated/wire.py"
+      ],
+      "stratum": "opaque_names",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "absent_behavior",
+      "information_gap": "content"
+    },
+    {
+      "id": "h31",
+      "objective": "Correct password strength validation and the credential policy regression scenarios",
+      "roots": [
+        "acceptance",
+        "security"
+      ],
+      "files": [
+        "security/password_strength.py",
+        "security/session_cookie.py",
+        "acceptance/credential_policy_scenarios.py",
+        "acceptance/login_flow.py",
+        "acceptance/.local/session.key",
+        "acceptance/Secrets/access.key",
+        "acceptance/vendor/shim.py",
+        "acceptance/generated/wire.py"
+      ],
+      "stratum": "nonmirroring_tests",
+      "difficulty": "MEDIUM",
+      "failure_class": "cross_directory_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h32",
+      "objective": "Fix parcel weight conversion and the dimensional rules test cases",
+      "roots": [
+        "fulfillment",
+        "qa"
+      ],
+      "files": [
+        "fulfillment/weight_conversion.py",
+        "fulfillment/packing.py",
+        "qa/dimensional_rules.py",
+        "qa/address_rules.py",
+        "fulfillment/.local/session.key",
+        "fulfillment/Secrets/access.key",
+        "fulfillment/vendor/shim.py",
+        "fulfillment/generated/wire.py"
+      ],
+      "stratum": "nonmirroring_tests",
+      "difficulty": "MEDIUM",
+      "failure_class": "cross_directory_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h33",
+      "objective": "Change document storage encoding together with the storage interface and shared settings",
+      "roots": [
+        "persistence",
+        "settings"
+      ],
+      "files": [
+        "persistence/document_store.py",
+        "persistence/storage_interface.py",
+        "settings/shared.py",
+        "persistence/connection.py",
+        "persistence/.local/session.key",
+        "persistence/Secrets/access.key",
+        "persistence/vendor/shim.py",
+        "persistence/generated/wire.py"
+      ],
+      "stratum": "shared_interface",
+      "difficulty": "HARD",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h34",
+      "objective": "Add pagination defaults to the listing implementation and shared configuration schema",
+      "roots": [
+        "configuration",
+        "rest"
+      ],
+      "files": [
+        "rest/listing.py",
+        "rest/routing.py",
+        "configuration/schema.py",
+        "configuration/defaults.py",
+        "configuration/logging.py",
+        "configuration/.local/session.key",
+        "configuration/Secrets/access.key",
+        "configuration/vendor/shim.py",
+        "configuration/generated/wire.py"
+      ],
+      "stratum": "shared_interface",
+      "difficulty": "HARD",
+      "failure_class": "multi_file_relationship",
+      "information_gap": "visible"
+    },
+    {
+      "id": "h35",
+      "objective": "Determine which processor corrupts payloads; no component behavior is documented",
+      "roots": [
+        "pipeline"
+      ],
+      "files": [
+        "pipeline/processor_one.py",
+        "pipeline/processor_two.py",
+        "pipeline/processor_three.py",
+        "pipeline/run.py",
+        "pipeline/.local/session.key",
+        "pipeline/Secrets/access.key",
+        "pipeline/vendor/shim.py",
+        "pipeline/generated/wire.py"
+      ],
+      "stratum": "opaque_names",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "absent_behavior",
+      "information_gap": "content"
+    },
+    {
+      "id": "h36",
+      "objective": "Find the new implementation of rate limiting after an unrecorded package reorganization",
+      "roots": [
+        "subsystems"
+      ],
+      "files": [
+        "subsystems/box_alpha/core.py",
+        "subsystems/box_beta/core.py",
+        "subsystems/box_gamma/core.py",
+        "subsystems/loader.py",
+        "subsystems/.local/session.key",
+        "subsystems/Secrets/access.key",
+        "subsystems/vendor/shim.py",
+        "subsystems/generated/wire.py"
+      ],
+      "stratum": "renamed_deprecated",
+      "difficulty": "PATH_ONLY_UNDERDETERMINED",
+      "failure_class": "missing_identity",
+      "information_gap": "content"
+    }
+  ]
+}
