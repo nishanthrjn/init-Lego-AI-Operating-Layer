@@ -998,7 +998,7 @@ their prior scope; M6.5 and M7 are unstarted. See the
 
 `analyst.api.RepositoryAnalyst` composes a trusted `RepositoryEvidencePort` with
 the existing M7 `AgentRuntimePort`. `repository_analyst_definition()` returns an
-immutable version 1.0.1 definition (1.0.0 until ENG-ANALYST-PROMPT-1) using the M6.5 `engineering-reasoning` profile.
+immutable version 1.0.2 definition (1.0.0 until ENG-ANALYST-PROMPT-1, 1.0.1 until ENG-ANALYST-SUFFICIENCY-PROMPT-1) using the M6.5 `engineering-reasoning` profile.
 The [offline example](examples/repository_analyst.py) supplies real routing,
 governed Chat and an in-memory fake ModelPort; it requires no provider service.
 Install the `analyst` extra to add the existing Core distribution. Base M1–M6
@@ -1965,3 +1965,56 @@ sub-phases) of `validate_engineering_analyst_prompt.py`. That covers:
 
 No live model or Docker was used. Live structural validity of 1.0.1 is not yet
 measured.
+
+## ENG-ANALYST-SUFFICIENCY-PROMPT-1 — implemented, local validation pending
+
+ANALYST-ABSTENTION-DECISION-1 found that RepositoryAnalyst 1.0.1 defined the
+shape of each status but not when to choose it. On adequate evidence the model
+abstained on 43-46 of 60 answerable held-out calls. RepositoryAnalyst is now
+1.0.2 (previously 1.0.1). AgentId, public API types and package version are
+unchanged. This exact version triple is not an inferred SemVer compatibility
+promise. Only `analyst/api.py` instruction text and version change.
+
+The SYSTEM guidance gains a generic status decision policy:
+- **succeeded:** the supplied evidence is sufficient for a defensible analysis,
+  meaning the relevant supplied files can be identified, findings stated and
+  remaining gaps explained. succeeded means a defensible answer, not certainty;
+  residual uncertainty, concerns and unresolved details go in `risks` and
+  `unknowns` while the status stays `succeeded`.
+- **insufficient_evidence:** only when missing or unavailable evidence prevents a
+  defensible analysis. Uncertainty is not the same as being unable to answer.
+  It is not chosen merely because the wider repository is not visible,
+  uncertainty or risk remains, related files may exist elsewhere, or a requested
+  change or behavior is not yet implemented.
+- **Change requests:** the absence of the requested behavior is not missing
+  evidence.
+- **Existing rule, restated:** with `insufficient_evidence`, `findings` MUST be
+  empty and `unknowns` MUST hold at least one item. Evidence-supported findings
+  that answer the question mean `succeeded`.
+
+There is no ForgeAI, fixture or evaluation wording, and nothing grants
+authority, execution or wider reads.
+
+**Unchanged:**
+- the parser and `values.py`;
+- the six-field set, bounds and membership;
+- the insufficient-evidence invariant;
+- duplicate keys and the ADR-021 decoder;
+- the model, provider, sampling, evidence and runtime.
+
+No new ADR, defaults, repair, retry or confidence fields.
+
+Operator qualification: `uv run python .\validate_engineering_analyst_sufficiency_prompt.py`.
+It pins the pre-slice commit dc8bacb and requires no live model or Docker.
+
+**History:** CONTENT-DISCOVERY-1Q-R2 and ANALYST-INSUFFICIENT-DIAG-1 remain
+pinned to Analyst 1.0.1. Their live commands refuse 1.0.2, and their reports are
+unchanged.
+
+**Local qualification does not establish improved live behavior.** A new
+condition, CONTENT-DISCOVERY-1Q-R3, is required. It pins 1.0.2 and reuses the
+frozen cases, oracle, partition, thresholds, N, model, digest and decision rule.
+
+Over-correction toward false success is the main risk. It is guarded by the
+unchanged insufficient-correctness (≥ 90%), false-sufficient (0) and
+catastrophic-miss (0) gates.

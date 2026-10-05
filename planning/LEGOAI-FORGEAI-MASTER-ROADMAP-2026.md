@@ -585,6 +585,8 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+ENG-ANALYST-SUFFICIENCY-PROMPT-1 status (2026-10-05): RepositoryAnalyst 1.0.2 adds a generic succeeded-vs-insufficient_evidence decision policy; parser, schema, model and evidence are unchanged; implemented, local validation pending; no live benefit claimed. CONTENT-DISCOVERY-1Q-R3 is required next; see [abstention decision](FORGEAI-ANALYST-ABSTENTION-DECISION.md#12-implementation-status-eng-analyst-sufficiency-prompt-1-2026-10-05). G07 remains open.
+
 ANALYST-ABSTENTION-DECISION-1 (2026-10-05): **ANALYST SUFFICIENCY-POLICY PROMPT EXPERIMENT JUSTIFIED**. The 1.0.1 guidance gives no status decision policy; abstention is broad and stable across cases; the evidence subsets are complete. The `findings = []` structural rule goes into the same revision. Next: ENG-ANALYST-SUFFICIENCY-PROMPT-1 (Analyst 1.0.2), then CONTENT-DISCOVERY-1Q-R3; nothing implemented; see [abstention decision](FORGEAI-ANALYST-ABSTENTION-DECISION.md). G07 remains open.
 
 ANALYST-INSUFFICIENT-DIAG-1 status (2026-10-05): a content-free harness that splits r2's `insufficient_inconsistent` into its rule clauses and cross-tabulates actual status against expected outcome; locally qualified. The same-condition live run (91 calls) found all 12 invalid abstentions are `insufficient_findings_present` (findings listed while abstaining; `unknowns` never empty). Valid abstention covers 31/60 answerable held-out replies, so the decision is **B. ANALYST ABSTENTION BEHAVIOR REQUIRES QUALITY DECISION** (maintainer decision; nothing implemented); see [insufficient diagnostic](FORGEAI-ANALYST-INSUFFICIENT-DIAGNOSTIC.md). G07 remains open.

@@ -52,7 +52,7 @@ def sentences(text: str) -> list[str]:
 def test_definition_version_and_guidance() -> None:
     definition = repository_analyst_definition()
     assert definition.agent_id.value == "repository-analyst"
-    assert definition.behavior_version == Version(1, 0, 1)
+    assert definition.behavior_version == Version(1, 0, 2)
     for text in (
         "Return only a JSON object with exactly these six top-level keys: status, "
         "summary, relevant_files, findings, risks, unknowns.",
@@ -64,7 +64,8 @@ def test_definition_version_and_guidance() -> None:
         "unknowns is a required array of at most 8 nonblank strings of <=1024 bytes "
         "describing relevant unresolved or missing evidence; it may be empty.",
         SHAPE_LEAD + SHAPE,
-        "For insufficient_evidence give at least one unknown and no findings.",
+        "With insufficient_evidence, findings MUST be an empty array and unknowns "
+        "MUST contain at least one item.",
     ):
         assert text in definition.instructions
     assert "risks and unknowns (" not in definition.instructions
@@ -94,7 +95,7 @@ def test_governed_request_and_user_payload(workspace: Path) -> None:
     assert result.status is RepositoryAnalysisStatus.SUCCEEDED
     assert result.agent_result is not None
     assert result.agent_result.definition == repository_analyst_definition()
-    assert result.agent_result.definition.behavior_version == Version(1, 0, 1)
+    assert result.agent_result.definition.behavior_version == Version(1, 0, 2)
     assert model.last_request is not None and model.calls == 1
     system, user = model.last_request.messages
     assert system.role is ChatRole.SYSTEM and user.role is ChatRole.USER
