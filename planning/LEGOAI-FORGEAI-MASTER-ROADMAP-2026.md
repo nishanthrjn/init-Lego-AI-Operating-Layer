@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-ENG-ANALYST-PROMPT-1 status (2026-10-05): RepositoryAnalyst 1.0.1 (wording only: `risks` and `unknowns` specified as separate required keys, one placeholder shape; parser unchanged) implemented, local validation pending; see [contract diagnostic](FORGEAI-ANALYST-CONTRACT-DIAGNOSTIC.md#eng-analyst-prompt-1-implemented-2026-10-05-local-validation-pending). Re-measurement needs a new prompt-contract condition (1Q-r2). G07 remains open.
+ENG-ANALYST-PROMPT-1 status (2026-10-05): RepositoryAnalyst 1.0.1 (wording only: `risks` and `unknowns` specified as separate required keys, one placeholder shape; parser unchanged) implemented and locally qualified (28/28 validator phases, no live model); see [contract diagnostic](FORGEAI-ANALYST-CONTRACT-DIAGNOSTIC.md#eng-analyst-prompt-1-implemented-and-locally-qualified-2026-10-05). Re-measurement needs a new prompt-contract condition (1Q-r2). G07 remains open.
 
 ANALYST-CONTRACT-DIAG-1 status (2026-10-05): locally qualified; the same-condition live run (91 calls) shows every Analyst reply omits exactly `risks` and `unknowns` (91/91) with one replacement key (90/91); no other stage failed. Next decision: **ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED** (not implemented); see [contract diagnostic](FORGEAI-ANALYST-CONTRACT-DIAGNOSTIC.md). G07 remains open.
 
