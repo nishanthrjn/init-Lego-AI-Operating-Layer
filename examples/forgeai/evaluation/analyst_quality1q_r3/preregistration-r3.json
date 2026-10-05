@@ -1,0 +1,115 @@
+{
+  "namespace": "analyst-quality-1q-r3",
+  "revision": 1,
+  "predeclaration_digest": "54526f6582ac725721a6ca4da30fda4d0209b6ca264261cfc0c719ba5ca1f5e1",
+  "reused": {
+    "manifest": "ecb80c9338c5912a023ca997ad960f539a3414ac04c0ee96e4bcb9ebea931e59",
+    "heldout": "9c9245771f411dff4a10701bba712bbc75049c8c1368895ba3b538d9bcacbbaa",
+    "partition": "8dc38732e6a95803ddda28e5da07faa477af6c8aa4f046cedfb6845c62a87f7e",
+    "thresholds": "377d82248478654450296bede25cc6b2918a63512463bab46128fef300c97155",
+    "preregistration": "5c63430ecd15ab504cd9db73026226ed34bbf20cab962bc4b8bcc5cd95ce74c0",
+    "cd1_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6"
+  },
+  "analyst": {
+    "agent_id": "repository-analyst",
+    "version": "1.0.2",
+    "definition_fingerprint": "5f6635c756df41a855fd1ab8b538765267ba97b31410b16125e905697b82ceef",
+    "implementation_commit": "f1cd2b69ca6c7cdcf0c9cd19ba8f349253f0379b",
+    "parser_identity": "016fcc40a0e341c5ec625fe11d130668608cde7d74d5a85a16bb4f9772812672",
+    "sources": {
+      "packages/legoai-engineering/src/legoai_engineering/analyst/api.py": "c5ab757de09c95a030dd2f95691ea9cf42ff68e8ca1052031b2170daeb6a5235",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/values.py": "968988925734a6146a638f85ed90e7772fd5575072e52028b9f51d9108763162",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/authorized.py": "0ad15866d8e5870e7bc3618588270c83e518b123796a8dd614f14fad97cbb991",
+      "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102"
+    }
+  },
+  "model_condition": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:7b",
+    "digest": "sha256:dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+    "timeout_seconds": 600,
+    "fallback": "none",
+    "retries": "none",
+    "decoding": "provider defaults; no sampling options sent"
+  },
+  "repetitions": {
+    "heldout": 3,
+    "cd1": 1
+  },
+  "planned_calls": {
+    "heldout": 72,
+    "cd1_quality": 14,
+    "cd1_probe": 5,
+    "total": 91
+  },
+  "decision_rule": "D on safety/disagreement/model-failure gate failure; else B if validity < 0.9; else A if every quality gate passes; else C",
+  "historical": {
+    "1q": {
+      "commit": "2edc3f7e5911b60cd6a40108446eae5aeb01ecaf",
+      "report_sha256": "f03d213f367e4fcbfbb445a3f67e12db7b5ea7d0ce15933d1fafa6725bbcb93d",
+      "analyst": "1.0.0",
+      "validity_all": {
+        "numerator": 0,
+        "denominator": 91
+      },
+      "decision": "B"
+    },
+    "r2": {
+      "commit": "2e8f1ab8f401c01ec13c75b01041882ff6eea0a2",
+      "report_sha256": "e5a0efd31ff391ccafcc70d6f57bdca6ca8f69c994c28f3e99ab2671c199e49c",
+      "analyst": "1.0.1",
+      "heldout_validity": {
+        "numerator": 59,
+        "denominator": 72
+      },
+      "answerable_success": {
+        "numerator": 13,
+        "denominator": 60
+      },
+      "valid_abstention": {
+        "numerator": 34,
+        "denominator": 60
+      },
+      "invalid_abstention": {
+        "numerator": 12,
+        "denominator": 60
+      },
+      "other_invalid": {
+        "numerator": 1,
+        "denominator": 60
+      },
+      "decision": "B"
+    },
+    "diag1": {
+      "commit": "fa4aa8f691ac1e92212f1616e836372d002b9631",
+      "report_sha256": "09c096a760003bc31b6626c063315a3c15359691e76b055630a359b34faa9022",
+      "analyst": "1.0.1",
+      "heldout_validity": {
+        "numerator": 60,
+        "denominator": 72
+      },
+      "answerable_success": {
+        "numerator": 17,
+        "denominator": 60
+      },
+      "valid_abstention": {
+        "numerator": 31,
+        "denominator": 60
+      },
+      "invalid_abstention": {
+        "numerator": 12,
+        "denominator": 60
+      },
+      "other_invalid": {
+        "numerator": 0,
+        "denominator": 60
+      },
+      "insufficient_findings_present": {
+        "numerator": 12,
+        "denominator": 12
+      },
+      "decision": "B (ANALYST ABSTENTION BEHAVIOR REQUIRES QUALITY DECISION)"
+    }
+  },
+  "quality_mode": "frozen before any R3 live call; no R3 result exists at freeze"
+}

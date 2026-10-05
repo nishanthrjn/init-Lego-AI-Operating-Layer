@@ -585,6 +585,8 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+CONTENT-DISCOVERY-1Q-R3 status (2026-10-05): a new quality condition for RepositoryAnalyst 1.0.2 (fingerprint `5f6635c7…`, commit `f1cd2b6`) reuses the frozen 1Q cases, oracle, partition, thresholds, N = 91, model, digest and decision function. It adds descriptive answerable-success, abstention, status-confusion and clause metrics, and refuses placeholder hardware. Implemented, local validation pending; no live result yet; see [1Q-R3](FORGEAI-CONTENT-DISCOVERY-ANALYST-QUALITY-R3.md). G07 remains open.
+
 ENG-ANALYST-SUFFICIENCY-PROMPT-1 status (2026-10-05): RepositoryAnalyst 1.0.2 adds a generic succeeded-vs-insufficient_evidence decision policy; parser, schema, model and evidence are unchanged; locally qualified (34/34 validator phases, commit `f1cd2b6`, no live model); no live benefit claimed. CONTENT-DISCOVERY-1Q-R3 is required next; see [abstention decision](FORGEAI-ANALYST-ABSTENTION-DECISION.md#12-implementation-status-eng-analyst-sufficiency-prompt-1-2026-10-05). G07 remains open.
 
 ANALYST-ABSTENTION-DECISION-1 (2026-10-05): **ANALYST SUFFICIENCY-POLICY PROMPT EXPERIMENT JUSTIFIED**. The 1.0.1 guidance gives no status decision policy; abstention is broad and stable across cases; the evidence subsets are complete. The `findings = []` structural rule goes into the same revision. Next: ENG-ANALYST-SUFFICIENCY-PROMPT-1 (Analyst 1.0.2), then CONTENT-DISCOVERY-1Q-R3; nothing implemented; see [abstention decision](FORGEAI-ANALYST-ABSTENTION-DECISION.md). G07 remains open.
