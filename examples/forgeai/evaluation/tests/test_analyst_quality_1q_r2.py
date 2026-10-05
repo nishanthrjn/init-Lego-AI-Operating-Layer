@@ -97,16 +97,39 @@ def test_historical_diag1_identity_is_referenced_not_recomputed() -> None:
 # Analyst 1.0.1 identity -----------------------------------------------------
 
 
-def test_analyst_identity_is_pinned_to_1_0_1() -> None:
+def test_analyst_identity_is_pinned_to_1_0_1(monkeypatch: pytest.MonkeyPatch) -> None:
     analyst = data.read()["analyst"]
     assert isinstance(analyst, dict)
-    assert analyst["version"] == q.analyst_version() == "1.0.1"
-    assert analyst["definition_fingerprint"] == q.definition_fingerprint() == V101
-    assert analyst["definition_fingerprint"] != V100
+    assert analyst["version"] == "1.0.1"
+    assert analyst["definition_fingerprint"] == V101 != V100
     assert analyst["implementation_commit"] == (
         "009378bb720a9b287690d61549bb62ff419f23ed"
     )
-    data.require_live_identity()
+    # A later Analyst may not be sampled under this frozen 1.0.1 condition.
+    assert q.analyst_version() != "1.0.1"
+    assert q.definition_fingerprint() != V101
+    with pytest.raises(data.AnalystIdentityError):
+        data.require_live_identity()
+    pretend_pinned(monkeypatch)
+    data.require_live_identity()  # the pinned 1.0.1 identity itself still passes
+
+
+def pretend_pinned(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present exactly the preregistered 1.0.1 identity so that later preflight
+    steps are reached; the working-tree Analyst is a later version."""
+    analyst = data.read()["analyst"]
+    assert isinstance(analyst, dict)
+    sources = analyst["sources"]
+    assert isinstance(sources, dict)
+    real = q.digest
+
+    def digest(path: Path) -> str:
+        relative = path.resolve().relative_to(q.ROOT).as_posix()
+        return str(sources[relative]) if relative in sources else real(path)
+
+    monkeypatch.setattr(q, "analyst_version", lambda: "1.0.1")
+    monkeypatch.setattr(q, "definition_fingerprint", lambda: V101)
+    monkeypatch.setattr(q, "digest", digest)
 
 
 def test_parser_and_schema_are_unchanged_from_1_0_0() -> None:
@@ -155,6 +178,7 @@ def test_implementation_commit_must_be_an_ancestor(
     pre = data.read()
     analyst = pre["analyst"]
     assert isinstance(analyst, dict)
+    pretend_pinned(monkeypatch)
     forged = {**pre, "analyst": {**analyst, "implementation_commit": "f" * 40}}
     monkeypatch.setattr(data, "read", lambda: forged)
     with pytest.raises(data.AnalystIdentityError):
@@ -361,8 +385,8 @@ def test_replay_report_schema_and_folding(tmp_path: Path) -> None:
     condition = json.loads((output / "condition.json").read_text("utf-8"))
     written = json.loads((output / "report.json").read_text("utf-8"))
     assert condition["schema"] == report.CONDITION_SCHEMA
-    assert condition["analyst"]["version"] == "1.0.1"
-    assert condition["analyst"]["definition_fingerprint"] == V101
+    assert condition["analyst"]["version"] == q.analyst_version()
+    assert condition["analyst"]["definition_fingerprint"] == q.definition_fingerprint()
     assert condition["fixtures"] == data.freeze()
     assert condition["historical_reference"] == data.read()["historical"]
     assert set(written) == {
@@ -443,12 +467,26 @@ def test_live_refuses_wrong_analyst(
     assert not output.exists()
 
 
+def test_live_refuses_the_current_later_analyst(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def never(*args: object) -> object:
+        raise AssertionError("refused before checkout or provider access")
+
+    monkeypatch.setattr(cq, "git_state", never)
+    monkeypatch.setattr(cli, "verify_ollama", never)
+    output = tmp_path / "live"
+    assert cli.main(live_argv(output)) == cq.PREFLIGHT_FAILED
+    assert not output.exists()
+
+
 def test_live_refuses_model_digest_mismatch_before_ollama(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def never(*args: object) -> object:
         raise AssertionError("Ollama must not be contacted")
 
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(cli, "verify_ollama", never)
     monkeypatch.setattr(cq, "git_state", lambda *a: {"head": "h"})
     output = tmp_path / "live"
@@ -470,6 +508,7 @@ def test_live_refuses_model_digest_mismatch_before_ollama(
 def test_live_refuses_checkout_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, state: dict[str, str]
 ) -> None:
+    pretend_pinned(monkeypatch)
     good = {"rev-parse": "c", "branch": "b", "status": ""}
     monkeypatch.setattr(cq, "git", lambda args: {**good, **state}[args[0]])
     monkeypatch.setattr(cli, "verify_ollama", refuse_ollama)
@@ -481,6 +520,7 @@ def test_live_refuses_checkout_mismatch(
 def test_live_refuses_unreachable_ollama_and_existing_output(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(cq, "git_state", lambda *a: {"head": "h"})
     monkeypatch.setattr(cli, "verify_ollama", refuse_ollama)
     output = tmp_path / "live"

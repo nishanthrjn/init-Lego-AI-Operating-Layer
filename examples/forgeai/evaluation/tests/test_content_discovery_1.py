@@ -104,7 +104,7 @@ def test_confirmed_request(c: object) -> None:
         assert observation.result is not None
         assert observation.result.agent_result is not None
         assert observation.result.agent_result.definition.behavior_version == Version(
-            1, 0, 1
+            1, 0, 2
         )
         final = await confirm_targets(s, observation, c.final_confirmation)
         assert final == c.final_confirmation

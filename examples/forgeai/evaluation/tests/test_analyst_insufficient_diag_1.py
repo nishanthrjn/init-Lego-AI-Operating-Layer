@@ -61,10 +61,13 @@ def call(output: str, case: object = CASE) -> dict[str, object]:
 
 def test_analyst_and_r2_condition_are_unchanged() -> None:
     r2.freeze()
-    r2.require_live_identity()  # still exactly the preregistered 1.0.1
-    assert q.analyst_version() == "1.0.1"
     analyst = r2.read()["analyst"]
     assert isinstance(analyst, dict)
+    # The diagnostic sampled the preregistered 1.0.1; a later Analyst is refused.
+    assert analyst["version"] == "1.0.1"
+    assert q.analyst_version() != analyst["version"]
+    with pytest.raises(r2.AnalystIdentityError):
+        r2.require_live_identity()
     current = r2.parser_identity((q.ROOT / r2.API).read_text(encoding="utf-8"))
     assert current == analyst["parser_identity"]
 
@@ -375,7 +378,7 @@ def test_replay_report_schema_and_deterministic_folding(tmp_path: Path) -> None:
     condition = json.loads((output / "condition.json").read_text("utf-8"))
     written = json.loads((output / "report.json").read_text("utf-8"))
     assert condition["schema"] == report.CONDITION_SCHEMA
-    assert condition["analyst"]["version"] == "1.0.1"
+    assert condition["analyst"]["version"] == q.analyst_version()
     assert condition["linkage"] == report.LINKAGE
     assert set(written) == {
         "schema", "mode", "condition", "condition_digest", "linkage", "records",
@@ -455,6 +458,7 @@ def test_live_refuses_a_different_analyst(
 def test_live_refuses_model_checkout_and_existing_output(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(r2, "require_live_identity", lambda: None)  # past identity
     monkeypatch.setattr(cli, "verify_ollama", refuse_ollama)
     output = tmp_path / "live"
     assert cli.main(live_argv(output, "sha256:" + "a" * 64)) == cq.PREFLIGHT_FAILED
@@ -467,6 +471,19 @@ def test_live_refuses_model_checkout_and_existing_output(
     existing.mkdir()
     with pytest.raises(SystemExit):
         cli.main(live_argv(existing))
+
+
+def test_live_refuses_the_current_later_analyst(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def never(*args: object) -> object:
+        raise AssertionError("refused before checkout or provider access")
+
+    monkeypatch.setattr(cq, "git_state", never)
+    monkeypatch.setattr(cli, "verify_ollama", never)
+    output = tmp_path / "live"
+    assert cli.main(live_argv(output)) == cq.PREFLIGHT_FAILED
+    assert not output.exists()
 
 
 def test_harness_is_evaluation_only() -> None:

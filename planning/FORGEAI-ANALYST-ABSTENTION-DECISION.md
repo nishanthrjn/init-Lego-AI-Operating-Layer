@@ -292,3 +292,48 @@ The comparison with 1.0.1 uses the recorded r2 and DIAG-1 references only.
 - This decision narrows the blocker from output formatting to the Analyst's
   status decision policy.
 - **CONTENT-DISCOVERY-2 and ForgeAI integration remain deferred.**
+
+## 12. Implementation status: ENG-ANALYST-SUFFICIENCY-PROMPT-1 (2026-10-05)
+
+The decision was approved and implemented: RepositoryAnalyst 1.0.1 → 1.0.2,
+changing only the instruction text and version in `analyst/api.py`. Local
+validation is pending.
+
+**Added generic status decision policy:**
+- **succeeded:** sufficient evidence for a defensible analysis; this is not
+  certainty, and uncertainty goes in `risks` and `unknowns`.
+- **insufficient_evidence:** only when missing evidence prevents a defensible
+  analysis. It is not chosen for limited repository visibility, residual
+  uncertainty or risk, possible unseen related files, or a not-yet-implemented
+  requested change.
+- **Existing rule, restated:** `findings = []` and a non-empty `unknowns` under
+  `insufficient_evidence`; findings that answer the question mean `succeeded`.
+  This is the section 8 disposition: INCLUDE WITH NEXT PROMPT REVISION.
+
+**Unchanged:**
+- the parser, values, schema, bounds, membership and the ADR-021 decoder;
+- the model, provider and sampling;
+- the evidence and the runtime.
+
+**Pinned history:** the r2 and DIAG-1 live commands refuse 1.0.2; their tests
+assert the pinned 1.0.1 identity.
+
+**No live benefit is claimed.** CONTENT-DISCOVERY-1Q-R3 is required next and is
+not implemented here. It reuses unchanged the frozen gates:
+- safety 0 and classifier disagreements 0;
+- model failures ≤ 10%;
+- validity ≥ 90%;
+- precision ≥ 85%;
+- required recall ≥ 90%;
+- acceptable set ≥ 80%;
+- insufficient correctness ≥ 90%;
+- false-sufficient 0 and catastrophic 0.
+
+It reports descriptively, with no new gate:
+- answerable-success rate;
+- valid and invalid abstention;
+- the expected-vs-actual status confusion;
+- the insufficient-evidence clause counts.
+
+Over-correction toward false success on expected-insufficient cases is the main
+risk, and the insufficient-correctness and false-sufficient gates guard it.
