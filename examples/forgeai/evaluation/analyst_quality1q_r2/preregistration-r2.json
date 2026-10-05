@@ -1,0 +1,80 @@
+{
+  "namespace": "analyst-quality-1q-r2",
+  "revision": 1,
+  "predeclaration_digest": "52b2b37fa65207777b07bd92119cddc49d108e48cc2e94c37036e9eba2b8835e",
+  "reused": {
+    "manifest": "ecb80c9338c5912a023ca997ad960f539a3414ac04c0ee96e4bcb9ebea931e59",
+    "heldout": "9c9245771f411dff4a10701bba712bbc75049c8c1368895ba3b538d9bcacbbaa",
+    "partition": "8dc38732e6a95803ddda28e5da07faa477af6c8aa4f046cedfb6845c62a87f7e",
+    "thresholds": "377d82248478654450296bede25cc6b2918a63512463bab46128fef300c97155",
+    "preregistration": "5c63430ecd15ab504cd9db73026226ed34bbf20cab962bc4b8bcc5cd95ce74c0",
+    "cd1_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6"
+  },
+  "analyst": {
+    "agent_id": "repository-analyst",
+    "version": "1.0.1",
+    "definition_fingerprint": "f99564e6a483eb91f8d9221f0206ea358251c74295608115c1253103125c2cc0",
+    "implementation_commit": "009378bb720a9b287690d61549bb62ff419f23ed",
+    "parser_identity": "016fcc40a0e341c5ec625fe11d130668608cde7d74d5a85a16bb4f9772812672",
+    "sources": {
+      "packages/legoai-engineering/src/legoai_engineering/analyst/api.py": "41bc789440e1e8cb7738a964786575c984bc3855ef96782c60f5dce14aefa681",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/values.py": "968988925734a6146a638f85ed90e7772fd5575072e52028b9f51d9108763162",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/authorized.py": "0ad15866d8e5870e7bc3618588270c83e518b123796a8dd614f14fad97cbb991",
+      "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102"
+    }
+  },
+  "model_condition": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:7b",
+    "digest": "sha256:dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+    "timeout_seconds": 600,
+    "fallback": "none",
+    "retries": "none",
+    "decoding": "provider defaults; no sampling options sent"
+  },
+  "repetitions": {
+    "heldout": 3,
+    "cd1": 1
+  },
+  "planned_calls": {
+    "heldout": 72,
+    "cd1_quality": 14,
+    "cd1_probe": 5,
+    "total": 91
+  },
+  "decision_rule": "D on safety/disagreement/model-failure gate failure; else B if validity < 0.9; else A if every quality gate passes; else C",
+  "historical": {
+    "1q_commit": "2edc3f7e5911b60cd6a40108446eae5aeb01ecaf",
+    "1q_condition_digest": "2cdb97109fee018ff9a1f36e47a7663202a36ec2e8de80f68ec940f8b5f5afbf",
+    "1q_report_sha256": "f03d213f367e4fcbfbb445a3f67e12db7b5ea7d0ce15933d1fafa6725bbcb93d",
+    "1q_analyst": {
+      "version": "1.0.0",
+      "definition_fingerprint": "924bdaac617c51341b56d27bb3aef53a7e37dd358d85e37f43bdf4e5c9a659b7"
+    },
+    "1q_decision": "B",
+    "1q_validity": {
+      "numerator": 0,
+      "denominator": 91
+    },
+    "1q_schema_invalid": {
+      "numerator": 91,
+      "denominator": 91
+    },
+    "diag1_commit": "6f5a80f151f5992b49db61738397e134d5d6aa68",
+    "diag1_condition_sha256": "00858bc071e451f7db9193f95581b811dc332fdb5e87995c9128d19ec3e982ae",
+    "diag1_report_sha256": "7bbc3ab074cfbc9bf1bfd8da8cac3163776caefca9d4bd1e68d4ac466f963fa8",
+    "diag1_field_set_invalid": {
+      "numerator": 91,
+      "denominator": 91
+    },
+    "diag1_risks_and_unknowns_missing": {
+      "numerator": 91,
+      "denominator": 91
+    },
+    "diag1_one_unexpected_field": {
+      "numerator": 90,
+      "denominator": 91
+    }
+  },
+  "quality_mode": "frozen before any r2 live call; no r2 result exists at freeze"
+}
