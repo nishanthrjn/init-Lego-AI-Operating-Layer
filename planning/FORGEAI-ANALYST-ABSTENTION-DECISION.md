@@ -337,3 +337,15 @@ It reports descriptively, with no new gate:
 
 Over-correction toward false success on expected-insufficient cases is the main
 risk, and the insufficient-correctness and false-sufficient gates guard it.
+
+**Local qualification (2026-10-05):** all 34 phases of
+`validate_engineering_analyst_sufficiency_prompt.py` passed (40 including
+sub-phases), with no live model or Docker. That includes regressions for:
+- Analyst (124 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41) and ENG-ANALYST-PROMPT-1 (27);
+- the r2 tests pinned to 1.0.1 (34) and the DIAG-1 tests pinned to 1.0.1 (37).
+
+Implementation commit: `f1cd2b6`. Live behavior of 1.0.2 is not yet measured;
+CONTENT-DISCOVERY-1Q-R3 is required.

@@ -1966,7 +1966,7 @@ sub-phases) of `validate_engineering_analyst_prompt.py`. That covers:
 No live model or Docker was used. Live structural validity of 1.0.1 is not yet
 measured.
 
-## ENG-ANALYST-SUFFICIENCY-PROMPT-1 — implemented, local validation pending
+## ENG-ANALYST-SUFFICIENCY-PROMPT-1 — Analyst 1.0.2 status policy (locally qualified 2026-10-05)
 
 ANALYST-ABSTENTION-DECISION-1 found that RepositoryAnalyst 1.0.1 defined the
 shape of each status but not when to choose it. On adequate evidence the model
@@ -2018,3 +2018,14 @@ frozen cases, oracle, partition, thresholds, N, model, digest and decision rule.
 Over-correction toward false success is the main risk. It is guarded by the
 unchanged insufficient-correctness (≥ 90%), false-sufficient (0) and
 catastrophic-miss (0) gates.
+
+Operator qualification passed on 2026-10-05: all 34 phases (40 including
+sub-phases), with no live model or Docker. That includes regressions for:
+- Analyst (124 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41) and ENG-ANALYST-PROMPT-1 (27);
+- the r2 tests pinned to 1.0.1 (34) and the DIAG-1 tests pinned to 1.0.1 (37).
+
+Implementation commit: `f1cd2b6`. Live behavior of 1.0.2 is not yet measured;
+CONTENT-DISCOVERY-1Q-R3 is required.
