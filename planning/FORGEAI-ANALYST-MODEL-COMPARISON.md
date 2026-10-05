@@ -311,3 +311,41 @@ uv run python evaluation/run_analyst_model_compare_1.py compare `
 ```
 
 **No candidate is installed, and no comparison result exists yet.**
+
+## Acquisition and pins (2026-10-06)
+
+The operator pulled both candidates. Their digests, as Ollama reports them, are
+recorded in `model-pins.json` (commit `e9024c9`):
+
+| Model | Digest | Family / size |
+| --- | --- | --- |
+| `qwen2.5-coder:14b` | `sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` | qwen2, 14.8B Q4_K_M, 9.0 GB, context 32768 |
+| `phi4:14b` | `sha256:ac896e5b8b34a1f4efa7b14d7520725140d5512484457fab45d2a4ea14c69dba` | phi3, 14.7B Q4_K_M, 9.1 GB, context 16384 |
+
+## Stage 1 smoke: `qwen2.5-coder:14b` (2026-10-05T22:49Z; not quality evidence)
+
+- **Condition:** commit `e9024c9`, clean tracked tree; Analyst 1.0.2
+  (`5f6635c7…`); Ollama 0.35.1; the real hardware description.
+- **Files:** `smoke.json` SHA-256
+  `2b03221b27dfb16f7e5c40ab740aaa79ac388987e7164ac664bbb825f7ae6d18`;
+  `condition.json`
+  `d8584d45908fbe5ffc79e42eaa27de37d81412eef439b94331b95fe932eb7800`;
+  condition digest
+  `90ad01e5b481bff3b3ad50c2f6dbed38866fa52a6318b8aa7482deff85c27e02`.
+- **Compatibility:** 3/3 replies structurally valid; 0 model failures.
+  `fits_host` is true.
+- **Latency:** mean 187.4 s and max 239.5 s per call. That is about 4x the
+  control (mean 47.5 s), not the 2-2.5x estimated, but every call is under the
+  600 s timeout. The projected full run is about 4.7 h.
+- **Not evidence:** the smoke carries no gates and no decision. Its status
+  outcomes are not compared with anything.
+- **Recording note:** the smoke `plan` block reuses the 1Q `plan_counts`
+  helper. It shows `heldout_repetitions: 3` as a constant, while the smoke
+  actually makes one call per case (`total_calls: 3`).
+
+The R3 control `report.json` was restored from `9a92430` to its local path for
+the later comparison step. Its SHA-256 matches the pinned
+`025f4717…d0d367` exactly.
+
+**Next:** the full 91-call `qwen2.5-coder:14b` condition, then the comparison.
+`phi4:14b` remains optional and needs separate approval.
