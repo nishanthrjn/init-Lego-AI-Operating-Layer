@@ -1924,7 +1924,7 @@ Operator command from repository root:
 No live model or Docker required. The validator includes local/replay regressions
 and clean wheel consumption; full operator qualification remains pending.
 
-## ENG-ANALYST-PROMPT-1 — implemented, local validation pending
+## ENG-ANALYST-PROMPT-1 — Analyst 1.0.1 prompt contract (locally qualified 2026-10-05)
 
 ANALYST-CONTRACT-DIAG-1 found every frozen-condition reply missing both `risks`
 and `unknowns` (91/91 `field_set_invalid`); the 1.0.0 guidance named them in one
@@ -1954,3 +1954,14 @@ sources at their recorded foundation commits via git, so their evidence stays
 immutable; their live CLIs refuse to sample Analyst 1.0.1 under the 1.0.0
 condition. Re-measurement needs a new prompt-contract condition; no live
 measurement was run for this implementation.
+
+Operator qualification passed on 2026-10-05: all 28 phases (35 including
+sub-phases) of `validate_engineering_analyst_prompt.py`. That covers:
+- prompt/parser phases 2–18;
+- Analyst (117 tests) and authorized evidence (25);
+- DISCOVERY-1 (185) and DISCOVERY-2A/2A.1/CONTENT-DISCOVERY-1 (229);
+- ForgeAI architecture (41), DIAG-1 (45) and 1Q (36);
+- mypy, Ruff and `git diff --check`.
+
+No live model or Docker was used. Live structural validity of 1.0.1 is not yet
+measured.

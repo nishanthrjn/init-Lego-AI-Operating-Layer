@@ -294,7 +294,7 @@ No live model or Docker was used by the validator.
 
 **ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED**
 
-## ENG-ANALYST-PROMPT-1 (implemented 2026-10-05; local validation pending)
+## ENG-ANALYST-PROMPT-1 (implemented and locally qualified 2026-10-05)
 
 The diagnostic conclusion is accepted. RepositoryAnalyst is now 1.0.1. That is
 a narrow revision of its definition in
@@ -348,3 +348,15 @@ first. Relevance quality is evaluated only if structural validity reaches 90%.
 
 Operator qualification: `uv run python .\validate_engineering_analyst_prompt.py`
 (28 phases, no live model).
+
+**Result (2026-10-05):** all 28 phases passed (35 including sub-phases):
+- 1b: only the Analyst version and instructions changed.
+- 10–18: every contract violation is still rejected after one call.
+- 23a/23b: DIAG-1 evidence is unchanged and the doc is append-only (45 tests).
+- 24a/24b: 1Q/CD-1 evidence is unchanged, with frozen inputs verified at the
+  foundation (36 tests).
+- 19–22: regressions passed (117 + 25 + 185 + 229 + 41).
+- 25–28: mypy, Ruff and `git diff --check` passed.
+
+No live model or Docker was used. Live validity of 1.0.1 remains unmeasured
+until the 1Q-r2 condition.
