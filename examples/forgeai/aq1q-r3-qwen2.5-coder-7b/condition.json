@@ -1,0 +1,117 @@
+{
+  "schema": "forgeai-analyst-quality-condition/3",
+  "mode": "live",
+  "git": {
+    "head": "9442ef393d22c316a378818952d690566b04eb52",
+    "branch": "br-PyLLMComfy-CustomerRec-ForgeAI",
+    "tracked_clean": true
+  },
+  "analyst": {
+    "agent_id": "repository-analyst",
+    "version": "1.0.2",
+    "definition_fingerprint": "5f6635c756df41a855fd1ab8b538765267ba97b31410b16125e905697b82ceef",
+    "implementation_commit": "f1cd2b69ca6c7cdcf0c9cd19ba8f349253f0379b",
+    "parser_identity": "016fcc40a0e341c5ec625fe11d130668608cde7d74d5a85a16bb4f9772812672"
+  },
+  "model": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:7b",
+    "digest": "sha256:dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+    "ollama_version": "0.35.1",
+    "timeout_seconds": 600.0,
+    "decoding": "provider defaults; LegoAI sends no sampling options (unobserved)",
+    "context_window": "provider default (unobserved)",
+    "fallback": "none",
+    "retries": "none"
+  },
+  "hardware_class": "Intel Core i7-8565U (4 cores/8 threads), 16 GB RAM, NVIDIA GeForce MX130 + Intel UHD 620, Windows 11",
+  "platform": "Windows 11 (AMD64)",
+  "fixtures": {
+    "manifest": "ecb80c9338c5912a023ca997ad960f539a3414ac04c0ee96e4bcb9ebea931e59",
+    "heldout": "9c9245771f411dff4a10701bba712bbc75049c8c1368895ba3b538d9bcacbbaa",
+    "partition": "8dc38732e6a95803ddda28e5da07faa477af6c8aa4f046cedfb6845c62a87f7e",
+    "thresholds": "377d82248478654450296bede25cc6b2918a63512463bab46128fef300c97155",
+    "preregistration": "5c63430ecd15ab504cd9db73026226ed34bbf20cab962bc4b8bcc5cd95ce74c0",
+    "predeclaration": "957626512d3c7ceeed0d02710bcc11b096f0222a301462145dad0de3de7c1cc4",
+    "cd1_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6",
+    "r3_preregistration": "6499b45ee5b720bcd2b7830140831c721994d87874c2dcf435f73a0cfec7a6b6"
+  },
+  "plan": {
+    "cd1_probe_calls": 5,
+    "cd1_quality_calls": 14,
+    "cd1_repetitions": 1,
+    "heldout_calls": 72,
+    "heldout_cases": 24,
+    "heldout_repetitions": 3,
+    "total_calls": 91
+  },
+  "historical_reference": {
+    "1q": {
+      "commit": "2edc3f7e5911b60cd6a40108446eae5aeb01ecaf",
+      "report_sha256": "f03d213f367e4fcbfbb445a3f67e12db7b5ea7d0ce15933d1fafa6725bbcb93d",
+      "analyst": "1.0.0",
+      "validity_all": {
+        "numerator": 0,
+        "denominator": 91
+      },
+      "decision": "B"
+    },
+    "r2": {
+      "commit": "2e8f1ab8f401c01ec13c75b01041882ff6eea0a2",
+      "report_sha256": "e5a0efd31ff391ccafcc70d6f57bdca6ca8f69c994c28f3e99ab2671c199e49c",
+      "analyst": "1.0.1",
+      "heldout_validity": {
+        "numerator": 59,
+        "denominator": 72
+      },
+      "answerable_success": {
+        "numerator": 13,
+        "denominator": 60
+      },
+      "valid_abstention": {
+        "numerator": 34,
+        "denominator": 60
+      },
+      "invalid_abstention": {
+        "numerator": 12,
+        "denominator": 60
+      },
+      "other_invalid": {
+        "numerator": 1,
+        "denominator": 60
+      },
+      "decision": "B"
+    },
+    "diag1": {
+      "commit": "fa4aa8f691ac1e92212f1616e836372d002b9631",
+      "report_sha256": "09c096a760003bc31b6626c063315a3c15359691e76b055630a359b34faa9022",
+      "analyst": "1.0.1",
+      "heldout_validity": {
+        "numerator": 60,
+        "denominator": 72
+      },
+      "answerable_success": {
+        "numerator": 17,
+        "denominator": 60
+      },
+      "valid_abstention": {
+        "numerator": 31,
+        "denominator": 60
+      },
+      "invalid_abstention": {
+        "numerator": 12,
+        "denominator": 60
+      },
+      "other_invalid": {
+        "numerator": 0,
+        "denominator": 60
+      },
+      "insufficient_findings_present": {
+        "numerator": 12,
+        "denominator": 12
+      },
+      "decision": "B (ANALYST ABSTENTION BEHAVIOR REQUIRES QUALITY DECISION)"
+    }
+  },
+  "started_at": "2026-10-05T19:56:14+00:00"
+}
