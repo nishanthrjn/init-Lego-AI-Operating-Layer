@@ -208,3 +208,121 @@ An existing output directory is refused with exit 2, and nothing is deleted.
 `report.md` after all 91 calls.
 
 **No live result exists yet, and no quality claim is made.**
+
+## Local qualification
+
+All 34 phases of `validate_forgeai_content_discovery_1q_r2.py` passed on
+2026-10-05 (38 including sub-phases), with no live model or Docker. That
+includes regressions for:
+- Analyst (90 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41) and ENG-ANALYST-PROMPT-1 (27).
+
+## Results (live, 2026-10-05)
+
+**Condition:**
+- commit `2e8f1ab8f401c01ec13c75b01041882ff6eea0a2`, clean tracked tree;
+- RepositoryAnalyst 1.0.1, fingerprint `f99564e6…2cc0`, parser identity
+  `016fcc40…2672`;
+- `qwen2.5-coder:7b` `sha256:dae161e2…f4364`, Ollama 0.35.1, 600 s timeout,
+  provider-default sampling, no retry or fallback;
+- all 91 planned calls completed.
+
+The report was not committed. Its digests:
+- `report.json`: SHA-256 `e5a0efd31ff391ccafcc70d6f57bdca6ca8f69c994c28f3e99ab2671c199e49c`;
+- `report.md`: `9418b02411cd6d492ad54f3319eac25a2d4572852b466f43b0cd33d03df2ab0e`;
+- `condition.json`: `5b716ad7509992e4835932fab225423dfdca7590c2e01da8939f059097856c43`;
+- condition digest: `5cd301942dd91cf6186f768ef6b86ad42a0bc8e131b41c855317a53eba4cfec3`.
+
+Re-building from the 91 records reproduces the aggregates, structural block,
+gates, decision and comparison exactly, and `report.md` re-renders identically.
+
+**Recording defect:** `hardware_class` holds the literal placeholder
+`<same hardware class as 1Q>`, because the documented command was run without
+substituting it. The platform is recorded as Windows 11 (AMD64). The condition
+is immutable and stays as written; hardware equivalence with 1Q is asserted
+by the operator, not recorded.
+
+### Structural result (the primary question)
+
+| Analyst | Structurally valid (all calls) | Held-out (gating) |
+| --- | --- | --- |
+| 1.0.0 (1Q, recorded) | 0/91 | 0/72 |
+| 1.0.1 (r2) | 77/91 (84.6%) | 59/72 (81.9%) |
+
+**The prior blocker is gone:**
+- `field_set_invalid`: 0/91, compared with 91/91 in DIAG-1.
+- Missing `risks`/`unknowns`: 0, and unexpected fields: 0.
+- All 90 parsed objects carry the six fields with the correct JSON types.
+- The pre-declared observation is **CONSISTENT WITH THE PRIOR BLOCKER BEING
+  ADDRESSED**. This is not a causal proof: it is one condition, with fresh
+  samples.
+
+**The 14 invalid calls:**
+- 13 are `insufficient_inconsistent`: 12 held-out and 1 CD-1 supporting
+  (`c19`). Every one has status `insufficient_evidence` on a case whose
+  expected answer is `succeeded`. They violate the unchanged rule that
+  `insufficient_evidence` requires at least one unknown and no findings. The
+  first-failure record does not say which clause failed.
+- 1 is `response_not_json` (`q10` repetition 2).
+
+The DIAG-1 pattern rule returns **F, MIXED STRUCTURAL PATTERN**. That is a
+mechanical artifact: `insufficient_inconsistent` belongs to none of the
+rule's parse, field-set or shape groups, even though 13 of the 14 failures are
+that one stage.
+
+**Other gates:** safety counts 0, classifier disagreements 0, model failures 0
+and coarse inconsistencies 0. Representations were 46 fenced and 45 raw; ADR-021
+decoding was again not a blocker.
+
+### Decision (mechanical, frozen 1Q rule)
+
+| Gate (held-out) | Passed |
+| --- | --- |
+| safety | true |
+| classifier_disagreement | true |
+| model_failure_rate | true |
+| validity (≥ 90%) | **false** (81.9%) |
+
+**B. ANALYST OUTPUT CONTRACT IS THE PRIMARY BLOCKER**: the output contract
+remains the primary blocker, and `quality_is_decision_evidence` = false. The
+blocker has moved, from field-set omission (1.0.0) to status/narrative
+consistency under `insufficient_evidence` (1.0.1).
+
+### Relevance metrics: descriptive only, NOT decision evidence
+
+Below the validity gate, these are reported for orientation only. No
+reasoning-quality conclusion (C) is drawn.
+
+Held-out, valid calls only:
+- precision 27/33;
+- required recall 18/57;
+- acceptable-set success 8/47;
+- insufficient correctness 11/12;
+- false-sufficient 1 (`q22` repetition 2);
+- catastrophic 0.
+
+The dominant valid-reply behavior is abstention:
+- 34 of the 47 valid answerable held-out replies are `insufficient_evidence`.
+- Across all calls, the status is `insufficient_evidence` in 67 of the 90 parsed
+  objects.
+- Together with the 13 inconsistent abstentions, the model abstains on most
+  answerable cases while still listing relevant files.
+
+This is an observation, not an evaluated gate.
+
+### Next step (recommendation only; not implemented)
+
+**A content-free diagnostic of the new blocker, before any further Analyst
+change:**
+- Refine `insufficient_inconsistent` into its clauses: findings present,
+  unknowns empty, or both.
+- Record status against the expected outcome per class.
+
+This should reuse the r2 condition identity and request path, with no prompt,
+parser or threshold change. Whether a later Analyst revision should address the
+`insufficient_evidence` consistency or the abstention tendency is a separate
+decision, made on that evidence. Quality remains unmeasured as decision
+evidence. CONTENT-DISCOVERY-2 and ForgeAI integration stay out of scope.
+G07 remains open.
