@@ -139,9 +139,13 @@ def test_candidate_registry_and_pins(monkeypatch: pytest.MonkeyPatch) -> None:
     assert set(registry) == set(data.pins()) == {CANDIDATE, "phi4:14b"}
     assert registry[CANDIDATE]["required"] is True
     assert "qwen2.5-coder:7b" not in registry  # the control is recorded R3
-    assert all(v is None for v in data.pins().values())  # nothing acquired yet
+    assert data.pins() == {  # recorded by the operator after acquisition
+        CANDIDATE: "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+        "phi4:14b": "sha256:ac896e5b8b34a1f4efa7b14d7520725140d5512484457fab45d2a4ea14c69dba",
+    }
     with pytest.raises(data.CandidateError, match="not a registered"):
         data.require_candidate("qwen2.5-coder:3b", PIN)
+    pin(monkeypatch, None)
     with pytest.raises(data.CandidateError, match="acquisition pending"):
         data.require_candidate(CANDIDATE, PIN)
     pin(monkeypatch)
