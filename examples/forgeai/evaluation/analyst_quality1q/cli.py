@@ -82,7 +82,7 @@ def condition(
         "git": checkout,
         "analyst": {
             "agent_id": "repository-analyst",
-            "version": "1.0.0",
+            "version": data.analyst_version(),
             "definition_fingerprint": data.definition_fingerprint(),
         },
         "model": model,
@@ -156,11 +156,17 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             parser.error("live mode requires " + ", ".join(missing))
         try:
+            data.require_live_identity()
             checkout = git_state(git, args.expect_branch, args.expect_commit)
             identity = verify_ollama(args.ollama_url, args.model, args.model_digest)
         except ValueError as error:
             parser.error(str(error))
-        except (PreflightError, CheckoutError, subprocess.CalledProcessError) as error:
+        except (
+            data.AnalystIdentityError,
+            PreflightError,
+            CheckoutError,
+            subprocess.CalledProcessError,
+        ) as error:
             print(f"live preflight failed: {error}", file=sys.stderr)
             print("no call was made and nothing was written", file=sys.stderr)
             return PREFLIGHT_FAILED

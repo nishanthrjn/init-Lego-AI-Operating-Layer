@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -26,6 +27,23 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_text(encoding="utf-8-sig").encode()).hexdigest()
 
 
+def committed_digest(commit: str, path: str) -> str:
+    """digest() of a file as recorded at a commit (newline-normalized, BOM ignored).
+
+    Production sources move on after a freeze; the frozen study is pinned to the
+    source it measured, which git retains immutably. A missing git, commit or path
+    raises rather than passing.
+    """
+    blob = subprocess.run(
+        ["git", "show", f"{commit}:{path}"],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout
+    text = blob.decode("utf-8-sig").replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def freeze() -> None:
     m, p = read("manifest-v1.json"), read("preregistration-v1.json")
     assert digest(HERE / "manifest-v1.json") == MANIFEST
@@ -36,7 +54,12 @@ def freeze() -> None:
     ):
         assert digest(HERE / filename) == expected, "frozen evaluation changed"
     for filename, expected in cast(dict[str, str], p["frozen_inputs"]).items():
-        assert digest(ROOT / filename) == expected, "historical source/artifact changed"
+        actual = (
+            committed_digest(str(p["foundation"]), filename)
+            if filename.startswith("packages/")
+            else digest(ROOT / filename)
+        )
+        assert actual == expected, "historical source/artifact changed"
     doc = (ROOT / "planning/FORGEAI-CONTENT-DISCOVERY-EVALUATION.md").read_text(
         encoding="utf-8-sig"
     )

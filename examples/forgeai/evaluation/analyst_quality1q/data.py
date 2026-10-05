@@ -66,6 +66,30 @@ def definition_fingerprint() -> str:
     ).hexdigest()
 
 
+def analyst_version() -> str:
+    v = repository_analyst_definition().behavior_version
+    return f"{v.major}.{v.minor}.{v.patch}"
+
+
+class AnalystIdentityError(RuntimeError):
+    """The current Analyst is not the behavior this frozen condition measured."""
+
+
+def require_live_identity() -> None:
+    """Live runs of the frozen 1Q condition require the preregistered Analyst.
+
+    The frozen sources are verified at their foundation commit by freeze(); a
+    new live sample is only admissible while the Analyst sent to the model is
+    still that behavior. A later Analyst version needs its own new condition.
+    """
+    expected = read("preregistration-v1.json")["definition_fingerprint"]
+    if definition_fingerprint() != expected:
+        raise AnalystIdentityError(
+            f"RepositoryAnalyst {analyst_version()} is not the preregistered 1Q "
+            "behavior; a new condition is required"
+        )
+
+
 def predeclaration_digest() -> str:
     doc = (ROOT / PREDECLARATION).read_text(encoding="utf-8-sig")
     prefix, found, _ = doc.partition(MARKER)
@@ -252,10 +276,8 @@ def freeze() -> dict[str, str]:
         raise ValueError("preregistration changed after freeze")
     if pre["predeclaration_digest"] != predeclaration_digest():
         raise ValueError("predeclaration changed after freeze")
-    if pre["definition_fingerprint"] != definition_fingerprint():
-        raise ValueError("RepositoryAnalyst definition changed")
     for path, expected in cast(dict[str, str], pre["analyst_sources"]).items():
-        if digest(ROOT / path) != expected:
+        if cd1.committed_digest(str(pre["foundation"]), path) != expected:
             raise ValueError(f"{path} changed")
     if digest(cd1.HERE / "manifest-v1.json") != pre["cd1_manifest"]:
         raise ValueError("CONTENT-DISCOVERY-1 manifest changed")

@@ -195,7 +195,7 @@ def test_condition_schema_and_plan() -> None:
     }  # fmt: skip
     assert condition["analyst"] == {
         "agent_id": "repository-analyst",
-        "version": "1.0.0",
+        "version": data.analyst_version(),
         "definition_fingerprint": data.definition_fingerprint(),
     }
 
@@ -472,8 +472,21 @@ def test_preflight_refusals(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     argv = ["live", "--output", str(output), "--model", "m", "--hardware", "h"]
     argv += ["--model-digest", "sha256:" + "a" * 64]
     argv += ["--expect-branch", "b", "--expect-commit", "c"]
+    # A later Analyst is refused before any checkout, provider or file access.
     assert cli.main(argv) == cli.PREFLIGHT_FAILED
     assert not output.exists()
+    monkeypatch.setattr(data, "require_live_identity", lambda: None)
+    assert cli.main(argv) == cli.PREFLIGHT_FAILED
+    assert not output.exists()
+
+
+def test_live_identity_is_the_preregistered_analyst() -> None:
+    pre = data.read("preregistration-v1.json")
+    assert pre["analyst"] == {"agent_id": "repository-analyst", "version": "1.0.0"}
+    assert data.analyst_version() != "1.0.0"
+    assert data.definition_fingerprint() != pre["definition_fingerprint"]
+    with pytest.raises(data.AnalystIdentityError):
+        data.require_live_identity()
 
 
 def test_harness_is_evaluation_only() -> None:

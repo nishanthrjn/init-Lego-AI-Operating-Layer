@@ -62,9 +62,13 @@ def test_taxonomy_is_closed_and_refines_the_1q_categories() -> None:
 
 
 def test_contract_matches_the_unchanged_analyst() -> None:
-    assert data.definition_fingerprint() == (
+    # The diagnosed live run measured the preregistered 1.0.0 behavior; the
+    # current Analyst may not be sampled under that frozen condition.
+    assert data.read("preregistration-v1.json")["definition_fingerprint"] == (
         "924bdaac617c51341b56d27bb3aef53a7e37dd358d85e37f43bdf4e5c9a659b7"
     )
+    with pytest.raises(data.AnalystIdentityError):
+        data.require_live_identity()
     prompt = repository_analyst_definition().system_prompt
     positions = [prompt.index(name) for name in CONTRACT]
     assert positions == sorted(positions)  # canonical order is the prompt order
@@ -322,7 +326,7 @@ def test_pattern_rule(records: list[dict[str, object]], code: str) -> None:
 
 
 def test_historical_1q_inputs_and_classifier_unchanged() -> None:
-    data.freeze()  # 1Q frozen inputs, Analyst source and fingerprint
+    data.freeze()  # 1Q frozen inputs; Analyst source pinned at the 1Q foundation
     from analyst_quality1q.classify import classify
 
     assert classify(reply(drop=("risks",)), CASE.supplied)[0] is Category.SCHEMA_INVALID
@@ -340,7 +344,10 @@ def test_live_preflight_refuses_without_writing(
     argv = ["live", "--output", str(output), "--model", "m", "--hardware", "h"]
     argv += ["--model-digest", "sha256:" + "a" * 64]
     argv += ["--expect-branch", "b", "--expect-commit", "c"]
-    assert cli.main(argv) == 3
+    assert cli.main(argv) == 3  # refused: not the preregistered Analyst
+    assert not output.exists()
+    monkeypatch.setattr(data, "require_live_identity", lambda: None)
+    assert cli.main(argv) == 3  # refused: provider preflight
     assert not output.exists()
     existing = tmp_path / "exists"
     existing.mkdir()

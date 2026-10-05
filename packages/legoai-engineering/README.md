@@ -998,7 +998,7 @@ their prior scope; M6.5 and M7 are unstarted. See the
 
 `analyst.api.RepositoryAnalyst` composes a trusted `RepositoryEvidencePort` with
 the existing M7 `AgentRuntimePort`. `repository_analyst_definition()` returns an
-immutable version 1.0.0 definition using the M6.5 `engineering-reasoning` profile.
+immutable version 1.0.1 definition (1.0.0 until ENG-ANALYST-PROMPT-1) using the M6.5 `engineering-reasoning` profile.
 The [offline example](examples/repository_analyst.py) supplies real routing,
 governed Chat and an in-memory fake ModelPort; it requires no provider service.
 Install the `analyst` extra to add the existing Core distribution. Base M1–M6
@@ -1923,3 +1923,34 @@ Operator command from repository root:
 `uv run python .\validate_engineering_discovery_1.py`.
 No live model or Docker required. The validator includes local/replay regressions
 and clean wheel consumption; full operator qualification remains pending.
+
+## ENG-ANALYST-PROMPT-1 — implemented, local validation pending
+
+ANALYST-CONTRACT-DIAG-1 found every frozen-condition reply missing both `risks`
+and `unknowns` (91/91 `field_set_invalid`); the 1.0.0 guidance named them in one
+joint phrase. RepositoryAnalyst behavior version is now 1.0.1 (previously
+1.0.0); AgentId, public API types and package version are unchanged. This exact
+version triple is not an inferred SemVer compatibility promise. Only
+`analyst/api.py` instruction text and version change.
+
+The guidance now lists the six required top-level keys in order, states that
+none is optional, and says `risks` and `unknowns` are two separate keys that
+must each appear on their own. Each is defined separately: `risks` is a required
+array of at most 8 nonblank strings describing risks supported by the supplied
+evidence; `unknowns` is a required array of at most 8 nonblank strings
+describing relevant unresolved or missing evidence; either may be empty. One
+placeholder-only six-field shape is included; no fixture paths, source code or
+task-specific answers.
+
+Parser, values, the exact six-field set, bounds, membership, findings schema,
+the insufficient-evidence rule and the ADR-021 decoder are unchanged. Missing,
+merged, extra or mistyped fields are still rejected. No new ADR, defaults,
+repair, retry, provider JSON mode or structured-output abstraction.
+
+Operator qualification: `uv run python .\validate_engineering_analyst_prompt.py`.
+It pins the pre-slice commit 8d1ada3 and requires no live model or Docker.
+The frozen CONTENT-DISCOVERY-1/1Q/DIAG-1 studies now verify their pinned Analyst
+sources at their recorded foundation commits via git, so their evidence stays
+immutable; their live CLIs refuse to sample Analyst 1.0.1 under the 1.0.0
+condition. Re-measurement needs a new prompt-contract condition; no live
+measurement was run for this implementation.
