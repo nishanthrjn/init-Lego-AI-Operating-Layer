@@ -163,3 +163,121 @@ uv run python evaluation/run_analyst_insufficient_diag_1.py live `
 ```
 
 No diagnostic result exists yet.
+
+## Local qualification
+
+All 27 phases of `validate_forgeai_analyst_insufficient_diag_1.py` passed on
+2026-10-05 (29 including sub-phases), with no live model or Docker. That
+includes regressions for:
+- Analyst (90 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41), ENG-ANALYST-PROMPT-1 (27) and 1Q-R2 (33).
+
+The recorded-mode fold was not run: the local r2 output directory no longer
+holds the SHA-256-pinned `report.json`.
+
+## Results (live, 2026-10-05)
+
+**Condition:**
+- commit `fa4aa8f691ac1e92212f1616e836372d002b9631`, clean tracked tree;
+- RepositoryAnalyst 1.0.1, fingerprint `f99564e6…2cc0`, parser identity
+  `016fcc40…2672`;
+- `qwen2.5-coder:7b` `sha256:dae161e2…f4364`, Ollama 0.35.1, 600 s timeout,
+  provider-default sampling, no retry or fallback;
+- all 91 planned calls completed.
+
+The report was not committed. Its digests:
+- `report.json`: SHA-256 `09c096a760003bc31b6626c063315a3c15359691e76b055630a359b34faa9022`;
+- `report.md`: `a5c55a3b133ed2a9a076ff8cc4324ccfa9b36d0b27e5c95e042afbb9deb5342c`;
+- `condition.json`: `f6e94c11f611c362770fa60bceb15d83e982721e88b3dcb87c76312167df9f78`;
+- condition digest: `6cd0b37569f1277e9c33544e25bc5b0252eaa741d273a33f4b8e74259719762c`.
+
+Re-building from the 91 records reproduces the aggregates, decision, condition
+digest and linkage exactly, and `report.md` re-renders identically.
+
+**Recording defect (repeated):** `hardware_class` holds the literal placeholder
+`<actual hardware description>`. The condition stays as written.
+
+**Integrity:** classifier disagreements 0, stage/category inconsistencies 0,
+refinement inconsistencies 0 and model failures 0. Every reply parsed; there
+were no earlier-stage failures and no non-JSON replies in this sample.
+
+### Clause split (the primary question)
+
+| Refined category | All calls | Held-out |
+| --- | --- | --- |
+| `insufficient_findings_present` | 12 | 12 |
+| `insufficient_unknowns_empty` | 0 | 0 |
+| `insufficient_findings_present_and_unknowns_empty` | 0 | 0 |
+
+- **Every invalid abstention (12/12) failed one clause only:** findings were
+  present (1 or 2 each) while the status was `insufficient_evidence`.
+- `unknowns` was never empty. All 64 insufficient-evidence replies had 1–2
+  unknowns.
+- All 12 invalid abstentions are on cases expected to `succeed`, spread across
+  8 of the 20 answerable held-out cases. `q16` failed in all 3 repetitions.
+  None of the supporting or probe calls failed.
+
+### Status against expected outcome
+
+| Partition | Expected | → succeeded | → insufficient_evidence |
+| --- | --- | --- | --- |
+| held-out | succeeded (60) | 17 | 43 (31 valid, 12 invalid) |
+| held-out | insufficient (12) | 2 | 10 |
+| supporting | succeeded (12) | 8 | 4 |
+| supporting | insufficient (2) | 0 | 2 |
+| probes | succeeded (2) | 0 | 2 |
+| probes | insufficient (3) | 0 | 3 |
+
+**Abstention classes, all calls:**
+- valid abstention 52 (37 on expected-succeeded cases, 15 on expected-insufficient);
+- invalid abstention 12 (all expected-succeeded);
+- valid success 27 (25 expected-succeeded, 2 expected-insufficient);
+- other invalid 0.
+
+### Decision (mechanical, predeclared rule)
+
+**Inputs (held-out):**
+- valid abstentions / parsed answerable replies = 31/60 (51.7%);
+- invalid abstentions / invalid calls = 12/12;
+- dominant refined category `insufficient_findings_present`, 12/12;
+- model failures 0/72;
+- integrity failures 0.
+
+**B. ANALYST ABSTENTION BEHAVIOR REQUIRES QUALITY DECISION.**
+
+**Interpretation, without changing the rule:**
+- **The contract failure is narrow and uniform.** On answerable cases the
+  model sometimes reports supporting findings and still chooses
+  `insufficient_evidence`. Its `unknowns` are always present. The
+  preconditions for A (one clause covering ≥ 80% of invalid abstentions, and
+  invalid abstention ≥ 50% of invalid calls) also hold, but the predeclared
+  order evaluates B first.
+- **Abstention dominates even among valid replies.** On answerable held-out
+  cases the model abstains in 43 of 60 calls (71.7%), 31 of them validly.
+  Clarifying the `insufficient_evidence` clause alone would at best turn invalid
+  abstentions into valid abstentions or answers. It would not by itself
+  produce answers on most answerable cases.
+- **B sits near the threshold.** 51.7% against the predeclared 50%: one fewer
+  valid abstention would have given 30/60, which still meets ≥ 50%. The rule is
+  applied as declared.
+- **No r2 decision is re-computed.** This sample's held-out validity (60/72) is
+  descriptive only; r2 remains decision B. No relevance-quality conclusion is
+  drawn.
+
+### Next decision (maintainer; not implemented)
+
+B means the next question is the model's abstention behavior, not JSON or schema
+formatting. It is a quality decision, and each candidate needs its own approved,
+separately measured condition:
+- explicit guidance on when the supplied evidence is sufficient to answer;
+- the separable `insufficient_evidence` ⇒ `findings = []` clarification. It is
+  evidenced here as the sole validity failure, but it is not a fix for
+  abstention;
+- a different model or provider condition.
+
+**Unchanged:** no threshold, oracle, parser, rule or model changes. Lowering
+the validity gate, allowing findings under `insufficient_evidence`, making
+`unknowns` optional, retries and repair all stay out of scope. ForgeAI
+integration and CONTENT-DISCOVERY-2 remain deferred. G07 remains open.
