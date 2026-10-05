@@ -195,11 +195,101 @@ disagreements and zero coarse inconsistencies.
 - an existing output directory;
 - an unreachable Ollama, missing model or digest mismatch.
 
-## Results
+## Results (live, 2026-10-05)
 
-Pending the operator's live run.
+**Condition:**
+- commit `6f5a80f151f5992b49db61738397e134d5d6aa68`, clean tracked tree;
+- RepositoryAnalyst 1.0.0, fingerprint `924bdaac…9b7`;
+- `qwen2.5-coder:7b` `sha256:dae161e2…f4364`, Ollama 0.35.1, provider-default
+  sampling, no fallback or retry;
+- fixtures equal the 1Q freeze;
+- linkage to 1Q (`2edc3f7`, `2cdb9710…afbf`, `f03d213f…b93d`, decision B) is
+  verified.
+
+The report was not committed. Its digests:
+- `report.json`: SHA-256 `7bbc3ab074cfbc9bf1bfd8da8cac3163776caefca9d4bd1e68d4ac466f963fa8`;
+- `condition.json`: `00858bc071e451f7db9193f95581b811dc332fdb5e87995c9128d19ec3e982ae`;
+- condition digest: `2e541e7f…eb4b`.
+
+The aggregates re-fold exactly from the 91 records.
+
+| Observation | All 91 calls | Held-out (72) | CD-1 supporting (14) | CD-1 probes (5) |
+| --- | --- | --- | --- | --- |
+| Valid | 0 | 0 | 0 | 0 |
+| First failure | `field_set_invalid` 91 | 72 | 14 | 5 |
+| Missing required fields | `risks`+`unknowns` together: 91/91 | 72/72 | 14/14 | 5/5 |
+| Unexpected-field count | 1 in 90, 2 in 1 (c08) | 1 in 72 | 1 in 13, 2 in 1 | 1 in 5 |
+| Actual / expected fields | 5/6 in 90, 6/6 in 1 | 5/6 | 5/6 in 13, 6/6 in 1 | 5/6 |
+| Representation | `fenced_json` 51, `raw` 40 | 42 / 30 | 7 / 7 | 2 / 3 |
+
+**Other observations:**
+- **Field types:** `status` string, `summary` string, `relevant_files` array and
+  `findings` array in **all 91** replies. `risks` and `unknowns` were missing
+  in all 91.
+- **Status values:** `insufficient_evidence` 61, `succeeded` 30. This is
+  structural only and not interpreted as quality.
+- **Run health:** 0 model failures, 0 classifier disagreements, 0 coarse
+  inconsistencies with 1Q.
+- **Wall clock:** 4,898 s; per call, mean 53.8 s and maximum 118.3 s.
+
+### Interpretation
+
+1. **The first blocker is a single repeated field-set mismatch.** Every reply
+   omits exactly the two fields `risks` and `unknowns` and adds one key in
+   their place: 90 of 91 have exactly one unexpected key. Everything else in
+   the field set is correct and correctly typed.
+2. **It is not a representation issue.** ADR-021 decoded all 51 fenced replies
+   correctly, and fenced and raw replies fail identically.
+3. **It is not a type or shape issue.** No reply reached a later stage, and
+   every present required field has the right JSON type.
+4. **It is consistent with the prompt wording.** The Analyst instruction names
+   these two fields jointly, in one phrase: "risks and unknowns (each at most
+   8 nonblank strings …)". The other four fields are each named individually.
+   A reply that merges the two into one combined key would produce exactly
+   this signature: 4 of 6 contract fields plus 1 unexpected field.
+5. **What is not known.** Unexpected key names are deliberately not recorded,
+   so the merged-key reading is a strong *hypothesis* that fits all
+   observations. It is not a verified identification of the extra key.
+6. **What is not measured.** Relevance and abstention quality remain
+   unmeasured. No quality is inferred from rejected replies or from the status
+   distribution.
+
+### Pattern and decision
+
+**Mechanical pattern: B. MIXED REQUIRED-FIELD OMISSION PATTERN.** Two required
+fields are missing, so the predeclared single-field rule (A) does not fire.
+
+**Next decision: 1. ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED.** This
+applies the predeclared exception to the B mapping: one narrow, repeated
+mismatch dominates.
+- The *same* missing pair appears in 91 of 91 replies.
+- Exactly one replacement key appears in 90 of 91.
+- No other stage, type or representation failure occurred.
+
+This is a single wording-level contract mismatch, not a broad structured-output
+problem (2), not evidence that the contract is overconstrained (3), and not a
+representation issue (4).
+
+**Not implemented here.** A separately approved RepositoryAnalyst version
+change would:
+- name `risks` and `unknowns` as two separate required array fields, giving
+  their bounds individually;
+- keep the parser and the six-field schema strict;
+- add no defaults, repair or retry.
+
+It would then be re-measured on the unchanged frozen CONTENT-DISCOVERY-1Q
+condition: same cases, oracle, thresholds, model and N.
 
 ## Local qualification
 
-`uv run python .\validate_forgeai_analyst_contract_diag_1.py`: pending operator
-run.
+All 23 phases of `uv run python .\validate_forgeai_analyst_contract_diag_1.py`
+passed on 2026-10-05, before the live run. That includes regressions for:
+- Analyst (90 tests);
+- authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1 and 1Q (264);
+- ForgeAI architecture (41).
+
+No live model or Docker was used by the validator.
+
+**ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED**

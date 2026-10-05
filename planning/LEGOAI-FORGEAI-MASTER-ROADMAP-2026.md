@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-ANALYST-CONTRACT-DIAG-1 status (2026-10-05): evaluation-only first-failure structural diagnostics for the unchanged RepositoryAnalyst are implemented to split 1Q's `schema_invalid`; see [contract diagnostic](FORGEAI-ANALYST-CONTRACT-DIAGNOSTIC.md). Local validation and the same-condition live run are pending; no Analyst change. G07 remains open.
+ANALYST-CONTRACT-DIAG-1 status (2026-10-05): locally qualified; the same-condition live run (91 calls) shows every Analyst reply omits exactly `risks` and `unknowns` (91/91) with one replacement key (90/91); no other stage failed. Next decision: **ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED** (not implemented); see [contract diagnostic](FORGEAI-ANALYST-CONTRACT-DIAGNOSTIC.md). G07 remains open.
 
 CONTENT-DISCOVERY-1Q status (2026-10-04): harness locally qualified; live measurement (qwen2.5-coder:7b, 91 calls) gave 0/91 structurally valid Analyst replies, all `schema_invalid`, with zero classifier disagreements and zero safety violations. Decision: **ANALYST OUTPUT CONTRACT IS THE PRIMARY BLOCKER**; no relevance quality is measured; see [Analyst quality](FORGEAI-CONTENT-DISCOVERY-ANALYST-QUALITY.md). Next: a content-free Analyst contract diagnostic; no Analyst change, no ForgeAI integration. G07 remains open.
 
