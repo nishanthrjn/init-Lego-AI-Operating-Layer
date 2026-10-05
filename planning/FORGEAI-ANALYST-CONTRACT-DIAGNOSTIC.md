@@ -293,3 +293,58 @@ passed on 2026-10-05, before the live run. That includes regressions for:
 No live model or Docker was used by the validator.
 
 **ANALYST PROMPT CONTRACT CLARIFICATION JUSTIFIED**
+
+## ENG-ANALYST-PROMPT-1 (implemented 2026-10-05; local validation pending)
+
+The diagnostic conclusion is accepted. RepositoryAnalyst is now 1.0.1. That is
+a narrow revision of its definition in
+`packages/legoai-engineering/src/legoai_engineering/analyst/api.py`.
+
+**Wording change (instruction text and version only):**
+- The instructions list the six required top-level keys in canonical order:
+  status, summary, relevant_files, findings, risks, unknowns.
+- They state that all six are required and none is optional.
+- They state that `risks` and `unknowns` are two separate keys. Each must appear
+  on its own, and the two are never merged into one key.
+- `risks` is defined on its own: a required array of at most 8 nonblank strings
+  (each 1024 bytes or less) describing risks supported by the supplied evidence.
+  It may be empty.
+- `unknowns` is defined on its own: a required array of at most 8 nonblank
+  strings (each 1024 bytes or less) describing relevant unresolved or missing
+  evidence. It may be empty.
+- One placeholder-only six-field shape illustration is added. It contains no
+  fixture paths, source code or task answers.
+- The joint phrase "risks and unknowns (each ...)" is removed.
+
+**Unchanged:**
+- the parser;
+- `values.py`;
+- the exact six-field set and the field bounds;
+- membership checks and the findings schema;
+- the insufficient-evidence rule;
+- the ADR-021 decoder.
+
+Missing, merged, extra or mistyped `risks`/`unknowns` are still rejected.
+
+**Not added:** a structured-output abstraction, a provider-specific schema or
+JSON mode, retry, repair, defaults and coercion. No new ADR is needed: no public
+API, schema or mechanism changes.
+
+**History stays immutable:**
+- This slice does not edit any report, condition, fixture, oracle, threshold or
+  schema.
+- The CONTENT-DISCOVERY-1 and 1Q freezes now verify their pinned Analyst source
+  digests at their recorded foundation commits (`git show`), not against the
+  working tree.
+- The 1Q and DIAG-1 live commands refuse (exit 3, nothing written) unless the
+  current Analyst fingerprint equals the preregistered 1.0.0 fingerprint
+  `924bdaac…`. So a 1.0.1 sample can never be recorded as the frozen 1.0.0
+  condition.
+
+**Re-measurement is required before any quality conclusion.** Analyst 1.0.1
+needs a new prompt-contract condition: a 1Q-r2 slice that pins 1.0.1 and reuses
+the frozen cases, oracle, thresholds, N, model and digest. That condition comes
+first. Relevance quality is evaluated only if structural validity reaches 90%.
+
+Operator qualification: `uv run python .\validate_engineering_analyst_prompt.py`
+(28 phases, no live model).

@@ -77,11 +77,13 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             parser.error("live mode requires " + ", ".join(missing))
         try:
+            data.require_live_identity()
             checkout = cq.git_state(cq.git, args.expect_branch, args.expect_commit)
             identity = verify_ollama(args.ollama_url, args.model, args.model_digest)
         except ValueError as error:
             parser.error(str(error))
         except (
+            data.AnalystIdentityError,
             PreflightError,
             cq.CheckoutError,
             subprocess.CalledProcessError,
