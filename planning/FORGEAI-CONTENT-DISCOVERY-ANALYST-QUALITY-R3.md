@@ -228,3 +228,112 @@ Replace the hardware placeholder with the real machine description, for example
 the CPU, GPU and memory. The literal placeholder is refused.
 
 **No R3 live result exists yet, and no quality claim is made.**
+
+## Local qualification
+
+All 43 phases of `validate_forgeai_content_discovery_1q_r3.py` passed on
+2026-10-05 (46 including sub-phases), with no live model or Docker. That
+includes regressions for:
+- Analyst (90 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41) and the Analyst 1.0.2 prompt (61);
+- r2 (34) and DIAG-1 (38) pinned to 1.0.1.
+
+**Preflight:** two live attempts with the literal hardware placeholder were
+refused before any call, and nothing was written.
+
+## Results (live, 2026-10-05)
+
+**Condition:**
+- commit `9442ef393d22c316a378818952d690566b04eb52`, clean tracked tree;
+- RepositoryAnalyst 1.0.2, fingerprint `5f6635c7…ceef`, parser identity
+  `016fcc40…2672`;
+- `qwen2.5-coder:7b` `sha256:dae161e2…f4364`, Ollama 0.35.1, 600 s timeout,
+  provider-default sampling, no retry or fallback;
+- hardware: Intel Core i7-8565U (4 cores/8 threads), 16 GB RAM, NVIDIA GeForce
+  MX130 + Intel UHD 620, Windows 11;
+- all 91 planned calls completed.
+
+The report was not committed. Its digests:
+- `report.json`: SHA-256 `025f4717b2479812823068196f00cdf587ba3fcb40b083ea7ebd23e69dd0d367`;
+- `report.md`: `ad324ab8ee4bd758fb4a15ce225b9a77c2a6044c699dc16553bf740dc5af4df3`;
+- `condition.json`: `b85648aaaa24fb813de5e9f56de4aa629f11578852b89c5c521271f66444bf60`;
+- condition digest: `a8d403e0cdddaee8d04178fa858649fe1c436ddbb288652c90ba79295fb5619e`.
+
+Re-building from the 91 records reproduces every aggregate, gate, decision and
+descriptive block exactly, and `report.md` re-renders identically.
+
+### Frozen gates (held-out; safety over all calls)
+
+| Gate | Result | Passed |
+| --- | --- | --- |
+| Safety counts | 0 | yes |
+| Classifier disagreements | 0 | yes |
+| Model failures | 0/72 | yes |
+| Structural validity (≥ 90%) | 67/72 = 93.1% | **yes** (first time) |
+| Precision (≥ 85%) | 49/56 = 87.5% | yes |
+| Required recall (≥ 90%) | 34/67 = 50.7% | no |
+| Acceptable-set success (≥ 80%) | 21/55 = 38.2% | no |
+| Insufficient correctness (≥ 90%) | 3/12 = 25.0% | no |
+| False-sufficient (= 0) | 10 | no |
+| Catastrophic miss (= 0) | 0 | yes |
+
+### Decision (mechanical, frozen 1Q rule)
+
+**C. ANALYST REASONING QUALITY IS INSUFFICIENT.** Structural validity passed,
+and four quality gates fail. Relevance metrics are decision evidence for this
+condition.
+
+### Descriptive comparison (no causal claim; N = 3)
+
+| Measure (held-out) | r2 / 1.0.1 | DIAG-1 / 1.0.1 | R3 / 1.0.2 |
+| --- | --- | --- | --- |
+| Structural validity | 59/72 | 60/72 | **67/72** |
+| Answerable success | 13/60 | 17/60 | **28/60** |
+| Valid abstention (answerable) | 34/60 | 31/60 | 27/60 |
+| Invalid abstention (answerable) | 12/60 | 12/60 | 4/60 |
+| Other invalid (answerable) | 1/60 | 0/60 | 1/60 |
+| Total abstention (answerable) | 46/60 | 43/60 | 31/60 |
+| Expected-insufficient → succeeded | 1/12 | 2/12 | **9/12** |
+
+**What changed:**
+- **Structural validity passed the gate.** Invalid abstentions fell from 12 to 4
+  on answerable cases. All 5 remaining invalid abstentions (4 held-out, 1
+  supporting) are still `insufficient_findings_present`, so the defect is
+  reduced but persists.
+- **Two new `membership_invalid` replies** cite unsupplied paths: `q16`
+  repetition 2 and `c13`. Membership rejected both, and the safety counts stay 0.
+- **Answerable success rose to 28/60** (46.7%), but abstention on answerable
+  cases is still 31/60. Eight answerable cases never succeeded across their
+  3 calls: q08, q12, q14, q23 and q24 abstained in every call, and q01, q02 and
+  q06 succeeded only once each.
+
+**Over-correction occurred:**
+- 9 of 12 expected-insufficient held-out calls answered `succeeded`. Insufficient
+  correctness fell to 25%.
+- Every call for `q21` was a false success, and q19, q20 and q22 each had two.
+- False-sufficient = 10: 9 on expected-insufficient cases and 1 partial answer
+  (`q06` repetition 2).
+
+The frozen gate fails, and it is not rationalized by the improved answer rate.
+
+**Calibration rather than formatting:** the policy moved the model's status
+choice in both directions at once. It raised answers on answerable cases and on
+unanswerable cases alike, while 8 answerable cases kept failing. That is a
+discrimination (calibration) failure, not a formatting or contract failure.
+
+### Next step (pre-declared; recommendation only, not implemented)
+
+Under C, the pre-declared follow-up is **ANALYST-MODEL-COMPARE-1**. Prompt tuning
+stops here, because the explicit status policy has now been tested. The R3
+results expose no new evidence or oracle defect:
+- the supplied subsets are unchanged and audited complete;
+- the expected-insufficient cases visibly lack the required code.
+
+The comparison would keep Analyst 1.0.2, the evidence, the oracle, N and the
+thresholds fixed, under separately pinned model conditions. No stronger model is
+installed locally today, so candidate selection, hardware cost and the pinned
+digests are part of that slice's decision.
+
+CONTENT-DISCOVERY-2 and ForgeAI integration remain deferred. **G07 remains open.**
