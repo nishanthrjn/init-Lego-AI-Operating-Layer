@@ -354,3 +354,28 @@ approved CONTENT-DISCOVERY-2 bounded-orchestration decision. Even then, G07 is
 narrowed, not closed, from one synthetic workload.
 
 CONTENT-DISCOVERY-2 and ForgeAI integration remain deferred.
+
+## 18. Implementation status (ENG-ANALYST-SUFFICIENCY-SEMANTICS-1)
+
+Status (2026-10-06): **implemented, local validation pending.**
+
+- RepositoryAnalyst 1.0.2 → 1.0.3. Only the `analyst/api.py` instruction text
+  and version change.
+- The SYSTEM guidance encodes the section 13 delta as generic wording:
+  governing evidence, `succeeded` requiring it, the four
+  `insufficient_evidence` situations, reference-is-not-content, unseen context
+  vs governing evidence, future behavior and its limit, ambiguity, and
+  relevance vs sufficiency.
+- The 1.0.2 clause "related files may exist elsewhere" is removed.
+- The parser, schema, evidence, oracle, model, provider, routing and retry are
+  unchanged.
+- c15 remains a non-gating contract probe, unmodified.
+- R2 and the insufficient diagnostic remain pinned to 1.0.1. R3 and the model
+  comparison are pinned to 1.0.2 and refuse 1.0.3.
+- No new ADR; this record is the rationale.
+- Validator: `validate_engineering_analyst_sufficiency_semantics.py`, 41 phases,
+  no live model.
+
+Next, unchanged from section 16: CONTENT-DISCOVERY-1Q-R4, after local
+qualification and a commit. Live behavior of 1.0.3 is not yet measured. G07
+remains open.

@@ -67,12 +67,35 @@ def argv(mode: str, output: Path, **overrides: str) -> list[str]:
 # Frozen identities ------------------------------------------------------------
 
 
-def test_analyst_identity_is_the_r3_1_0_2() -> None:
+def pretend_pinned(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present exactly the preregistered 1.0.2 identity so that later preflight
+    steps are reached; the working-tree Analyst is a later version."""
+    analyst = r3.read()["analyst"]
+    assert isinstance(analyst, dict)
+    sources = analyst["sources"]
+    assert isinstance(sources, dict)
+    real = q.digest
+
+    def digest(path: Path) -> str:
+        relative = path.resolve().relative_to(q.ROOT).as_posix()
+        return str(sources[relative]) if relative in sources else real(path)
+
+    monkeypatch.setattr(q, "analyst_version", lambda: "1.0.2")
+    monkeypatch.setattr(q, "definition_fingerprint", lambda: V102)
+    monkeypatch.setattr(q, "digest", digest)
+
+
+def test_analyst_identity_is_the_r3_1_0_2(monkeypatch: pytest.MonkeyPatch) -> None:
     analyst = data.read()["analyst"]
     assert analyst == r3.read()["analyst"]
     assert isinstance(analyst, dict)
-    assert analyst["version"] == q.analyst_version() == "1.0.2"
-    assert analyst["definition_fingerprint"] == q.definition_fingerprint() == V102
+    assert analyst["version"] == "1.0.2"
+    assert analyst["definition_fingerprint"] == V102
+    # A later Analyst may not be sampled under this frozen comparison.
+    assert q.analyst_version() != "1.0.2"
+    with pytest.raises(r3.AnalystIdentityError):
+        data.require_live_identity()
+    pretend_pinned(monkeypatch)
     data.require_live_identity()
 
 
@@ -203,7 +226,7 @@ def test_per_model_report_isolation(tmp_path: Path) -> None:
     condition = json.loads((output / "condition.json").read_text("utf-8"))
     assert written["schema"] == report.REPORT_SCHEMA
     assert condition["schema"] == report.CONDITION_SCHEMA
-    assert condition["analyst"]["definition_fingerprint"] == V102
+    assert condition["analyst"]["definition_fingerprint"] == q.definition_fingerprint()
     assert condition["fixtures"] == data.freeze()
     assert len(written["records"]) == 91
     assert written["decision"]["label"] == "REPLAY ONLY - not quality evidence"
@@ -369,8 +392,12 @@ def test_margins_are_preregistered() -> None:
 # Verified comparison end to end ----------------------------------------------------
 
 
-def live_report(tmp_path: Path) -> dict[str, object]:
-    """A replay report re-labelled as a pinned live candidate (identity test only)."""
+def live_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, object]:
+    """A replay report re-labelled as a pinned live candidate (identity test only).
+
+    The condition records the pinned 1.0.2 identity, as a real run would have.
+    """
+    pretend_pinned(monkeypatch)
     output = tmp_path / "source"
     assert cli.main(["replay", "--output", str(output)]) == 0
     source = json.loads((output / "report.json").read_text("utf-8"))
@@ -387,7 +414,7 @@ def test_candidate_identity_verification(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pin(monkeypatch)
-    value = live_report(tmp_path)
+    value = live_report(tmp_path, monkeypatch)
     digests = data.freeze()
     cli.verify_candidate(value, digests)
     tampered = json.loads(json.dumps(value))
@@ -418,7 +445,7 @@ def test_compare_command_end_to_end(
     candidate_dir = tmp_path / "candidate"
     candidate_dir.mkdir()
     (candidate_dir / "report.json").write_text(
-        json.dumps(live_report(tmp_path)), "utf-8"
+        json.dumps(live_report(tmp_path, monkeypatch)), "utf-8"
     )
     r3_out = tmp_path / "r3"
     assert r3cli.main(["replay", "--output", str(r3_out)]) == 0
@@ -494,6 +521,7 @@ def test_report_privacy(tmp_path: Path) -> None:
 def test_refuses_wrong_analyst(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str
 ) -> None:
+    pretend_pinned(monkeypatch)
     pin(monkeypatch)
     monkeypatch.setattr(q, "definition_fingerprint", lambda: "0" * 64)
     monkeypatch.setattr(cq, "git_state", never)
@@ -520,6 +548,7 @@ def test_refuses_wrong_model_or_digest(
     digest: str,
     pinned: str | None,
 ) -> None:
+    pretend_pinned(monkeypatch)
     pin(monkeypatch, pinned)
     monkeypatch.setattr(cq, "git_state", never)
     monkeypatch.setattr(cli, "verify_ollama", never)
@@ -538,6 +567,7 @@ def test_refuses_wrong_model_or_digest(
 def test_refuses_checkout_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, state: dict[str, str]
 ) -> None:
+    pretend_pinned(monkeypatch)
     pin(monkeypatch)
     good = {"rev-parse": "c", "branch": "b", "status": ""}
     monkeypatch.setattr(cq, "git", lambda args: {**good, **state}[args[0]])
@@ -550,6 +580,7 @@ def test_refuses_checkout_mismatch(
 def test_refuses_placeholder_hardware_and_unreachable_ollama(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pretend_pinned(monkeypatch)
     pin(monkeypatch)
     monkeypatch.setattr(cq, "git_state", never)
     output = tmp_path / "live"
@@ -565,6 +596,17 @@ def test_refuses_placeholder_hardware_and_unreachable_ollama(
 
     monkeypatch.setattr(cli, "verify_ollama", refuse)
     assert cli.main(argv("smoke", output)) == cq.PREFLIGHT_FAILED
+    assert not output.exists()
+
+
+def test_refuses_the_current_later_analyst(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin(monkeypatch)
+    monkeypatch.setattr(cq, "git_state", never)
+    monkeypatch.setattr(cli, "verify_ollama", never)
+    output = tmp_path / "live"
+    assert cli.main(argv("live", output)) == cq.PREFLIGHT_FAILED
     assert not output.exists()
 
 

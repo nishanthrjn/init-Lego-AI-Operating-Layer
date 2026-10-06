@@ -52,7 +52,7 @@ def sentences(text: str) -> list[str]:
 def test_definition_version_and_guidance() -> None:
     definition = repository_analyst_definition()
     assert definition.agent_id.value == "repository-analyst"
-    assert definition.behavior_version == Version(1, 0, 2)
+    assert definition.behavior_version == Version(1, 0, 3)
     for text in (
         "Return only a JSON object with exactly these six top-level keys: status, "
         "summary, relevant_files, findings, risks, unknowns.",
@@ -95,7 +95,7 @@ def test_governed_request_and_user_payload(workspace: Path) -> None:
     assert result.status is RepositoryAnalysisStatus.SUCCEEDED
     assert result.agent_result is not None
     assert result.agent_result.definition == repository_analyst_definition()
-    assert result.agent_result.definition.behavior_version == Version(1, 0, 2)
+    assert result.agent_result.definition.behavior_version == Version(1, 0, 3)
     assert model.last_request is not None and model.calls == 1
     system, user = model.last_request.messages
     assert system.role is ChatRole.SYSTEM and user.role is ChatRole.USER
