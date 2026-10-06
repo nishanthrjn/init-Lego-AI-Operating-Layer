@@ -2030,7 +2030,7 @@ sub-phases), with no live model or Docker. That includes regressions for:
 Implementation commit: `f1cd2b6`. Live behavior of 1.0.2 is not yet measured;
 CONTENT-DISCOVERY-1Q-R3 is required.
 
-## ENG-ANALYST-SUFFICIENCY-SEMANTICS-1 — Analyst 1.0.3 evidence sufficiency (implemented, local validation pending)
+## ENG-ANALYST-SUFFICIENCY-SEMANTICS-1 — Analyst 1.0.3 evidence sufficiency (locally qualified 2026-10-06)
 
 ANALYST-SUFFICIENCY-SEMANTICS-DECISION adopted strict evidence sufficiency.
 Under 1.0.2, `qwen2.5-coder:14b` answered `succeeded` on 8 of 12
@@ -2104,3 +2104,15 @@ It pins the pre-slice commit cfeed11 and requires no live model or Docker.
 CONTENT-DISCOVERY-1Q-R4 is required. It pins 1.0.3, uses `qwen2.5-coder:14b`
 at its pinned digest, and reuses the frozen workload, oracle, thresholds, N
 and decision function.
+
+Operator qualification passed on 2026-10-06: all 41 phases (52 including
+sub-phases), with no live model or Docker. That includes regressions for:
+- Analyst (176 tests) and authorized evidence (25);
+- DISCOVERY-1 (185);
+- DISCOVERY-2A/2A.1, CONTENT-DISCOVERY-1, 1Q and DIAG-1 (310);
+- ForgeAI architecture (41);
+- r2 (34) and the insufficient diagnostic (37), pinned to 1.0.1;
+- R3 (42) and the model comparison (37), pinned to 1.0.2.
+
+Live behavior of 1.0.3 is not yet measured; CONTENT-DISCOVERY-1Q-R4 is
+required.
