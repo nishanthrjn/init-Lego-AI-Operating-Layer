@@ -349,3 +349,145 @@ the later comparison step. Its SHA-256 matches the pinned
 
 **Next:** the full 91-call `qwen2.5-coder:14b` condition, then the comparison.
 `phi4:14b` remains optional and needs separate approval.
+
+## Stage 2 full condition and comparison (live, 2026-10-06)
+
+**Condition:**
+- `qwen2.5-coder:14b`
+  `sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849`;
+- commit `46ef93f8b7fc186d42448fadaf94cac2b1727d4e`, clean tracked tree;
+- Analyst 1.0.2 (`5f6635c7…`), parser `016fcc40…`; Ollama 0.35.1, 600 s timeout;
+- the real hardware description;
+- all 91 calls, no early stop.
+
+**Timing:** mean 130.1 s, median 121.8 s, p90 188.7 s, max 238.5 s; 3.29 h in
+total, under the smoke projection of 4.7 h.
+
+**Digests (reports not committed):**
+
+| File | SHA-256 |
+| --- | --- |
+| candidate `report.json` | `63e9ec768b421bec88f70bbc218f988122ae7650654f28ae8dd4e04c411cbb76` |
+| candidate `report.md` | `a4ca4c55a8b104626ae0ab9b120d2b401d19018aa4d97e0186c0a35194cee8e5` |
+| candidate `condition.json` | `4642dbe17d7b1e6cce3cd07e92c953002d7999778d2147fe1c5816a256a2ee03` |
+| candidate condition digest | `82ce8f150f19587d745329b2d745d49a4c6c96e4ffdece237588f77095c22dfc` |
+| `comparison.json` | `80cf5c6ee917a45bb00af93d6992cbf26c775d2a6993671d15aed454a9061f4f` |
+| `comparison.md` | `ec1b76bcdb702b024a997c3ff2cb9b37e87f19ebb9ea731dae5ae5ec8ba8fd46` |
+
+**Verification:** the comparison verified the R3 control report by its pinned
+SHA-256 (`025f4717…`) and verified the candidate:
+- identity: Analyst, workload digests, the 91-call plan and the pinned model
+  digest;
+- exact re-folding of all aggregates from the records.
+
+There are no identity failures. Both Markdown files re-render identically from
+their JSON.
+
+### Frozen gates, held-out (control = R3 `qwen2.5-coder:7b`)
+
+| Gate | 7b (R3) | 14b | 14b passed |
+| --- | --- | --- | --- |
+| Safety counts | 0 | 0 | yes |
+| Classifier disagreements / model failures | 0 / 0 | 0 / 0 | yes |
+| Structural validity (≥ 90%) | 67/72 | **72/72** | yes |
+| Precision (≥ 85%) | 49/56 | **101/103** (98.1%) | yes |
+| Required recall (≥ 90%) | 34/67 | **74/75** (98.7%) | yes |
+| Acceptable-set success (≥ 80%) | 21/55 | **57/60** (95.0%) | yes |
+| Insufficient correctness (≥ 90%) | 3/12 | 4/12 (33.3%) | **no** |
+| False-sufficient (= 0) | 10 | 8 | **no** |
+| Catastrophic miss (= 0) | 0 | 0 | yes |
+
+The 14b's own frozen decision is **C. ANALYST REASONING QUALITY IS
+INSUFFICIENT**.
+
+### Comparison outcome (mechanical, section 9)
+
+**B. MODEL CHANGE DOES NOT RESOLVE ANALYST QUALITY.**
+
+The 14b passes the following material-improvement checks: validity, required
+recall (+0.48), acceptable set (+0.57), safety, and class majority (8 of 9
+classes improved). It fails two:
+- insufficient correctness, 0.33 against the required 0.50 or more;
+- false-sufficient, 8 against the required 5 or fewer.
+
+So it is not materially better, and its own decision is not A. The rule is
+applied as declared.
+
+### Descriptive results (not gates)
+
+**Answerable cases are essentially solved:**
+- answerable success 59/60, against 28/60 for the control;
+- one valid abstention (q23, repetition 3); 0 invalid abstentions;
+- 0 structural failures in 91 calls;
+- required recall 100% in 9 of the 10 answerable classes with a defined
+  denominator (prompt_injection 5/6).
+
+**Every remaining failure is on expected-insufficient cases.** All 8 held-out
+false-sufficients:
+
+| Case | 14b answered succeeded |
+| --- | --- |
+| q19 (the governing function lives in an unsupplied module) | 2/3 |
+| q21 (customer messages live in an unsupplied catalog) | 3/3 |
+| q22 (an ambiguous request across several supplied timeouts) | 3/3 |
+| q20 (the scheduler logic is in an unsupplied module) | 0/3 (correct abstention) |
+
+Supporting and probe partitions: 5 of 5 expected-insufficient calls answered
+succeeded.
+
+**Insufficient correctness across conditions (held-out; recorded facts):**
+- Analyst 1.0.1 with 7b: 11/12 (r2) and 10/12 (insufficient diagnostic);
+- Analyst 1.0.2 with 7b: 3/12 (R3);
+- Analyst 1.0.2 with 14b: 4/12.
+
+### Interpretation (descriptive; no causal claim; the outcome stays B)
+
+- **Model scale resolved the answerable-case quality problem on this
+  workload.** Recall, acceptable-set success and the abstention behaviour on
+  answerable cases reach the gates with a large margin.
+- **The remaining blocker is discrimination of genuinely insufficient
+  evidence, and it does not improve with scale.** Insufficient correctness
+  under 1.0.2 is 3/12 (7b) and 4/12 (14b). Under 1.0.1, the 7b got it right
+  10-11/12. The collapse coincides with the 1.0.2 status policy, not with the
+  model.
+- **That points at a semantic tension between the policy and the oracle.**
+  1.0.2 tells the Analyst not to abstain merely because "related files may
+  exist elsewhere" or because a requested change is not yet implemented. The
+  expected-insufficient fixtures are exactly the cases where the code that
+  must change is not supplied (q19, q21), or where the request is ambiguous
+  across the supplied candidates (q22); the policy does not address request
+  ambiguity at all. The failing calls answer by naming a supplied caller or a
+  context file.
+- This is an inference from content-free counts, across conditions that differ
+  in more than one variable (Analyst version for the 7b; model for 1.0.2).
+  Narratives were never read.
+
+### Next decision (maintainer; recommendation only, not implemented)
+
+The R3 predeclaration stopped open-ended prompt tuning, and this result does not
+reopen it by itself. It does surface a **definitional** question that further
+model comparison cannot answer:
+
+> When the code that the requested change must modify is not among the supplied
+> files, or the request is ambiguous among supplied candidates, is that
+> `insufficient_evidence`, as the frozen oracle holds, even though "related
+> files may exist elsewhere" must not by itself force abstention?
+
+**Recommended next slice:** a decision record, ANALYST-SUFFICIENCY-SEMANTICS
+DECISION.
+- It reconciles the oracle's definition of insufficiency with the 1.0.2
+  status-policy wording, using the evidence above.
+- It decides whether a narrowly scoped semantics clarification is justified,
+  for example: "the code that must change is not supplied" and "the request is
+  ambiguous among supplied candidates" mean `insufficient_evidence`.
+- If so, that clarification would be measured with `qwen2.5-coder:14b`, the
+  condition that already solves answerable cases.
+- No code changes until it is approved.
+
+**`phi4:14b` (optional) is not recommended now.** A second family measured under
+the same policy wording would not separate model from semantics.
+
+The 14b remains a credible model condition for later configuration.
+Model-comparison outcome B authorizes no routing, fallback or integration.
+CONTENT-DISCOVERY-2 and ForgeAI integration remain deferred. **G07 remains
+open.**
