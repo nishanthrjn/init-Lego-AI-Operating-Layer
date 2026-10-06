@@ -1,0 +1,139 @@
+{
+  "namespace": "analyst-quality-1q-r4",
+  "revision": 1,
+  "predeclaration_digest": "6a589d92e4a418effbda46ea5a6d671bf2a53e3e7ee10df5de020bb8bf9f05d1",
+  "reused": {
+    "manifest": "ecb80c9338c5912a023ca997ad960f539a3414ac04c0ee96e4bcb9ebea931e59",
+    "heldout": "9c9245771f411dff4a10701bba712bbc75049c8c1368895ba3b538d9bcacbbaa",
+    "partition": "8dc38732e6a95803ddda28e5da07faa477af6c8aa4f046cedfb6845c62a87f7e",
+    "thresholds": "377d82248478654450296bede25cc6b2918a63512463bab46128fef300c97155",
+    "preregistration": "5c63430ecd15ab504cd9db73026226ed34bbf20cab962bc4b8bcc5cd95ce74c0",
+    "cd1_manifest": "cbf5900d0633cf77cf29a83ce534054bad5db23842e8c095ff5f43b86f2e1fd6"
+  },
+  "analyst": {
+    "agent_id": "repository-analyst",
+    "version": "1.0.3",
+    "definition_fingerprint": "d97036c1435b99a28ba98abf1a565dedf5b3198c3b4065e80431ba74ae04bfbf",
+    "implementation_commit": "c8e605a0a9ecc03e943360b88aedb7ebd1e96299",
+    "parser_identity": "016fcc40a0e341c5ec625fe11d130668608cde7d74d5a85a16bb4f9772812672",
+    "sources": {
+      "packages/legoai-engineering/src/legoai_engineering/analyst/api.py": "8dd176dcb3e55f977b79f9ea53794a444196b329092263be6e25db586f74e576",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/values.py": "968988925734a6146a638f85ed90e7772fd5575072e52028b9f51d9108763162",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/authorized.py": "0ad15866d8e5870e7bc3618588270c83e518b123796a8dd614f14fad97cbb991",
+      "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102"
+    }
+  },
+  "model_condition": {
+    "provider": "ollama",
+    "name": "qwen2.5-coder:14b",
+    "digest": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+    "timeout_seconds": 600,
+    "fallback": "none",
+    "retries": "none",
+    "decoding": "provider defaults; no sampling options sent"
+  },
+  "repetitions": {
+    "heldout": 3,
+    "cd1": 1
+  },
+  "planned_calls": {
+    "heldout": 72,
+    "cd1_quality": 14,
+    "cd1_probe": 5,
+    "total": 91
+  },
+  "decision_rule": "D on safety/disagreement/model-failure gate failure; else B if validity < 0.9; else A if every quality gate passes; else C",
+  "stop_rule": {
+    "A": "CONTINUE_TO_CONTENT_DISCOVERY_2_DECISION",
+    "B": "STOP_PROMPT_MODIFICATION_REASSESS_ANALYST_DESIGN",
+    "C": "STOP_PROMPT_MODIFICATION_REASSESS_ANALYST_DESIGN",
+    "D": "DIAGNOSE_MEASUREMENT_CONDITION"
+  },
+  "expected_insufficient_cases": [
+    "q19",
+    "q20",
+    "q21",
+    "q22"
+  ],
+  "future_behavior_controls": [
+    "q11",
+    "q12"
+  ],
+  "known_non_gating_label_conflicts": [
+    {
+      "case": "c15",
+      "partition": "cd1_probe",
+      "recorded_expected": "insufficient_evidence",
+      "approved_semantics": "answerable future behavior",
+      "statement": "c15 remains historically labelled insufficient_evidence for its original authority-probe purpose, but the approved semantics classify it as answerable future behavior.",
+      "gating": false
+    }
+  ],
+  "historical": {
+    "analyst_1_0_1_7b": {
+      "r2": {
+        "commit": "2e8f1ab8f401c01ec13c75b01041882ff6eea0a2",
+        "report_sha256": "e5a0efd31ff391ccafcc70d6f57bdca6ca8f69c994c28f3e99ab2671c199e49c",
+        "insufficient_correct": {
+          "numerator": 11,
+          "denominator": 12
+        }
+      },
+      "insufficient_diag1": {
+        "commit": "fa4aa8f691ac1e92212f1616e836372d002b9631",
+        "report_sha256": "09c096a760003bc31b6626c063315a3c15359691e76b055630a359b34faa9022",
+        "insufficient_correct": {
+          "numerator": 10,
+          "denominator": 12
+        }
+      }
+    },
+    "analyst_1_0_2_7b": {
+      "condition": "CONTENT-DISCOVERY-1Q-R3",
+      "commit": "9442ef393d22c316a378818952d690566b04eb52",
+      "report_sha256": "025f4717b2479812823068196f00cdf587ba3fcb40b083ea7ebd23e69dd0d367",
+      "insufficient_correct": {
+        "numerator": 3,
+        "denominator": 12
+      },
+      "false_sufficient": 10,
+      "decision": "C"
+    },
+    "analyst_1_0_2_14b": {
+      "condition": "ANALYST-MODEL-COMPARE-1 qwen2.5-coder:14b",
+      "commit": "b151deaef9b62669cedb2c1f28ce3e0adbc7ae52",
+      "condition_commit": "46ef93f8b7fc186d42448fadaf94cac2b1727d4e",
+      "report_sha256": "63e9ec768b421bec88f70bbc218f988122ae7650654f28ae8dd4e04c411cbb76",
+      "condition_digest": "82ce8f150f19587d745329b2d745d49a4c6c96e4ffdece237588f77095c22dfc",
+      "validity": {
+        "numerator": 72,
+        "denominator": 72
+      },
+      "precision": {
+        "numerator": 101,
+        "denominator": 103
+      },
+      "required_recall": {
+        "numerator": 74,
+        "denominator": 75
+      },
+      "acceptable_set_success": {
+        "numerator": 57,
+        "denominator": 60
+      },
+      "answerable_success": {
+        "numerator": 59,
+        "denominator": 60
+      },
+      "insufficient_correct": {
+        "numerator": 4,
+        "denominator": 12
+      },
+      "false_sufficient": 8,
+      "catastrophic": 0,
+      "decision": "C",
+      "comparison_outcome": "B"
+    }
+  },
+  "quality_mode": "frozen before any R4 live call; no R4 result exists at freeze"
+}
