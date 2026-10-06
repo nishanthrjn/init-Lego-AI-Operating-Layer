@@ -644,3 +644,12 @@ Precision corrections, recorded in the addendum (§14.1):
   response's `model` field.
 
 These refine §2 and §13 of this record; the decision itself is unchanged.
+
+## 28. Status: ADR-014 addendum accepted (2026-10-07)
+
+[ADR-014 §14](../adrs/ADR-014.md) (provider portability addendum) was **ACCEPTED**
+on 2026-10-07 by explicit maintainer decision, exactly as proposed in §27.
+**OPENAI-COMPATIBLE-MODEL-1 is now architecturally authorized** within ADR-014
+§14.15: credential-free and `ModelDeployment.LOCAL` only. **No implementation has
+happened yet.** SECRET-REF-1 and REMOTE-MODEL-DISCLOSURE-1 remain prerequisites
+for any credentialed or remote provider.
