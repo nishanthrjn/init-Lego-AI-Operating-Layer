@@ -1,4 +1,7 @@
-"""ENG-ANALYST-SUFFICIENCY-PROMPT-1: status decision policy, unchanged parser."""
+"""Status-policy structure and the unchanged parser (since 1.0.2).
+
+The exact policy wording is covered by test_analyst_sufficiency_semantics.py.
+"""
 
 import asyncio
 import json
@@ -14,102 +17,20 @@ from legoai_engineering.analyst.values import RepositoryAnalysisStatus
 
 FIELDS = ("status", "summary", "relevant_files", "findings", "risks", "unknowns")
 POLICY_LEAD = "Status decision policy: "
-SUCCEEDED = (
-    "choose succeeded when the supplied evidence is sufficient for a defensible "
-    "analysis of the question, that is, when you can identify the relevant "
-    "supplied files, state findings supported by them and explain any remaining gaps"
-)
-NOT_CERTAINTY = (
-    "succeeded means a defensible answer, not certainty: record residual "
-    "uncertainty, evidence-supported concerns and unresolved details in risks and "
-    "unknowns while status stays succeeded"
-)
-INSUFFICIENT = (
-    "Choose insufficient_evidence only when missing or unavailable evidence "
-    "prevents a defensible analysis of the question"
-)
-DISTINCTION = (
-    "Uncertainty is not the same as being unable to answer from the supplied evidence"
-)
-NOT_REASONS = (
-    "the wider repository is not visible",
-    "some uncertainty or risk remains",
-    "related files may exist elsewhere",
-    "a requested change or behavior is not yet implemented in the supplied code",
-)
-CHANGE_REQUEST = (
-    "For a change request, the absence of the requested behavior is not missing "
-    "evidence; if the supplied evidence identifies and explains the relevant code, "
-    "the status is succeeded"
-)
 STRUCTURE = (
     "With insufficient_evidence, findings MUST be an empty array and unknowns MUST "
     "contain at least one item"
 )
-FINDINGS_MEAN_SUCCEEDED = (
-    "If you have evidence-supported findings that answer the question, choose "
-    "succeeded and put the remaining uncertainty in risks and unknowns"
-)
-
-
-def policy() -> list[str]:
-    """The status-policy sentences, in order."""
-    instructions = repository_analyst_definition().instructions
-    start = instructions.index(POLICY_LEAD) + len(POLICY_LEAD)
-    end = instructions.index("Narrative is a hypothesis")
-    return [s.strip() for s in instructions[start:end].split(". ") if s.strip()]
 
 
 def test_version_and_identity() -> None:
     definition = repository_analyst_definition()
     assert definition.agent_id.value == "repository-analyst"
-    assert definition.behavior_version == Version(1, 0, 2)
+    assert definition.behavior_version == Version(1, 0, 3)
     assert definition.model_requirement.profile == "engineering-reasoning"
     assert definition.output_contract.max_bytes == 16384
     assert (definition.max_input_bytes, definition.max_prompt_bytes) == (32768, 49152)
     assert len(definition.system_prompt.encode()) + 32768 <= 49152
-
-
-def test_status_policy_sentences_are_exact_and_ordered() -> None:
-    sentences = policy()
-    expected = [
-        SUCCEEDED,
-        NOT_CERTAINTY,
-        INSUFFICIENT,
-        DISTINCTION,
-        None,  # the "merely because" list, checked below
-        CHANGE_REQUEST,
-        STRUCTURE,
-        FINDINGS_MEAN_SUCCEEDED,
-    ]
-    assert len(sentences) == len(expected)
-    for sentence, wanted in zip(sentences, expected, strict=True):
-        if wanted is not None:
-            assert sentence == wanted.rstrip(".")
-    reasons = sentences[4]
-    assert reasons.startswith("Do not choose insufficient_evidence merely because ")
-    for reason in NOT_REASONS:
-        assert reason in reasons
-
-
-def test_succeeded_is_defensible_not_certain() -> None:
-    sentences = policy()
-    # succeeded is defined by sufficiency, and may carry risks and unknowns.
-    assert "not certainty" in sentences[1]
-    assert "risks and unknowns while status stays succeeded" in sentences[1]
-    # insufficient_evidence is never defined by the mere presence of uncertainty.
-    for sentence in sentences:
-        if sentence.startswith("Choose insufficient_evidence"):
-            assert "uncertain" not in sentence
-            assert "prevents a defensible analysis" in sentence
-    assert sentences[3] == DISTINCTION
-
-
-def test_structural_rule_is_explicit_and_unchanged() -> None:
-    sentences = policy()
-    assert STRUCTURE in sentences
-    assert FINDINGS_MEAN_SUCCEEDED in sentences
-    assert sentences.index(STRUCTURE) < sentences.index(FINDINGS_MEAN_SUCCEEDED)
 
 
 def test_six_field_contract_and_posture_are_preserved() -> None:
@@ -132,16 +53,6 @@ def test_six_field_contract_and_posture_are_preserved() -> None:
         "Path spelling must match exactly.",
     ):
         assert posture in instructions
-
-
-def test_policy_is_generic_and_grants_nothing() -> None:
-    text = " ".join(policy()).casefold()
-    for word in (
-        "forgeai", "fixture", "held-out", "heldout", "oracle", "evaluation",
-        "opaque", "injection", "discovery", "target", "test_", ".py",
-        "execute", "run ", "edit", "modify", "write", "obey", "authorized",
-    ):  # fmt: skip
-        assert word not in text, word
 
 
 @pytest.fixture
@@ -174,9 +85,8 @@ def test_governed_system_and_user_requests(workspace: Path) -> None:
     system, user = model.last_request.messages
     assert system.role is ChatRole.SYSTEM and user.role is ChatRole.USER
     assert system.content == repository_analyst_definition().system_prompt
-    for sentence in (SUCCEEDED, INSUFFICIENT, CHANGE_REQUEST, STRUCTURE):
-        assert sentence in system.content
-    assert "1.0.2" not in user.content  # no version attribution in USER
+    assert POLICY_LEAD in system.content and STRUCTURE in system.content
+    assert "1.0." not in user.content  # no version attribution in USER
     expected = json.dumps(
         {
             "question": request.question,

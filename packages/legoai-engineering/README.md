@@ -998,7 +998,7 @@ their prior scope; M6.5 and M7 are unstarted. See the
 
 `analyst.api.RepositoryAnalyst` composes a trusted `RepositoryEvidencePort` with
 the existing M7 `AgentRuntimePort`. `repository_analyst_definition()` returns an
-immutable version 1.0.2 definition (1.0.0 until ENG-ANALYST-PROMPT-1, 1.0.1 until ENG-ANALYST-SUFFICIENCY-PROMPT-1) using the M6.5 `engineering-reasoning` profile.
+immutable version 1.0.3 definition (1.0.0 until ENG-ANALYST-PROMPT-1, 1.0.1 until ENG-ANALYST-SUFFICIENCY-PROMPT-1, 1.0.2 until ENG-ANALYST-SUFFICIENCY-SEMANTICS-1) using the M6.5 `engineering-reasoning` profile.
 The [offline example](examples/repository_analyst.py) supplies real routing,
 governed Chat and an in-memory fake ModelPort; it requires no provider service.
 Install the `analyst` extra to add the existing Core distribution. Base M1–M6
@@ -2029,3 +2029,78 @@ sub-phases), with no live model or Docker. That includes regressions for:
 
 Implementation commit: `f1cd2b6`. Live behavior of 1.0.2 is not yet measured;
 CONTENT-DISCOVERY-1Q-R3 is required.
+
+## ENG-ANALYST-SUFFICIENCY-SEMANTICS-1 — Analyst 1.0.3 evidence sufficiency (implemented, local validation pending)
+
+ANALYST-SUFFICIENCY-SEMANTICS-DECISION adopted strict evidence sufficiency.
+Under 1.0.2, `qwen2.5-coder:14b` answered `succeeded` on 8 of 12
+expected-insufficient held-out calls. RepositoryAnalyst is now 1.0.3
+(previously 1.0.2). AgentId, public API types and package version are
+unchanged. This exact version triple is not an inferred SemVer compatibility
+promise. Only `analyst/api.py` instruction text and version change.
+
+The status decision policy now says:
+- **Governing evidence** is the supplied implementation, authoritative data or
+  configuration, or ownership or relationship evidence without which the
+  requested conclusion would require guessing.
+- **succeeded** requires the governing evidence for the requested conclusion,
+  not certainty. Residual uncertainty that does not prevent the conclusion goes
+  in `risks` and `unknowns` while the status stays `succeeded`.
+- **insufficient_evidence** applies in exactly four situations:
+  1. the governing implementation is not supplied;
+  2. the authoritative data or configuration is not supplied;
+  3. several supplied candidates plausibly match and the evidence cannot
+     establish which one is meant or authoritative;
+  4. the requested relationship cannot be established from the supplied
+     evidence.
+- **A reference is not content.** An import, a call site, a docstring naming a
+  source or a stated path shows that a source exists or where it lives, not
+  what it contains.
+- **Unseen context vs missing governing evidence.** Unseen context that the
+  conclusion does not depend on does not make the evidence insufficient;
+  missing governing evidence does. This replaces the 1.0.2 clause "related
+  files may exist elsewhere".
+- **Future behavior.** A requested behavior that does not exist yet is not by
+  itself missing evidence, but only when the current implementation the change
+  depends on is supplied. If that implementation is absent, the status is
+  `insufficient_evidence`.
+- **Ambiguity.** Ambiguous candidates are listed in `relevant_files`, the
+  unresolved choice is stated in `unknowns`, and none is selected.
+- **Relevance is not sufficiency.** `relevant_files` may name supplied context
+  or candidates under `insufficient_evidence`.
+- **Existing rule, restated:** with `insufficient_evidence`, `findings` MUST be
+  empty and `unknowns` MUST hold at least one item.
+
+There is no ForgeAI, fixture, held-out or evaluation wording, and no path count
+or number. Nothing grants authority, execution or wider reads, and
+`insufficient_evidence` never triggers another read.
+
+**Unchanged:**
+- the parser and `values.py`;
+- the six-field set, bounds and membership;
+- the insufficient-evidence invariant;
+- duplicate keys and the ADR-021 decoder;
+- the model, provider, sampling, routing, retry, evidence and runtime;
+- the frozen oracle. CD-1 probe c15 stays a non-gating contract probe and is
+  not edited.
+
+No new ADR, defaults, repair, retry or confidence fields. The decision record
+is the governing rationale.
+
+Tests: `tests/test_analyst_sufficiency_semantics.py` pins the exact policy
+sentences, each rule and the parser regressions. The 1.0.2 exact-wording tests
+were removed from `tests/test_analyst_sufficiency_prompt.py`, which keeps the
+version, contract, request and parser checks.
+
+**History:** CONTENT-DISCOVERY-1Q-R2 and ANALYST-INSUFFICIENT-DIAG-1 remain
+pinned to 1.0.1. CONTENT-DISCOVERY-1Q-R3 and ANALYST-MODEL-COMPARE-1 are now
+pinned to 1.0.2. Their live commands refuse 1.0.3, and their packages,
+preregistrations and reports are unchanged.
+
+Operator qualification: `uv run python .\validate_engineering_analyst_sufficiency_semantics.py`.
+It pins the pre-slice commit cfeed11 and requires no live model or Docker.
+
+**Local qualification does not establish improved live behavior.**
+CONTENT-DISCOVERY-1Q-R4 is required. It pins 1.0.3, uses `qwen2.5-coder:14b`
+at its pinned digest, and reuses the frozen workload, oracle, thresholds, N
+and decision function.

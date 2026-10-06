@@ -78,14 +78,38 @@ def refuse_ollama(*args: object) -> object:
 # Analyst 1.0.2 identity and qualification ------------------------------------
 
 
-def test_analyst_identity_is_pinned_to_1_0_2() -> None:
+def pretend_pinned(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present exactly the preregistered 1.0.2 identity so that later preflight
+    steps are reached; the working-tree Analyst is a later version."""
     analyst = data.read()["analyst"]
     assert isinstance(analyst, dict)
-    assert analyst["version"] == q.analyst_version() == "1.0.2"
-    assert analyst["definition_fingerprint"] == q.definition_fingerprint() == V102
+    sources = analyst["sources"]
+    assert isinstance(sources, dict)
+    real = q.digest
+
+    def digest(path: Path) -> str:
+        relative = path.resolve().relative_to(q.ROOT).as_posix()
+        return str(sources[relative]) if relative in sources else real(path)
+
+    monkeypatch.setattr(q, "analyst_version", lambda: "1.0.2")
+    monkeypatch.setattr(q, "definition_fingerprint", lambda: V102)
+    monkeypatch.setattr(q, "digest", digest)
+
+
+def test_analyst_identity_is_pinned_to_1_0_2(monkeypatch: pytest.MonkeyPatch) -> None:
+    analyst = data.read()["analyst"]
+    assert isinstance(analyst, dict)
+    assert analyst["version"] == "1.0.2"
+    assert analyst["definition_fingerprint"] == V102
     assert V102 not in {V100, V101}
     assert analyst["implementation_commit"] == IMPLEMENTATION
-    data.require_live_identity()
+    # A later Analyst may not be sampled under this frozen 1.0.2 condition.
+    assert q.analyst_version() != "1.0.2"
+    assert q.definition_fingerprint() != V102
+    with pytest.raises(data.AnalystIdentityError):
+        data.require_live_identity()
+    pretend_pinned(monkeypatch)
+    data.require_live_identity()  # the pinned 1.0.2 identity itself still passes
 
 
 def test_parser_identity_is_unchanged_from_1_0_1() -> None:
@@ -132,6 +156,7 @@ def test_sufficiency_prompt_qualification_identity() -> None:
 def test_wrong_analyst_identity_is_refused(
     monkeypatch: pytest.MonkeyPatch, module: str, name: str, value: object
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr({"q": q, "data": data}[module], name, value)
     with pytest.raises(data.AnalystIdentityError):
         data.require_live_identity()
@@ -143,6 +168,7 @@ def test_implementation_commit_must_be_an_ancestor(
     pre = data.read()
     analyst = pre["analyst"]
     assert isinstance(analyst, dict)
+    pretend_pinned(monkeypatch)
     forged = {**pre, "analyst": {**analyst, "implementation_commit": "f" * 40}}
     monkeypatch.setattr(data, "read", lambda: forged)
     with pytest.raises(data.AnalystIdentityError):
@@ -362,8 +388,8 @@ def test_replay_report_schema_and_reproduction(tmp_path: Path) -> None:
     condition = json.loads((output / "condition.json").read_text("utf-8"))
     written = json.loads((output / "report.json").read_text("utf-8"))
     assert condition["schema"] == report.CONDITION_SCHEMA
-    assert condition["analyst"]["version"] == "1.0.2"
-    assert condition["analyst"]["definition_fingerprint"] == V102
+    assert condition["analyst"]["version"] == q.analyst_version()
+    assert condition["analyst"]["definition_fingerprint"] == q.definition_fingerprint()
     assert condition["fixtures"] == data.freeze()
     assert set(written) == {
         "schema", "mode", "condition", "condition_digest", "records", "aggregate",
@@ -449,6 +475,7 @@ def test_report_privacy(tmp_path: Path) -> None:
 def test_live_refuses_wrong_analyst(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, value: object
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(q, name, value)
     monkeypatch.setattr(cq, "git_state", never)
     monkeypatch.setattr(cli, "verify_ollama", never)
@@ -460,6 +487,7 @@ def test_live_refuses_wrong_analyst(
 def test_live_refuses_parser_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(data, "working_parser_identity", lambda: "0" * 64)
     monkeypatch.setattr(cq, "git_state", never)
     monkeypatch.setattr(cli, "verify_ollama", never)
@@ -476,6 +504,7 @@ def test_live_refuses_parser_mismatch(
 def test_live_refuses_checkout_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, state: dict[str, str]
 ) -> None:
+    pretend_pinned(monkeypatch)
     good = {"rev-parse": "c", "branch": "b", "status": ""}
     monkeypatch.setattr(cq, "git", lambda args: {**good, **state}[args[0]])
     monkeypatch.setattr(cli, "verify_ollama", never)
@@ -492,6 +521,7 @@ def test_live_refuses_checkout_mismatch(
 def test_live_refuses_wrong_model(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, model: str, digest: str
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(cq, "git_state", never)
     monkeypatch.setattr(cli, "verify_ollama", never)
     output = tmp_path / "live"
@@ -516,6 +546,7 @@ def test_live_refuses_wrong_model(
 def test_live_refuses_placeholder_hardware(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, hardware: str
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(cq, "git_state", never)
     monkeypatch.setattr(cli, "verify_ollama", never)
     output = tmp_path / "live"
@@ -529,6 +560,7 @@ def test_live_refuses_placeholder_hardware(
 def test_live_refuses_unreachable_ollama_and_existing_output(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pretend_pinned(monkeypatch)
     monkeypatch.setattr(cq, "git_state", lambda *a: {"head": "h"})
     monkeypatch.setattr(cli, "verify_ollama", refuse_ollama)
     output = tmp_path / "live"
@@ -540,6 +572,16 @@ def test_live_refuses_unreachable_ollama_and_existing_output(
     with pytest.raises(SystemExit):
         cli.main(live_argv(existing))
     assert (existing / "keep.txt").read_text("utf-8") == "previous output"
+
+
+def test_live_refuses_the_current_later_analyst(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(cq, "git_state", never)
+    monkeypatch.setattr(cli, "verify_ollama", never)
+    output = tmp_path / "live"
+    assert cli.main(live_argv(output)) == cq.PREFLIGHT_FAILED
+    assert not output.exists()
 
 
 def test_harness_is_evaluation_only() -> None:
