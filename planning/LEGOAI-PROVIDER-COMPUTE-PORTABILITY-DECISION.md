@@ -628,3 +628,19 @@ No ADR number is allocated here.
 | **ADR-019** | **No change now; addendum later** | Selection, pinning and failure rules suffice for the first slices. Its secret statement is satisfied by SECRET-REF-1. Per-profile pinning (§11) would need an addendum |
 | **ADR-020** | **Revision or amendment required** before remote VTO | §8 refuses remote personal-image transfer by decision |
 | **New ADR (recommended, unnumbered)** | Remote model-provider disclosure admission | Enforces SEC-039 for model inference, as ADR-020 does for images. The maintainer may instead choose an ADR-014 addendum; allocation needs maintainer approval |
+
+## 27. Status: ADR-014 addendum prepared (2026-10-07)
+
+[ADR-014 §14](../adrs/ADR-014.md) (provider portability addendum) is **prepared
+for maintainer decision; not accepted.** If accepted, it authorizes only
+OPENAI-COMPATIBLE-MODEL-1: credential-free, `ModelDeployment.LOCAL` only, stdlib
+adapter, optional embeddings, `max_output_tokens`, strict identity and truncation
+rejection, and `ModelResponseRetryableRejectedError` for complete 429/503 replies.
+
+Precision corrections, recorded in the addendum (§14.1):
+- the composition-level identity check against the pinned binding covers chat
+  only, not embeddings;
+- the Ollama adapter declares its configured model name without reading the
+  response's `model` field.
+
+These refine §2 and §13 of this record; the decision itself is unchanged.
