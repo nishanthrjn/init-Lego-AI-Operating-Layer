@@ -488,3 +488,17 @@ provider or Docker was used, and no live semantic quality improvement is claimed
 Frozen evaluation inputs are now immutable; corrections require a new revision.
 The next model-backed assessment contract/prompt and any live run still require
 separate explicit maintainer authorization. G07 remains open.
+
+## ENG-ANALYST-SUFFICIENCY-AGENT-1 implementation — 2026-10-07
+
+**IMPLEMENTED — LOCAL VALIDATION PENDING.** The separately authorized
+[EvidenceSufficiencyAgent](../packages/legoai-engineering/docs/analyst-sufficiency-agent.md)
+adds distinct `evidence-sufficiency-agent` 1.0.0 over the qualified manifest and
+assessment values. One governed provider-neutral invocation, strict ADR-021
+JSON parsing and trusted current-input attribution remain separate from final
+analysis, acquisition and operator progression. RepositoryAnalyst 1.0.3, Core,
+production ForgeAI and all frozen design/R3/R4 artifacts remain unchanged.
+Operator command: `uv run python .\validate_engineering_analyst_sufficiency_agent_1.py`.
+The 64-phase offline validator establishes contract evidence only; no live
+semantic improvement is claimed. Local qualification and explicit live-condition
+authorization remain gates. G07 remains open.
