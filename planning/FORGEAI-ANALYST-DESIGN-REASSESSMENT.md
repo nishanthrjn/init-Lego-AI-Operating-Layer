@@ -409,3 +409,18 @@ ForgeAI regressions, static checks and diff integrity. No new validator is
 created or runtime suite rerun for this documentation-only decision.
 
 **ANALYST REDESIGN RECOMMENDED**
+
+## ENG-ANALYST-SUFFICIENCY-CONTRACT-1 implementation — 2026-10-07
+
+**IMPLEMENTED — LOCAL OPERATOR QUALIFICATION PENDING.** The explicitly
+authorized first slice adds immutable sufficiency/request/manifest values,
+exact input attribution and deterministic declared-prerequisite checks in
+Engineering's Analyst package. See the [consumer contract](../packages/legoai-engineering/docs/analyst-sufficiency.md).
+RepositoryAnalyst 1.0.3, its prompt/parser, evidence acquisition, Core and
+ForgeAI worker remain unchanged. No semantic correctness or live improvement
+is claimed. No evidence loop, new Agent, model condition or UI is implemented.
+
+Operator command: `uv run python .\validate_engineering_analyst_sufficiency_contract_1.py`.
+The next slice, FORGEAI-ANALYST-EVIDENCE-LOOP-1, requires separate authorization
+after operator qualification; this record does not start it. Frozen R4
+history and its prompt-modification stop rule are unchanged.

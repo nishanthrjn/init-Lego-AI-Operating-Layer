@@ -96,6 +96,13 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.reviewer.definition",
             "legoai_engineering.reviewer.values",
         },
+        "analyst.sufficiency": {
+            "enum",
+            "hashlib",
+            "json",
+            "legoai_engineering.analyst.values",
+            "legoai_engineering.repository.workspace",
+        },
         "analyst.values": {
             "enum",
             "legoai.execution.agent.ports",
@@ -405,7 +412,12 @@ def test_source_boundaries_and_inert_initializers() -> None:
     ],
 )
 def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
-    for module in ("analyst.api", "analyst.values", "analyst.authorized"):
+    for module in (
+        "analyst.api",
+        "analyst.values",
+        "analyst.authorized",
+        "analyst.sufficiency",
+    ):
         assert import_violations(source, module)
 
 
