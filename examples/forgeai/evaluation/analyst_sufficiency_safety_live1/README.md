@@ -1,7 +1,7 @@
 # forgeai-analyst-sufficiency-safety-live/1
 
-**Status: harness implemented, local validation pending. No baseline has been
-run; the baseline is not authorized.** See
+**Status: HARNESS LOCALLY QUALIFIED (2026-10-07; offline; 70/70 validator
+phases). No baseline has been run; the baseline is not authorized.** See
 [the decision record](../../../../planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-LIVE-1.md).
 
 This is the live baseline harness for EvidenceSufficiencyAgent 1.0.0 /

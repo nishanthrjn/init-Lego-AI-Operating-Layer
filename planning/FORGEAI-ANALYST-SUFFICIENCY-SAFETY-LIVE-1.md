@@ -1,7 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-LIVE-1
 
-Status: **harness implemented, local validation pending (2026-10-07).** This
-slice is offline instrumentation only. No baseline has been run, no model call
+Status: **HARNESS LOCALLY QUALIFIED (2026-10-07; offline; 70/70 validator
+phases).** This slice is offline instrumentation only. No baseline has been run, no model call
 has been made, no live run UUID exists, and nothing here authorizes the
 baseline, hardening or LIVE-1 FULL.
 
@@ -256,3 +256,22 @@ architecture regressions, plus mypy, Ruff and the diff check, under
    `python -m analyst_sufficiency_safety_live1 BASELINE --output <fresh dir> --approval-reference <ref>`.
 
 None of these steps authorizes hardening or LIVE-1 FULL.
+
+## 17. Local qualification
+
+Operator qualification passed on 2026-10-07 (implementation commit `f19d32b`):
+all **70/70 phases** of
+`uv run python .alidate_forgeai_analyst_sufficiency_safety_live_1.py`.
+The run covered:
+- the SAFETY-EVAL-2 qualification prerequisite, scope, the Smoke 3 inventory,
+  frozen identities and revision-1 rejection;
+- the 57 harness tests and 53 coverage phases (the 45 required items, each
+  A–G precedence outcome, and preflight refusals);
+- regressions: SAFETY-EVAL-2 (33), SAFETY-EVAL-1 (47), LIVE-1 harness (151),
+  sufficiency Agent (79), evidence loop (50), RepositoryAnalyst (175), ForgeAI
+  worker (49) and architecture (53);
+- the zero-provider guard, mypy, Ruff lint and format, and the diff check.
+
+This is offline evidence only: no model, provider or Docker, and no live run
+UUID. It does not authorize PREFLIGHT, the baseline, hardening or LIVE-1 FULL;
+each needs separate authorization and a clean tracked tree.
