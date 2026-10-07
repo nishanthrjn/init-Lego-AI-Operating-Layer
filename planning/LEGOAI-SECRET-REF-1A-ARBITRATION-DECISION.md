@@ -183,3 +183,93 @@ workflow/runtime redesign.
 SECRET-REF-1A remains unimplemented and unqualified; Stage B remains gated and
 G03 remains open. This acceptance task changes documentation only. Arbitration
 implementation does not begin in this task.
+
+## 8. Implementation assessment — 2026-10-07
+
+**SECRET-REF-1A STOPPED — DURABLE CUSTODY SCOPE REQUIRED.**
+
+The subsequent implementation request authorizes Stage A and the shared local
+domain above. That authorization is not the blocker. Its explicit durability
+stop condition applies before implementation; Stage A remains unimplemented and
+unqualified. The following is source analysis, not an executed ordering proof.
+
+### Lock inventory and candidate partial order
+
+`reference/execution.py` has two independent synchronization primitives:
+`DeterministicDispatchArbiter._lock` is a synchronous `threading.Lock`, held
+across authorization evaluation, Catalog snapshot, Evidence reads and applicable
+Approval consumption. It returns an inert permit, not consumer acceptance.
+`ExecutionCoordinator._lock` is an `asyncio.Lock` guarding state and invocation
+claims. Claim releases it before invoking a consumer; settlement acquires it
+separately. No existing nested acquisition establishes Secret-use ordering.
+
+Governance registries, Catalog and in-memory Evidence have no owner-local locks.
+The supported mutation entry points are Grant `revoke`, Policy `supersede`,
+Approval `consume`, and Catalog `publish`/`withdraw`. Future Secret mapping and
+revision invalidation must join the same domain. Evidence is append-only and
+has no removal API to treat as an invalidator. `runtime/local.py` currently
+constructs independent reference owners and in-memory Evidence custody; it does
+not wire a shared domain. Governed Model composition claims invocation before
+calling the provider and settles afterward; that path must remain unchanged.
+
+A candidate Stage-A order, derived from these existing separable scopes, is:
+
+1. Complete required pre-use custody and safe source-obligation preparation.
+2. Where Coordinator invocation is used, acquire/release its claim lock before
+   entering the protected boundary. A claim does not authorize Secret use.
+3. Acquire the single shared synchronous domain; perform final current authority,
+   policy, Catalog, Secret revision/use, expiry and cancellation checks; consume
+   applicable Approval and accept the exact synthetic use within that boundary.
+4. Release the domain before any await, settlement or post-use custody operation.
+
+The protected arbiter path must use the domain instead of nesting its old lock
+with the domain. Participating public mutations acquire that domain once;
+already-held internal operations must not reenter guarded public methods.
+Owners retain their state and decisions; the domain owns ordering only. No
+Coordinator lock may be held while waiting for the domain, and no code inside
+the domain may acquire the Coordinator lock. Missing/mismatched domain identity
+must refuse protected use. Arbitrary injected Port callbacks cannot be assumed
+bounded or non-reentrant: only qualified synchronous participants and the private
+synthetic consumer could run there, without I/O, task submission or callbacks
+into guarded entry points.
+
+Cancellation while waiting needs an ordered pre-acceptance check; synchronous
+lock waiting alone does not deliver asyncio cancellation. Cancellation after
+acceptance cannot erase use. A concrete cancellation participation mechanism
+and deterministic event/barrier tests remain unimplemented. The same is true of
+injected-clock expiry tests; this analysis establishes no hard-real-time bound.
+The candidate avoids nested lock inversion by construction, but is not a claim
+that the complete acceptance/cancellation protocol has been implemented or proved.
+
+### Independent evidence blocker
+
+[ADR-010 §14](../adrs/ADR-010.md) requires a **durable repair/intervention
+obligation** after post-effect evidence failure. [ADR-009 §§8.2–9](../adrs/ADR-009.md)
+requires crash-discoverable source identity and submission responsibility before
+effectful handoff; for a purely local source mutation, the fact and obligation
+commit atomically. A volatile accepted-use flag and repair list cannot satisfy
+this requirement even for a synthetic consumer. Failing closed after restart
+prevents further use but does not recover a lost accepted-use obligation.
+
+`reference/evidence.py:InMemoryEvidenceCustody` explicitly has no persistence or
+concurrency guarantee. `evidence/ports.py:EvidenceRecord` supports configuration
+revision and authorization-decision subjects, with no Secret-use custody or
+durable repair contract. Coordinator claims/state are also process-local.
+`reference/application/sqlite_store.py:SQLiteConfigurationStore` is an
+Application Configuration store, not an Evidence custodian or Secret-use ledger;
+repurposing it would require new owner contracts and qualification. Observation
+and logs cannot supply the missing custody guarantee.
+
+The smallest additional maintainer decision needed is a bounded local durable
+safe-use attribution/repair scope under ADR-004/009/010: identify the source owner,
+define safe intent/fact/obligation commits and discoverable repair, define the
+required Evidence custody acknowledgment, and qualify crash/failure behavior.
+It must resolve atomic local acceptance attribution without holding this gate
+across disallowed work or assuming an in-memory substitute is durable. Material
+and live handles must never be persisted. This is a scope request, not approval
+to implement a database, generic transaction API or broader Coordinator redesign.
+
+No source, contracts, tests, validator or ADRs were changed. No executable race,
+restart or qualification result is claimed. Documentation verification is
+`git diff --check`. Stage B, environment sources, provider credentials, remote
+use and KISSKI remain gated; G03 remains open.

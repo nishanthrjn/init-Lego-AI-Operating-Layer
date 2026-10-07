@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-SECRET-REF-1A [bounded shared local arbitration scope](LEGOAI-SECRET-REF-1A-ARBITRATION-DECISION.md) **ACCEPTED** (2026-10-07, explicit maintainer decision); Stage A remains unimplemented/unqualified, Stage B and KISSKI remain gated, and G03 remains open. No arbitration code is implemented by this acceptance record.
+SECRET-REF-1A shared local arbitration scope remains **ACCEPTED**; implementation **STOPPED — DURABLE CUSTODY SCOPE REQUIRED** (2026-10-07). [Lock-order assessment and required scope](LEGOAI-SECRET-REF-1A-ARBITRATION-DECISION.md#8-implementation-assessment--2026-10-07) recorded; Stage A unimplemented/unqualified, Stage B and KISSKI gated, G03 open.
 
 SECRET-REF-1 scope **ACCEPTED** (2026-10-07, explicit maintainer decision); not implemented. Next implementation slice: **SECRET-REF-1A**, reference-only contracts and synthetic protected exact-use qualification. The [accepted staged scope](LEGOAI-SECRET-REF-1-DECISION.md#8-accepted-implementation-order--2026-10-07) gates SECRET-REF-1B on successful Stage A local qualification and demonstrated ADR-010 actual-use/current-invalidator ordering without an unapproved broader redesign. A wider owner, Coordinator, governance, execution or arbitration redesign requires a separate maintainer decision before implementation. G03 remains open; Secrets are not qualified. Neither stage authorizes remote providers; REMOTE-MODEL-DISCLOSURE-1 and KISSKI qualification retain their separate prerequisites. No credential or external endpoint was used.
 
