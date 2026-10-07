@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-SECRET-REF-1B [consumer-boundary assessment ready](LEGOAI-SECRET-REF-1B-CONSUMER-BOUNDARY-DECISION.md): ordinary environment source rejected under ADR-010; source currentness and HTTP-use ordering remain blockers; implementation, remote use and KISSKI remain gated.
+SECRET-REF-1B [source/transport decision ready](LEGOAI-SECRET-REF-1B-SOURCE-TRANSPORT-DECISION.md): provisioned immutable source recommended; transport validity remains unproven; implementation, remote use and KISSKI remain gated.
 
 SECRET-USE-DURABLE-CUSTODY-1 [LOCALLY QUALIFIED — all 72 operator phases passed](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07) (2026-10-07), intact local-storage crash/restart only. Durable prerequisite gate satisfied; maintainer explicitly resumed SECRET-REF-1A, now [LOCALLY QUALIFIED — all 62 operator phases passed](../docs/secret-ref-1a.md); G02/G03/G06 remain open; Stage B, credentials, remote providers and KISSKI remain gated.
 
