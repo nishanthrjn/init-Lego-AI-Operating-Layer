@@ -1,6 +1,6 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-EVAL-1
 
-Status: **implemented, local validation pending (2026-10-07).** Offline only:
+Status: **LOCALLY QUALIFIED (2026-10-07).** Offline only:
 no model run, no hardening, no Agent, prompt, parser, revision-2, profile,
 harness or model change.
 
@@ -198,3 +198,26 @@ exact condition and carry a new Agent or representation identity.
 - no model comparison or phi4;
 - no LIVE-1 FULL;
 - no revision-2 change.
+
+## 14. Local qualification
+
+Operator qualification passed on 2026-10-07 (implementation commit `d7b3434`):
+all **73/73 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_safety_eval_1.py`,
+including the 47 safety-condition tests and regressions:
+- revision 1/2 (123);
+- sufficiency Agent (79);
+- evidence loop (50);
+- LIVE-1 harness (151);
+- RepositoryAnalyst (175);
+- ForgeAI worker (49);
+- architecture (53).
+
+The run also passed the Smoke 3 inventory check, the zero-provider guard,
+mypy, Ruff lint and format, and the diff check. This is offline evidence only:
+no model, provider or Docker. It does not authorize a live baseline.
+
+Next gate: a separately authorized live baseline of EvidenceSufficiencyAgent
+1.0.0 with `qwen2.5-coder:14b` and the current representation on this frozen
+condition. It needs its own harness or a LIVE-1 extension decision. No
+hardening, smoke or FULL is authorized; G07 remains open.
