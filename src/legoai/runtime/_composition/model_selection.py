@@ -17,7 +17,7 @@ from legoai.intelligence.model.ports import ModelPort
 from legoai.intelligence.model.routing import ModelBinding, ModelRouteDecision
 from legoai.kernel.references import ConfigurationRevisionRef
 from legoai.plugins.ports import PluginLifecycleRecord, PluginLifecycleState
-from legoai.reference.model import ollama_chat_offer
+from legoai.reference.model_capabilities import model_chat_offer
 from legoai.reference.resolution import CapabilityResolution, resolve
 from legoai.runtime._composition.model_governed import ConfiguredModelBinding
 
@@ -185,7 +185,7 @@ def compose_model(
         raise ModelCompositionError(CompositionFailure.INCOMPATIBLE_PROVIDER)
     # ConfiguredModelBinding supports precisely the existing v1 Chat offer.
     # Validate this before executing even a trusted constructor.
-    if selected.entry.offer != ollama_chat_offer():
+    if selected.entry.offer != model_chat_offer():
         raise ModelCompositionError(CompositionFailure.INCOMPATIBLE_PROVIDER)
     try:
         adapter = selected.construct()

@@ -30,6 +30,11 @@ CR1C_EXCEPTIONS = {
     "packages/legoai-generative-media/src/legoai_generative_media/local_host.py",
     "packages/legoai-generative-media/src/legoai_generative_media/composition.py",
 }
+# Existing authorization-adversarial fixture, not application/domain code.
+# Keep this exception exact; no production consumer may join it.
+INTERNAL_TEST_FIXTURES = {
+    "examples/forgeai/evaluation/tests/test_content_discovery_1.py",
+}
 # Never opened: excluded by path before any file is read.
 EXCLUDED_PARTS = {".venv", "node_modules", "__pycache__", "assessment_starter"}
 
@@ -225,7 +230,7 @@ def test_consumers_import_no_core_internals_except_listed_cr1c() -> None:
     for path in _consumer_files():
         if _internal(_imports(path.read_text(encoding="utf-8"))):
             offenders.add(path.relative_to(ROOT).as_posix())
-    assert offenders == CR1C_EXCEPTIONS
+    assert offenders == CR1C_EXCEPTIONS | INTERNAL_TEST_FIXTURES
 
 
 def test_migrated_consumers_do_not_self_issue_authority() -> None:

@@ -653,3 +653,26 @@ on 2026-10-07 by explicit maintainer decision, exactly as proposed in §27.
 §14.15: credential-free and `ModelDeployment.LOCAL` only. **No implementation has
 happened yet.** SECRET-REF-1 and REMOTE-MODEL-DISCLOSURE-1 remain prerequisites
 for any credentialed or remote provider.
+
+## 29. OPENAI-COMPATIBLE-MODEL-1 implementation (2026-10-07)
+
+Implemented under accepted ADR-014 §14; operator local validation pending.
+The closed host union adds credential-free `OpenAICompatibleSettings` and the
+required LOCAL/REMOTE declaration. REMOTE is refused before admission/construction.
+The private stdlib adapter implements versioned-root chat (`stream: false`) and
+optional embeddings, strict exact model identity, stop-only chat completion,
+operator max_tokens, and the accepted failure matrix. Complete 429/503 replies
+use the public retryable-rejection subtype; uncertain transport remains UNKNOWN.
+No automatic retry or fallback is performed.
+
+Neutral capability helpers retain both existing IDs and version 1.0.0. Ollama
+wire behavior, Agent semantics and TrustedModelContribution remain unchanged.
+Offline conformance rows A-C and the 52-phase
+`validate_openai_compatible_model_1.py` qualify contracts only, not model quality.
+See [composition and consumer details](../docs/model-composition.md).
+
+Supported scope after qualification: credential-free LOCAL OpenAI-compatible
+endpoints. Remote, credentials, KISSKI hosted, authenticated vLLM, cloud APIs,
+automatic routing, retries and VTO are unsupported. No live provider was invoked.
+No ADR was changed. Next planned slice after qualification: SECRET-REF-1,
+separately authorized; REMOTE-MODEL-DISCLOSURE-1 remains required for remote use.

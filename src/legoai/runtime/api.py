@@ -91,6 +91,13 @@ class ModelPurpose(Enum):
         return CapabilityId("legoai.intelligence.model.embedding")
 
 
+class ModelDeployment(Enum):
+    """Operator declaration of processing location, never inferred from a URL."""
+
+    LOCAL = "local"
+    REMOTE = "remote"
+
+
 def _text(value: object, failure: HostFailure) -> None:
     if type(value) is not str:
         raise TypeError("host configuration text must be str")
@@ -154,6 +161,41 @@ class OllamaSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class OpenAICompatibleSettings:
+    """Credential-free endpoint; base_url includes the API version prefix.
+
+    Full URL/model/bound validation happens at host open. REMOTE is a valid
+    declaration but is unsupported by this slice (ADR-014 §14).
+    """
+
+    base_url: str = field(repr=False)
+    chat_model: str
+    embedding_model: str | None
+    timeout_seconds: float
+    max_output_tokens: int | None
+    provider_id: ProviderId
+    deployment: ModelDeployment
+
+    def __post_init__(self) -> None:
+        for value in (self.base_url, self.chat_model):
+            if type(value) is not str:
+                raise TypeError("OpenAI-compatible settings require text")
+        if self.embedding_model is not None and type(self.embedding_model) is not str:
+            raise TypeError("embedding model must be text or None")
+        if type(self.timeout_seconds) not in (int, float):
+            raise TypeError("settings require a numeric timeout")
+        if (
+            self.max_output_tokens is not None
+            and type(self.max_output_tokens) is not int
+        ):
+            raise TypeError("max_output_tokens must be an exact int or None")
+        if type(self.provider_id) is not ProviderId:
+            raise TypeError("settings require ProviderId")
+        if type(self.deployment) is not ModelDeployment:
+            raise TypeError("settings require ModelDeployment")
+
+
+@dataclass(frozen=True, slots=True)
 class TrustedModelContribution:
     """Trusted composition-root code supplying a `ModelPort` (ADR-014 §3.6).
 
@@ -191,13 +233,17 @@ class ModelBindingConfig:
 
     binding_id: str = field(repr=False)
     requirement: ModelRequirement
-    provider: OllamaSettings | TrustedModelContribution
+    provider: OllamaSettings | OpenAICompatibleSettings | TrustedModelContribution
 
     def __post_init__(self) -> None:
         _text(self.binding_id, HostFailure.INVALID_CONFIGURATION)
         if type(self.requirement) is not ModelRequirement:
             raise TypeError("binding requires ModelRequirement")
-        if type(self.provider) not in (OllamaSettings, TrustedModelContribution):
+        if type(self.provider) not in (
+            OllamaSettings,
+            OpenAICompatibleSettings,
+            TrustedModelContribution,
+        ):
             raise TypeError("binding requires a supported provider contribution")
 
 

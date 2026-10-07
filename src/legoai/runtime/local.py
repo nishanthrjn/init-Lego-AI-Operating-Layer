@@ -42,7 +42,7 @@ from legoai.kernel.errors import ErrorDetail, Recoverability
 from legoai.kernel.identity import CorrelationId, OperationId
 from legoai.kernel.references import ConfigurationRef, OperationRef
 from legoai.plugins.ports import PluginAdmissionId
-from legoai.plugins.values import PluginDeclaration, PluginId
+from legoai.plugins.values import PluginDeclaration
 from legoai.reference.agent import OneStepAgentRuntime
 from legoai.reference.catalog import InMemoryCatalog
 from legoai.reference.evidence import InMemoryEvidenceCustody
@@ -61,10 +61,17 @@ from legoai.reference.governance import (
 from legoai.reference.model import (
     OllamaModelAdapter,
     OllamaModelConfig,
-    ollama_chat_offer,
-    ollama_embedding_offer,
-    ollama_plugin_id,
-    ollama_release,
+    ollama_declaration,
+)
+from legoai.reference.model_capabilities import (
+    model_capability_version,
+    model_chat_offer,
+    model_embedding_offer,
+)
+from legoai.reference.model_openai_compatible import (
+    OpenAICompatibleModelAdapter,
+    OpenAICompatibleModelConfig,
+    openai_compatible_declaration,
 )
 from legoai.reference.model_routing import DeterministicModelRouter
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
@@ -86,8 +93,10 @@ from legoai.runtime.api import (
     HostFailure,
     LocalHostConfig,
     ModelBindingConfig,
+    ModelDeployment,
     ModelPurpose,
     OllamaSettings,
+    OpenAICompatibleSettings,
 )
 
 
@@ -119,9 +128,7 @@ def _composition_failure(failure: CompositionFailure) -> HostFailure:
 
 def _offer(purpose: ModelPurpose) -> CapabilityOffer:
     return (
-        ollama_chat_offer()
-        if purpose is ModelPurpose.CHAT
-        else ollama_embedding_offer()
+        model_chat_offer() if purpose is ModelPurpose.CHAT else model_embedding_offer()
     )
 
 
@@ -133,7 +140,9 @@ def _requirement(offer: CapabilityOffer) -> CapabilityRequirement:
 
 def _realization(
     selected: ModelBindingConfig,
-) -> tuple[ModelBinding, PluginId, frozenset[ModelPurpose], Callable[[], ModelPort]]:
+) -> tuple[
+    ModelBinding, PluginDeclaration, frozenset[ModelPurpose], Callable[[], ModelPort]
+]:
     provider = selected.provider
     try:
         # ModelBindingConfig already enforced the exact closed provider types.
@@ -155,14 +164,51 @@ def _realization(
             def construct() -> ModelPort:
                 return OllamaModelAdapter(settings, provider_id)
 
-            return binding, ollama_plugin_id(), frozenset(ModelPurpose), construct
+            return binding, ollama_declaration(), frozenset(ModelPurpose), construct
+        if isinstance(provider, OpenAICompatibleSettings):
+            if provider.deployment is ModelDeployment.REMOTE:
+                raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
+            openai_settings = OpenAICompatibleModelConfig(
+                provider.base_url,
+                provider.chat_model,
+                provider.embedding_model,
+                provider.timeout_seconds,
+                provider.max_output_tokens,
+            )
+            openai_provider_id = provider.provider_id
+            binding = ModelBinding(
+                selected.binding_id,
+                selected.requirement,
+                ModelId(provider.chat_model),
+                openai_provider_id,
+            )
+            purposes = frozenset({ModelPurpose.CHAT})
+            if provider.embedding_model is not None:
+                purposes = frozenset(ModelPurpose)
+
+            def construct_openai() -> ModelPort:
+                return OpenAICompatibleModelAdapter(openai_settings, openai_provider_id)
+
+            return (
+                binding,
+                openai_compatible_declaration(
+                    embedding=provider.embedding_model is not None
+                ),
+                purposes,
+                construct_openai,
+            )
         binding = ModelBinding(
             selected.binding_id,
             selected.requirement,
             provider.model_id,
             provider.provider_id,
         )
-        return binding, provider.plugin_id, provider.purposes, provider.construct
+        declaration = PluginDeclaration(
+            provider.plugin_id,
+            model_capability_version(),
+            tuple(_offer(p) for p in ModelPurpose if p in provider.purposes),
+        )
+        return binding, declaration, provider.purposes, provider.construct
     except (TypeError, ValueError) as error:
         raise HostError(HostFailure.INVALID_CONFIGURATION) from error
 
@@ -423,7 +469,7 @@ def open_local_host(
     )
     if selected is None:
         raise HostError(HostFailure.UNKNOWN_BINDING)
-    binding, plugin_id, purposes, construct = _realization(selected)
+    binding, declaration, purposes, construct = _realization(selected)
     if ModelPurpose.CHAT not in purposes:
         # ADR-019 composition is anchored on the v1 Chat offer.
         raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
@@ -449,10 +495,7 @@ def open_local_host(
     except (TypeError, ValueError) as error:
         raise HostError(HostFailure.INVALID_GRANT) from error
 
-    offers = tuple(
-        _offer(p) for p in (ModelPurpose.CHAT, ModelPurpose.EMBEDDING) if p in purposes
-    )
-    declaration = PluginDeclaration(plugin_id, ollama_release(), offers)
+    offers = declaration.offers
     catalog = InMemoryCatalog()
     try:
         record = admit(
@@ -471,7 +514,7 @@ def open_local_host(
     except (TypeError, ValueError) as error:
         raise HostError(HostFailure.UNSUPPORTED_COMPOSITION) from error
 
-    chat_offer = ollama_chat_offer()
+    chat_offer = model_chat_offer()
     try:
         composed = compose_model(
             _requirement(chat_offer),
@@ -487,10 +530,10 @@ def open_local_host(
     except ModelCompositionError as error:
         raise HostError(_composition_failure(error.failure)) from error
 
-    embedding_entry = entries.get(ollama_embedding_offer())
+    embedding_entry = entries.get(model_embedding_offer())
     if embedding_entry is not None:
         resolution = resolve(
-            _requirement(ollama_embedding_offer()),
+            _requirement(model_embedding_offer()),
             catalog.snapshot(tenant),
             resolved_at=now,
         )

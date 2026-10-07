@@ -79,6 +79,29 @@ from legoai.intelligence.model.values import (
 )
 from legoai.kernel.versions import Version
 from legoai.plugins.values import PluginDeclaration, PluginId
+from legoai.reference.model_capabilities import (
+    model_chat_capability_id,
+    model_chat_offer,
+    model_embedding_capability_id,
+    model_embedding_offer,
+)
+
+
+# Legacy private names delegate to the sole neutral offer definitions.
+def ollama_chat_capability_id() -> CapabilityId:
+    return model_chat_capability_id()
+
+
+def ollama_embedding_capability_id() -> CapabilityId:
+    return model_embedding_capability_id()
+
+
+def ollama_chat_offer() -> CapabilityOffer:
+    return model_chat_offer()
+
+
+def ollama_embedding_offer() -> CapabilityOffer:
+    return model_embedding_offer()
 
 
 def ollama_plugin_id() -> PluginId:
@@ -92,22 +115,6 @@ def ollama_release() -> Version:
     return Version(1, 0, 0)
 
 
-def ollama_chat_capability_id() -> CapabilityId:
-    return CapabilityId("legoai.intelligence.model.chat")
-
-
-def ollama_embedding_capability_id() -> CapabilityId:
-    return CapabilityId("legoai.intelligence.model.embedding")
-
-
-def ollama_chat_offer() -> CapabilityOffer:
-    return CapabilityOffer(ollama_chat_capability_id(), ollama_release())
-
-
-def ollama_embedding_offer() -> CapabilityOffer:
-    return CapabilityOffer(ollama_embedding_capability_id(), ollama_release())
-
-
 def ollama_declaration() -> PluginDeclaration:
     """The inert Plugin declaration published to the Catalog for this one
     trusted Adapter -- one Plugin release, two Capability offers (chat,
@@ -116,7 +123,7 @@ def ollama_declaration() -> PluginDeclaration:
     return PluginDeclaration(
         ollama_plugin_id(),
         ollama_release(),
-        (ollama_chat_offer(), ollama_embedding_offer()),
+        (model_chat_offer(), model_embedding_offer()),
     )
 
 

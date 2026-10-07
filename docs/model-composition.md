@@ -31,7 +31,7 @@ the offline proof. These labels are local operator bindings, not global provider
 names. The host supplies the expected owner-issued ConfigurationRevisionRef;
 input cannot publish a revision or select another tenant by changing a string.
 
-Use capture_model_selection, then compose_model in the private
+Inside Core composition, use capture_model_selection, then compose_model in the private
 legoai.runtime._composition.model_selection module. Pass an explicit
 CapabilityRequirement, trusted contribution tuple, Catalog and evaluation time.
 The resulting route and configured association feed existing invoke_routed_chat
@@ -102,3 +102,90 @@ this proof. Expand only when the next real consumer supplies concrete evidence.
 
 Local validation: the focused composition/Model/architecture suite passed 333 tests.
 This is scoped offline evidence, not full-platform or live-provider qualification.
+
+## OPENAI-COMPATIBLE-MODEL-1 (ADR-014 §14)
+
+Implemented; operator local qualification pending. Applications use only
+`legoai.runtime.api` and, at their composition root, `open_local_host` from
+`legoai.runtime.local`. Domain code receives `GovernedHost` and owner contracts.
+The closed provider union is `OllamaSettings | OpenAICompatibleSettings |
+TrustedModelContribution`. Trusted contributions remain supported; no import
+strings, registry, fallback, automatic retry or per-call routing is introduced.
+
+`OpenAICompatibleSettings` is frozen/slotted and requires these explicit fields:
+`base_url`, `chat_model`, `embedding_model`, `timeout_seconds`,
+`max_output_tokens`, `provider_id`, and `deployment`. Optional values are expressed
+as `None`. `ModelDeployment` has LOCAL and REMOTE; REMOTE fails at open with
+`HostFailure.UNSUPPORTED_COMPOSITION` before admission or adapter construction.
+LOCAL is an operator attestation about processing location, never inferred from
+the URL. A loopback tunnel to a remote service is REMOTE and unsupported.
+
+The API root includes its version prefix: `http://127.0.0.1:8000/v1` becomes
+`http://127.0.0.1:8000/v1/chat/completions`, never `/v1/v1/chat/completions`.
+Chat sends only `model`, plain-text `messages`, `stream: false`, and `max_tokens`
+when configured. `max_output_tokens` accepts an exact integer in 1..2**31-1,
+or None (omitted); the representation bound is not provider capacity or a cost
+budget. Models use the existing 1..256-character identity bound, with blank,
+control-character and non-UTF-8 names rejected. Timeouts must be positive and
+finite. Full semantic settings validation happens at host open; Python type
+errors are rejected at value construction, consistent with Ollama settings.
+
+Chat requires exactly one choice, an assistant message with string content,
+the exact configured response model, and `finish_reason == "stop"`. `length`,
+missing/other finish reasons, tools, malformed success and streaming are rejected.
+Usage counts are optional nonnegative integers; missing/invalid counts remain
+unknown, never fabricated zeros. No alias resolution is performed.
+
+Embeddings are available only when `embedding_model` is configured. The request
+is `POST {base_url}/embeddings` with `model` and `input`. Response model must match
+exactly; count and ordered indexes must match inputs; vectors must have consistent
+positive dimensions and finite numeric components. Empty input/result has the
+existing dimension 0 contract. With no embedding model, the host publishes only
+CHAT and refuses EMBEDDING with PURPOSE_UNAVAILABLE before dispatch.
+
+| Observation | Governed effect / recoverability |
+| --- | --- |
+| Connection refused or DNS failure before send | NONE / POTENTIALLY_RETRYABLE |
+| Timeout, reset, incomplete body (including an error body) | UNKNOWN / REQUIRES_INTERVENTION |
+| Complete 429 or 503 | NONE / POTENTIALLY_RETRYABLE |
+| Other non-2xx, malformed success, wrong identity, invalid vectors or finish reason | NONE / TERMINAL |
+
+`ModelResponseRetryableRejectedError` subclasses `ModelResponseRejectedError`;
+composition classifies it before its terminal base class, for both chat and
+embedding. No status causes retry or fallback. Redirects are rejected and ambient
+proxies are disabled. No Authorization header, credential fields, environment
+secret lookup, new dependency or provider SDK is used. Constructor/host open
+perform no HTTP; only chat/embed perform I/O.
+
+Offline conformance rows A-C use the same governed application with a FixedModel
+contribution, Ollama over mocked HTTP, and OpenAI-compatible over a process-local
+stdlib server. They test contracts and effects, not output-quality equivalence.
+The Ollama protocol and configured-identity behavior remain unchanged; capability
+IDs/version are shared neutral helpers, with separate provider plugin identities.
+
+Supported scope: credential-free LOCAL OpenAI-compatible endpoints. Remote,
+credentials, KISSKI hosted, authenticated vLLM, cloud APIs, automatic routing,
+retries and VTO remain unsupported. The existing blocking-to-thread cancellation
+and complete-response buffering limitations remain; cancellation does not prove
+provider cessation. No live endpoint is qualified by these tests. Next planned
+slice after qualification is SECRET-REF-1, requiring separate authorization;
+REMOTE-MODEL-DISCLOSURE-1 is also required before remote use.
+
+Run from the repository root using installed project environments:
+
+```powershell
+uv run python .\validate_openai_compatible_model_1.py
+```
+
+The validator has 52 phases: scope and accepted ADR; public settings and closed
+union; deployment/credential controls; neutral offers; private adapter and stdlib
+boundaries; inert construction; chat wire, identity, usage and truncation;
+HTTP/effect matrix; embeddings and purposes; no retry/fallback; conformance A-C;
+runtime/Model/Agent/DocuMind/ForgeAI regressions; mypy, Ruff and diff checks.
+It makes no provider connection beyond the process-local scripted server.
+
+Implementation verification (2026-10-07): the offline 52-phase validator run
+passed, including 88 runtime, 100 Model, 53 Agent, 16 DocuMind and 89 ForgeAI
+regressions. Final focused verification passed all 161 new tests after tightening
+malformed-JSON diagnostic isolation and identity/construction tests. Operator
+qualification remains pending. No external provider or Docker was invoked.

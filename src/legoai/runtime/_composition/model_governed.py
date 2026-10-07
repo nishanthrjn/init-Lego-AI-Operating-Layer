@@ -40,6 +40,7 @@ from legoai.intelligence.model.ports import (
     ModelPort,
     ModelPreflightError,
     ModelResponseRejectedError,
+    ModelResponseRetryableRejectedError,
     ModelResponseUncertainError,
 )
 from legoai.intelligence.model.routing import ModelBinding, ModelRouteDecision
@@ -54,11 +55,10 @@ from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.references import ConfigurationRevisionRef
 from legoai.reference.execution import ExecutionCoordinator
 from legoai.reference.model import (
-    ollama_chat_offer,
-    ollama_embedding_offer,
     ollama_plugin_id,
     ollama_release,
 )
+from legoai.reference.model_capabilities import model_chat_offer, model_embedding_offer
 
 
 def _matches_known_offer(entry: CatalogEntry, expected_offer: object) -> bool:
@@ -85,6 +85,7 @@ async def _settle_mismatch(
 async def _settle_preflight_error(
     coordinator: ExecutionCoordinator, result: CoordinationResult
 ) -> ExecutionResult:
+    """Shared NONE/retryable outcome for preflight and complete temporary rejection."""
     return await coordinator.settle(
         result,
         final_state=ExecutionState.FAILED,
@@ -139,7 +140,7 @@ async def invoke_governed_chat(
     permit = result.permit
     assert permit is not None  # CoordinationResult's own invariant guarantees this
 
-    if not _matches_known_offer(permit.resolved_entry, ollama_chat_offer()):
+    if not _matches_known_offer(permit.resolved_entry, model_chat_offer()):
         return await _settle_mismatch(coordinator, result), None
 
     return await _invoke_chat(coordinator, result, request, adapter, None)
@@ -166,6 +167,8 @@ async def _invoke_chat(
         return await _settle_preflight_error(coordinator, result), None
     except ModelResponseUncertainError:
         return await _settle_uncertain_error(coordinator, result), None
+    except ModelResponseRetryableRejectedError:
+        return await _settle_preflight_error(coordinator, result), None
     except ModelResponseRejectedError:
         return await _settle_rejected_error(coordinator, result), None
 
@@ -204,7 +207,7 @@ class ConfiguredModelBinding:
         scope = self.configuration_revision.configuration.application.scope
         if self.entry.tenant_context.tenant_id != scope.tenant_id:
             raise ValueError("configured model tenant mismatch")
-        if self.entry.offer != ollama_chat_offer():
+        if self.entry.offer != model_chat_offer():
             raise ValueError("configured model requires the v1 chat capability")
 
 
@@ -267,7 +270,7 @@ async def invoke_governed_embedding(
     permit = result.permit
     assert permit is not None
 
-    if not _matches_known_offer(permit.resolved_entry, ollama_embedding_offer()):
+    if not _matches_known_offer(permit.resolved_entry, model_embedding_offer()):
         return await _settle_mismatch(coordinator, result), None
 
     return await _invoke_embedding(coordinator, result, request, adapter)
@@ -301,7 +304,7 @@ async def invoke_routed_embedding(
     assert permit is not None
     scope = configuration_revision.configuration.application.scope
     if (
-        entry.offer != ollama_embedding_offer()
+        entry.offer != model_embedding_offer()
         or entry.tenant_context.tenant_id != scope.tenant_id
         or permit.resolved_entry != entry
         or permit.operation.subject != configuration_revision.configuration
@@ -326,6 +329,8 @@ async def _invoke_embedding(
         return await _settle_preflight_error(coordinator, result), None
     except ModelResponseUncertainError:
         return await _settle_uncertain_error(coordinator, result), None
+    except ModelResponseRetryableRejectedError:
+        return await _settle_preflight_error(coordinator, result), None
     except ModelResponseRejectedError:
         return await _settle_rejected_error(coordinator, result), None
 
