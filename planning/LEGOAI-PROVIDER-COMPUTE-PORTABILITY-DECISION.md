@@ -656,7 +656,14 @@ for any credentialed or remote provider.
 
 ## 29. OPENAI-COMPATIBLE-MODEL-1 implementation (2026-10-07)
 
-Implemented under accepted ADR-014 §14; operator local validation pending.
+Implemented under accepted ADR-014 §14; **LOCALLY QUALIFIED** by operator validation.
+The operator ran `uv run python .\validate_openai_compatible_model_1.py` from
+the repository root; all **52/52 validator phases passed**, including conformance
+rows A–C, runtime, Model, Agent, DocuMind and ForgeAI regressions, mypy, Ruff lint,
+Ruff format and `git diff --check`. Qualification is offline/process-local
+contract and conformance evidence only. No external provider, Docker, remote
+endpoint or credentialed provider was used. No live model quality or live
+output-quality equivalence is established; remote/credential support is absent.
 The closed host union adds credential-free `OpenAICompatibleSettings` and the
 required LOCAL/REMOTE declaration. REMOTE is refused before admission/construction.
 The private stdlib adapter implements versioned-root chat (`stream: false`) and
@@ -671,8 +678,8 @@ Offline conformance rows A-C and the 52-phase
 `validate_openai_compatible_model_1.py` qualify contracts only, not model quality.
 See [composition and consumer details](../docs/model-composition.md).
 
-Supported scope after qualification: credential-free LOCAL OpenAI-compatible
+Locally qualified scope: credential-free LOCAL OpenAI-compatible
 endpoints. Remote, credentials, KISSKI hosted, authenticated vLLM, cloud APIs,
 automatic routing, retries and VTO are unsupported. No live provider was invoked.
-No ADR was changed. Next planned slice after qualification: SECRET-REF-1,
-separately authorized; REMOTE-MODEL-DISCLOSURE-1 remains required for remote use.
+No ADR was changed. Next separately authorized slice: SECRET-REF-1.
+REMOTE-MODEL-DISCLOSURE-1 remains required for remote use.

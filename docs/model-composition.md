@@ -105,7 +105,7 @@ This is scoped offline evidence, not full-platform or live-provider qualificatio
 
 ## OPENAI-COMPATIBLE-MODEL-1 (ADR-014 §14)
 
-Implemented; operator local qualification pending. Applications use only
+Implemented; **LOCALLY QUALIFIED** by operator validation. Applications use only
 `legoai.runtime.api` and, at their composition root, `open_local_host` from
 `legoai.runtime.local`. Domain code receives `GovernedHost` and owner contracts.
 The closed provider union is `OllamaSettings | OpenAICompatibleSettings |
@@ -163,12 +163,12 @@ stdlib server. They test contracts and effects, not output-quality equivalence.
 The Ollama protocol and configured-identity behavior remain unchanged; capability
 IDs/version are shared neutral helpers, with separate provider plugin identities.
 
-Supported scope: credential-free LOCAL OpenAI-compatible endpoints. Remote,
+Locally qualified scope: credential-free LOCAL OpenAI-compatible endpoints. Remote,
 credentials, KISSKI hosted, authenticated vLLM, cloud APIs, automatic routing,
 retries and VTO remain unsupported. The existing blocking-to-thread cancellation
 and complete-response buffering limitations remain; cancellation does not prove
-provider cessation. No live endpoint is qualified by these tests. Next planned
-slice after qualification is SECRET-REF-1, requiring separate authorization;
+provider cessation. No live endpoint is qualified by these tests. The next
+separately authorized slice is SECRET-REF-1;
 REMOTE-MODEL-DISCLOSURE-1 is also required before remote use.
 
 Run from the repository root using installed project environments:
@@ -188,4 +188,11 @@ Implementation verification (2026-10-07): the offline 52-phase validator run
 passed, including 88 runtime, 100 Model, 53 Agent, 16 DocuMind and 89 ForgeAI
 regressions. Final focused verification passed all 161 new tests after tightening
 malformed-JSON diagnostic isolation and identity/construction tests. Operator
-qualification remains pending. No external provider or Docker was invoked.
+qualification is now **LOCALLY QUALIFIED**: running
+`uv run python .\validate_openai_compatible_model_1.py` from the repository root
+passed **52/52 validator phases**, including conformance rows A–C. The 161 focused
+tests had already passed during implementation verification. Qualification is
+offline/process-local contract and conformance evidence only. No external or live
+provider was contacted, no Docker was invoked, and no remote endpoint or
+credentialed provider was used. No live model quality was measured or live
+output-quality equivalence established; remote/credential support remains absent.
