@@ -1,8 +1,9 @@
-# SECRET-REF-1A — wider owner/arbitration decision required
+# SECRET-REF-1A — accepted bounded shared local arbitration scope
 
-**Status: PROPOSED — no redesign authorized or implemented.**
+**Status: ACCEPTED — 2026-10-07 by explicit maintainer decision.**
 **Date:** 2026-10-07.
-**Outcome:** SECRET-REF-1A BLOCKED — WIDER OWNER/ARBITRATION DECISION REQUIRED.
+**Outcome:** Bounded shared local ordering scope authorized as a prerequisite
+for SECRET-REF-1A; no implementation or qualification established.
 
 This is the separate maintainer decision required by
 [the accepted staged scope, §8](LEGOAI-SECRET-REF-1-DECISION.md#8-accepted-implementation-order--2026-10-07).
@@ -89,7 +90,7 @@ before resuming SECRET-REF-1A implementation:
    Existing in-memory custody cannot justify a durable repair claim; any required
    durable extension needs explicit scope approval rather than an in-memory substitute.
 
-This is a candidate design, not a completed proof or an instruction to implement
+This accepted bounded design is not a completed proof or an instruction to implement
 a general Coordinator rewrite. The first known required changes cross Governance
 mutation and dispatch arbitration seams. Whether the Coordinator itself needs
 changes must be resolved in that design; no necessity for a complete rewrite is
@@ -108,7 +109,7 @@ of today's supported owners and is not a substitute.
 - ADR-014: composition may wire admitted implementations but does not authorize a
   new credential-bearing path by itself. ModelPort and model settings stay unchanged.
 
-If the candidate is authorized, first specify deterministic event/barrier tests
+Before implementation, specify deterministic event/barrier tests
 for revoke/policy/catalog changes before and after acceptance, all supported owner
 mutation entry points, competing uses, cancellation and expiry. Test pre-evidence
 failure and post-acceptance recording failure without retrying use. Then resume
@@ -118,13 +119,67 @@ No tests or `validate_secret_ref_1.py` were created: the explicit stop condition
 was reached before implementation. No successful race proof or Stage A validation
 is claimed. This documentation change is checked with `git diff --check`.
 
-## 6. Requested decision and unchanged gates
+## 6. Accepted decision and unchanged gates
 
-Decide whether to authorize the bounded shared-domain design in §4, including its
-owner-mutation and actual-acceptance changes, or revise/defer that scope. Do not
-mark Stage A qualified until its eventual executable proof passes. Do not
-implement the wider changes on the strength of this proposed document.
+The maintainer explicitly accepts only the bounded shared-domain design in §4,
+subject to the implementation constraints in §7 below. Do not mark Stage A
+qualified until its executable proof passes. Changes beyond this bounded
+authority require a separate maintainer decision.
 
 Stage B, environment sources, model credential fields/headers, authenticated
 providers, remote disclosure and KISSKI remain disabled. No credentials,
 environment variables, network endpoints or Docker were accessed by this work.
+
+## 7. Accepted implementation constraints — 2026-10-07
+
+Exactly one shared process-local ordering domain is authorized, injected through
+trusted composition. It owns ordering participation only. Governance retains
+grant/policy/approval state, Catalog contribution eligibility, Evidence custody,
+Execution dispatch/invocation semantics, and Secret Access reference/use semantics.
+No owner state is moved into a combined owner.
+
+All supported mutation paths relevant to protected use must participate by
+construction in that same domain: grant revocation, policy supersession,
+applicable approval mutation/consumption, Catalog withdrawal/eligibility changes,
+future Stage-A Secret mapping/revision invalidation, and protected acceptance.
+Caller convention or alternate bypassing mutation APIs are insufficient.
+Preserve credential-free construction and behavior; protected use must fail
+closed on missing or mismatched domains, never silently create independent
+domains that appear compatible. Unrelated consumers acquire no Secret semantics.
+
+Authorize one bounded, non-reentrant, private synchronous exact-acceptance
+operation for final current-authority, policy/eligibility and Secret revision/use
+validation, applicable approval consumption, and consumer acceptance of one exact
+use. Do not expose a raw lock, generic transaction facility or application-facing
+ordering convenience. Applications, Agents, ModelPort and provider adapters must
+not manipulate the ordering primitive. Any genuinely necessary public type/Port
+requires explicit justification.
+
+Before concrete locking is implemented, produce a lock-order analysis covering
+the shared domain, DeterministicDispatchArbiter, ExecutionCoordinator claim lock,
+Governance registries, Catalog and Evidence interactions. Avoid inversion and
+reentrant deadlock; unsafe ordering requires a stop, not a timeout workaround.
+Do not hold the gate during network I/O or call enqueue, task/worker/future
+creation or `asyncio.to_thread` submission actual acceptance.
+
+Invalidation or expiry effective before acceptance must prevent acceptance;
+later invalidation cannot erase accepted use. Support deterministic acceptance-
+time tests without claiming hard-real-time expiry. Required pre-use custody must
+complete before acceptance. Post-acceptance evidence failure preserves truthful
+use/effect knowledge and repair/reconciliation duties without automatic repeat.
+If normative compliance requires durable custody beyond existing support, stop
+and request separate scope; no durable evidence subsystem is authorized here.
+
+Stop and report if participation needs a broader semantic redesign, safe ordering
+cannot be established in this scope, or an ADR contradiction is found. This is
+an implementation profile under ADR-005/007/009/010 and existing dispatch
+contracts; no ADR semantics are changed and no new ADR is allocated.
+
+Explicit non-goals: general Coordinator rewrite, distributed arbitration, global
+singleton lock, remote execution, credential support, environment-backed Secrets,
+OpenAI credential headers, KISSKI, retry/fallback changes, and generalized
+workflow/runtime redesign.
+
+SECRET-REF-1A remains unimplemented and unqualified; Stage B remains gated and
+G03 remains open. This acceptance task changes documentation only. Arbitration
+implementation does not begin in this task.
