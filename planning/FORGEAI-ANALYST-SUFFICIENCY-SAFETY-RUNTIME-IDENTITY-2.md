@@ -1,6 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-RUNTIME-IDENTITY-2
 
-Status: **implemented, local validation pending (2026-10-07).** This is a
+Status: **LOCALLY QUALIFIED (2026-10-07; offline; 41/41 validator phases).**
+This is a
 runtime compatibility and identity slice only. No safety case was run, no
 semantic model call was made, no synthetic inference probe was sent, and no
 PREFLIGHT or BASELINE was run.
@@ -164,3 +165,24 @@ All of it runs under `FORGEAI_LIVE1_OFFLINE=1`.
    Its new run directory will need a custody entry before later validators
    accept it.
 3. The 22-call BASELINE, hardening and LIVE-1 FULL remain unauthorized.
+
+## 10. Local qualification
+
+Operator qualification passed on 2026-10-07 (implementation commit `731f69c`):
+all **41/41 phases** of
+`uv run python .alidate_forgeai_analyst_sufficiency_safety_runtime_identity_2.py`.
+The run covered:
+- scope, qualification prerequisites and the Smoke 3 inventory;
+- frozen identities, the exact 0.40.0 pin, the compatibility record and
+  run-artifact custody (including the preserved live/1 refusal);
+- the 27 runtime identity tests and 25 coverage phases;
+- regressions: SAFETY-LIVE-1 (57), SAFETY-EVAL-2 (33), LIVE-1 runtime (151),
+  sufficiency Agent (79), Ollama adapter and local host (136), ForgeAI CLI
+  binding (5) and architecture (251);
+- the zero-provider/no-baseline guard, mypy, Ruff lint and format, and the
+  diff check.
+
+This is offline evidence only: no model, provider or Docker, no synthetic
+inference call, and no live/2 run directory. It does not authorize the live/2
+PREFLIGHT or the BASELINE; each needs separate authorization and a clean
+tracked tree.
