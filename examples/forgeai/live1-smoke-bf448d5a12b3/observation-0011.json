@@ -1,0 +1,32 @@
+{
+  "case": "d21",
+  "variant": "initial",
+  "attempts": [
+    {
+      "identity": "d21-initial-initial",
+      "phase": "initial",
+      "disposition": "sufficient",
+      "requests": [],
+      "governing_sources": [
+        "plugins/readme.txt"
+      ],
+      "manifest_identity": "8f80bc8c9edc45e724a031db85e8577e1a46181dd6dd267eae31065d0bd82bc1",
+      "valid": true,
+      "failure": null
+    }
+  ],
+  "eligible": false,
+  "progress_phase": "initial",
+  "failure": null,
+  "stop": null,
+  "rounds": 0,
+  "accepted_request": 0,
+  "corrected_request": 0,
+  "operator_clarification": 0,
+  "operator_rejection": 0,
+  "operator_answer": 0,
+  "unauthorized_reads": 0,
+  "unauthorized_edits": 0,
+  "target_expansion": 0,
+  "profile_unresolved": false
+}

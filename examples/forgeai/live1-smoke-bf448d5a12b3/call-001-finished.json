@@ -1,0 +1,20 @@
+{
+  "case": "d01",
+  "variant": "initial",
+  "phase": "initial",
+  "seconds": 209.21732490000431,
+  "user_payload_digest": "23357653878fa3201a35f0867ed8e59325e75df6752d5d0b0ff99a3ecae20646",
+  "failure": null,
+  "child_diagnostics": {
+    "child_stage": "RESULT_COMPLETED",
+    "child_failure_category": null,
+    "exception_class": null,
+    "ipc_status": "ENVELOPE_RECEIVED",
+    "child_exit_code": 0,
+    "process_exit_observed": true,
+    "cleanup_action": "NONE",
+    "model_dispatch": "NOT_OBSERVED",
+    "http_request": "NOT_OBSERVED",
+    "provider_acceptance": "UNKNOWN"
+  }
+}
