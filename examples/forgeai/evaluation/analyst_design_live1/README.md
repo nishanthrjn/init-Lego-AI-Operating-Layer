@@ -196,7 +196,7 @@ and no live model-quality claim follows. Current implementation commit: `d592041
 Historical artifacts and SERVER_EFFECT_UNKNOWN are unchanged. Qualification
 alone does not authorize a new smoke or FULL; G07 remains open.
 
-## PARSER-DIAGNOSTICS-1 (2026-10-07; implemented, local validation pending)
+## PARSER-DIAGNOSTICS-1 (2026-10-07; locally qualified)
 
 **Why.** Smoke 2 (`cafee55d-…`) stopped on d13 with `invalid_output`. The Agent
 collapses every rejection into that single value, and no reply text is kept, so
@@ -269,3 +269,12 @@ structurally valid semantic request-quality miss.
 Operator qualification uses the same command:
 `uv run python .\validate_forgeai_analyst_design_live_1.py` (offline). Qualification
 does not authorize a new smoke or FULL.
+
+Operator qualification passed on 2026-10-07: all **131/131 phases** of
+`uv run python .\validate_forgeai_analyst_design_live_1.py`, including **680 tests**
+(**151 harness tests**, of which 63 are PARSER-DIAGNOSTICS-1),
+revision-1/revision-2 (123), sufficiency Agent (79), evidence-loop (50),
+RepositoryAnalyst (175), ForgeAI worker (49) and governed Agent runtime (53)
+regressions, the offline provider fence, mypy, Ruff lint/format and git diff check.
+This is offline evidence only: no model call, smoke, FULL or Docker. It does
+not authorize a new smoke.

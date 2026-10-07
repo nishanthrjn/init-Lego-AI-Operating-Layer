@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-FORGEAI-ANALYST-DESIGN-LIVE-1 PARSER-DIAGNOSTICS-1 (2026-10-07): harness-only closed invalid-output labels (rejection code, length class, branch, disagreement; no model text) for future smokes. Agent 1.0.0, prompt, parser, revision 2 and profile unchanged; d13 history remains cause not established. Implemented, local validation pending; see [diagnostic 2](FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md). No smoke or FULL authorized.
+FORGEAI-ANALYST-DESIGN-LIVE-1 PARSER-DIAGNOSTICS-1 (2026-10-07): harness-only closed invalid-output labels (rejection code, length class, branch, disagreement; no model text) for future smokes. Agent 1.0.0, prompt, parser, revision 2 and profile unchanged; d13 history remains cause not established. **LOCALLY QUALIFIED** (operator 131/131 phases, 680 tests including 151 harness tests); next: commit, clean tree, then a separately authorized NEW smoke; see [diagnostic 2](FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md). No smoke or FULL authorized.
 
 FORGEAI-ANALYST-DESIGN-LIVE-1 smoke 2 (2026-10-07, run `cafee55d`): **SMOKE_CONTRACT_FAILURE** (d13 `invalid_output`; d20/d21 never attempted; zero safety, authority or leakage findings). [Diagnostic 2](FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md): disposition E. d13 cause not established (no parser reason retained), so a harness-only PARSER-DIAGNOSTICS-1 slice is needed first; d09 is a model `named_evidence`-for-role miss against explicit guidance, with no Agent, prompt or oracle change. No new smoke or FULL authorized; G07 open.
 
