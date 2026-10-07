@@ -235,3 +235,15 @@ Neither stage authorizes a remote provider. Remote disclosure and KISSKI remain
 behind the separate decisions, admission and qualification prerequisites in §6.
 This acceptance record makes SECRET-REF-1A the next implementation slice; no
 implementation begins in this documentation-only change.
+
+## 9. Stage A implementation assessment — 2026-10-07
+
+**SECRET-REF-1A STOPPED — DURABLE CUSTODY SCOPE REQUIRED.** The accepted shared
+local arbitration prerequisite is authorized, but the subsequent implementation
+assessment reached the explicit durable-custody stop condition. ADR-010 §14 and
+ADR-009 §§8.2–9 require durable safe-use attribution/repair obligations that
+current in-memory Evidence support cannot provide. See the
+[lock-order analysis and smallest additional scope decision](LEGOAI-SECRET-REF-1A-ARBITRATION-DECISION.md#8-implementation-assessment--2026-10-07).
+No code or validator was implemented; Stage A is unqualified. Stage B, credentials,
+remote use and KISSKI remain gated. G03 remains open. Accepted architecture and
+the two-stage scope above are unchanged.
