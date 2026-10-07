@@ -1,6 +1,6 @@
 # Analyst evidence sufficiency contracts
 
-ENG-ANALYST-SUFFICIENCY-CONTRACT-1: **IMPLEMENTED — LOCAL OPERATOR QUALIFICATION PENDING**.
+ENG-ANALYST-SUFFICIENCY-CONTRACT-1: **LOCALLY QUALIFIED**.
 
 Import the additive public values from `legoai_engineering.analyst.sufficiency`.
 There is no assessment Agent, prompt, model call, filesystem access, acquisition
@@ -131,4 +131,7 @@ references, legacy parser/Analyst/evidence/M7/ForgeAI regressions, import and
 scope guards, mypy, Ruff, diff integrity and frozen R3/R4 harness regressions.
 Phases 4–24 reference phase 3's passing tests rather than repeat the suite.
 It uses offline installed dependencies, no live provider and no Docker.
-Agent verification does not replace the maintainer's operator qualification.
+Operator qualification completed on 2026-10-07 using the command above: all
+37/37 phases passed, including 27 contract cases and 103 frozen R3/R4 regression
+cases. This establishes offline contract/regression evidence only, not live
+model quality or semantic completeness. No live model or Docker was used.
