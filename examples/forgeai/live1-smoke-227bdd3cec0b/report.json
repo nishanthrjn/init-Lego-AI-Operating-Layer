@@ -1,0 +1,935 @@
+{
+  "report_identity": "forgeai-analyst-sufficiency-live-report/1",
+  "sufficiency_profile_identity": "forgeai-analyst-sufficiency-live-profile/1",
+  "revision_2_condition_identity": "forgeai-analyst-design-eval/2",
+  "run_id": "cafee55d-7032-4115-828a-8a6b2d14363a",
+  "mode": "SMOKE",
+  "approval_reference": "maintainer-smoke-5aaa8b29-6f79-4ee5-8c36-b7871e132efc",
+  "provenance": {
+    "condition": "forgeai-analyst-design-live/1",
+    "profile": "forgeai-analyst-sufficiency-live-profile/1",
+    "report": "forgeai-analyst-sufficiency-live-report/1",
+    "evaluation": "forgeai-analyst-design-eval/2",
+    "frozen_digests": {
+      "fixtures-v2.json": "ae4a64630231e4c34d7742581d306632c3d3c7a43432a7e1eda103d31581b748",
+      "inputs-v2.json": "235a26a9fe728b360ba00fa8e9de9b036ee057735fadf5c8a5a84601292571ea",
+      "inventory-v2.json": "ec3498c8feef8f8b8a5882af65e1fc8b2f787b6d088d8f7226619599ed94d9d2",
+      "oracle-v2.json": "8149806123fc85e060b1cf2ec44590f0d700d6a55b5d9e8465a8e9479852c612",
+      "gates-v2.json": "596c94dd0fe298ad54577b35f892b6ff2e5ea800ddec64efd5e61a2911fec3f5",
+      "schema-v2.json": "6ebda005bc8860bf18e76eb283edb2459e9c763e86264dad52a662e5ae71a9df",
+      "set-controls-v2.json": "fc9319e8e424e6be8c141feca63ec3824284309e6b109ec04ac5e2d5bdd2eb2d",
+      "CASES.md": "37e8efe51a9164b1dc9629d1343297d8ce91e01c2ad271365a7ec168e82279a6"
+    },
+    "harness_sources": {
+      "diagnostics.py": "3cd4008f01d1ecaa31ba01d134bc65579dc58db54a5367a648dfde161095502b",
+      "harness.py": "7d858da1e5f0b5ae9620666e7b0600665644400d6dcd8c1837aaa365f84e152a",
+      "identity.py": "e2774cdb4e22b9f3ccbb1fb022b0a91ad32b78d1a40537767560d944409223a7",
+      "lifecycle.py": "c0d66e0fb20553980ed770e2dcbd1bbd6ded3e423daaa3a972d84a4da1d93457",
+      "measurement.py": "1fb5ae4d1fc50e19ec79c83e5d968e9b105a068fd8e99bd669e6ff12c629a3f0",
+      "pins.json": "cf9ff26e0884cdbafbfae60cbf9c84adb92da5cba7723375d42bc02470f57505",
+      "report-schema.json": "a77bd857b257d8cc544db3de25ee954c312dfe590cf0086f16fa29e559c0b360",
+      "runtime.py": "0178059d2e7ad538830fbba7d92bb2f8ba96e5221e0608f764ca3a1e029c45d1",
+      "sequence.py": "9fdee4440e10c1429cdf05cfe6192b444b4afc6f9afdc9dff00e0581b23f7f3a",
+      "storage.py": "bd20e0be90d3a2355fb8d05ceadd5209348ce2ecb5cbc29a8a63125babb5ec34",
+      "__init__.py": "b930dc9b794842454155e3a46023a7628f5aeb863f3deb8e1e8920b57624140f",
+      "__main__.py": "febaa1b4652cfe969e12f8fbd160c97a254865c78e993240f1150aef67e03985"
+    },
+    "source_pins": {
+      "planning/FORGEAI-ANALYST-SUFFICIENCY-LIVE-PROFILE-1.md": "79a5d7e46cbc537c60abcc9092738351f81a3aebbfe793b48d9a533bfece5fcd",
+      "planning/FORGEAI-ANALYST-DESIGN-LIVE-1-DECISION.md": "81df741d20e2751d24b622b6bd40b426a474dac29fe5b73dec66a7becb1402ae",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_definition.py": "d2950b5658cfb05fd8db4ee01da575118159753965506182d5469703d769bfd2",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_agent.py": "0debfbf5743317a9e3ed11de4438a395b3ec9c0c67eb05ad641b45999323da79",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency.py": "298a74a865dd57d599f8df92a80ad635dc49ee07dab47ca5ab3c817a09389f76",
+      "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102",
+      "examples/forgeai/evaluation/analyst_design_eval2/CASES.md": "37e8efe51a9164b1dc9629d1343297d8ce91e01c2ad271365a7ec168e82279a6",
+      "examples/forgeai/evaluation/analyst_design_eval2/data.py": "f2e6a6fceb89eaf7806dd8aa9019f8c5853b5d740c8be2d3e53ba9cc857659d8",
+      "examples/forgeai/evaluation/analyst_design_eval2/fixtures-v2.json": "ae4a64630231e4c34d7742581d306632c3d3c7a43432a7e1eda103d31581b748",
+      "examples/forgeai/evaluation/analyst_design_eval2/freeze-v2.json": "210811368877d0227c00b2623fafaef069da3d9d1ac4a9553b80736140d76b93",
+      "examples/forgeai/evaluation/analyst_design_eval2/gates-v2.json": "596c94dd0fe298ad54577b35f892b6ff2e5ea800ddec64efd5e61a2911fec3f5",
+      "examples/forgeai/evaluation/analyst_design_eval2/inputs-v2.json": "235a26a9fe728b360ba00fa8e9de9b036ee057735fadf5c8a5a84601292571ea",
+      "examples/forgeai/evaluation/analyst_design_eval2/inputs.py": "088a1e19e288216a4a973f292382eca86f6b77c299602402ed5ec6b767c0e4bb",
+      "examples/forgeai/evaluation/analyst_design_eval2/inventory-v2.json": "ec3498c8feef8f8b8a5882af65e1fc8b2f787b6d088d8f7226619599ed94d9d2",
+      "examples/forgeai/evaluation/analyst_design_eval2/metrics.py": "64d6b52e3af12a02f37fef7c4ff46557e2685f4b104c4681f114e483d35854d0",
+      "examples/forgeai/evaluation/analyst_design_eval2/oracle-v2.json": "8149806123fc85e060b1cf2ec44590f0d700d6a55b5d9e8465a8e9479852c612",
+      "examples/forgeai/evaluation/analyst_design_eval2/report.py": "0d63ec0604c15e5e9b6f4db96192fc1e7ec42e23b1439229888c5a5c8e56d089",
+      "examples/forgeai/evaluation/analyst_design_eval2/requests.py": "caa4e229a75777fd2aca589c979c933c5add5d0163f9757c85e00764b1ba9ae1",
+      "examples/forgeai/evaluation/analyst_design_eval2/runner.py": "ae11c6514ad690f5c077fe6b1fd1d5ada8ac536ccc5bc67369186ec97ab5a471",
+      "examples/forgeai/evaluation/analyst_design_eval2/schema-v2.json": "6ebda005bc8860bf18e76eb283edb2459e9c763e86264dad52a662e5ae71a9df",
+      "examples/forgeai/evaluation/analyst_design_eval2/set-controls-v2.json": "fc9319e8e424e6be8c141feca63ec3824284309e6b109ec04ac5e2d5bdd2eb2d",
+      "examples/forgeai/evaluation/analyst_design_eval2/__init__.py": "d1aa39b81b4965856f80519e7374fb1a8c52f2a534cecaecf22aad2586ecaa4d"
+    },
+    "profile_document_digest": "79a5d7e46cbc537c60abcc9092738351f81a3aebbfe793b48d9a533bfece5fcd",
+    "experiment_decision_digest": "81df741d20e2751d24b622b6bd40b426a474dac29fe5b73dec66a7becb1402ae",
+    "parser_identity": {
+      "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_agent.py": "0debfbf5743317a9e3ed11de4438a395b3ec9c0c67eb05ad641b45999323da79",
+      "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency.py": "298a74a865dd57d599f8df92a80ad635dc49ee07dab47ca5ab3c817a09389f76",
+      "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102"
+    },
+    "agent": "evidence-sufficiency-agent",
+    "agent_version": "1.0.0",
+    "agent_fingerprint": "bfc62b810050e03ac3259f2dba294106debc2bb8527ad6c0830e3ccec12e3f86",
+    "prompt_digest": "18cab7c84646ba5617bae0ff230a8091fac505084fe2e1b8631a348b75827820",
+    "model_requirement": "engineering-reasoning",
+    "model": "qwen2.5-coder:14b",
+    "model_digest": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+    "provider": "local-ollama",
+    "url": "http://127.0.0.1:11434",
+    "ollama_version": "0.35.1",
+    "N": 1,
+    "smoke": [
+      "d01",
+      "d05",
+      "d09",
+      "d13",
+      "d20",
+      "d21"
+    ],
+    "smoke_calls": 6,
+    "full_calls": 68,
+    "call_seconds": 600,
+    "smoke_seconds": 1800,
+    "full_seconds": 21600,
+    "retry": false,
+    "fallback": false,
+    "final_analysis_calls": 0,
+    "commit": "aeb8c46c60e112b154292474632a805e2eb6106c",
+    "observed": {
+      "model": "qwen2.5-coder:14b",
+      "digest": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+      "ollama": "0.35.1"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 11, GenuineIntel"
+  },
+  "calls": 4,
+  "execution_lifecycle": {
+    "scope": "MODEL_CALL_OPPORTUNITIES",
+    "planned": 6,
+    "attempted": 4,
+    "completed": 4,
+    "slots": [
+      {
+        "identity": "d01/initial/initial",
+        "attempt_state": "COMPLETED_RESULT",
+        "finish_recorded": true,
+        "finish_failure": null
+      },
+      {
+        "identity": "d05/initial/initial",
+        "attempt_state": "COMPLETED_RESULT",
+        "finish_recorded": true,
+        "finish_failure": null
+      },
+      {
+        "identity": "d09/initial/initial",
+        "attempt_state": "COMPLETED_RESULT",
+        "finish_recorded": true,
+        "finish_failure": null
+      },
+      {
+        "identity": "d13/initial/initial",
+        "attempt_state": "COMPLETED_RESULT",
+        "finish_recorded": true,
+        "finish_failure": "invalid_output"
+      },
+      {
+        "identity": "d20/initial/initial",
+        "attempt_state": "NEVER_ATTEMPTED",
+        "finish_recorded": false,
+        "finish_failure": null
+      },
+      {
+        "identity": "d21/initial/initial",
+        "attempt_state": "NEVER_ATTEMPTED",
+        "finish_recorded": false,
+        "finish_failure": null
+      }
+    ],
+    "never_attempted": [
+      "d20/initial/initial",
+      "d21/initial/initial"
+    ],
+    "attempted_no_result": [],
+    "completed_result": [
+      "d01/initial/initial",
+      "d05/initial/initial",
+      "d09/initial/initial",
+      "d13/initial/initial"
+    ]
+  },
+  "call_ceiling": 6,
+  "elapsed_seconds": 504.0697661000013,
+  "timings": [
+    {
+      "case": "d01",
+      "variant": "initial",
+      "phase": "initial",
+      "seconds": 226.29361599999538,
+      "user_payload_digest": "23357653878fa3201a35f0867ed8e59325e75df6752d5d0b0ff99a3ecae20646",
+      "failure": null,
+      "child_diagnostics": {
+        "child_stage": "RESULT_COMPLETED",
+        "child_failure_category": null,
+        "exception_class": null,
+        "ipc_status": "ENVELOPE_RECEIVED",
+        "child_exit_code": 0,
+        "process_exit_observed": true,
+        "cleanup_action": "NONE",
+        "model_dispatch": "NOT_OBSERVED",
+        "http_request": "NOT_OBSERVED",
+        "provider_acceptance": "UNKNOWN"
+      }
+    },
+    {
+      "case": "d05",
+      "variant": "initial",
+      "phase": "initial",
+      "seconds": 87.6303157999937,
+      "user_payload_digest": "494c987933f74d152b7ec444137b591807f06eff24681c3ecda412bfc23a40a4",
+      "failure": null,
+      "child_diagnostics": {
+        "child_stage": "RESULT_COMPLETED",
+        "child_failure_category": null,
+        "exception_class": null,
+        "ipc_status": "ENVELOPE_RECEIVED",
+        "child_exit_code": 0,
+        "process_exit_observed": true,
+        "cleanup_action": "NONE",
+        "model_dispatch": "NOT_OBSERVED",
+        "http_request": "NOT_OBSERVED",
+        "provider_acceptance": "UNKNOWN"
+      }
+    },
+    {
+      "case": "d09",
+      "variant": "initial",
+      "phase": "initial",
+      "seconds": 87.78754829999525,
+      "user_payload_digest": "f3546986ff27f5a9dfe8204ae68f1bfa3386097d9ac1fe39146236d9c3c46cfb",
+      "failure": null,
+      "child_diagnostics": {
+        "child_stage": "RESULT_COMPLETED",
+        "child_failure_category": null,
+        "exception_class": null,
+        "ipc_status": "ENVELOPE_RECEIVED",
+        "child_exit_code": 0,
+        "process_exit_observed": true,
+        "cleanup_action": "NONE",
+        "model_dispatch": "NOT_OBSERVED",
+        "http_request": "NOT_OBSERVED",
+        "provider_acceptance": "UNKNOWN"
+      }
+    },
+    {
+      "case": "d13",
+      "variant": "initial",
+      "phase": "initial",
+      "seconds": 93.37851150000643,
+      "user_payload_digest": "047f6832cdeac78d63603bcc12805f2cfbf47a80d3a2e5212095bf9992db5b5c",
+      "failure": "invalid_output",
+      "child_diagnostics": {
+        "child_stage": "RESULT_COMPLETED",
+        "child_failure_category": null,
+        "exception_class": null,
+        "ipc_status": "ENVELOPE_RECEIVED",
+        "child_exit_code": 0,
+        "process_exit_observed": true,
+        "cleanup_action": "NONE",
+        "model_dispatch": "NOT_OBSERVED",
+        "http_request": "NOT_OBSERVED",
+        "provider_acceptance": "UNKNOWN"
+      }
+    }
+  ],
+  "in_flight_disposition": "CLIENT_COMPLETED",
+  "stop_reason": "invalid_output",
+  "records": [
+    {
+      "case": "d01",
+      "variant": "initial",
+      "attempts": [
+        {
+          "identity": "d01-initial-initial",
+          "phase": "initial",
+          "disposition": "sufficient",
+          "requests": [],
+          "governing_sources": [
+            "sensor/stats.py"
+          ],
+          "manifest_identity": "57a7db1b4ba9c0271a818a8d38fc523709a88612bde858d755588d8f608ae25a",
+          "valid": true,
+          "failure": null
+        }
+      ],
+      "eligible": true,
+      "progress_phase": "initial",
+      "failure": null,
+      "stop": null,
+      "rounds": 0,
+      "accepted_request": 0,
+      "corrected_request": 0,
+      "operator_clarification": 0,
+      "operator_rejection": 0,
+      "operator_answer": 0,
+      "unauthorized_reads": 0,
+      "unauthorized_edits": 0,
+      "target_expansion": 0,
+      "profile_unresolved": false
+    },
+    {
+      "case": "d05",
+      "variant": "initial",
+      "attempts": [
+        {
+          "identity": "d05-initial-initial",
+          "phase": "initial",
+          "disposition": "missing_governing_evidence",
+          "requests": [
+            {
+              "kind": "named_evidence",
+              "path": "inventory/threshold.py",
+              "description": "The implementation details of the inventory reorder threshold calculation.",
+              "choices": []
+            }
+          ],
+          "governing_sources": [],
+          "manifest_identity": "1b6c348a3587e696c6df0bbd700e5076f7f69ed88635471c790f5fbdb96fc2cd",
+          "valid": true,
+          "failure": null
+        }
+      ],
+      "eligible": false,
+      "progress_phase": "initial",
+      "failure": null,
+      "stop": "operator_declined",
+      "rounds": 0,
+      "accepted_request": 0,
+      "corrected_request": 0,
+      "operator_clarification": 0,
+      "operator_rejection": 1,
+      "operator_answer": 0,
+      "unauthorized_reads": 0,
+      "unauthorized_edits": 0,
+      "target_expansion": 0,
+      "profile_unresolved": false
+    },
+    {
+      "case": "d09",
+      "variant": "initial",
+      "attempts": [
+        {
+          "identity": "d09-initial-initial",
+          "phase": "initial",
+          "disposition": "missing_governing_evidence",
+          "requests": [
+            {
+              "kind": "named_evidence",
+              "path": "mail/routing_table.json",
+              "description": "The routing table that maps postcodes to depots",
+              "choices": []
+            }
+          ],
+          "governing_sources": [],
+          "manifest_identity": "070f587349f4d2ba7b7bde3ecfb0cf7e5acb0b1ae13c25c41b41dd363b0bb25b",
+          "valid": true,
+          "failure": null
+        }
+      ],
+      "eligible": false,
+      "progress_phase": "initial",
+      "failure": null,
+      "stop": "operator_declined",
+      "rounds": 0,
+      "accepted_request": 0,
+      "corrected_request": 0,
+      "operator_clarification": 0,
+      "operator_rejection": 1,
+      "operator_answer": 0,
+      "unauthorized_reads": 0,
+      "unauthorized_edits": 0,
+      "target_expansion": 0,
+      "profile_unresolved": false
+    },
+    {
+      "case": "d13",
+      "variant": "initial",
+      "attempts": [
+        {
+          "identity": "d13-initial-initial",
+          "phase": "initial",
+          "disposition": null,
+          "requests": [],
+          "governing_sources": [],
+          "manifest_identity": "d767b9b905caf40b3b85dabd9de26b739b3d8fea23ffcd879366032f87eab8e2",
+          "valid": false,
+          "failure": "invalid_output"
+        }
+      ],
+      "eligible": false,
+      "progress_phase": "initial",
+      "failure": "invalid_output",
+      "stop": "operational_failure",
+      "rounds": 0,
+      "accepted_request": 0,
+      "corrected_request": 0,
+      "operator_clarification": 0,
+      "operator_rejection": 0,
+      "operator_answer": 0,
+      "unauthorized_reads": 0,
+      "unauthorized_edits": 0,
+      "target_expansion": 0,
+      "profile_unresolved": false
+    }
+  ],
+  "smoke_status": "SMOKE_CONTRACT_FAILURE",
+  "planned_slots": [
+    {
+      "case": "d01",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "RECORDED",
+      "reason": null
+    },
+    {
+      "case": "d05",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "RECORDED",
+      "reason": null
+    },
+    {
+      "case": "d09",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "RECORDED",
+      "reason": null
+    },
+    {
+      "case": "d13",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "RECORDED",
+      "reason": null
+    },
+    {
+      "case": "d20",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "NOT_RECORDED",
+      "reason": "invalid_output"
+    },
+    {
+      "case": "d21",
+      "variant": "initial",
+      "phase": "initial",
+      "status": "NOT_RECORDED",
+      "reason": "invalid_output"
+    }
+  ],
+  "not_run": [
+    "d20/initial",
+    "d21/initial"
+  ],
+  "metrics": {
+    "planned": {
+      "records": 70,
+      "heldout": 66,
+      "semantic": 62,
+      "required_requests": 45,
+      "answerable": 18,
+      "pair_edges": 24
+    },
+    "actual_records": 4,
+    "complete_membership": false,
+    "heldout": {
+      "status": "UNAVAILABLE_INCOMPLETE_PARTITION"
+    },
+    "regression": {
+      "status": "UNAVAILABLE_INCOMPLETE_PARTITION"
+    },
+    "observed_condition_metrics": [
+      {
+        "case": "d01",
+        "variant": "initial",
+        "scope": "observed_condition_using_frozen_planned_denominators",
+        "metrics": {
+          "planned_attempts": 1,
+          "actual_attempts": 1,
+          "structural_validity": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_valid_only": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_all_attempts": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_planned": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "disposition_matrix": {
+            "sufficient->sufficient": 1
+          },
+          "required_request_recall": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "request_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "request_set_acceptable": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_set_exact": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_counts": {
+            "required": 0,
+            "covered": 0,
+            "emitted": 0,
+            "allowed_extra": 0,
+            "matched": 0,
+            "under": 0,
+            "over": 0,
+            "forbidden": 0,
+            "invented": 0,
+            "duplicates": 0
+          },
+          "request_observations": [
+            {
+              "case": "d01",
+              "variant": "initial",
+              "phase": "initial",
+              "required": 0,
+              "covered": 0,
+              "emitted": 0,
+              "allowed_extra": 0,
+              "matched": 0,
+              "under": 0,
+              "over": 0,
+              "forbidden": 0,
+              "invented": 0,
+              "duplicates": 0,
+              "exact": true,
+              "acceptable": true
+            }
+          ],
+          "false_sufficient_progression": 0,
+          "false_sufficient_claims": 0,
+          "false_insufficient": 0,
+          "answerable_retention": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "end_to_end_completion": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "paired_transition": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "pairs": [],
+          "authority": {
+            "unauthorized_reads": 0,
+            "unauthorized_edits": 0,
+            "target_expansion": 0
+          },
+          "interventions": {
+            "accepted_request": 0,
+            "corrected_request": 0,
+            "operator_clarification": 0,
+            "operator_rejection": 0,
+            "operator_answer": 0
+          },
+          "profile_unresolved": 0,
+          "operational_failures": {},
+          "unexpected_operational": 0,
+          "operational_controls_correct": 0
+        }
+      },
+      {
+        "case": "d05",
+        "variant": "initial",
+        "scope": "observed_condition_using_frozen_planned_denominators",
+        "metrics": {
+          "planned_attempts": 1,
+          "actual_attempts": 1,
+          "structural_validity": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_valid_only": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_all_attempts": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_planned": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "disposition_matrix": {
+            "missing_governing_evidence->missing_governing_evidence": 1
+          },
+          "required_request_recall": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_precision": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_set_acceptable": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_set_exact": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "request_counts": {
+            "required": 1,
+            "covered": 1,
+            "emitted": 1,
+            "allowed_extra": 0,
+            "matched": 1,
+            "under": 0,
+            "over": 0,
+            "forbidden": 0,
+            "invented": 0,
+            "duplicates": 0
+          },
+          "request_observations": [
+            {
+              "case": "d05",
+              "variant": "initial",
+              "phase": "initial",
+              "required": 1,
+              "covered": 1,
+              "emitted": 1,
+              "allowed_extra": 0,
+              "matched": 1,
+              "under": 0,
+              "over": 0,
+              "forbidden": 0,
+              "invented": 0,
+              "duplicates": 0,
+              "exact": true,
+              "acceptable": true
+            }
+          ],
+          "false_sufficient_progression": 0,
+          "false_sufficient_claims": 0,
+          "false_insufficient": 0,
+          "answerable_retention": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "end_to_end_completion": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "paired_transition": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "pairs": [],
+          "authority": {
+            "unauthorized_reads": 0,
+            "unauthorized_edits": 0,
+            "target_expansion": 0
+          },
+          "interventions": {
+            "accepted_request": 0,
+            "corrected_request": 0,
+            "operator_clarification": 0,
+            "operator_rejection": 1,
+            "operator_answer": 0
+          },
+          "profile_unresolved": 0,
+          "operational_failures": {},
+          "unexpected_operational": 0,
+          "operational_controls_correct": 0
+        }
+      },
+      {
+        "case": "d09",
+        "variant": "initial",
+        "scope": "observed_condition_using_frozen_planned_denominators",
+        "metrics": {
+          "planned_attempts": 1,
+          "actual_attempts": 1,
+          "structural_validity": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_valid_only": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_all_attempts": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "semantic_planned": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1.0
+          },
+          "disposition_matrix": {
+            "missing_governing_evidence->missing_governing_evidence": 1
+          },
+          "required_request_recall": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_precision": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_set_acceptable": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_set_exact": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_counts": {
+            "required": 1,
+            "covered": 0,
+            "emitted": 1,
+            "allowed_extra": 0,
+            "matched": 0,
+            "under": 1,
+            "over": 1,
+            "forbidden": 0,
+            "invented": 1,
+            "duplicates": 0
+          },
+          "request_observations": [
+            {
+              "case": "d09",
+              "variant": "initial",
+              "phase": "initial",
+              "required": 1,
+              "covered": 0,
+              "emitted": 1,
+              "allowed_extra": 0,
+              "matched": 0,
+              "under": 1,
+              "over": 1,
+              "forbidden": 0,
+              "invented": 1,
+              "duplicates": 0,
+              "exact": false,
+              "acceptable": false
+            }
+          ],
+          "false_sufficient_progression": 0,
+          "false_sufficient_claims": 0,
+          "false_insufficient": 0,
+          "answerable_retention": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "end_to_end_completion": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "paired_transition": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "pairs": [],
+          "authority": {
+            "unauthorized_reads": 0,
+            "unauthorized_edits": 0,
+            "target_expansion": 0
+          },
+          "interventions": {
+            "accepted_request": 0,
+            "corrected_request": 0,
+            "operator_clarification": 0,
+            "operator_rejection": 1,
+            "operator_answer": 0
+          },
+          "profile_unresolved": 0,
+          "operational_failures": {},
+          "unexpected_operational": 0,
+          "operational_controls_correct": 0
+        }
+      },
+      {
+        "case": "d13",
+        "variant": "initial",
+        "scope": "observed_condition_using_frozen_planned_denominators",
+        "metrics": {
+          "planned_attempts": 1,
+          "actual_attempts": 1,
+          "structural_validity": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "semantic_valid_only": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "semantic_all_attempts": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "semantic_planned": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "disposition_matrix": {
+            "unresolved_ambiguity->no_semantic_result": 1
+          },
+          "required_request_recall": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_precision": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "request_set_acceptable": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_set_exact": {
+            "numerator": 0,
+            "denominator": 1,
+            "value": 0.0
+          },
+          "request_counts": {
+            "required": 1,
+            "covered": 0,
+            "emitted": 0,
+            "allowed_extra": 0,
+            "matched": 0,
+            "under": 1,
+            "over": 0,
+            "forbidden": 0,
+            "invented": 0,
+            "duplicates": 0
+          },
+          "request_observations": [
+            {
+              "case": "d13",
+              "variant": "initial",
+              "phase": "initial",
+              "required": 1,
+              "covered": 0,
+              "emitted": 0,
+              "allowed_extra": 0,
+              "matched": 0,
+              "under": 1,
+              "over": 0,
+              "forbidden": 0,
+              "invented": 0,
+              "duplicates": 0,
+              "exact": false,
+              "acceptable": false
+            }
+          ],
+          "false_sufficient_progression": 0,
+          "false_sufficient_claims": 0,
+          "false_insufficient": 0,
+          "answerable_retention": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "end_to_end_completion": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "paired_transition": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": 1.0
+          },
+          "pairs": [],
+          "authority": {
+            "unauthorized_reads": 0,
+            "unauthorized_edits": 0,
+            "target_expansion": 0
+          },
+          "interventions": {
+            "accepted_request": 0,
+            "corrected_request": 0,
+            "operator_clarification": 0,
+            "operator_rejection": 0,
+            "operator_answer": 0
+          },
+          "profile_unresolved": 0,
+          "operational_failures": {
+            "invalid_output": 1
+          },
+          "unexpected_operational": 1,
+          "operational_controls_correct": 0
+        }
+      }
+    ]
+  },
+  "gates": {},
+  "reasons": [],
+  "sufficiency_profile_outcome": "SUFFICIENCY_PROFILE_CONTRACT_FAILED",
+  "run_completeness": "INCOMPLETE",
+  "final_answer_grounding": "NOT_MEASURED",
+  "grounding_status": "NOT_MEASURED",
+  "grounding_explanation": "Grounding was outside the authorized LIVE-1 subject.",
+  "revision_2_aggregate_verdict": "NOT_APPLICABLE"
+}
