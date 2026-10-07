@@ -240,7 +240,7 @@ HARNESS AND REPORTING FIX REQUIRED
 ## HARNESS-RUNTIME-FIX-1 implementation record — 2026-10-07
 
 Maintainer separately authorized the bounded harness fix after the diagnostic.
-**IMPLEMENTED — LOCAL VALIDATION PENDING.** The original findings and all eight
+**LOCALLY QUALIFIED — operator qualification recorded 2026-10-07.** The original findings and all eight
 historical artifacts above are unchanged; no diagnostic fields are backfilled.
 
 Implemented explicit existing `binding=ollama` selection; durable per-model-slot
@@ -255,18 +255,27 @@ separate from 70 frozen semantic slots.
 
 The canonical offline validator is extended to 99 phases. Run from repository
 root: `uv run python .\validate_forgeai_analyst_design_live_1.py`.
-Operator qualification is pending; implementation checks are not operator approval.
+Operator qualification passed; the supplied transcript is recorded below.
+Offline qualification does not authorize live execution.
 The module README documents custody fields and unobservable dispatch boundaries.
 No provider acceptance is claimed; uncertain effects remain UNKNOWN.
 
 No Core, adapter, Agent, prompt/parser, frozen evaluator/profile, model, gates,
 thresholds, call ceilings, smoke membership or authority semantics changed.
-After operator qualification, commit only when authorized, establish a clean
-tracked tree, and request explicit authorization for a NEW smoke identity.
+The implementation is committed as `d592041`. Commit this qualification record
+only when authorized, establish a clean tracked tree, and obtain explicit
+authorization for a NEW smoke identity.
 Neither smoke nor FULL is authorized by this implementation or qualification.
 No live call or new live run was made; G07 remains open.
 
 Implementation verification completed offline: **99/99 validator phases passed**,
 including **617 tests (88 harness tests)**, mypy, Ruff lint/format and diff checks.
-This is the implementation check, not the pending maintainer/operator execution
-of the validator. No provider endpoint, smoke, FULL or Docker was invoked.
+The operator subsequently ran the repository-root command
+`uv run python .\validate_forgeai_analyst_design_live_1.py` and supplied a complete
+passing transcript on 2026-10-07: **99/99 phases, 617 tests (88 harness tests)**,
+including mypy, Ruff lint/format and git diff check. Operator local qualification
+is now recorded as **LOCALLY QUALIFIED**. This is offline contract/conformance
+evidence only; no provider endpoint, new smoke, FULL or Docker was invoked,
+and no live model-quality claim follows. Current implementation commit: `d592041`.
+Historical artifacts and SERVER_EFFECT_UNKNOWN are unchanged. Qualification
+alone does not authorize a new smoke or FULL; G07 remains open.
