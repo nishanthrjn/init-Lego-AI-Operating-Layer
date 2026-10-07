@@ -1,0 +1,27 @@
+{
+  "namespace": "forgeai-analyst-sufficiency-safety-eval3-independence",
+  "revision": 3,
+  "method": "procedural: no reuse of ids, paths, questions, hidden governing paths, identical lines of 25+ characters or 6-word runs",
+  "sources": [
+    "analyst_design_eval2/fixtures-v2.json",
+    "analyst_sufficiency_safety_eval1/fixtures-s1.json",
+    "analyst_sufficiency_safety_eval1/inputs-s1.json",
+    "analyst_sufficiency_safety_eval1/oracle-s1.json",
+    "analyst_sufficiency_safety_eval2/fixtures-s2.json",
+    "analyst_sufficiency_safety_eval2/inputs-s2.json",
+    "analyst_sufficiency_safety_eval2/oracle-s2.json"
+  ],
+  "historical_cases": [
+    "d21",
+    "d22"
+  ],
+  "shingle_words": 6,
+  "line_characters": 25,
+  "shared_ids": [],
+  "shared_paths": [],
+  "shared_questions": [],
+  "shared_hidden_answers": [],
+  "shared_lines": [],
+  "shared_shingles": [],
+  "independent": true
+}
