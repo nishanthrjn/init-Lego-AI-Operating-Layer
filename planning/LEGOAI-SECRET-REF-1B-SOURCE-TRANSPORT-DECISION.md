@@ -1,6 +1,6 @@
 # SECRET-REF-1B SOURCE + TRANSPORT BOUNDARY DECISION
 
-Date: 2026-10-07. Status: **decision ready; implementation remains blocked**.
+Date: 2026-10-07. Status: **DEFERRED/BLOCKED by explicit maintainer disposition**.
 
 - Source: **PROVISIONED IMMUTABLE LOCAL SOURCE RECOMMENDED** (S1).
 - Transport: **NO TRANSPORT PROFILE YET SATISFIES ADR-010** (T4 for current support; T2 is the smallest candidate for further proof).
@@ -11,6 +11,29 @@ ownership model below. The inspected transport does not establish bounded
 actual-use validity. This decision narrows both questions but does not pretend
 to have resolved the transport blocker. It authorizes no source, transport,
 settings or runtime implementation. No accepted ADR is amended or reinterpreted.
+
+## Maintainer disposition — 2026-10-07
+
+**SECRET-REF-1B DEFERRED — BLOCKED ON QUALIFIED CREDENTIAL TRANSPORT**.
+The completed assessment's outcome remains **SECRET-REF-1B STILL BLOCKED**.
+No further Secret/transport architecture or implementation work should begin
+without a concrete credentialed consumer/provider requirement whose product
+value justifies transport qualification, and explicit maintainer authorization.
+The conditional future work below is deferred, not an instruction to proceed.
+
+S1 is the preferred future source profile but remains unimplemented because
+no qualified credential-bearing consumer exists. Blocking `urllib`/`to_thread`
+has no qualified ADR-010 credential-use boundary; T2 remains only a candidate.
+Check-to-handoff validity and bounded occupancy remain unproven. Durable
+Execution-owned external-attempt integration needs additional implementation
+authority. No `api_key` field is authorized.
+
+SECRET-REF-1A and SECRET-USE-DURABLE-CUSTODY-1 remain **LOCALLY QUALIFIED**
+within their recorded scopes. Credential-free OpenAI-compatible
+`ModelDeployment.LOCAL` support remains **LOCALLY QUALIFIED**. No credentialed
+model provider is currently supported. G03 remains open; REMOTE providers and
+KISSKI remain unsupported and gated. This disposition changes no architecture,
+runtime behavior or qualification claim.
 
 ## 1. Authority and current evidence
 
