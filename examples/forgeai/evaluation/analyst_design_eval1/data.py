@@ -11,7 +11,7 @@ from legoai_engineering.repository.workspace import RepositoryPath
 
 HERE = Path(__file__).resolve().parent
 CONDITION = "forgeai-analyst-design-eval/1"
-FREEZE_DIGEST = "68892cbcd9491c2851a556ddf1a7222dea27694e168c245ec27709b60aa16972"
+FREEZE_DIGEST = "34073e24ad50142fac7f6636a276bdb0a16b03fc3f147ad4833a034d6c01ad38"
 DISPOSITIONS = {"sufficient", "missing_governing_evidence", "unresolved_ambiguity"}
 
 

@@ -490,4 +490,3 @@ READ_TIMEOUT_SECONDS = 30 | JOB_TIMEOUT_SECONDS = 300
 **unrelated control:** The build-label note states no behavior, governing value, source relationship or operator intent; it cannot discharge this obligation.
 
 **intervention:** Non-gating representation check only; no historical metric is recomputed.
-
