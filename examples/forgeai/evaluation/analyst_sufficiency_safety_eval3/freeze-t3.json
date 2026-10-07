@@ -1,0 +1,22 @@
+{
+  "namespace": "forgeai-analyst-sufficiency-safety-eval3-freeze",
+  "revision": 3,
+  "condition": "forgeai-analyst-sufficiency-safety-eval/3",
+  "normalization": "UTF-8, BOM stripped, CRLF -> LF, SHA-256",
+  "development_regression": "forgeai-analyst-sufficiency-safety-eval/2",
+  "artifacts": {
+    "fixtures-t3.json": "5c7b8538b715676c3c3d7910b1c9f5e5fab77c4b40735f625001df13572c07ae",
+    "inputs-t3.json": "6623ee092959f25735f9d92960b6dabfbb10db925b8cc6c6e55c03bb14c00026",
+    "oracle-t3.json": "3a21ab35cd1c09c4f2e94ae62b3946be3c8df79e474e9ea8a23957293125d526",
+    "gates-t3.json": "11aaaa4ee91bffdcbc6d4fa288d508f0b045a99eacdbc0738428e336858db3ff",
+    "schema-t3.json": "ba00ff0c8cb04b9b938075416f3183556895bb36ed10017128b795031ebeb264",
+    "independence-t3.json": "ba1893766f3aa4bc1b51cfe4bcf2f49768e0cb849ed835fcdc022def22e569be",
+    "CASES.md": "7586116ee819c7a70a19a6fd69f8b850e9316f3e9ac3f5e0ddfafd0a594ca98c",
+    "scoring.py": "c585b4c5cb4a470c451c374ee6c6bd155d61026df57fcb81431ea369e4f8b89f",
+    "metrics.py": "c7dfab498927641992cf28bad1375eea0aefa184dcb353c2707d49d0b56343a1",
+    "overlap.py": "057ef904b9fcfd8c871d0a47c88e8c4d1ca045a4eae18bb238bdcd557a43e3af"
+  },
+  "dependencies": {
+    "analyst_sufficiency_safety_eval2/scoring.py": "f94c4e6f601a34898aef70eb2f7bfc28765756a5c18e020e1efd8e7625655921"
+  }
+}
