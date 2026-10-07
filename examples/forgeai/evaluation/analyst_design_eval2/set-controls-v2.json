@@ -1,0 +1,143 @@
+{
+  "namespace": "forgeai-analyst-request-set-controls",
+  "revision": 2,
+  "cases": {
+    "two_evidence": {
+      "required": [
+        {
+          "id": "a",
+          "kind": "named_evidence",
+          "path": "a.py",
+          "alternatives": [],
+          "choices": [],
+          "choice_groups": []
+        },
+        {
+          "id": "b",
+          "kind": "named_evidence",
+          "path": "b.py",
+          "alternatives": [],
+          "choices": [],
+          "choice_groups": []
+        }
+      ],
+      "allowed": [],
+      "forbidden_paths": [
+        "private/token.txt",
+        "plugins/extra.py"
+      ],
+      "unknown_extras": "semantic_error_not_authority",
+      "duplicate_semantics": "error"
+    },
+    "mixed_evidence": {
+      "required": [
+        {
+          "id": "a",
+          "kind": "named_evidence",
+          "path": "a.py",
+          "alternatives": [],
+          "choices": [],
+          "choice_groups": []
+        },
+        {
+          "id": "catalog",
+          "kind": "source_role",
+          "path": null,
+          "alternatives": [
+            "governing catalog",
+            "message catalog"
+          ],
+          "choices": [],
+          "choice_groups": []
+        }
+      ],
+      "allowed": [],
+      "forbidden_paths": [
+        "private/token.txt",
+        "plugins/extra.py"
+      ],
+      "unknown_extras": "semantic_error_not_authority",
+      "duplicate_semantics": "error"
+    },
+    "mixed_intent": {
+      "required": [
+        {
+          "id": "a",
+          "kind": "named_evidence",
+          "path": "a.py",
+          "alternatives": [],
+          "choices": [],
+          "choice_groups": []
+        },
+        {
+          "id": "intent",
+          "kind": "operator_clarification",
+          "path": null,
+          "alternatives": [
+            "which timeout"
+          ],
+          "choices": [
+            "network",
+            "pool"
+          ],
+          "choice_groups": [
+            [
+              "network"
+            ],
+            [
+              "pool"
+            ]
+          ]
+        }
+      ],
+      "allowed": [],
+      "forbidden_paths": [
+        "private/token.txt",
+        "plugins/extra.py"
+      ],
+      "unknown_extras": "semantic_error_not_authority",
+      "duplicate_semantics": "error"
+    },
+    "allowed_extra": {
+      "required": [
+        {
+          "id": "a",
+          "kind": "named_evidence",
+          "path": "a.py",
+          "alternatives": [],
+          "choices": [],
+          "choice_groups": []
+        }
+      ],
+      "allowed": [
+        {
+          "id": "catalog",
+          "kind": "source_role",
+          "path": null,
+          "alternatives": [
+            "governing catalog",
+            "message catalog"
+          ],
+          "choices": [],
+          "choice_groups": []
+        }
+      ],
+      "forbidden_paths": [
+        "private/token.txt",
+        "plugins/extra.py"
+      ],
+      "unknown_extras": "semantic_error_not_authority",
+      "duplicate_semantics": "error"
+    },
+    "none": {
+      "required": [],
+      "allowed": [],
+      "forbidden_paths": [
+        "private/token.txt",
+        "plugins/extra.py"
+      ],
+      "unknown_extras": "semantic_error_not_authority",
+      "duplicate_semantics": "error"
+    }
+  }
+}

@@ -1,0 +1,2428 @@
+{
+  "namespace": "forgeai-analyst-design-provenance",
+  "revision": 2,
+  "cases": {
+    "d01": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d02": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d03": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d04": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d05": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d06": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d07": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d08": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d09": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d10": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d11": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d12": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d13": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d14": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d15": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d16": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d17": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d18": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d19": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d20": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d21": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d22": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d23": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "operator_provided_fact",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d24": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d25": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d26": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d27": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "d28": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "q19": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "q20": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "q21": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    },
+    "q22": {
+      "question": "question_fixture",
+      "files.path": "supplied_evidence",
+      "files.text": "supplied_evidence",
+      "expectations": "application_known_empty",
+      "clarifications": "application_known_empty",
+      "unknowns": "application_known_empty",
+      "operator_intervention": [
+        "addition",
+        "clarification",
+        "revised_question"
+      ],
+      "oracle_only": [
+        "initial",
+        "expected",
+        "request_policy",
+        "governing",
+        "facts",
+        "rationale",
+        "answerable",
+        "category",
+        "one_round_resolves"
+      ]
+    }
+  },
+  "declaration_classes": {
+    "application_known_prerequisite": "A",
+    "operator_provided_fact": "B",
+    "fixture_observable_fact": "C",
+    "oracle_only_fact": "D"
+  },
+  "revision1_audit": {
+    "question_and_selected_files": "C: supplied fixture observations",
+    "wrong_binding": "B: retained wrong operator assertion in d23",
+    "ambiguity_clarification": "D: removed from every initial manifest",
+    "missing_named_and_role": "D: no initial declaration inserted",
+    "unknowns": "A: empty unless legitimately declared; no hidden prerequisites invented",
+    "resolved_clarification": "B: intervention only after model request"
+  },
+  "conditions": {
+    "d01/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d02/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d03/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d04/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d05/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d05/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d05/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d06/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d06/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d06/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d07/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d07/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d07/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d08/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d08/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d08/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d09/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d09/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d09/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d10/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d10/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d10/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d11/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d11/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d11/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d12/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d12/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d12/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d13/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d13/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "operator_intervention",
+        "added_files": null,
+        "clarification.request": "recorded_model_request",
+        "clarification.answer": "operator_intervention"
+      }
+    },
+    "d13/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d14/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d14/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "operator_intervention",
+        "added_files": null,
+        "clarification.request": "recorded_model_request",
+        "clarification.answer": "operator_intervention"
+      }
+    },
+    "d14/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d15/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d15/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "operator_intervention",
+        "added_files": null,
+        "clarification.request": "recorded_model_request",
+        "clarification.answer": "operator_intervention"
+      }
+    },
+    "d15/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d16/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d16/resolved": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "operator_intervention",
+        "added_files": null,
+        "clarification.request": "recorded_model_request",
+        "clarification.answer": "operator_intervention"
+      }
+    },
+    "d16/unrelated": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": "fixture_observable_fact",
+      "after_intervention": null
+    },
+    "d17/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d18/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d19/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d20/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": {
+        "question": "question_fixture",
+        "added_files": "operator_intervention",
+        "clarification.request": null,
+        "clarification.answer": null
+      }
+    },
+    "d21/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d22/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d23/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "operator_provided_fact",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d24/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d25/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d26/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d27/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "d28/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "q19/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "q20/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "q21/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    },
+    "q22/initial": {
+      "initial": {
+        "question": "question_fixture",
+        "files.path": "supplied_evidence",
+        "files.text": "supplied_evidence",
+        "expectations": "application_known_empty",
+        "clarifications": "application_known_empty",
+        "unknowns": "application_known_empty",
+        "operator_intervention": [
+          "addition",
+          "clarification",
+          "revised_question"
+        ],
+        "oracle_only": [
+          "initial",
+          "expected",
+          "request_policy",
+          "governing",
+          "facts",
+          "rationale",
+          "answerable",
+          "category",
+          "one_round_resolves"
+        ]
+      },
+      "added_unrelated_evidence": null,
+      "after_intervention": null
+    }
+  }
+}

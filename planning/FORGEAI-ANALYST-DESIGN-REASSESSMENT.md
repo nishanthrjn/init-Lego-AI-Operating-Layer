@@ -516,3 +516,19 @@ No live model, external provider or Docker was used; no live semantic improvemen
 is established. RepositoryAnalyst 1.0.3 and frozen evaluation artifacts remain
 unchanged. The controlled live condition still requires separate explicit
 maintainer authorization. No production integration is enabled; G07 remains open.
+
+## FORGEAI-ANALYST-DESIGN-EVAL-2 implementation — 2026-10-07
+
+**IMPLEMENTED — LOCAL VALIDATION PENDING.** The separately authorized
+[revision-2 condition](../examples/forgeai/evaluation/analyst_design_eval2/README.md)
+removes oracle-derived initial clarification declarations and defines complete
+request-set scoring, deterministic alternatives, mixed-request stop behavior and
+per-condition input provenance. Revision 1 remains a LOCALLY QUALIFIED HISTORICAL
+OFFLINE CONDITION, unchanged; revision 2 is the candidate for future live use.
+Case-by-case deltas preserve all disposition/answerability labels and qualify
+the evaluator only. The Agent, RepositoryAnalyst, evidence loop and Core remain
+unchanged. No live semantic improvement is claimed.
+Operator command: `uv run python .\validate_forgeai_analyst_design_eval_2.py`.
+Live repetitions remain unauthorized; live final analysis requires a separate
+maintainer decision. Revision 2 must be operator-qualified and committed before
+separately authorized live-harness preparation restarts. G07 remains open.

@@ -1,0 +1,317 @@
+{
+  "namespace": "forgeai-analyst-design-inputs",
+  "revision": 2,
+  "cases": {
+    "d01": {
+      "question": "Explain the empty-input result of the sensor median.",
+      "selected_paths": [
+        "sensor/stats.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d02": {
+      "question": "Which checksum guards each archive chunk?",
+      "selected_paths": [
+        "archive/chunk.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d03": {
+      "question": "How are appointment timestamps normalized?",
+      "selected_paths": [
+        "clinic/time.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d04": {
+      "question": "What happens to fully transparent image pixels?",
+      "selected_paths": [
+        "image/alpha.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d05": {
+      "question": "Explain the inventory reorder threshold.",
+      "selected_paths": [
+        "inventory/job.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d06": {
+      "question": "Identify the digest algorithm for release artifacts.",
+      "selected_paths": [
+        "build/publish.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d07": {
+      "question": "Explain the fare for crossing two transit zones.",
+      "selected_paths": [
+        "transit/sale.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d08": {
+      "question": "Explain how overtime hours are calculated.",
+      "selected_paths": [
+        "roster/export.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d09": {
+      "question": "Which depot handles postcode AB12?",
+      "selected_paths": [
+        "mail/route.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d10": {
+      "question": "What offset calibrates probe P7?",
+      "selected_paths": [
+        "lab/probe.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d11": {
+      "question": "Is 2030-01-02 a business day?",
+      "selected_paths": [
+        "calendar/business.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d12": {
+      "question": "What color is the high-contrast focus outline?",
+      "selected_paths": [
+        "ui/focus.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d13": {
+      "question": "Increase the gain.",
+      "selected_paths": [
+        "audio/capture.py",
+        "audio/playback.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d14": {
+      "question": "Keep records longer.",
+      "selected_paths": [
+        "jobs/results.py",
+        "jobs/logs.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d15": {
+      "question": "Reduce compression.",
+      "selected_paths": [
+        "network/codec.py",
+        "backup/codec.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d16": {
+      "question": "Change the sort locale.",
+      "selected_paths": [
+        "catalog/order.py",
+        "search/order.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d17": {
+      "question": "Add a UTF-8 BOM option to this encoder.",
+      "selected_paths": [
+        "export/text.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d18": {
+      "question": "Add WebP support to this thumbnail format selector.",
+      "selected_paths": [
+        "thumb/formats.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d19": {
+      "question": "Explain the effective regional license limit.",
+      "selected_paths": [
+        "license/start.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d20": {
+      "question": "Explain the conversion factor for dimension D4.",
+      "selected_paths": [
+        "units/use.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d21": {
+      "question": "Explain the plugin admission rule.",
+      "selected_paths": [
+        "plugins/readme.txt"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d22": {
+      "question": "Identify the warranty exclusion period.",
+      "selected_paths": [
+        "sales/banner.txt"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d23": {
+      "question": "Explain the audit exemption rule.",
+      "selected_paths": [
+        "audit/caller.py"
+      ],
+      "expectations": [
+        {
+          "key": "claimed",
+          "request": {
+            "kind": "source_role",
+            "description": "declared governing source",
+            "path": null,
+            "choices": []
+          },
+          "supplied_paths": [
+            "audit/caller.py"
+          ],
+          "provenance": "operator_provided_fact"
+        }
+      ],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d24": {
+      "question": "Explain which analytics records are excluded.",
+      "selected_paths": [
+        "analytics/load.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d25": {
+      "question": "Explain the compliance rule.",
+      "selected_paths": [
+        "compliance/entry.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d26": {
+      "question": "Explain the firmware rule.",
+      "selected_paths": [
+        "firmware/entry.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d27": {
+      "question": "Explain the catalogue rule.",
+      "selected_paths": [
+        "catalogue/entry.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "d28": {
+      "question": "Explain the warehouse rule.",
+      "selected_paths": [
+        "warehouse/entry.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "q19": {
+      "question": "Change the percentage applied by apply_loyalty_discount from 5 to 8 percent.",
+      "selected_paths": [
+        "cart/checkout.py",
+        "cart/items.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "q20": {
+      "question": "Fix the bug in the scheduler's next run calculation for monthly jobs.",
+      "selected_paths": [
+        "jobs/models.py",
+        "jobs/runner.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "q21": {
+      "question": "Update the message shown to the customer when a card payment is declined.",
+      "selected_paths": [
+        "payments/errors.py",
+        "payments/gateway.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    },
+    "q22": {
+      "question": "Make the timeout longer.",
+      "selected_paths": [
+        "db/pool.py",
+        "net/client.py",
+        "worker/jobs.py"
+      ],
+      "expectations": [],
+      "clarifications": [],
+      "unknowns": []
+    }
+  }
+}
