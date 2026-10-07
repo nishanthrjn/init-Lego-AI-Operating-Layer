@@ -247,3 +247,8 @@ current in-memory Evidence support cannot provide. See the
 No code or validator was implemented; Stage A is unqualified. Stage B, credentials,
 remote use and KISSKI remain gated. G03 remains open. Accepted architecture and
 the two-stage scope above are unchanged.
+
+Durability follow-up (2026-10-07): [SECRET-USE-DURABLE-CUSTODY decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
+is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
+SECRET-USE-DURABLE-CUSTODY-1 is implemented and locally qualified; Stage B remains
+gated. This acceptance record implements nothing.

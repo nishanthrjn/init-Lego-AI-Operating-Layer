@@ -273,3 +273,8 @@ No source, contracts, tests, validator or ADRs were changed. No executable race,
 restart or qualification result is claimed. Documentation verification is
 `git diff --check`. Stage B, environment sources, provider credentials, remote
 use and KISSKI remain gated; G03 remains open.
+
+Durability follow-up (2026-10-07): [bounded source-use and custody decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
+is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
+SECRET-USE-DURABLE-CUSTODY-1 is implemented and locally qualified; the shared
+arbitration acceptance above remains valid. No implementation is recorded here.
