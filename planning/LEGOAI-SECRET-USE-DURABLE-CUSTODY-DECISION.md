@@ -402,7 +402,7 @@ Markdown-link checks. No runtime or crash qualification is claimed.
 
 ## 11. SECRET-USE-DURABLE-CUSTODY-1 implementation — 2026-10-07
 
-**IMPLEMENTED — LOCAL VALIDATION PENDING.** This status concerns the durable
+**LOCALLY QUALIFIED — operator result recorded 2026-10-07.** This status concerns the durable
 prerequisite only. It does not resume or qualify SECRET-REF-1A. The acceptance
 record above and all Stage-B/remote/KISSKI gates remain unchanged.
 
@@ -516,7 +516,21 @@ nothing. Run from repository root:
 uv run python .\validate_secret_use_durable_custody_1.py
 ```
 
-No operator qualification is recorded yet. The storage evidence is limited to
+Operator qualification is now recorded from the supplied output of the root
+command above: **all 72 numbered phases passed**, ending with
+`SECRET-USE-DURABLE-CUSTODY-1 LOCALLY QUALIFIED — intact local-storage crash/restart only; Stage A not resumed`.
+The run includes 288 focused/architecture tests, 748 existing Core regression
+tests, 89 ForgeAI tests, 16 DocuMind tests, mypy (78 source files), Ruff lint,
+Ruff format (12 files) and `git diff --check`. Reused identical selectors are
+explicitly identified in the output; 72 phases does not mean 72 distinct suites.
+This is operator-supplied qualification evidence, not a new run performed during
+status reconciliation. No source, test, validator, provider or ADR change is
+part of this reconciliation.
+
+The durable prerequisite qualification gate is satisfied. SECRET-REF-1A remains
+unresumed and unqualified; explicitly resuming its already accepted scope is the
+next separate step. This result does not close G02/G03/G06 or qualify Secrets
+generally. The storage evidence is limited to
 intact local-storage process crash/restart; no power-loss, disk-loss, hostile-admin,
 coordinated rollback, distributed durability, remote handoff or general exactly-
 once guarantee is established. Ordinary Python process privacy is not hostile-code

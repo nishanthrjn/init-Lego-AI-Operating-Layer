@@ -275,7 +275,8 @@ restart or qualification result is claimed. Documentation verification is
 use and KISSKI remain gated; G03 remains open.
 
 Durability follow-up (2026-10-07): [bounded source-use and custody decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
-is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
-SECRET-USE-DURABLE-CUSTODY-1 is locally qualified; its [implementation is ready,
-local validation pending](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07).
-Shared arbitration acceptance remains valid; full Stage-A ordering is not resumed.
+is **ACCEPTED** by explicit maintainer decision. Its [durable prerequisite is
+LOCALLY QUALIFIED](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07)
+from the operator's 72-phase result. Shared arbitration acceptance remains valid;
+the prerequisite gate is satisfied, but Stage A remains unresumed/unqualified
+pending explicit resumption. Stage B and KISSKI remain gated.

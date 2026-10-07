@@ -249,7 +249,7 @@ remote use and KISSKI remain gated. G03 remains open. Accepted architecture and
 the two-stage scope above are unchanged.
 
 Durability follow-up (2026-10-07): [SECRET-USE-DURABLE-CUSTODY decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
-is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
-SECRET-USE-DURABLE-CUSTODY-1 is locally qualified. The [durable prerequisite is
-implemented, local validation pending](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07);
-Stage B remains gated and Stage A has not resumed.
+is **ACCEPTED** by explicit maintainer decision. The [durable prerequisite is
+LOCALLY QUALIFIED](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07)
+from the operator's 72-phase result. Its prerequisite gate is satisfied; Stage A
+remains unresumed/unqualified pending explicit resumption. Stage B remains gated.
