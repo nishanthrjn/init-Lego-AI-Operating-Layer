@@ -10,29 +10,46 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 FORGE = ROOT / "examples/forgeai"
 ENG = ROOT / "packages/legoai-engineering"
-BASE = "a9aaabe154f3afa00cbf4ada1c70e3e378233eac"
+BASE = "3bfdd9235fb915b07d3a759f9b731dee5670e33f"
 PACKAGE = "evaluation/analyst_design_live1"
 TEST = "evaluation/tests/test_analyst_design_live1.py"
 SELF = "validate_forgeai_analyst_design_live_1.py"
+FIX_TEST = "evaluation/tests/test_analyst_design_live1_fix.py"
 ALLOWED = {
     SELF,
     "examples/forgeai/" + TEST,
+    "examples/forgeai/" + FIX_TEST,
     "planning/LEGOAI-FORGEAI-MASTER-ROADMAP-2026.md",
+    "planning/FORGEAI-ANALYST-DESIGN-LIVE-1-CHILD-FAILURE-DIAGNOSTIC.md",
 } | {
     "examples/forgeai/" + PACKAGE + "/" + name
     for name in (
-        "__init__.py",
-        "__main__.py",
-        "identity.py",
         "runtime.py",
-        "sequence.py",
-        "measurement.py",
+        "diagnostics.py",
+        "lifecycle.py",
         "storage.py",
         "harness.py",
-        "pins.json",
-        "report-schema.json",
         "README.md",
     )
+}
+# Only these historical files may be untracked; phase 4 checks every byte
+# against the inventory in the committed diagnostic. No directory-wide exemption.
+HISTORY = {
+    "examples/forgeai/live1-" + directory + "/" + name
+    for directory, names in (
+        ("preflight-411899d3f557", ("run.json", "report.json", "report.md")),
+        (
+            "smoke-d59e9c3f030b",
+            (
+                "run.json",
+                "report.json",
+                "report.md",
+                "call-001-started.json",
+                "call-001-finished.json",
+            ),
+        ),
+    )
+    for name in names
 }
 
 
@@ -101,8 +118,10 @@ def main() -> int:
                     SELF,
                 ).splitlines()
             )
-            if changed - ALLOWED:
-                raise ValueError("unexpected files: " + repr(sorted(changed - ALLOWED)))
+            if changed - ALLOWED - HISTORY:
+                raise ValueError(
+                    "unexpected files: " + repr(sorted(changed - ALLOWED - HISTORY))
+                )
             for name in (
                 "ENG-ANALYST-SUFFICIENCY-CONTRACT-1",
                 "FORGEAI-ANALYST-EVIDENCE-LOOP-1",
@@ -137,7 +156,12 @@ def main() -> int:
             done.append(current)
             report = temp / "offline.xml"
             tests(
-                4, "offline harness qualification", FORGE, TEST, f"--junitxml={report}"
+                4,
+                "offline harness qualification",
+                FORGE,
+                TEST,
+                FIX_TEST,
+                f"--junitxml={report}",
             )
             cases = list(ET.parse(report).getroot().iter("testcase"))
             if not cases or any(list(c) for c in cases):
@@ -216,6 +240,93 @@ def main() -> int:
                 ("no discovery", "architecture"),
                 ("historical revision-1 preserved", "architecture"),
             ]
+            coverage.extend(
+                [
+                    (
+                        "historical smoke artifacts unchanged",
+                        "historical_artifacts_unchanged",
+                    ),
+                    (
+                        "historical effect status unchanged",
+                        "historical_artifacts_unchanged",
+                    ),
+                    (
+                        "actual-provider revision and binding supplied",
+                        "actual_composition_network_fenced",
+                    ),
+                    ("binding value is ollama", "actual_composition_network_fenced"),
+                    (
+                        "missing binding fails deterministically",
+                        "actual_composition_network_fenced",
+                    ),
+                    (
+                        "corrected composition passes model selection",
+                        "actual_composition_network_fenced",
+                    ),
+                    (
+                        "actual branch zero DNS socket HTTP under fence",
+                        "actual_composition_network_fenced",
+                    ),
+                    ("attempt lifecycle representation", "never_attempted_partition"),
+                    ("NEVER_ATTEMPTED", "never_attempted_partition"),
+                    ("ATTEMPTED_NO_RESULT", "spawn_composition_failure_custody"),
+                    ("COMPLETED_RESULT", "full_controller_68_calls_and_report"),
+                    ("attempted accounting invariant", "never_attempted_partition"),
+                    ("planned accounting invariant", "never_attempted_partition"),
+                    (
+                        "composition failure lifecycle",
+                        "spawn_composition_failure_custody",
+                    ),
+                    ("timeout lifecycle", "timeout_lifecycle"),
+                    ("invalid protocol lifecycle", "spawn_protocol_custody"),
+                    (
+                        "successful result lifecycle",
+                        "spawn_replay_success_and_durable_diagnostics",
+                    ),
+                    (
+                        "terminal-stop remaining slots never attempted",
+                        "spawn_composition_failure_custody",
+                    ),
+                    ("safe child stages", "closed_diagnostics"),
+                    ("safe failure categories", "closed_diagnostics"),
+                    ("exception class safety", "closed_diagnostics"),
+                    ("exit status distinct from envelope", "spawn_protocol_custody"),
+                    ("IPC status custody", "spawn_protocol_custody"),
+                    ("bounded cleanup action custody", "timeout_lifecycle"),
+                    (
+                        "dispatch marker semantics",
+                        "spawn_replay_success_and_durable_diagnostics",
+                    ),
+                    (
+                        "no false provider acceptance claim",
+                        "spawn_composition_failure_custody",
+                    ),
+                    ("UNKNOWN effect preserved", "spawn_composition_failure_custody"),
+                    (
+                        "no raw exception message leakage",
+                        "spawn_composition_failure_custody",
+                    ),
+                    (
+                        "no prompt oracle secret diagnostic payload",
+                        "spawn_protocol_custody",
+                    ),
+                    (
+                        "Windows spawn live-composition regression",
+                        "spawn_composition_failure_custody",
+                    ),
+                    ("process launch failure custody", "process_launch_failure"),
+                    (
+                        "semantic failures remain results",
+                        "semantic_failure_remains_result",
+                    ),
+                    ("orphan finish rejected", "orphan_finish_rejected"),
+                    (
+                        "model versus semantic opportunity partition",
+                        "full_controller_68_calls_and_report",
+                    ),
+                ]
+            )
+            offset = len(coverage) - 50
             for number, (label, case) in enumerate(coverage, 5):
                 phase(number, label)
                 if "test_" + case not in names:
@@ -223,26 +334,26 @@ def main() -> int:
                 print("  verified in phase 4: " + case)
                 done.append(current)
             tests(
-                55,
+                55 + offset,
                 "revision-1 and revision-2 regressions",
                 FORGE,
                 "evaluation/tests/test_analyst_design_eval.py",
                 "evaluation/tests/test_analyst_design_eval2.py",
             )
             tests(
-                56,
+                56 + offset,
                 "sufficiency Agent regressions",
                 ENG,
                 "tests/test_sufficiency_agent.py",
             )
             tests(
-                57,
+                57 + offset,
                 "evidence-loop regressions",
                 FORGE,
                 "evaluation/tests/test_analyst_evidence_loop.py",
             )
             tests(
-                58,
+                58 + offset,
                 "RepositoryAnalyst regressions",
                 ENG,
                 "tests/test_analyst.py",
@@ -252,38 +363,38 @@ def main() -> int:
                 "tests/test_analyst_sufficiency_semantics.py",
             )
             tests(
-                59,
+                59 + offset,
                 "ForgeAI worker regressions",
                 FORGE,
                 "tests/test_worker.py",
                 "tests/test_architecture.py",
             )
             tests(
-                60,
+                60 + offset,
                 "architecture and governed Agent runtime",
                 ROOT,
                 "tests/unit/execution/test_agent.py",
                 "tests/integration/composition/test_agent.py",
                 "tests/architecture/test_agent.py",
             )
-            phase(61, "validator cannot invoke live provider")
+            phase(61 + offset, "validator cannot invoke live provider")
             if (
                 env["FORGEAI_LIVE1_OFFLINE"] != "1"
                 or "test_offline_live_provider_refused" not in names
             ):
                 raise ValueError("offline fence missing")
             done.append(current)
-            checked = [PACKAGE, TEST, str(ROOT / SELF)]
-            phase(62, "mypy")
+            checked = [PACKAGE, TEST, FIX_TEST, str(ROOT / SELF)]
+            phase(62 + offset, "mypy")
             run(FORGE, "mypy", "--cache-dir", str(temp / "mypy"), *checked)
             done.append(current)
-            phase(63, "Ruff lint")
+            phase(63 + offset, "Ruff lint")
             run(FORGE, "ruff", "check", "--no-cache", *checked)
             done.append(current)
-            phase(64, "Ruff format")
+            phase(64 + offset, "Ruff format")
             run(FORGE, "ruff", "format", "--check", "--no-cache", *checked)
             done.append(current)
-            phase(65, "git diff check")
+            phase(65 + offset, "git diff check")
             git("diff", "--check", BASE)
             for name in ALLOWED:
                 value = (ROOT / name).read_text(encoding="utf-8")
@@ -305,7 +416,7 @@ def main() -> int:
     for name in done:
         print("PASS " + name)
     print(
-        "FORGEAI-ANALYST-DESIGN-LIVE-1 HARNESS LOCAL VALIDATION PASSED — no live model; no Docker"
+        "FORGEAI-ANALYST-DESIGN-LIVE-1 HARNESS-RUNTIME-FIX-1 LOCALLY QUALIFIED — no live model; no Docker"
     )
     return 0
 

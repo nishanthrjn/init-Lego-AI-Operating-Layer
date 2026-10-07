@@ -10,6 +10,7 @@ from analyst_design_eval2.report import decode, record
 from analyst_design_eval2.runner import Row
 
 from analyst_design_live1.identity import HERE, PROFILE, REPORT, SMOKE
+from analyst_design_live1.lifecycle import validate_partition
 from analyst_design_live1.measurement import interpret
 
 
@@ -71,6 +72,11 @@ class Store:
 
 
 def validate(report: dict[str, Any]) -> None:
+    # Additive LIVE-1 custody fields; historical reports remain readable.
+    if "execution_lifecycle" in report:
+        validate_partition(report["execution_lifecycle"])
+        if report["calls"] != report["execution_lifecycle"]["attempted"]:
+            raise ValueError("lifecycle call count")
     schema = json.loads((HERE / "report-schema.json").read_text())
     if not set(schema["required"]) <= set(report):
         raise ValueError("missing live report fields")

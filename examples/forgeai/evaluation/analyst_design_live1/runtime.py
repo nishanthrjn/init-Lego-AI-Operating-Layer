@@ -31,6 +31,16 @@ from legoai_engineering.analyst.sufficiency_definition import (
     evidence_sufficiency_definition,
 )
 
+from analyst_design_live1.diagnostics import (
+    SAFE_CLASSES,
+    ChildDiagnostics,
+    ChildStage,
+    Cleanup,
+    FailureCategory,
+    IPCStatus,
+    classify,
+    safe_class,
+)
 from analyst_design_live1.identity import MODEL, URL
 from legoai.execution.agent.ports import (
     AgentDefinition,
@@ -102,14 +112,21 @@ def projection(
 
 
 class GuardedRuntime:
-    def __init__(self, runtime: AgentRuntimePort, expected: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        runtime: AgentRuntimePort,
+        expected: dict[str, Any],
+        mark: Callable[[ChildStage], None],
+    ) -> None:
         self.runtime, self.expected = runtime, expected
+        self.mark = mark
         self.payload_digest: str | None = None
         self.calls = 0
 
     async def run(
         self, definition: AgentDefinition, request: AgentRequest
     ) -> AgentResult:
+        self.mark(ChildStage.PAYLOAD_GUARD_STARTED)
         if (
             definition != evidence_sufficiency_definition()
             or json.loads(request.text) != self.expected
@@ -119,6 +136,8 @@ class GuardedRuntime:
             raise ValueError("SECOND_CALL_FORBIDDEN")
         self.calls += 1
         self.payload_digest = hashlib.sha256(request.text.encode()).hexdigest()
+        self.mark(ChildStage.PAYLOAD_GUARD_COMPLETED)
+        self.mark(ChildStage.GOVERNED_RUNTIME_ENTERED)
         return await self.runtime.run(definition, request)
 
 
@@ -134,7 +153,10 @@ async def governed(
     expected: dict[str, Any],
     timeout: float,
     output: str | None = None,
+    *,
+    mark: Callable[[ChildStage], None] = lambda stage: None,
 ) -> tuple[EvidenceSufficiencyResult, str | None]:
+    mark(ChildStage.HOST_COMPOSITION_STARTED)
     if output is not None:
         host, _ = host_for(Replay(output))
     else:
@@ -167,13 +189,16 @@ async def governed(
                 (ollama_binding(URL, MODEL, timeout),),
                 max_executions=1,
             ),
-            {"revision": "live1"},
+            {"revision": "live1", "binding": "ollama"},
             clock=lambda: datetime.now(UTC),
         )
-    guard = GuardedRuntime(host.agent_runtime(), expected)
+    mark(ChildStage.HOST_COMPOSITION_COMPLETED)
+    guard = GuardedRuntime(host.agent_runtime(), expected, mark)
+    mark(ChildStage.AGENT_CALL_STARTED)
     result = await EvidenceSufficiencyAgent(guard).assess(
         host.model_execution(ModelPurpose.CHAT), m, current_manifest=lambda: m
     )
+    mark(ChildStage.RESULT_COMPLETED)
     return result, guard.payload_digest
 
 
@@ -184,19 +209,29 @@ def child(
     timeout: float,
     output: str | None,
 ) -> None:
+    stage: ChildStage | None = None
+
+    def mark(value: ChildStage) -> None:
+        nonlocal stage
+        stage = value
+        pipe.send(("stage", value))
+
     try:
-        result, payload_digest = asyncio.run(governed(m, expected, timeout, output))
-        pipe.send((result, payload_digest, None))
+        mark(ChildStage.CHILD_STARTED)
+        result, digest = asyncio.run(governed(m, expected, timeout, output, mark=mark))
+        pipe.send(("result", result, digest))
     except BaseException as error:
-        # Safe category only: no arbitrary exception text or raw model content.
-        pipe.send((None, None, type(error).__name__))
+        pipe.send(("failure", classify(stage), safe_class(error)))
     finally:
         pipe.close()
 
 
 class CallStopped(RuntimeError):
-    def __init__(self, reason: str, disposition: str) -> None:
+    def __init__(
+        self, reason: str, disposition: str, diagnostics: ChildDiagnostics | None = None
+    ) -> None:
         self.reason, self.disposition = reason, disposition
+        self.diagnostics = diagnostics or ChildDiagnostics()
         super().__init__(reason)
 
 
@@ -207,37 +242,138 @@ def supervised(
     *,
     output: str | None = None,
     clock: Callable[[], float] = time.monotonic,
+    observe: Callable[[dict[str, Any]], None] = lambda record: None,
 ) -> tuple[EvidenceSufficiencyResult, str | None]:
+    diagnostics = ChildDiagnostics()
     if timeout <= 0:
-        raise CallStopped("deadline", "NOT_STARTED")
+        raise CallStopped("deadline", "NOT_STARTED", diagnostics)
     ctx = multiprocessing.get_context("spawn")
     reader, writer = ctx.Pipe(duplex=False)
     process = ctx.Process(target=child, args=(writer, m, expected, timeout, output))
     start = clock()
-    process.start()
-    writer.close()
+    started = False
+
+    def stop(reason: str, category: FailureCategory) -> CallStopped:
+        diagnostics.failure = category
+        return CallStopped(reason, "SERVER_EFFECT_UNKNOWN", diagnostics)
+
     try:
-        while not reader.poll(min(0.05, max(0.0, timeout - (clock() - start)))):
-            if not process.is_alive():
-                raise CallStopped("child_exit", "SERVER_EFFECT_UNKNOWN")
+        try:
+            process.start()
+            started = True
+        except Exception as error:
+            diagnostics.exception_class = safe_class(error)
+            raise stop(
+                "child_failure", FailureCategory.PROCESS_LAUNCH_FAILURE
+            ) from None
+        finally:
+            writer.close()
+        while True:
             if clock() - start >= timeout:
-                raise CallStopped("timeout", "SERVER_EFFECT_UNKNOWN")
-        result, payload_digest, error = reader.recv()
-        if error or not isinstance(result, EvidenceSufficiencyResult):
-            raise CallStopped("child_failure", "SERVER_EFFECT_UNKNOWN")
-        return result, payload_digest
+                raise stop("timeout", FailureCategory.TIMEOUT)
+            try:
+                ready = reader.poll(min(0.05, max(0.0, timeout - (clock() - start))))
+                if not ready:
+                    if not process.is_alive():
+                        category = (
+                            FailureCategory.CHILD_PROTOCOL_FAILURE
+                            if process.exitcode == 0
+                            else FailureCategory.CHILD_ABNORMAL_EXIT
+                            if process.exitcode is not None
+                            else FailureCategory.UNKNOWN_CHILD_FAILURE
+                        )
+                        raise stop("child_exit", category)
+                    continue
+                envelope = reader.recv()
+            except EOFError:
+                diagnostics.ipc = IPCStatus.EOF_BEFORE_ENVELOPE
+                raise stop(
+                    "child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE
+                ) from None
+            except OSError:
+                diagnostics.ipc = IPCStatus.PIPE_ERROR
+                raise stop(
+                    "child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE
+                ) from None
+            if not isinstance(envelope, tuple) or not envelope:
+                diagnostics.ipc = IPCStatus.INVALID_ENVELOPE
+                raise stop("child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE)
+            kind = envelope[0]
+            if (
+                kind == "stage"
+                and len(envelope) == 2
+                and isinstance(envelope[1], ChildStage)
+            ):
+                stages = list(ChildStage)
+                previous = stages.index(diagnostics.stage) if diagnostics.stage else -1
+                if stages.index(envelope[1]) != previous + 1 and not (
+                    envelope[1] == ChildStage.RESULT_COMPLETED
+                    and diagnostics.stage == ChildStage.AGENT_CALL_STARTED
+                ):
+                    diagnostics.ipc = IPCStatus.INVALID_ENVELOPE
+                    raise stop("child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE)
+                diagnostics.stage = envelope[1]
+                observe(diagnostics.record())
+                continue
+            if (
+                kind == "failure"
+                and len(envelope) == 3
+                and isinstance(envelope[1], FailureCategory)
+                and isinstance(envelope[2], str)
+                and envelope[2] in SAFE_CLASSES | {"OtherException"}
+            ):
+                diagnostics.ipc = IPCStatus.ENVELOPE_RECEIVED
+                diagnostics.exception_class = envelope[2]
+                raise stop("child_failure", envelope[1])
+            if kind == "result" and len(envelope) == 3:
+                diagnostics.ipc = IPCStatus.ENVELOPE_RECEIVED
+                result, digest = envelope[1:]
+                if (
+                    not isinstance(result, EvidenceSufficiencyResult)
+                    or diagnostics.stage != ChildStage.RESULT_COMPLETED
+                    or (
+                        digest is not None
+                        and (
+                            not isinstance(digest, str)
+                            or len(digest) != 64
+                            or any(c not in "0123456789abcdef" for c in digest)
+                        )
+                    )
+                ):
+                    raise stop("child_failure", FailureCategory.INVALID_RESULT)
+                return result, digest
+            diagnostics.ipc = IPCStatus.INVALID_ENVELOPE
+            raise stop("child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE)
     except KeyboardInterrupt:
-        raise CallStopped("interrupted", "SERVER_EFFECT_UNKNOWN") from None
+        raise stop("interrupted", FailureCategory.UNKNOWN_CHILD_FAILURE) from None
     finally:
         reader.close()
-        if process.is_alive():
-            process.terminate()
-        process.join(0.5)
-        if process.is_alive():
-            process.kill()
+        if started:
+            # Give an envelope-sending child a bounded chance to exit normally.
+            # Cleanup is separate from the envelope and from provider effect truth.
+            if diagnostics.ipc != IPCStatus.NO_ENVELOPE:
+                process.join(0.5)
+            if process.is_alive():
+                diagnostics.cleanup = Cleanup.TERMINATE
+                process.terminate()
             process.join(0.5)
-        if process.is_alive():
-            raise CallStopped(
-                "client_termination_unconfirmed", "CLIENT_AND_SERVER_UNKNOWN"
-            )
+            if process.is_alive():
+                diagnostics.cleanup = Cleanup.KILL
+                process.kill()
+                process.join(0.5)
+            diagnostics.exitcode = process.exitcode
+            if (
+                diagnostics.ipc == IPCStatus.EOF_BEFORE_ENVELOPE
+                and diagnostics.exitcode not in {None, 0}
+                and diagnostics.cleanup == Cleanup.NONE
+            ):
+                diagnostics.failure = FailureCategory.CHILD_ABNORMAL_EXIT
+            if process.is_alive():
+                observe(diagnostics.record())
+                raise CallStopped(
+                    "client_termination_unconfirmed",
+                    "CLIENT_AND_SERVER_UNKNOWN",
+                    diagnostics,
+                )
         process.close()
+        observe(diagnostics.record())
