@@ -23,11 +23,25 @@ TEST = "evaluation/tests/test_analyst_sufficiency_safety_eval3.py"
 PLAN = "planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-EVAL-3.md"
 DIAGNOSTIC = "planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-BASELINE-DIAGNOSTIC-1.md"
 EVAL2 = "examples/forgeai/evaluation/analyst_sufficiency_safety_eval2"
-# The live/2 baseline awaits its own custody slice; recognized only by exact
-# file inventory, never by pattern.
+# Untracked live/2 run evidence awaiting its own custody slice. Each directory
+# is recognized only by its exact file inventory, never by pattern, and must
+# stay visible to git (not ignored).
 BASELINE = "examples/forgeai/safety2-baseline-3cf8aba9a377"
-BASELINE_FILES = 267
-BASELINE_INVENTORY = "774d65914b0dea783dac1812d6b166c855d18332ecac8fdd5a71e08bad3721b8"
+PENDING = {
+    BASELINE: (
+        267,
+        "774d65914b0dea783dac1812d6b166c855d18332ecac8fdd5a71e08bad3721b8",
+    ),
+    # live/2 PREFLIGHT runs bdbcfa91 and 002b8ba7 (zero calls), kept as evidence.
+    "examples/forgeai/evaluation/safety2-preflight-20261007-01": (
+        3,
+        "41d0f0aab063fc3c335345c2bcd176e17da527e02334793b585d9878de36647e",
+    ),
+    "examples/forgeai/evaluation/safety2-preflight-20261007-a": (
+        3,
+        "33c7d199d7b6ca753e9e449a549b051516c6f9f7ff64470e2ef7928f12755582",
+    ),
+}
 ALLOWED = {
     SELF,
     ".gitignore",  # removal of the baseline ignore rule only
@@ -253,7 +267,9 @@ def main() -> int:
                 "planning",
                 SELF,
             ).splitlines()
-            pending = {p for p in untracked if p.startswith(BASELINE + "/")}
+            pending = {
+                p for p in untracked if any(p.startswith(d + "/") for d in PENDING)
+            }
             changed.update(set(untracked) - pending)
             if changed - ALLOWED:
                 raise ValueError(
@@ -265,15 +281,22 @@ def main() -> int:
             done.append(current)
             phase(".gitignore has no wildcard rule hiding baseline evidence")
             ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-            ignored = subprocess.run(
-                ["git", "check-ignore", "-q", BASELINE + "/"], cwd=ROOT, check=False
-            ).returncode
-            if "safety2-baseline" in ignore or ignored == 0:
-                raise ValueError("baseline evidence is ignored")
+            # `git status --ignored` is authoritative ("!!" = ignored); a
+            # trailing-slash check-ignore query misreports untracked directories.
+            status = git("status", "--porcelain", "--ignored", "--", "examples/forgeai")
+            hidden = [
+                line
+                for line in status.splitlines()
+                if line.startswith("!!")
+                and ("-preflight-" in line or "-baseline-" in line or "-smoke-" in line)
+            ]
+            if "safety2-baseline" in ignore or "safety2-preflight" in ignore or hidden:
+                raise ValueError("live run evidence is ignored: " + repr(hidden))
             done.append(current)
-            phase("live/2 baseline pending custody: untouched, exact inventory")
-            if inventory(ROOT / BASELINE) != (BASELINE_FILES, BASELINE_INVENTORY):
-                raise ValueError("baseline artifact changed or incomplete")
+            phase("live/2 run evidence pending custody: untouched, exact inventory")
+            for name, expected in PENDING.items():
+                if inventory(ROOT / name) != expected:
+                    raise ValueError("pending run artifact changed: " + name)
             done.append(current)
             phase("frozen revisions 1-3, revision-3 identity and independence")
             subprocess.run(

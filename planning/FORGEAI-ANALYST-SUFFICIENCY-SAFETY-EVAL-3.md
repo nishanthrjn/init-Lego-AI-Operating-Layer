@@ -239,8 +239,16 @@ The validator `validate_forgeai_analyst_sufficiency_safety_eval_3.py` runs:
   - `safety2-preflight-20261007-a/` (run `002b8ba7`).
 
   Both show zero calls at HEAD `456a90a`. They were not produced by this slice
-  and are outside the live/2 custody scan location. The validator refuses
-  them as unreviewed until a maintainer decides their custody.
+  and are outside the live/2 custody scan location. The maintainer chose to
+  keep them as evidence. Like the baseline, they stay untracked and visible,
+  and the validator recognizes each only by its exact file inventory until a
+  custody slice admits them.
+- A later commit (`e5cfba3`) re-added the baseline rule and added an
+  `examples/forgeai/evaluation/safety2-preflight-*/` rule. Both are removed
+  again here. The validator now fails if any live run directory under
+  `examples/forgeai` is git-ignored, checked through `git status --ignored`.
+  A trailing-slash `git check-ignore` query misreports untracked directories in
+  this repository.
 
 ## 15. Limitations
 
@@ -254,8 +262,8 @@ The validator `validate_forgeai_analyst_sufficiency_safety_eval_3.py` runs:
 
 ## 16. Next gate
 
-1. The operator decides custody of the two unreviewed preflight directories.
-   The validator cannot pass while they are present and unreviewed.
+1. Commit the `.gitignore` and validator fix, keeping the three run
+   directories untracked.
 2. The operator runs
    `uv run python .\validate_forgeai_analyst_sufficiency_safety_eval_3.py`,
    then commits.
