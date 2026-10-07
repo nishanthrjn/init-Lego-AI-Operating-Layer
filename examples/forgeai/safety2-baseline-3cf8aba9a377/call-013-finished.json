@@ -1,0 +1,24 @@
+{
+  "case": "s13",
+  "variant": "initial",
+  "phase": "initial",
+  "seconds": 84.38998609999908,
+  "user_payload_digest": "24955a68c3b14950415be9cf3609abfe90aa01f5f325ebf1998c0317581e6f3a",
+  "failure": "invalid_output",
+  "child_diagnostics": {
+    "child_stage": "RESULT_COMPLETED",
+    "child_failure_category": null,
+    "exception_class": null,
+    "ipc_status": "ENVELOPE_RECEIVED",
+    "child_exit_code": 0,
+    "process_exit_observed": true,
+    "cleanup_action": "NONE",
+    "model_dispatch": "NOT_OBSERVED",
+    "http_request": "NOT_OBSERVED",
+    "provider_acceptance": "UNKNOWN",
+    "invalid_output_rejection_code": "DISPOSITION_REQUEST_INCOHERENT",
+    "output_length_class": "SMALL",
+    "invalid_output_branch": "AGENT_PARSE",
+    "diagnostic_disagreement": false
+  }
+}

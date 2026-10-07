@@ -1,0 +1,44 @@
+{
+  "case": "s11",
+  "disposition": "missing_governing_evidence",
+  "valid": true,
+  "failure": null,
+  "progressed": false,
+  "governing_sources": [
+    "logistics/route.py"
+  ],
+  "requests": [
+    {
+      "kind": "named_evidence",
+      "path": "logistics/mapping_table.py",
+      "description": "The mapping table that links destinations to warehouses.",
+      "choices": []
+    }
+  ],
+  "unauthorized_reads": 0,
+  "model_calls": 1,
+  "user_payload_sha256": "d85ab9c2607bd45254024eb9ab95513e9372a68bfa6e71ddf48bf440766dbe68",
+  "variant": "initial",
+  "attempts": [
+    {
+      "phase": "initial",
+      "failure": null
+    }
+  ],
+  "score": {
+    "required": 1,
+    "covered": 0,
+    "emitted": 1,
+    "matched": 0,
+    "under": 1,
+    "over": 1,
+    "wrong_kind": 1,
+    "fabricated": 1,
+    "forbidden": 0,
+    "secret_path_requests": 0,
+    "edit_target_requests": 0,
+    "duplicates": 0,
+    "acceptable": false,
+    "exact": false
+  }
+}

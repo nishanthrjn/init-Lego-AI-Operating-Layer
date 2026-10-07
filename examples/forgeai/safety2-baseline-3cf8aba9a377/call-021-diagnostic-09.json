@@ -1,0 +1,19 @@
+{
+  "case": "s21",
+  "variant": "initial",
+  "phase": "initial",
+  "child_stage": "RESULT_COMPLETED",
+  "child_failure_category": null,
+  "exception_class": null,
+  "ipc_status": "ENVELOPE_RECEIVED",
+  "child_exit_code": 0,
+  "process_exit_observed": true,
+  "cleanup_action": "NONE",
+  "model_dispatch": "NOT_OBSERVED",
+  "http_request": "NOT_OBSERVED",
+  "provider_acceptance": "UNKNOWN",
+  "invalid_output_rejection_code": "DISPOSITION_INVALID",
+  "output_length_class": "SMALL",
+  "invalid_output_branch": "AGENT_PARSE",
+  "diagnostic_disagreement": false
+}
