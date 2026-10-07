@@ -1,0 +1,84 @@
+{
+  "namespace": "forgeai-analyst-design-schema",
+  "revision": 2,
+  "condition": "forgeai-analyst-design-eval/2",
+  "report": "forgeai-analyst-design-report/2",
+  "mode": "scripted-offline",
+  "model_identity": null,
+  "live_repetitions": "UNAUTHORIZED / TO BE DECIDED BEFORE LIVE RUN",
+  "live_final_analysis": "SEPARATE MAINTAINER DECISION REQUIRED",
+  "families": 28,
+  "heldout_conditions": 52,
+  "regressions": 4,
+  "pair_edges": 24,
+  "assessment_budget": 2,
+  "round_budget": 1,
+  "request_order": "original retained; normalized set used for scoring",
+  "request_fields": [
+    "kind",
+    "path",
+    "description",
+    "choices"
+  ],
+  "attempt_fields": [
+    "identity",
+    "phase",
+    "disposition",
+    "requests",
+    "governing_sources",
+    "manifest_identity",
+    "valid",
+    "failure"
+  ],
+  "planned_assessments": 70,
+  "semantic_planned": 62,
+  "critical_planned": 44,
+  "answerable": 18,
+  "report_fields": [
+    "schema",
+    "condition",
+    "mode",
+    "model_identity",
+    "digests",
+    "implementation",
+    "live_repetitions",
+    "live_final_analysis",
+    "measurement"
+  ],
+  "normalization": {
+    "text": "NFKC casefold word tokens, whitespace/punctuation normalized, one frozen polite prefix removed",
+    "prefixes": [
+      "could you please provide ",
+      "please provide ",
+      "please clarify ",
+      "provide ",
+      "show "
+    ],
+    "named_path": "exact case-sensitive RepositoryPath.value; no basename or inferred import resolution",
+    "choice_order": "ignored for set comparison; original retained",
+    "description_matching": "finite frozen alternatives; no open-ended synonym inference or LLM judge",
+    "empty_denominator": "vacuous ratio 1.0, original numerator/denominator always shown",
+    "choice_equivalence": "If nonempty, exactly one representative from every frozen relevant-choice group; original order retained."
+  },
+  "intervention_policy": {
+    "initial": "no acquisition; operator declines outstanding request",
+    "unrelated": "independently supplied initial bundle plus unrelated note; no repair",
+    "resolved": "one exact frozen addition OR clarification after an acceptable model request set",
+    "multi_step": "one exact frozen first addition; remaining requests stop",
+    "mixed": "never execute acquisition and clarification together; stop unless oracle one_round_resolves permits the single frozen intervention",
+    "repair": "explicit fault only; preserve original request set, report corrected separately, never independent credit"
+  },
+  "request_metrics": [
+    "required_request_recall",
+    "request_precision",
+    "request_set_exact",
+    "request_set_acceptable",
+    "under",
+    "over",
+    "allowed_extra",
+    "forbidden",
+    "invented",
+    "duplicates"
+  ],
+  "required_request_planned": 45
+}
