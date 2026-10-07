@@ -1,6 +1,6 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-EVAL-2
 
-Status: **implemented, local validation pending (2026-10-07).** This is an
+Status: **LOCALLY QUALIFIED (2026-10-07).** This is an
 offline evaluator correction: no model run, no live baseline, no hardening, and
 no Agent, prompt, parser, model, LIVE-1, revision-2 design-evaluation or Core
 change.
@@ -117,3 +117,21 @@ EvidenceSufficiencyAgent 1.0.0 with `qwen2.5-coder:14b` and the current
 representation runs against **revision 2 only**, under separate authorization.
 Revision 1 must not be baselined. Nothing here claims an Agent or model
 improvement.
+
+## 8. Local qualification
+
+Operator qualification passed on 2026-10-07 (implementation commit `752c782`):
+all **54/54 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_safety_eval_2.py`.
+The run covered:
+- the 33 revision-2 tests;
+- the immutable revision-1 safety suite (47);
+- regressions: design-eval revisions 1 and 2 (123), sufficiency Agent (79),
+  evidence loop (50), LIVE-1 harness (151), RepositoryAnalyst (175), ForgeAI
+  worker (49) and architecture (53);
+- the Smoke 3 inventory, the zero-provider guard, mypy, Ruff lint and format,
+  and the diff check.
+
+This is offline evidence only: no model, provider or Docker. It does not
+authorize the live baseline, which needs separate authorization and must use
+revision 2 only.

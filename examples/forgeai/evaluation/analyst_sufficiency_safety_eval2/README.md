@@ -1,6 +1,6 @@
 # forgeai-analyst-sufficiency-safety-eval/2
 
-**Status: implemented, local validation pending (offline only).** This is the
+**Status: LOCALLY QUALIFIED (2026-10-07; offline only; 54/54 validator phases).** This is the
 corrected safety condition, **selected for the future live baseline**. Revision 1
 (`../analyst_sufficiency_safety_eval1/`) remains frozen, locally qualified
 history and was never used live. See [REVISION-DELTA.md](REVISION-DELTA.md) and
