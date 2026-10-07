@@ -1,6 +1,6 @@
 # SECRET-REF-1 — implementation-scope decision
 
-**Status: PROPOSED — maintainer decision requested.**
+**Status: ACCEPTED — 2026-10-07 by explicit maintainer decision, subject to the staged implementation gate in §8.**
 **Prepared:** 2026-10-07 against `5f4a6ec69656f5ff42619a7e11a0fad1560cff9d`.
 **Authority:** accepted ADR-010, ADR-005/007/009, ADR-014 §14.7,
 CONTRACTS §15.5 and SECURITY §§17, 20. This record proposes implementation
@@ -205,3 +205,33 @@ Keep credential enablement conditional on its proof; keep remote and KISSKI
 work behind §6. Acceptance must be recorded explicitly before treating this
 proposed scope as an implementation decision. Do not mark ADR-010, G03 or any
 provider fully qualified merely because this planning decision is accepted.
+
+## 8. Accepted implementation order — 2026-10-07
+
+The maintainer accepts this bounded implementation scope in two gated stages.
+The technical proposal above is preserved; this note records acceptance of §7
+and governs implementation order. Acceptance does not qualify Secrets or close G03.
+
+**Stage A — SECRET-REF-1A:**
+
+- Public reference/status/use contracts and Secret Access Port operations.
+- Private synthetic Secret realization and deterministic exact-use/invalidation tests.
+- No environment source, model credential header or credentialed provider enablement.
+
+**Stage B — SECRET-REF-1B:**
+
+- One explicitly configured environment-backed source.
+- OpenAICompatibleSettings reference field and private protected credential handoff.
+- Fake local authenticated HTTP qualification; still LOCAL deployment only.
+
+Stage B is not authorized merely by acceptance of this scope. It may proceed
+only after Stage A is locally qualified and its report demonstrates ADR-010
+actual-use/current-invalidator ordering without an unapproved broader runtime
+redesign. If Stage A requires a broader owner, Coordinator, governance, execution
+or arbitration redesign, **STOP** and prepare a separate maintainer decision
+before implementing that wider change.
+
+Neither stage authorizes a remote provider. Remote disclosure and KISSKI remain
+behind the separate decisions, admission and qualification prerequisites in §6.
+This acceptance record makes SECRET-REF-1A the next implementation slice; no
+implementation begins in this documentation-only change.
