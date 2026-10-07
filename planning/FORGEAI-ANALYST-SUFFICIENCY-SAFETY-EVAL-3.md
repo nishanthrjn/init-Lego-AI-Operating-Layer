@@ -1,6 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-EVAL-3
 
-Status: **implemented, local validation pending (2026-10-08).** This slice is
+Status: **LOCALLY QUALIFIED (2026-10-08; offline; 81/81 validator phases).**
+This slice is
 offline evaluator design and implementation only. Nothing ran against a model,
 provider, preflight or baseline. No Agent, prompt, parser, ModelPort, adapter or
 model changed, and no hardening was done.
@@ -271,3 +272,25 @@ The validator `validate_forgeai_analyst_sufficiency_safety_eval_3.py` runs:
    development evidence only, with revision 3 sealed.
 
 No live run of revision 3 is authorized.
+
+## 17. Local qualification
+
+Operator qualification passed on 2026-10-08: all **81/81 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_safety_eval_3.py`.
+The freeze was committed in `7aac8c6`. The final validator, which recognizes
+pending run evidence untracked or committed, is at `d5d4cb9`. The run covered:
+- the baseline-diagnostic prerequisite and scope;
+- no git-ignored live run evidence;
+- the exact inventories of the baseline (`69bcc2f3`) and the two kept
+  preflights (`bdbcfa91`, `002b8ba7`), pending custody;
+- the frozen revisions 1–3 and independence;
+- the 65 revision-3 tests and 65 coverage phases, including the 12 mutations;
+- regressions: SAFETY-EVAL-2 (33), SAFETY-EVAL-1 (47), SAFETY-LIVE-1 (57),
+  sufficiency Agent (79), evidence loop (50) and architecture (251);
+- the zero-provider check, mypy, Ruff lint and format, and the diff check.
+
+Revision 3 is now the **sealed held-out condition**. This is offline evidence
+only: no model run, no live use of revision 3, and no hardening. The three run
+directories were committed (`ade5d97`) before their custody slice. Until that
+slice pins them, the live/2 custody check and its test suites report the
+baseline directory as unrecognized.
