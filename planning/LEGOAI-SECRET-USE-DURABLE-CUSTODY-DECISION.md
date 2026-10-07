@@ -399,3 +399,133 @@ of implementation or local qualification.
 This task creates/links planning documents only. No database, source, tests,
 validator or ADR change. Documentation verification: `git diff --check` and local
 Markdown-link checks. No runtime or crash qualification is claimed.
+
+## 11. SECRET-USE-DURABLE-CUSTODY-1 implementation — 2026-10-07
+
+**IMPLEMENTED — LOCAL VALIDATION PENDING.** This status concerns the durable
+prerequisite only. It does not resume or qualify SECRET-REF-1A. The acceptance
+record above and all Stage-B/remote/KISSKI gates remain unchanged.
+
+### Implemented boundary
+
+- `legoai.governance.secret`: immutable safe exact-use plan, exact Secret revision,
+  prepared/accepted fact, duty state, Approval observation and recovery projection.
+  Existing nominal Principal, scope, configuration, operation, submission, Grant,
+  Approval, Policy and version types are reused. No material field or metadata bag.
+- `legoai.evidence.custody`: additive source evidence, declared
+  `INTACT_LOCAL_V1` profile, durable receipt and acknowledged-custody/status Port.
+  Existing EvidenceRecord and EvidenceCustodyPort.record/read are unchanged;
+  in-memory custody acquires no durability promise.
+- Private `reference/_secret_ledger.py`: source-owned preparation, exact-use
+  uniqueness, retained synthetic acceptance, submission duty/history, conditional
+  receipt linkage and intervention. The acceptance transaction commits the fact,
+  pre-use custody reference and outstanding duty transition together. There is
+  no independent consumer callback. The retained structural fact stays visible
+  even when the duty requires intervention.
+- Private `reference/_durable_evidence.py`: separately committed source evidence
+  and immutable custody receipt; exact equivalent submission returns its retained
+  outcome, conflicting identity refuses. The private witness is obtained by an
+  Evidence-owner lookup before domain entry, not by trusting a caller-created
+  receipt value. No Evidence transaction runs inside the acceptance domain.
+- Private `reference/_secret_domain.py`: injected, instance-local, non-reentrant
+  synchronous ordering identity. This slice tests the storage ordering boundary;
+  it does not wire or qualify Grant/Policy/Catalog invalidator participation.
+  No public ordering or transaction API was added.
+
+The adapters are private trusted-composition facilities, not application Secret
+services. `CustodyAccess` is an explicit scope/requester input, not authentication
+or a grant. The trusted caller must establish current admission and entitled
+repair authority; stored authority references never do that. Scope mismatches
+refuse without exposing another subject. The synthetic storage harness supplies
+the in-memory validation inputs; no production runtime host is wired to it.
+Stage A must still implement current-authority/current-invalidator checks and
+cancellation before this private acceptance boundary can serve protected use.
+
+### Persistence and recovery profile
+
+The source and Evidence files have separate owner schemas and version-1 metadata.
+Shared private code is limited to closed safe-value serialization and SQLite
+mechanics; it does not define a generic repository, journal or transaction Port.
+SQLiteConfigurationStore, Governance registries, Execution, Catalog, runtime/local
+composition, providers and ADRs were not changed.
+
+Both files use rollback journal `DELETE`, `synchronous=EXTRA`, foreign keys,
+zero busy timeout and no retry. Each owner uses a separate SQLite admission
+sidecar whose held EXCLUSIVE transaction admits one writer incarnation. Process
+termination releases that lock. Each physical store durably pins its admitted
+owner/tenant/requester scope and refuses rebinding on writable or read-only reopen;
+this scope binding is not authentication. Explicit provisioning requires new paths;
+reopening uses `mode=rw`, inspection `mode=ro`. Missing/incompatible/corrupt stores
+never silently initialize or fall back to memory. Integrity and typed-history
+checks reject incomplete atomic sets, including a missing accepted fact. Public
+record encodings are bounded to 32 KiB and each store to 4,096 source/submission
+records in this profile. A capacity failure never authorizes use.
+
+Source preparation and required pre-use Evidence custody complete before entry;
+the source commit runs inside the domain. Source transactions are released before
+domain exit. Post-use Evidence and conditional duty closure run afterward.
+Coordinator locks and provider calls are absent. This ordering permits local disk
+latency, not a hard realtime bound or proof of acceptance-time expiry; Stage-A
+time qualification remains outstanding. Acceptance timestamps are the supplied
+observation-clock basis, not measured storage completion timestamps.
+
+A persisted first-incarnation marker disables new preparation/acceptance on
+reopen, including fresh identities: this profile reopens for inspection and repair
+only. Equivalent preparation/status can recover retained meaning but cannot admit
+a prepared-only use for acceptance. No authority, Approval count or Secret handle
+is restored. Read-only inspection uses a coherent SQLite read transaction and
+reports prepared-only, accepted/outstanding, accepted/attributed, intervention,
+or UNKNOWN/GAP. Missing history is never reported as unused. A hot journal that
+cannot be recovered read-only yields a gap until the trusted owner can recover
+storage; inspection does not secretly perform recovery writes.
+
+Approval remains a separate owner. The crash driver exercises its real in-memory
+consume operation before source acceptance; the source retains only applicability
+and known/possible consumption observations. It neither restores nor refunds a
+count. Post-use custody failure leaves accepted truth and a pending duty. Explicit
+repair submits/looks up that same Evidence meaning and conditionally links its
+receipt; no acceptance, second consume, automatic retry or execution resume.
+
+### Verification and operator command
+
+Focused tests cover 13 explicit child-process termination points, source/Evidence/
+duty lost acknowledgments, duplicate/conflicting identities, pre-use refusal,
+matching receipt/revision checks, writer admission, scope non-disclosure, recovery
+gaps and corruption. Child failpoints are test-only injections around actual SQL
+commits, not production callback hooks or sleep races. Canary checks inspect SQL
+traces, source/Evidence files, active rollback journals, stdout/stderr, logs and
+safe serialized results without displaying material. WAL is rejected by the
+selected profile and is not claimed to be qualified.
+
+Implementation verification passed: focused custody tests and architecture guards,
+748 existing Core regression tests, 89 ForgeAI regression tests and 16 lightweight
+DocuMind regression tests. Canary checks passed. Full-source mypy and focused Ruff
+checks passed. These are implementation checks, not an operator qualification
+result for all validator phases. Existing provider regressions use mocks/local fake
+HTTP only; no live or remote provider, credential, environment Secret source or
+Docker was used by this slice.
+
+Prepared `validate_secret_use_durable_custody_1.py` with 72 numbered phases covering
+the accepted matrix, safe contracts/owner separation, crash/storage/disclosure
+proofs, existing regressions, mypy, Ruff and diff checks. Identical selectors are
+reused only after they pass earlier in that same run; each phase reports that reuse.
+The validator requires existing repository/example environments and downloads
+nothing. Run from repository root:
+
+```powershell
+uv run python .\validate_secret_use_durable_custody_1.py
+```
+
+No operator qualification is recorded yet. The storage evidence is limited to
+intact local-storage process crash/restart; no power-loss, disk-loss, hostile-admin,
+coordinated rollback, distributed durability, remote handoff or general exactly-
+once guarantee is established. Ordinary Python process privacy is not hostile-code
+isolation. Full Stage-A ordering, expiry and cancellation qualification remains
+separate; Stage B, credentials, remote providers and KISSKI stay gated.
+
+Implementation workspace limitation: Windows ACLs prevented removal of the exact
+task-generated `.custody-...-temp` test directories, including attempts with
+elevated tool permissions. They are enumerated in the validator's
+`IMPLEMENTATION_TEST_DIRECTORIES`, excluded from source scope, and never reused
+as qualification evidence or implementation input. Do not commit these temporary
+test artifacts. The operator validator creates a fresh temporary directory.

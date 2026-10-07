@@ -250,5 +250,6 @@ the two-stage scope above are unchanged.
 
 Durability follow-up (2026-10-07): [SECRET-USE-DURABLE-CUSTODY decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
 is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
-SECRET-USE-DURABLE-CUSTODY-1 is implemented and locally qualified; Stage B remains
-gated. This acceptance record implements nothing.
+SECRET-USE-DURABLE-CUSTODY-1 is locally qualified. The [durable prerequisite is
+implemented, local validation pending](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07);
+Stage B remains gated and Stage A has not resumed.

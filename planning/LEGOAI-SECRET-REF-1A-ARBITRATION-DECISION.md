@@ -276,5 +276,6 @@ use and KISSKI remain gated; G03 remains open.
 
 Durability follow-up (2026-10-07): [bounded source-use and custody decision](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md)
 is **ACCEPTED** by explicit maintainer decision. Stage A remains stopped until
-SECRET-USE-DURABLE-CUSTODY-1 is implemented and locally qualified; the shared
-arbitration acceptance above remains valid. No implementation is recorded here.
+SECRET-USE-DURABLE-CUSTODY-1 is locally qualified; its [implementation is ready,
+local validation pending](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-durable-custody-1-implementation--2026-10-07).
+Shared arbitration acceptance remains valid; full Stage-A ordering is not resumed.

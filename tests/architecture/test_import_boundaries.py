@@ -158,6 +158,9 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.governance.values.")
                         or target == "legoai.governance.ports"
                         or target.startswith("legoai.governance.ports.")
+                        # Durable source-use custody attributes safe Secret facts;
+                        # ADR-002 O -> G, no reference/runtime dependency.
+                        or target == "legoai.governance.secret"
                     ):
                         errors.add("evidence-owner")
                     if name.startswith("legoai.evidence.") and any(
@@ -743,7 +746,11 @@ def test_no_ambient_context_or_module_state() -> None:
     # lock lives on the instance, is never read from module scope, and
     # every other file in this tree remains fully forbidden from importing
     # `threading`/`contextvars`.
-    threading_import_allowed = {"legoai.reference.execution"}
+    threading_import_allowed = {
+        "legoai.reference.execution",
+        # Accepted custody prerequisite: private injected domain, no singleton.
+        "legoai.reference._secret_domain",
+    }
 
     root = Path(__file__).resolve().parents[2] / "src" / "legoai"
     for path in root.rglob("*.py"):
@@ -1053,6 +1060,10 @@ def test_no_database_driver_imported_by_production_source() -> None:
     allowed_sqlite3_paths = {
         "reference/application/sqlite_store.py",
         "reference/application/recovery.py",
+        # Separate owner adapters; no ConfigurationStore schema reuse.
+        "reference/_custody_sqlite.py",
+        "reference/_durable_evidence.py",
+        "reference/_secret_ledger.py",
     }
     forbidden_everywhere_roots = {
         "psycopg",
