@@ -469,6 +469,12 @@ def test_full_controller_68_calls_and_report(tmp_path: Path) -> None:
         )
     )
     assert result["calls"] == len(calls) == 68
+    lifecycle = result["execution_lifecycle"]
+    assert (
+        lifecycle["planned"] == lifecycle["attempted"] == lifecycle["completed"] == 68
+    )
+    assert lifecycle["never_attempted"] == lifecycle["attempted_no_result"] == []
+    assert len(lifecycle["completed_result"]) == 68
     assert result["sufficiency_profile_outcome"].endswith("SUPPORTED"), result[
         "reasons"
     ]

@@ -1,7 +1,10 @@
 # FORGEAI-ANALYST-DESIGN-LIVE-1 HARNESS
 
-**LOCALLY QUALIFIED.** Harness and offline verification only.
-No live model-quality claim. No smoke, full run, Ollama or Docker was invoked.
+**HARNESS-RUNTIME-FIX-1 IMPLEMENTED — LOCAL VALIDATION PENDING.**
+The prior harness was locally qualified offline, then its first authorized smoke
+failed without a completed assessment. That history remains immutable. This fix
+is verified offline only; no new smoke, provider call, FULL or Docker execution
+is authorized or performed. No live model-quality claim.
 
 ## Authority and bindings
 
@@ -96,7 +99,7 @@ From repository root:
 uv run python .\validate_forgeai_analyst_design_live_1.py
 ```
 
-The 65-phase validator sets an explicit offline provider fence inherited by
+The extended 99-phase validator sets an explicit offline provider fence inherited by
 spawned children. It uses fixed responses through the real governed Agent path,
 fake identity probes, failure injection and existing evaluator/Agent/loop/Analyst/
 worker regressions, followed by mypy, Ruff and diff checks. No Ollama, provider
@@ -111,7 +114,77 @@ contract/conformance evidence only. No live Ollama/provider call, smoke/full liv
 run, final RepositoryAnalyst analysis or Docker execution occurred. No live
 semantic-quality, stability or production-readiness claim follows.
 
-Next, obtain explicit maintainer authorization before smoke; use a committed clean harness/runtime. Full execution requires another
+Next, run the extended validator for operator local qualification, commit the
+qualified fix when authorized, and establish a clean tracked tree. Obtain fresh
+explicit maintainer authorization before any NEW smoke identity. Full execution requires another
 explicit approval after smoke review. No runnable smoke/full command is supplied
 as part of this implementation-only delivery. LIVE-2, final analysis, production
 integration and G07 closure remain unauthorized.
+
+## HARNESS-RUNTIME-FIX-1 (2026-10-07)
+
+The actual-provider composition now supplies the existing selection
+`{"revision": "live1", "binding": "ollama"}`. Core host-selection semantics and
+the Ollama adapter are unchanged. Offline regressions exercise this same branch
+with DNS/socket/HTTP fences installed after Windows event-loop initialization;
+the Agent is stopped before inference. Removing binding fails the regression.
+Replay composition remains independently covered.
+
+`execution_lifecycle` is additive to the separate LIVE-1 report/1; historical
+reports without it remain readable. It partitions MODEL_CALL_OPPORTUNITIES into
+NEVER_ATTEMPTED, ATTEMPTED_NO_RESULT and COMPLETED_RESULT, with identity lists,
+per-slot finish custody, and planned/attempted/completed counts. It derives
+starts and finishes from durable call files and completed phases from durable
+observation files, not transient returned rows. A semantic failure returned by
+the Agent is a completed result, not a child-process failure or quality pass.
+A finish file alone does not establish semantic result custody. Orphan finishes,
+duplicate starts and completed model results without starts are rejected.
+
+For this partition, planned = never_attempted + attempted_no_result +
+completed_result, and attempted = attempted_no_result + completed_result.
+FULL retains 70 semantic slots and separately partitions 68 model opportunities;
+d27/d28 remain non-model controls. `not_run` now lists only condition rows with
+no started model call, excluding controls; per-phase unreached opportunities
+remain in the lifecycle lists even after a row's initial call. Frozen semantic
+metrics and denominators are unchanged.
+
+The child emits an ordered, bounded closed stage protocol: CHILD_STARTED,
+HOST_COMPOSITION_STARTED/COMPLETED, AGENT_CALL_STARTED,
+PAYLOAD_GUARD_STARTED/COMPLETED, GOVERNED_RUNTIME_ENTERED, RESULT_COMPLETED.
+An Agent prerequisite result may complete before entering the payload guard.
+The parent flushes separate immutable per-call diagnostic records on observed
+stages and at cleanup, and embeds the final diagnostic in the finish record.
+Call/phase identity is supplied by the parent. No raw exception, traceback,
+prompt, environment dump, hidden oracle, secret or model explanation is added.
+
+Closed failure categories distinguish observed launch, bootstrap, composition,
+pre-dispatch Agent, timeout, abnormal exit, protocol and invalid-result failures;
+UNKNOWN_CHILD_FAILURE covers unlocated failures. TRANSPORT_FAILURE is reserved
+but not inferred: this harness has no adapter transport receipt. Bootstrap
+failure can only be located after child entry; an exit before any marker is not
+proof of an import failure. Exception identifiers use an explicit allowlist,
+with OtherException otherwise. Result/failure envelopes, EOF, invalid envelopes,
+pipe errors, observed exit codes and parent terminate/kill actions are separate.
+An error envelope does not mean abnormal process exit. Cleanup remains bounded
+within the existing two-second reserve, including a 0.5-second natural-exit wait.
+
+GOVERNED_RUNTIME_ENTERED is not ModelPort entry, HTTP initiation, or provider
+acceptance. `model_dispatch` and `http_request` remain NOT_OBSERVED;
+`provider_acceptance` remains UNKNOWN. No missing marker narrows historical or
+future uncertain effects to NONE. SERVER_EFFECT_UNKNOWN remains conservative.
+No result-parse stage is invented inside the unchanged Agent implementation.
+
+The historical smoke and preflight are checked byte-for-byte against the
+committed diagnostic's eight-file SHA-256 inventory. They are required local
+qualification inputs; missing history fails the guard rather than being skipped.
+The original smoke remains runtime failed / SERVER_EFFECT_UNKNOWN.
+
+No profile, revision-2 artifact, Agent 1.0.0, prompt/parser, model pin, membership,
+N, call/time ceiling, outcome precedence, threshold, grounding interpretation,
+retry policy or authority changed. See the
+[diagnostic and implementation record](../../../../planning/FORGEAI-ANALYST-DESIGN-LIVE-1-CHILD-FAILURE-DIAGNOSTIC.md).
+
+Implementation verification completed offline: **99/99 validator phases passed**,
+including **617 tests (88 harness tests)**, mypy, Ruff lint/format and diff checks.
+This is the implementation check, not the pending maintainer/operator execution
+of the validator. No provider endpoint, smoke, FULL or Docker was invoked.

@@ -20,6 +20,7 @@ from analyst_design_live1.identity import (
     preflight,
     verify_before_call,
 )
+from analyst_design_live1.lifecycle import partition
 from analyst_design_live1.measurement import interpret
 from analyst_design_live1.runtime import CallStopped, projection, supervised
 from analyst_design_live1.sequence import run_row
@@ -60,8 +61,8 @@ async def execute(
         ]
 
     def checkpoint(row: Row) -> None:
-        rows[(row.case, row.variant)] = row
         store.checkpoint(row)
+        rows[(row.case, row.variant)] = row
 
     async def assess(
         m: EvidenceManifest, f: Fixture, variant: str, phase: str
@@ -87,8 +88,25 @@ async def execute(
                 "timeout": min(600.0, remaining),
             },
         )
+        diagnostics: dict[str, Any] | None = None
+        diagnostic_serial = 0
+
+        def observe(value: dict[str, Any]) -> None:
+            nonlocal diagnostics, diagnostic_serial
+            diagnostics = value
+            diagnostic_serial += 1
+            store.write(
+                f"call-{calls:03}-diagnostic-{diagnostic_serial:02}.json",
+                {"case": f.id, "variant": variant, "phase": phase, **value},
+            )
+
         try:
-            result, payload_digest = call(m, expected, min(600.0, remaining))
+            if call is supervised:
+                result, payload_digest = call(
+                    m, expected, min(600.0, remaining), observe=observe
+                )
+            else:
+                result, payload_digest = call(m, expected, min(600.0, remaining))
         except BaseException as error:
             timing = {
                 "case": f.id,
@@ -100,6 +118,10 @@ async def execute(
                 if isinstance(error, CallStopped)
                 else type(error).__name__,
             }
+            if isinstance(error, CallStopped):
+                timing["child_diagnostics"] = error.diagnostics.record()
+            elif diagnostics is not None:
+                timing["child_diagnostics"] = diagnostics
             times.append(timing)
             store.write(f"call-{calls:03}-finished.json", timing)
             raise
@@ -112,6 +134,8 @@ async def execute(
             "user_payload_digest": payload_digest,
             "failure": result.failure.value if result.failure else None,
         }
+        if diagnostics is not None:
+            timing["child_diagnostics"] = diagnostics
         times.append(timing)
         store.write(f"call-{calls:03}-finished.json", timing)
         return result
@@ -192,6 +216,15 @@ async def execute(
                     else stop or "bounded_sequence_terminal",
                 }
             )
+    # d27/d28 are semantic controls, not model-call opportunities.
+    controls = {
+        f.id
+        for f, _o, _v in plan
+        if f.failure in {"stale_assessment", "budget_exhausted"}
+    }
+    lifecycle = partition(store.path, [s for s in slots if s["case"] not in controls])
+    if calls != lifecycle["attempted"]:
+        raise ValueError("call counter differs from durable lifecycle")
     report = {
         "report_identity": REPORT,
         "sufficiency_profile_identity": PROFILE,
@@ -200,7 +233,8 @@ async def execute(
         "mode": mode,
         "approval_reference": approval,
         "provenance": provenance,
-        "calls": calls,
+        "calls": lifecycle["attempted"],
+        "execution_lifecycle": lifecycle,
         "call_ceiling": budget,
         "elapsed_seconds": clock() - start,
         "timings": times,
@@ -209,7 +243,16 @@ async def execute(
         "records": [parsed(r) for r in observed],
         "smoke_status": smoke_status,
         "planned_slots": slots,
-        "not_run": [f"{f.id}/{v}" for f, o, v in plan if (f.id, v) not in rows],
+        "not_run": [
+            f"{f.id}/{v}"
+            for f, o, v in plan
+            if f.id not in controls
+            and not any(
+                s["identity"].startswith(f"{f.id}/{v}/")
+                and s["attempt_state"] != "NEVER_ATTEMPTED"
+                for s in lifecycle["slots"]
+            )
+        ],
         **result,
     }
     store.finish(report)

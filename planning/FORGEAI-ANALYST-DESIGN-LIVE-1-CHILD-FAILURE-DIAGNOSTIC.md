@@ -235,3 +235,38 @@ for a NEW smoke identity. FULL remains unauthorized. No blind retry.
 | smoke-d59e9c3f030b | report.md | `81085e6e9e06b478f7e39fb819857678e8f4aa12d3c78fd8e5400e3061336b1c` |
 
 HARNESS AND REPORTING FIX REQUIRED
+
+
+## HARNESS-RUNTIME-FIX-1 implementation record — 2026-10-07
+
+Maintainer separately authorized the bounded harness fix after the diagnostic.
+**IMPLEMENTED — LOCAL VALIDATION PENDING.** The original findings and all eight
+historical artifacts above are unchanged; no diagnostic fields are backfilled.
+
+Implemented explicit existing `binding=ollama` selection; durable per-model-slot
+NEVER_ATTEMPTED / ATTEMPTED_NO_RESULT / COMPLETED_RESULT accounting; bounded
+closed child stage/failure/IPC diagnostics, allowlisted exception class, observed
+exit status and distinct cleanup actions. The actual live composition branch is
+covered by zero-provider fenced tests, including intentional missing binding.
+Windows spawn tests cover composition, Replay results, error envelopes, EOF,
+invalid protocol/results, abnormal exit, timeout and launch failure. Returned
+Agent semantic failures remain results. The 68-call execution partition stays
+separate from 70 frozen semantic slots.
+
+The canonical offline validator is extended to 99 phases. Run from repository
+root: `uv run python .\validate_forgeai_analyst_design_live_1.py`.
+Operator qualification is pending; implementation checks are not operator approval.
+The module README documents custody fields and unobservable dispatch boundaries.
+No provider acceptance is claimed; uncertain effects remain UNKNOWN.
+
+No Core, adapter, Agent, prompt/parser, frozen evaluator/profile, model, gates,
+thresholds, call ceilings, smoke membership or authority semantics changed.
+After operator qualification, commit only when authorized, establish a clean
+tracked tree, and request explicit authorization for a NEW smoke identity.
+Neither smoke nor FULL is authorized by this implementation or qualification.
+No live call or new live run was made; G07 remains open.
+
+Implementation verification completed offline: **99/99 validator phases passed**,
+including **617 tests (88 harness tests)**, mypy, Ruff lint/format and diff checks.
+This is the implementation check, not the pending maintainer/operator execution
+of the validator. No provider endpoint, smoke, FULL or Docker was invoked.
