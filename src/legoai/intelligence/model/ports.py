@@ -73,6 +73,13 @@ class ModelResponseRejectedError(Exception):
     Maps to `EffectExtent.NONE`."""
 
 
+class ModelResponseRetryableRejectedError(ModelResponseRejectedError):
+    """Complete temporary rejection: NONE / POTENTIALLY_RETRYABLE.
+
+    No usable result; never initiates automatic retry or fallback.
+    """
+
+
 class ModelPort(Protocol):
     """Provider-neutral Model interaction. Both operations are async
     (network-shaped effects, per ADR-015's structured-supervision model);

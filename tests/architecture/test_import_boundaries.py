@@ -479,6 +479,8 @@ def violations(sources: dict[str, str]) -> set[str]:
                     if name in {
                         "legoai.reference.model",
                         "legoai.reference.model_fake",
+                        "legoai.reference.model_openai_compatible",
+                        "legoai.reference.model_capabilities",
                     } and not (
                         target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
@@ -496,6 +498,9 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.capabilities.values.")
                         or target == "legoai.plugins.values"
                         or target.startswith("legoai.plugins.values.")
+                        # ADR-014 section 14.13: shared Model declarations, not another owner.
+                        or target == "legoai.reference.model_capabilities"
+                        or target.startswith("legoai.reference.model_capabilities.")
                     ):
                         # v0.1's reference realization gets the same
                         # allowed-peer permissions as its owner's row
@@ -553,6 +558,8 @@ def violations(sources: dict[str, str]) -> set[str]:
                         or target.startswith("legoai.intelligence.model.values.")
                         or target == "legoai.intelligence.model.ports"
                         or target.startswith("legoai.intelligence.model.ports.")
+                        or target == "legoai.reference.model_capabilities"
+                        or target.startswith("legoai.reference.model_capabilities.")
                         or target == "legoai.reference.model"
                         or target.startswith("legoai.reference.model.")
                         or target == "legoai.intelligence.model.routing"
@@ -2062,11 +2069,10 @@ def test_reference_modules_do_not_depend_on_composition_root(module: str) -> Non
 
 def test_asyncio_confined_to_authorized_reference_execution_module() -> None:
     """ADR-015's structured-concurrency substrate belongs to exactly the
-    Coordinator (`legoai.reference.execution`) plus, as of v0.1, the one
-    Adapter that bridges a genuinely blocking network call into it
-    (`legoai.reference.model`, via `asyncio.to_thread` -- see that module's
-    own docstring: the smallest possible bridge, never a general worker
-    pool). No Kernel, values, Port or other reference/runtime module may
+    Coordinator (`legoai.reference.execution`) plus the two qualified Model
+    adapters (`model` and `model_openai_compatible`, ADR-014 section 14),
+    which bridge blocking HTTP via `asyncio.to_thread`. This is not a general
+    worker pool. No Kernel, values, Port or other reference/runtime module may
     import `asyncio` -- Coordinator/supervision behavior never leaks into
     semantic values or other owners' Port contracts.
     """
@@ -2088,7 +2094,11 @@ def test_asyncio_confined_to_authorized_reference_execution_module() -> None:
         "legoai." + ".".join(path.relative_to(root).with_suffix("").parts)
         for path in asyncio_importers
     }
-    assert module_names == {"legoai.reference.execution", "legoai.reference.model"}
+    assert module_names == {
+        "legoai.reference.execution",
+        "legoai.reference.model",
+        "legoai.reference.model_openai_compatible",
+    }
 
 
 def test_execution_values_does_not_import_reference_execution() -> None:

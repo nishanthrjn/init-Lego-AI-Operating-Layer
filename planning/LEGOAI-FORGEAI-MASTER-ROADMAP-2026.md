@@ -585,7 +585,7 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
-ADR-014 provider-portability addendum (2026-10-07): [ADR-014 §14](../adrs/ADR-014.md) **ACCEPTED** by explicit maintainer decision. Next implementation slice: **OPENAI-COMPATIBLE-MODEL-1** (credential-free, LOCAL deployment only; not yet implemented). SECRET-REF-1 and REMOTE-MODEL-DISCLOSURE-1 remain prerequisites for any credentialed or remote provider.
+ADR-014 provider-portability addendum (2026-10-07): [ADR-014 §14](../adrs/ADR-014.md) **ACCEPTED** by explicit maintainer decision. **OPENAI-COMPATIBLE-MODEL-1 implemented; operator local validation pending** (credential-free, LOCAL deployment only). It preserves versioned base URLs, sends `stream: false`, adds optional embeddings and strict identity/failure validation, and provides offline conformance rows A-C with a 52-phase Python validator. No live provider or output-quality equivalence is claimed. Next planned slice after qualification: SECRET-REF-1, separately authorized. SECRET-REF-1 and REMOTE-MODEL-DISCLOSURE-1 remain prerequisites for any credentialed or remote provider.
 
 LEGOAI-PROVIDER-COMPUTE-PORTABILITY decision (2026-10-07): **PROTOCOL-ADAPTER PORTABILITY RECOMMENDED**. Existing ModelPort and media Ports suffice; integrate by protocol, not platform (KISSKI, local vLLM and owned GPUs are endpoints). First slice: OPENAI-COMPATIBLE-MODEL-1 (credential-free), then SECRET-REF-1 (ADR-010 completion) and REMOTE-MODEL-DISCLOSURE-1 (SEC-039), which block any credentialed or remote provider. One pinned binding per host is kept. VTO on KISSKI stays blocked by ADR-020 §8. Not implemented; see [portability decision](LEGOAI-PROVIDER-COMPUTE-PORTABILITY-DECISION.md).
 
