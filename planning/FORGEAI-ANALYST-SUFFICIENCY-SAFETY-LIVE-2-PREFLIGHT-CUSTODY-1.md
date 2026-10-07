@@ -1,7 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-LIVE-2-PREFLIGHT-CUSTODY-1
 
-Status: **implemented, local validation pending (2026-10-07).** This is a
-custody and admission slice only. Nothing was re-run, Ollama was not invoked,
+Status: **LOCALLY QUALIFIED (2026-10-07; offline; 29/29 validator phases).**
+This is a custody and admission slice only. Nothing was re-run, Ollama was not invoked,
 and no semantic call was made. No Agent, prompt, parser, evaluator, model,
 gate, scorer, membership, budget, runtime identity or compatibility record
 changed.
@@ -94,3 +94,21 @@ checks:
    then commits and confirms a clean tree.
 2. **Separately authorized:** the 22-call BASELINE on live/2. It is not
    authorized here.
+
+## 7. Local qualification
+
+Operator qualification passed on 2026-10-07 (implementation commit `fa89394`):
+all **29/29 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_safety_live_2_preflight_custody_1.py`.
+The run covered:
+- scope and protected files against `72cb346`;
+- exact custody (8 pinned directories), live/2 preflight report integrity,
+  no baseline directory, and unchanged identities and pins;
+- the 23 custody tests and 18 coverage phases;
+- regressions: runtime identity 2 (27), SAFETY-LIVE-1 (57) and SAFETY-EVAL-2
+  (33);
+- the zero-provider check, mypy, Ruff lint and format, and the diff check.
+
+This is offline custody evidence only: no model, provider or Docker, and no
+new run. It is not baseline evidence and does not authorize the 22-call
+BASELINE, which needs separate authorization and a clean tracked tree.
