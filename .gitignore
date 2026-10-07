@@ -1428,3 +1428,13 @@ htmlcov/
 
 # ForgeAI generated safety/baseline execution artifacts
 examples/forgeai/safety2-baseline-*/
+
+# ForgeAI generated evaluation/preflight outputs
+examples/forgeai/evaluation/safety2-preflight-*/
+
+# Python-generated cache
+__pycache__/
+*.py[cod]
+
+# Pytest cache
+.pytest_cache/
