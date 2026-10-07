@@ -1,6 +1,6 @@
 # FORGEAI-ANALYST-DESIGN-EVAL-2
 
-**IMPLEMENTED — LOCAL VALIDATION PENDING.** Offline evaluator qualification only.
+**LOCALLY QUALIFIED.** Offline evaluator qualification only.
 Condition `forgeai-analyst-design-eval/2` supersedes revision 1 as the candidate
 for later live evaluation. Revision 1 remains a LOCALLY QUALIFIED HISTORICAL
 OFFLINE CONDITION; none of its artifacts, digests, scorer or tests is changed.
@@ -198,13 +198,15 @@ Run from repository root. The offline validator checks 63 phases covering frozen
 identities, serialized leakage guards, complete sets, scorer mutations, unchanged
 revision-1 tests and qualified Agent/loop/Analyst/M7/worker regressions, architecture,
 mypy, Ruff and diff integrity. It invokes no Ollama, external provider or Docker.
-Operator local qualification remains pending; no live-quality claim follows.
+Operator local qualification completed on 2026-10-07 using the repository-root
+command above: all 63/63 phases and 739 tests passed, including 76 revision-2
+tests, mypy, Ruff lint/format and git diff check. No live model, external provider
+or Docker was used. No live-quality claim follows.
 
 Live repetitions: **UNAUTHORIZED / TO BE DECIDED BEFORE LIVE RUN**.
 Live final-analysis execution: **SEPARATE MAINTAINER DECISION REQUIRED**.
 No R4 N=3 inheritance and no increase to an authorized live call budget.
 
-Next: operator qualification, then an explicitly requested commit. Only after
-both may separately authorized live-harness preparation restart against revision
-2. No live harness, smoke, live run, Agent/Analyst/Core change, Workflow, Team,
+Next: an explicitly requested commit. After that, separately authorized
+live-harness preparation may restart against revision 2. No live harness, smoke, live run, Agent/Analyst/Core change, Workflow, Team,
 Planner, discovery or production ForgeAI integration is included. G07 remains open.
