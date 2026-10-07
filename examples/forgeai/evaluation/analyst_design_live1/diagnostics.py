@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
+from analyst_design_live1.output_diagnostics import OutputDiagnosis
+
 
 class ChildStage(StrEnum):
     CHILD_STARTED = "CHILD_STARTED"
@@ -86,9 +88,11 @@ class ChildDiagnostics:
     ipc: IPCStatus = IPCStatus.NO_ENVELOPE
     exitcode: int | None = None
     cleanup: Cleanup = Cleanup.NONE
+    # PARSER-DIAGNOSTICS-1: closed labels for an Agent-rejected reply, if any.
+    output: OutputDiagnosis | None = None
 
     def record(self) -> dict[str, Any]:
-        return {
+        record = {
             "child_stage": self.stage.value if self.stage else None,
             "child_failure_category": self.failure.value if self.failure else None,
             "exception_class": self.exception_class,
@@ -100,3 +104,6 @@ class ChildDiagnostics:
             "http_request": "NOT_OBSERVED",
             "provider_acceptance": "UNKNOWN",
         }
+        if self.output is not None:
+            record.update(self.output.record())
+        return record

@@ -255,3 +255,27 @@ the composition fix.
 | preflight `report.json` | `4cafdcf07b4b3dc215a7f650575a6897617c55837c85370315821113e99d8edb` |
 | preflight `report.md` | `4a02f2640ca563c70d1c031e09811fe0fcfcfc841c35192359b4420e68c1018d` |
 | preflight `run.json` | `14b5f3634903bbf99b1173ec91b7e41dec230c308bb27c4041d6631f0580f159` |
+
+## PARSER-DIAGNOSTICS-1 implementation record (2026-10-07)
+
+Status: **implemented, local validation pending.** This is harness-only,
+offline evidence: no model call, smoke or FULL.
+
+- Implements §10 item 1 as specified: a closed rejection code, length class,
+  branch and disagreement flag for future `invalid_output` and
+  `prerequisites_unmet` results, computed in the child from the same attempt's
+  transient `AgentResult`. No text is persisted.
+- Agent 1.0.0, prompt, parser, Core output contract, revision 2, profile, model,
+  smoke membership, ceilings and outcome precedence are unchanged.
+- §3 and §5 of this record are unchanged: **d13's historical cause remains
+  CAUSE NOT ESTABLISHED.** No rejection code is backfilled into smoke 2.
+- d09 remains a semantic request-quality miss; there is no Agent, prompt or
+  oracle change.
+- Boundary finding: the Core output-contract branch (blank, more than 32 768
+  bytes, invalid UTF-8) remains undistinguished, because Core discards rejected
+  text. This is labelled `CORE_OUTPUT_CONTRACT` with length `UNAVAILABLE`.
+- Details are in the [LIVE-1 harness README](../examples/forgeai/evaluation/analyst_design_live1/README.md).
+
+Next gate: the operator runs `uv run python .\validate_forgeai_analyst_design_live_1.py`;
+then commit, verify a clean tree, and obtain a separate explicit authorization
+for any new smoke. FULL remains unauthorized.
