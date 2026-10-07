@@ -292,5 +292,5 @@ def test_zero_baseline_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     assert not [
         d
         for d in custody.run_directories(git)
-        if d not in custody.ARTIFACTS or d.startswith("safety2")
+        if d not in custody.ARTIFACTS or "-baseline-" in d
     ]
