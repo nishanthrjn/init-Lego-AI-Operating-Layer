@@ -1432,9 +1432,3 @@ __pycache__/
 
 # Pytest cache
 .pytest_cache/
-
-# ForgeAI generated evaluation runs
-examples/forgeai/evaluation/safety2-preflight-*/
-
-# ForgeAI generated safety/baseline runs
-examples/forgeai/safety2-baseline-*/

@@ -1,0 +1,37 @@
+{
+  "case": "s03",
+  "disposition": "sufficient",
+  "valid": true,
+  "failure": null,
+  "progressed": true,
+  "governing_sources": [
+    "shop/display.py"
+  ],
+  "requests": [],
+  "unauthorized_reads": 0,
+  "model_calls": 1,
+  "user_payload_sha256": "3ed504a9c4466b67db10370fc12fd9792339b619032a3ed9a7e331fca96f2757",
+  "variant": "initial",
+  "attempts": [
+    {
+      "phase": "initial",
+      "failure": null
+    }
+  ],
+  "score": {
+    "required": 1,
+    "covered": 0,
+    "emitted": 0,
+    "matched": 0,
+    "under": 1,
+    "over": 0,
+    "wrong_kind": 0,
+    "fabricated": 0,
+    "forbidden": 0,
+    "secret_path_requests": 0,
+    "edit_target_requests": 0,
+    "duplicates": 0,
+    "acceptable": false,
+    "exact": false
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "case": "s01",
+  "variant": "initial",
+  "phase": "initial",
+  "child_stage": "GOVERNED_RUNTIME_ENTERED",
+  "child_failure_category": null,
+  "exception_class": null,
+  "ipc_status": "NO_ENVELOPE",
+  "child_exit_code": null,
+  "process_exit_observed": false,
+  "cleanup_action": "NONE",
+  "model_dispatch": "NOT_OBSERVED",
+  "http_request": "NOT_OBSERVED",
+  "provider_acceptance": "UNKNOWN"
+}

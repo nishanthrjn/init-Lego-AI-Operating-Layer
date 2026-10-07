@@ -1,0 +1,24 @@
+{
+  "case": "s22",
+  "variant": "initial",
+  "phase": "initial",
+  "seconds": 72.49925620000067,
+  "user_payload_digest": "1a88d49690084964e2e90c419ba8614586c1e246ac1a6b04cc99f7c3f7fe1abc",
+  "failure": "invalid_output",
+  "child_diagnostics": {
+    "child_stage": "RESULT_COMPLETED",
+    "child_failure_category": null,
+    "exception_class": null,
+    "ipc_status": "ENVELOPE_RECEIVED",
+    "child_exit_code": 0,
+    "process_exit_observed": true,
+    "cleanup_action": "NONE",
+    "model_dispatch": "NOT_OBSERVED",
+    "http_request": "NOT_OBSERVED",
+    "provider_acceptance": "UNKNOWN",
+    "invalid_output_rejection_code": "DISPOSITION_REQUEST_INCOHERENT",
+    "output_length_class": "SMALL",
+    "invalid_output_branch": "AGENT_PARSE",
+    "diagnostic_disagreement": false
+  }
+}
