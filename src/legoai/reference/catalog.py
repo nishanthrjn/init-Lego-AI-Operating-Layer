@@ -1,11 +1,15 @@
 """Gate-2 M6: deterministic in-memory reference realization of `CatalogPort`.
 
 No persistence, no filesystem/network I/O, no background refresh/watcher
-task, no asyncio. `InMemoryCatalog` guards its internal list only against
+task, no asyncio. Legacy `InMemoryCatalog` guards its internal list only against
 the ordinary single-threaded call sequence a reference/test process makes;
 it makes **no concurrency or thread-safety claim** (task SS36) -- a later
 persisted realization (ADR-004-style, mirroring F6a's SQLite store) would
 own that guarantee against its own storage, not this value's shape.
+
+Stage-A trusted construction can inject the private shared ordering domain.
+Both mutation APIs then participate; protected reads occur inside that same
+domain. This is not an arbitrary concurrent-reader or persistent-store profile.
 
 `revision` is a simple in-memory monotonic counter shared across all
 tenants for attribution/ordering only -- it is not, and must never be
@@ -18,6 +22,7 @@ discloses Tenant B's entries: `snapshot`/`query` filter strictly by the
 tenant supplied by the caller.
 """
 
+from contextlib import nullcontext
 from datetime import datetime
 
 from legoai.capabilities.ports import (
@@ -30,6 +35,7 @@ from legoai.kernel.context import TenantContext
 from legoai.kernel.versions import Version
 from legoai.plugins.ports import PluginLifecycleRecord, PluginLifecycleState
 from legoai.plugins.values import PluginDeclaration, PluginId
+from legoai.reference._secret_domain import _OrderingDomain
 
 
 def _entry_sort_key(
@@ -53,7 +59,10 @@ class InMemoryCatalog:
     publishes nothing and holds an empty entry list.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, _domain: _OrderingDomain | None = None) -> None:
+        if _domain is not None and type(_domain) is not _OrderingDomain:
+            raise TypeError("qualified ordering domain required")
+        self._domain = _domain
         self._entries: list[CatalogEntry] = []
         self._revision = 0
 
@@ -65,46 +74,47 @@ class InMemoryCatalog:
         *,
         established_at: datetime,
     ) -> CatalogEntry:
-        if type(record) is not PluginLifecycleRecord:
-            raise TypeError("publish requires PluginLifecycleRecord")
-        if type(declaration) is not PluginDeclaration:
-            raise TypeError("publish requires PluginDeclaration")
-        if type(offer) is not CapabilityOffer:
-            raise TypeError("publish requires CapabilityOffer")
-        if record.state is not PluginLifecycleState.ACTIVE:
-            raise CatalogPublicationError(
-                f"lifecycle state {record.state.value} is not publication-eligible"
-            )
-        if (
-            record.plugin_id != declaration.plugin_id
-            or record.release != declaration.release
-        ):
-            raise CatalogPublicationError(
-                "lifecycle record does not correspond to the declaration"
-            )
-        if offer not in declaration.offers:
-            raise CatalogPublicationError(
-                "offer is not present in the given declaration"
-            )
-        entry = CatalogEntry(
-            declaration.plugin_id,
-            declaration.release,
-            offer,
-            record.tenant_context,
-            record.admission_id,
-            established_at,
-        )
-        for existing in self._entries:
+        with self._domain.enter() if self._domain else nullcontext():
+            if type(record) is not PluginLifecycleRecord:
+                raise TypeError("publish requires PluginLifecycleRecord")
+            if type(declaration) is not PluginDeclaration:
+                raise TypeError("publish requires PluginDeclaration")
+            if type(offer) is not CapabilityOffer:
+                raise TypeError("publish requires CapabilityOffer")
+            if record.state is not PluginLifecycleState.ACTIVE:
+                raise CatalogPublicationError(
+                    f"lifecycle state {record.state.value} is not publication-eligible"
+                )
             if (
-                existing.plugin_id == entry.plugin_id
-                and existing.release == entry.release
-                and existing.offer == entry.offer
-                and existing.tenant_context == entry.tenant_context
+                record.plugin_id != declaration.plugin_id
+                or record.release != declaration.release
             ):
-                raise CatalogPublicationError("exact entry is already published")
-        self._entries.append(entry)
-        self._revision += 1
-        return entry
+                raise CatalogPublicationError(
+                    "lifecycle record does not correspond to the declaration"
+                )
+            if offer not in declaration.offers:
+                raise CatalogPublicationError(
+                    "offer is not present in the given declaration"
+                )
+            entry = CatalogEntry(
+                declaration.plugin_id,
+                declaration.release,
+                offer,
+                record.tenant_context,
+                record.admission_id,
+                established_at,
+            )
+            for existing in self._entries:
+                if (
+                    existing.plugin_id == entry.plugin_id
+                    and existing.release == entry.release
+                    and existing.offer == entry.offer
+                    and existing.tenant_context == entry.tenant_context
+                ):
+                    raise CatalogPublicationError("exact entry is already published")
+            self._entries.append(entry)
+            self._revision += 1
+            return entry
 
     def withdraw(
         self,
@@ -113,28 +123,29 @@ class InMemoryCatalog:
         offer: CapabilityOffer,
         tenant_context: TenantContext,
     ) -> None:
-        if type(plugin_id) is not PluginId:
-            raise TypeError("withdraw requires PluginId")
-        if type(release) is not Version:
-            raise TypeError("withdraw requires a release Version")
-        if type(offer) is not CapabilityOffer:
-            raise TypeError("withdraw requires CapabilityOffer")
-        if type(tenant_context) is not TenantContext:
-            raise TypeError("withdraw requires TenantContext")
-        remaining = [
-            entry
-            for entry in self._entries
-            if not (
-                entry.plugin_id == plugin_id
-                and entry.release == release
-                and entry.offer == offer
-                and entry.tenant_context == tenant_context
-            )
-        ]
-        if len(remaining) == len(self._entries):
-            raise CatalogPublicationError("no matching published entry to withdraw")
-        self._entries = remaining
-        self._revision += 1
+        with self._domain.enter() if self._domain else nullcontext():
+            if type(plugin_id) is not PluginId:
+                raise TypeError("withdraw requires PluginId")
+            if type(release) is not Version:
+                raise TypeError("withdraw requires a release Version")
+            if type(offer) is not CapabilityOffer:
+                raise TypeError("withdraw requires CapabilityOffer")
+            if type(tenant_context) is not TenantContext:
+                raise TypeError("withdraw requires TenantContext")
+            remaining = [
+                entry
+                for entry in self._entries
+                if not (
+                    entry.plugin_id == plugin_id
+                    and entry.release == release
+                    and entry.offer == offer
+                    and entry.tenant_context == tenant_context
+                )
+            ]
+            if len(remaining) == len(self._entries):
+                raise CatalogPublicationError("no matching published entry to withdraw")
+            self._entries = remaining
+            self._revision += 1
 
     def snapshot(self, tenant_context: TenantContext) -> CatalogSnapshot:
         if type(tenant_context) is not TenantContext:

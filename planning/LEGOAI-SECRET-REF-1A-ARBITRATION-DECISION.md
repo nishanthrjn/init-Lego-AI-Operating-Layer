@@ -280,3 +280,18 @@ LOCALLY QUALIFIED](LEGOAI-SECRET-USE-DURABLE-CUSTODY-DECISION.md#11-secret-use-d
 from the operator's 72-phase result. Shared arbitration acceptance remains valid;
 the prerequisite gate is satisfied, but Stage A remains unresumed/unqualified
 pending explicit resumption. Stage B and KISSKI remain gated.
+
+## 9. Resumed Stage-A implementation — 2026-10-07
+
+**SECRET-REF-1A IMPLEMENTED — LOCAL VALIDATION PENDING.** The maintainer explicitly
+resumed the accepted Stage-A scope after the 72-phase durable prerequisite was
+locally qualified. The earlier stopped/unresumed assessments above are historical.
+The implementation reuses that ledger/custody profile and adds reference-only
+Secret Access, shared owner mutation participation and exact synthetic acceptance.
+See the [implementation and lock-order analysis](../docs/secret-ref-1a.md).
+
+Operator command: `uv run python .\validate_secret_ref_1.py` (62 phases).
+No broader Coordinator/runtime redesign, ADR amendment, environment source,
+credential or provider integration is included. G03 remains open. Stage B remains
+gated until Stage A qualification demonstrates the accepted ordering; neither
+stage authorizes remote use or KISSKI. No Stage-A qualification is claimed here.

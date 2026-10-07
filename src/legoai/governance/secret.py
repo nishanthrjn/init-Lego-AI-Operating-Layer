@@ -1,6 +1,6 @@
 """Safe Secret source attribution values; construction grants no authority.
 
-Durable-custody prerequisite only. No resolver, material, admission or provider API.
+Exact Stage-A references and durable attribution; no material or provider API.
 """
 
 from dataclasses import dataclass, field
@@ -38,6 +38,25 @@ class SecretRevisionRef:
             raise TypeError("Secret scope required")
         for value in (self.identity, self.revision, self.mapping_revision):
             _validate(value)
+
+
+@dataclass(frozen=True, slots=True)
+class SecretRef:
+    """Exact selection only. Opaque mapping identity is not a source locator.
+
+    Class and use requirements are declarations, never permission. No alias,
+    current selector, environment name or credential transport is interpreted.
+    """
+
+    exact: SecretRevisionRef
+    secret_class: str = field(repr=False)
+    use_requirement: str = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if type(self.exact) is not SecretRevisionRef:
+            raise TypeError("exact Secret revision required")
+        _validate(self.secret_class)
+        _validate(self.use_requirement)
 
 
 @dataclass(frozen=True, slots=True)

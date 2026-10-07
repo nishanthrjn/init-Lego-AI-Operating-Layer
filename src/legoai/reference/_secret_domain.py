@@ -1,4 +1,4 @@
-"""Private process-local ordering identity. No owner mutation wiring in this slice."""
+"""Private process-local ordering identity. Explicit participation; no owner state or public locking API."""
 
 import threading
 from collections.abc import Iterator
@@ -9,6 +9,10 @@ class _OrderingDomain:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._holder: int | None = None
+
+    @staticmethod
+    def thread_identity() -> int:
+        return threading.get_ident()
 
     def outside(self) -> None:
         if self._holder == threading.get_ident():
