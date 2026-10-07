@@ -1425,3 +1425,6 @@ htmlcov/
 
 # Temporary lock/writer markers
 *.db.writer
+
+# ForgeAI generated safety/baseline execution artifacts
+examples/forgeai/safety2-baseline-*/
