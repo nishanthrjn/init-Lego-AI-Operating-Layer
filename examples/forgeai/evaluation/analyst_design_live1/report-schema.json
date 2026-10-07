@@ -1,0 +1,27 @@
+{
+  "report_identity": "forgeai-analyst-sufficiency-live-report/1",
+  "required": [
+    "report_identity",
+    "sufficiency_profile_identity",
+    "revision_2_condition_identity",
+    "run_id",
+    "mode",
+    "run_completeness",
+    "provenance",
+    "calls",
+    "records",
+    "planned_slots",
+    "timings",
+    "metrics",
+    "grounding_status",
+    "final_answer_grounding",
+    "revision_2_aggregate_verdict",
+    "sufficiency_profile_outcome",
+    "smoke_status",
+    "stop_reason",
+    "in_flight_disposition",
+    "approval_reference"
+  ],
+  "grounding": "NOT_MEASURED",
+  "aggregate": "NOT_APPLICABLE"
+}
