@@ -258,8 +258,8 @@ the composition fix.
 
 ## PARSER-DIAGNOSTICS-1 implementation record (2026-10-07)
 
-Status: **implemented, local validation pending.** This is harness-only,
-offline evidence: no model call, smoke or FULL.
+Status: **LOCALLY QUALIFIED (2026-10-07).** This is harness-only, offline
+evidence: no model call, smoke or FULL.
 
 - Implements §10 item 1 as specified: a closed rejection code, length class,
   branch and disagreement flag for future `invalid_output` and
@@ -276,6 +276,15 @@ offline evidence: no model call, smoke or FULL.
   text. This is labelled `CORE_OUTPUT_CONTRACT` with length `UNAVAILABLE`.
 - Details are in the [LIVE-1 harness README](../examples/forgeai/evaluation/analyst_design_live1/README.md).
 
-Next gate: the operator runs `uv run python .\validate_forgeai_analyst_design_live_1.py`;
-then commit, verify a clean tree, and obtain a separate explicit authorization
-for any new smoke. FULL remains unauthorized.
+Operator qualification passed on 2026-10-07: all **131/131 phases** of
+`uv run python .\validate_forgeai_analyst_design_live_1.py`, including **680 tests**
+(**151 harness tests**, of which 63 are PARSER-DIAGNOSTICS-1),
+revision-1/revision-2 (123), sufficiency Agent (79), evidence-loop (50),
+RepositoryAnalyst (175), ForgeAI worker (49) and governed Agent runtime (53)
+regressions, the offline provider fence, mypy, Ruff lint/format and git diff check.
+This is offline evidence only: no model call, smoke, FULL or Docker. It does
+not authorize a new smoke.
+
+Next gate: commit this slice, verify a clean tracked tree, and obtain a
+separate explicit authorization for any new smoke identity. FULL remains
+unauthorized; G07 remains open.
