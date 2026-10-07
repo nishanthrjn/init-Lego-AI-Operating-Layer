@@ -1,0 +1,126 @@
+{
+  "namespace": "forgeai-analyst-sufficiency-safety-runtime-compat",
+  "revision": 2,
+  "condition": "forgeai-analyst-sufficiency-safety-live/2",
+  "reviewed": "2026-10-07",
+  "from": {
+    "condition": "forgeai-analyst-sufficiency-safety-live/1",
+    "ollama": "0.35.1",
+    "source_commit": "b0c1ca4f7549d7acdfa52a7dcffc934bc63a43ce"
+  },
+  "to": {
+    "ollama": "0.40.0",
+    "source_commit": "0d0720e51fb2fd9aa58781c3d720c06d720c2e7b",
+    "model": "qwen2.5-coder:14b",
+    "model_digest": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849"
+  },
+  "source_comparison": {
+    "url": "https://github.com/ollama/ollama/compare/v0.35.1...v0.40.0",
+    "commits": 26,
+    "files": 206,
+    "diff_sha256": "73ff731801f680520529b2a645bf1398f3e690c5c1675b6e8883e579274fee13"
+  },
+  "metadata_probes": {
+    "kind": "non-semantic GET /api/version, GET /api/tags, POST /api/show (no inference, no model load)",
+    "version": "0.40.0",
+    "tags_row": {
+      "name": "qwen2.5-coder:14b",
+      "digest": "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+      "rows_for_tag": 1,
+      "family": "qwen2",
+      "format": "gguf",
+      "quantization_level": "Q4_K_M",
+      "runner": "ggml"
+    },
+    "show": {
+      "general.architecture": "qwen2",
+      "context_length": 32768,
+      "modelfile_parameters": null,
+      "template_sha256": "1e65450c30670713aa47fe23e8b9662bdf4065e81cc8e3cbfaa98924fcc0d320"
+    },
+    "largest_prompt_characters": 3980
+  },
+  "surfaces": [
+    {
+      "surface": "GET /api/version",
+      "used_by": "preflight probe",
+      "class": "UNCHANGED",
+      "evidence": "response {version} read only; no change in the comparison"
+    },
+    {
+      "surface": "GET /api/tags",
+      "used_by": "preflight probe (name, digest)",
+      "class": "COMPATIBLE CHANGE",
+      "evidence": "additive details.runner and per-child rows for manifest-list tags; the probe still requires exactly one row for the tag, so a manifest-list tag refuses (fail closed); observed one row with the pinned digest"
+    },
+    {
+      "surface": "model identity and digest",
+      "used_by": "preflight",
+      "class": "UNCHANGED",
+      "evidence": "existing v1 tags preserved; template, system and parameter layers are covered by the pinned manifest digest; observed digest unchanged"
+    },
+    {
+      "surface": "legacy GGUF compatibility migration (new in 0.40)",
+      "used_by": "none (server-side on load)",
+      "class": "COMPATIBLE CHANGE",
+      "evidence": "migratorsByArchitecture has no qwen2 entry, so the qwen2 model is unsupported for migration and keeps its stored manifest"
+    },
+    {
+      "surface": "POST /api/chat request fields",
+      "used_by": "OllamaModelAdapter.chat (model, messages[role, content], stream=false)",
+      "class": "COMPATIBLE CHANGE",
+      "evidence": "only an optional runner field added to ChatRequest; omitted by the adapter, normalized to the default selection"
+    },
+    {
+      "surface": "POST /api/chat response fields",
+      "used_by": "message.content, prompt_eval_count, eval_count",
+      "class": "UNCHANGED",
+      "evidence": "ChatResponse type and the non-streaming response path unchanged in the comparison"
+    },
+    {
+      "surface": "non-streaming behavior",
+      "used_by": "adapter sends stream=false and reads one JSON object",
+      "class": "UNCHANGED",
+      "evidence": "no change to the chat streaming switch"
+    },
+    {
+      "surface": "error mapping",
+      "used_by": "adapter maps any non-200 to ModelResponseRejectedError; transport errors to preflight/uncertain",
+      "class": "COMPATIBLE CHANGE",
+      "evidence": "new 400 for no compatible manifest (maps to rejected); embed 413 change is outside the chat path"
+    },
+    {
+      "surface": "timeout and cancellation",
+      "used_by": "client urllib timeout plus LIVE-1 child supervision and termination",
+      "class": "UNCHANGED",
+      "evidence": "client-side mechanisms; the server API has no timeout contract the harness relies on"
+    },
+    {
+      "surface": "UTF-8 / text handling",
+      "used_by": "JSON request/response bodies",
+      "class": "UNCHANGED",
+      "evidence": "no change to chat message encoding; renderer change is an exported rename and a tev1 mapping only"
+    },
+    {
+      "surface": "default context length",
+      "used_by": "no num_ctx in requests or Modelfile",
+      "class": "UNCHANGED",
+      "evidence": "no change to the automatic context-length logic or envconfig; the largest prompt (about 4k characters) is far below the smallest default tier"
+    },
+    {
+      "surface": "local endpoint behavior",
+      "used_by": "http://127.0.0.1:11434, no credentials",
+      "class": "UNCHANGED",
+      "evidence": "loopback, no user info; cloud paths not used"
+    },
+    {
+      "surface": "inference engine version",
+      "used_by": "token generation for the pinned model",
+      "class": "COMPATIBLE CHANGE",
+      "evidence": "llama.cpp b11232 -> b11351; no contract change, but outputs are not claimed numerically identical to 0.35.1, which is why live/2 is a new pinned runtime identity"
+    }
+  ],
+  "synthetic_call": "NOT_MADE: contract compatibility established from source and metadata; a call would add no contract evidence",
+  "decision": "COMPATIBLE",
+  "limits": "Contract compatibility only. No model-quality evidence; no claim of output equivalence with 0.35.1."
+}
