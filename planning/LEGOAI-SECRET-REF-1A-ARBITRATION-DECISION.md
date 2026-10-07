@@ -283,7 +283,7 @@ pending explicit resumption. Stage B and KISSKI remain gated.
 
 ## 9. Resumed Stage-A implementation — 2026-10-07
 
-**SECRET-REF-1A IMPLEMENTED — LOCAL VALIDATION PENDING.** The maintainer explicitly
+**SECRET-REF-1A LOCALLY QUALIFIED.** The maintainer explicitly
 resumed the accepted Stage-A scope after the 72-phase durable prerequisite was
 locally qualified. The earlier stopped/unresumed assessments above are historical.
 The implementation reuses that ledger/custody profile and adds reference-only
@@ -293,5 +293,20 @@ See the [implementation and lock-order analysis](../docs/secret-ref-1a.md).
 Operator command: `uv run python .\validate_secret_ref_1.py` (62 phases).
 No broader Coordinator/runtime redesign, ADR amendment, environment source,
 credential or provider integration is included. G03 remains open. Stage B remains
-gated until Stage A qualification demonstrates the accepted ordering; neither
-stage authorizes remote use or KISSKI. No Stage-A qualification is claimed here.
+gated on its separately authorized consumer boundary; neither
+stage authorizes remote use or KISSKI. The operator qualification below
+supersedes the implementation-time pending status.
+
+## Operator local qualification recorded — 2026-10-07
+
+**SECRET-REF-1A LOCALLY QUALIFIED.** Operator command:
+`uv run python .\validate_secret_ref_1.py`. All 62 phases passed, including
+69 focused tests, owner/runtime/consumer regressions, durable crash/recovery,
+mypy, Ruff lint/format and diff checks. See the
+[qualification evidence and limits](../docs/secret-ref-1a.md#operator-local-qualification-recorded--2026-10-07).
+
+The Stage-A qualification prerequisite is satisfied for synthetic owner-thread
+acceptance and intact local storage, without a broader Coordinator redesign.
+Stage B remains gated on its separately authorized consumer/HTTP boundary;
+no credentials, external provider, remote use or KISSKI qualification is established.
+G03 remains open. Earlier pending/stopped assessments are historical.
