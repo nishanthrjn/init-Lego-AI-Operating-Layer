@@ -82,3 +82,12 @@ cases and can never enter the gating denominator: `metrics.evaluate` and
 
 Run from the repository root, offline:
 `uv run python .\validate_forgeai_analyst_sufficiency_safety_eval_1.py`
+
+## Version selection (added 2026-10-07)
+
+Revision 1 is frozen, locally qualified history and was **never used live**. Its
+scorer let a named path count as established when it was inferred from a Python
+import. For the future live baseline, use
+[`forgeai-analyst-sufficiency-safety-eval/2`](../analyst_sufficiency_safety_eval2/README.md),
+which requires exact paths to be model-visible. Nothing above this section is
+changed.
