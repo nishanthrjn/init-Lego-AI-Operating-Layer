@@ -23,9 +23,9 @@ TEST = "evaluation/tests/test_analyst_sufficiency_safety_eval3.py"
 PLAN = "planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-EVAL-3.md"
 DIAGNOSTIC = "planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-BASELINE-DIAGNOSTIC-1.md"
 EVAL2 = "examples/forgeai/evaluation/analyst_sufficiency_safety_eval2"
-# Untracked live/2 run evidence awaiting its own custody slice. Each directory
-# is recognized only by its exact file inventory, never by pattern, and must
-# stay visible to git (not ignored).
+# Live/2 run evidence awaiting its own custody slice (untracked or committed
+# unchanged). Each directory is recognized only by its exact file inventory,
+# never by pattern, and must stay visible to git (not ignored).
 BASELINE = "examples/forgeai/safety2-baseline-3cf8aba9a377"
 PENDING = {
     BASELINE: (
@@ -267,10 +267,10 @@ def main() -> int:
                 "planning",
                 SELF,
             ).splitlines()
-            pending = {
-                p for p in untracked if any(p.startswith(d + "/") for d in PENDING)
+            changed.update(untracked)
+            changed = {
+                p for p in changed if not any(p.startswith(d + "/") for d in PENDING)
             }
-            changed.update(set(untracked) - pending)
             if changed - ALLOWED:
                 raise ValueError(
                     "unexpected or unreviewed files: " + repr(sorted(changed - ALLOWED))
@@ -297,6 +297,9 @@ def main() -> int:
             for name, expected in PENDING.items():
                 if inventory(ROOT / name) != expected:
                     raise ValueError("pending run artifact changed: " + name)
+                # If committed, the committed copy must match the working tree.
+                if git("diff", "--name-only", "HEAD", "--", name):
+                    raise ValueError("pending run artifact modified: " + name)
             done.append(current)
             phase("frozen revisions 1-3, revision-3 identity and independence")
             subprocess.run(
