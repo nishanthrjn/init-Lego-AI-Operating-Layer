@@ -1,8 +1,8 @@
 """Private Secret source owner. The acceptance COMMIT is the synthetic effect.
 
-This is a persistence prerequisite, not current-authority enforcement. No runtime
-host wires it to protected use. Trusted Stage-A composition must establish all
-current checks before this private boundary; ordering qualification is separate.
+This persistence owner does not decide current authority. Private Stage-A
+composition establishes current checks before this boundary; runtime hosts and
+providers do not enable it. Durable qualification and ordering remain distinct.
 """
 
 import hmac
@@ -85,6 +85,8 @@ class _SecretLedger:
             raise TypeError("trusted source composition required")
         domain.outside()
         self._access, self._domain, self._readonly = access, domain, readonly
+        self._owner_thread = domain.thread_identity()
+        self._stage_a_claimed = False
         self._live: set[str] = set()
         self._new_work = False
         self._admission = None if readonly else _admit(path, "secret-source-v1")
@@ -324,6 +326,46 @@ class _SecretLedger:
             use_id, category, SourceDutyState(state), revision, approval, fact
         )
 
+    def _claim_stage_a(self) -> None:
+        """One Stage-A binding per admitted owner incarnation, never reset.
+
+        Reconstructing a facade cannot reset cancellation or Secret invalidation.
+        Reopened incarnations still permit only inspection/repair, not new use.
+        """
+        if self._domain.thread_identity() != self._owner_thread:
+            raise _ScopeDenied("source owner thread required")
+        with self._domain.enter():
+            if self._stage_a_claimed:
+                raise _ScopeDenied("source Stage-A binding already established")
+            self._stage_a_claimed = True
+
+    def _ready(
+        self, plan: SecretUsePlan, witness: _ReceiptWitness, now: datetime
+    ) -> None:
+        """Stage-A pre-consumption check, under the same acceptance domain."""
+        self._domain.held()
+        if (
+            self._readonly
+            or not self._new_work
+            or plan.use_id.value not in self._live
+            or self._plan(plan.use_id, self._access) != plan
+            or type(witness) is not _ReceiptWitness
+            or witness.domain is not self._domain
+        ):
+            raise _ScopeDenied("Secret use unavailable")
+        receipt = witness.receipt
+        if (
+            receipt.evidence.fact
+            != SecretUseFact(plan, SourceEvent.PREPARED, plan.prepared_at)
+            or receipt.evidence.profile is not CustodyProfile.INTACT_LOCAL_V1
+            or not receipt.committed_at <= now < plan.expires_at
+        ):
+            raise _ScopeDenied("Secret use unavailable")
+
+    def _discard(self, use_id: SecretUseId) -> None:
+        self._domain.held()
+        self._live.discard(use_id.value)
+
     def accept(
         self,
         plan: SecretUsePlan,
@@ -337,7 +379,7 @@ class _SecretLedger:
     ) -> SecretUseFact:
         """Private persistence boundary; caller already holds the exact domain.
 
-        Current owner checks are the later Stage-A composition's responsibility.
+        Current owner checks are the private Stage-A composition's responsibility.
         No callbacks, Evidence DB transaction or invocation happens here.
         """
         self._domain.held()

@@ -44,6 +44,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Protocol
 
+from legoai.governance.secret import SecretRef, SecretUsePlan, SecretUseStatus
 from legoai.governance.values import (
     Approval,
     ApprovalId,
@@ -256,3 +257,46 @@ class ApprovalConsumptionPort(Protocol):
     def current_use_state(self, approval: Approval) -> ApprovalUseState | None: ...
 
     def consume(self, approval: Approval) -> ApprovalUseState: ...
+
+
+@dataclass(frozen=True, slots=True)
+class SecretAccessRequest:
+    """Exact reference/use plus externally established authority candidate.
+
+    Construction authenticates nobody. Trusted composition admits the candidate;
+    every operation rechecks current authority. No delegated Stage-A use.
+    """
+
+    reference: SecretRef
+    plan: SecretUsePlan
+    context: SecurityContext
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.reference) is not SecretRef
+            or type(self.plan) is not SecretUsePlan
+            or type(self.context) is not SecurityContext
+        ):
+            raise TypeError("typed Secret request required")
+        if self.reference.exact != self.plan.secret:
+            raise ValueError("Secret request revision mismatch")
+
+
+class SecretAccessPort(Protocol):
+    """Reference-only Secret Access; denial raises PermissionError.
+
+    Authorization returns a point-in-time decision, never a replayable permit.
+    Protected acceptance is private to the qualified composition. Recording
+    consults retained source truth, never a caller's claimed actual-use fact.
+    Storage uncertainty remains an error requiring exact outcome inspection.
+    """
+
+    def resolve_secret_reference(self, request: SecretAccessRequest) -> SecretRef: ...
+
+    def authorize_secret_use(
+        self, request: SecretAccessRequest
+    ) -> AuthorizationDecision: ...
+
+    def validate_secret_revision(self, request: SecretAccessRequest) -> SecretRef: ...
+
+    def record_secret_use(self, request: SecretAccessRequest) -> SecretUseStatus: ...

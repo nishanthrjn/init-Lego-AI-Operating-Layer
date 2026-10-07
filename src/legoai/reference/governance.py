@@ -16,6 +16,7 @@ This is one instant's evaluation only -- ADR-007 SS12.1 still requires
 current revalidation at the actual dispatch boundary.
 """
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 
 from legoai.governance.ports import (
@@ -31,6 +32,7 @@ from legoai.governance.ports import (
 )
 from legoai.governance.values import Approval, ApprovalId, Grant, GrantId, PolicyRef
 from legoai.kernel.errors import ErrorCategory
+from legoai.reference._secret_domain import _OrderingDomain
 
 
 def _denied(context: SecurityContext, category: ErrorCategory) -> AuthorizationDecision:
@@ -157,11 +159,15 @@ class InMemoryGrantRegistry:
     already-accepted scope exactly -- no new persistence claim is made.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, _domain: _OrderingDomain | None = None) -> None:
+        if _domain is not None and type(_domain) is not _OrderingDomain:
+            raise TypeError("qualified ordering domain required")
+        self._domain = _domain
         self._revoked: set[GrantId] = set()
 
     def revoke(self, grant_id: GrantId) -> None:
-        self._revoked.add(grant_id)
+        with self._domain.enter() if self._domain else nullcontext():
+            self._revoked.add(grant_id)
 
     def current_revocation_status(self, grant: Grant) -> RevocationStatus:
         if grant.grant_id in self._revoked:
@@ -177,9 +183,16 @@ class InMemoryApprovalRegistry:
     caller (the dispatch arbiter, under its own exclusive gate) to have
     already checked eligibility, per `ApprovalConsumptionPort`'s own
     documented contract.
+
+    With an explicitly injected Stage-A domain, every consumption participates
+    and exhaustion refuses. The private already-held operation checks domain
+    ownership; credential-free no-argument construction keeps its old contract.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, _domain: _OrderingDomain | None = None) -> None:
+        if _domain is not None and type(_domain) is not _OrderingDomain:
+            raise TypeError("qualified ordering domain required")
+        self._domain = _domain
         self._uses: dict[ApprovalId, int] = {}
 
     def current_use_state(self, approval: Approval) -> ApprovalUseState | None:
@@ -188,7 +201,15 @@ class InMemoryApprovalRegistry:
         )
 
     def consume(self, approval: Approval) -> ApprovalUseState:
+        with self._domain.enter() if self._domain else nullcontext():
+            return self._consume(approval)
+
+    def _consume(self, approval: Approval) -> ApprovalUseState:
+        if self._domain is not None:
+            self._domain.held()
         current = self._uses.get(approval.approval_id, 0)
+        if self._domain is not None and current >= approval.max_uses:
+            raise PermissionError("Approval exhausted")
         self._uses[approval.approval_id] = current + 1
         return ApprovalUseState(approval.approval_id, current + 1)
 
@@ -200,11 +221,15 @@ class InMemoryPolicyRegistry:
     a single-operator local example, never claimed as a substitute for a
     real Policy Decision realization."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, _domain: _OrderingDomain | None = None) -> None:
+        if _domain is not None and type(_domain) is not _OrderingDomain:
+            raise TypeError("qualified ordering domain required")
+        self._domain = _domain
         self._superseded: set[PolicyRef] = set()
 
     def supersede(self, policy_ref: PolicyRef) -> None:
-        self._superseded.add(policy_ref)
+        with self._domain.enter() if self._domain else nullcontext():
+            self._superseded.add(policy_ref)
 
     def current_status(self, policy_ref: PolicyRef) -> PolicyCurrencyStatus:
         if policy_ref in self._superseded:

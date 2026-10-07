@@ -195,7 +195,9 @@ def violations(sources: dict[str, str]) -> set[str]:
                     ):
                         errors.add("reference-owner")
                     if name == "legoai.reference.governance" and not (
-                        target == "legoai.kernel"
+                        target == "legoai.reference._secret_domain"
+                        or target.startswith("legoai.reference._secret_domain.")
+                        or target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.governance.values"
                         or target.startswith("legoai.governance.values.")
@@ -330,7 +332,9 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # never other reference realizations or runtime.
                         errors.add("reference-owner")
                     if name == "legoai.reference.catalog" and not (
-                        target == "legoai.kernel"
+                        target == "legoai.reference._secret_domain"
+                        or target.startswith("legoai.reference._secret_domain.")
+                        or target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.capabilities.values"
                         or target.startswith("legoai.capabilities.values.")
@@ -511,7 +515,24 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # reference-owner realization or the composition root.
                         errors.add("reference-owner")
                     if name.startswith("legoai.runtime._composition.") and not (
-                        target == "legoai.kernel"
+                        (
+                            name == "legoai.runtime._composition.secret"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.evidence.custody",
+                                    "legoai.governance.ports",
+                                    "legoai.governance.secret",
+                                    "legoai.reference._durable_evidence",
+                                    "legoai.reference._secret_domain",
+                                    "legoai.reference._secret_ledger",
+                                    "legoai.reference.catalog",
+                                    "legoai.reference.governance",
+                                    "legoai.reference.secret",
+                                )
+                            )
+                        )
+                        or target == "legoai.kernel"
                         or target.startswith("legoai.kernel.")
                         or target == "legoai.application.values"
                         or target.startswith("legoai.application.values.")
