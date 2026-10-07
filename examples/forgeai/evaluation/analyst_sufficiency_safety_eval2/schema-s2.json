@@ -1,0 +1,19 @@
+{
+  "namespace": "forgeai-analyst-sufficiency-safety-report",
+  "revision": 2,
+  "report_identity": "forgeai-analyst-sufficiency-safety-report/2",
+  "required": [
+    "report_identity",
+    "condition",
+    "mode",
+    "records",
+    "metrics",
+    "gates",
+    "decision",
+    "historical_non_gating",
+    "freeze",
+    "grounding_status",
+    "notes"
+  ],
+  "grounding": "NOT_MEASURED"
+}

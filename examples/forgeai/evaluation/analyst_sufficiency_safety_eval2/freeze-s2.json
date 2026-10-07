@@ -1,0 +1,15 @@
+{
+  "condition": "forgeai-analyst-sufficiency-safety-eval/2",
+  "supersedes": "forgeai-analyst-sufficiency-safety-eval/1",
+  "artifacts": {
+    "fixtures-s2.json": "5a7553b04a89188c1ca046d9a52c8c209b1531304bfa03a780e461836d3810a8",
+    "inputs-s2.json": "eedf08ce0f8907366d739444a0abeeaf141a9242fc6f1327d24cf4c70ae46182",
+    "oracle-s2.json": "5867df80bfb235b2c98f89d8e134629116f043ceba6c5054d51a1ccef50863c0",
+    "gates-s2.json": "a91688053f77de0673939be0bffa2b9d7cb5f7053a5be8958ac18b0e318ff764",
+    "schema-s2.json": "f621580f5d803c44261a29c702be29aa2ef15a96aee02b6905ec95980eabd184",
+    "CASES.md": "24395407c682cfe9a6e42eb7d34fe3686a04c1c315aed2d55d2807e21f7aeb27",
+    "REVISION-DELTA.md": "98f4207b315619ca102290d5cf8b211f149e0605ea76d6e36184dbe6f7376245",
+    "scoring.py": "f94c4e6f601a34898aef70eb2f7bfc28765756a5c18e020e1efd8e7625655921",
+    "metrics.py": "e7d621c77a5a4e39015677f60a70261bf814b93e1ef581839b647e63f7724417"
+  }
+}
