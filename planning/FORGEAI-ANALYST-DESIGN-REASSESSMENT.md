@@ -458,3 +458,19 @@ offline evaluation-only orchestration/authority qualification; no live model
 or Docker was used. No live semantic quality or production workflow support
 is established. FORGEAI-ANALYST-DESIGN-EVAL-1 still requires separate
 authorization; G07 remains open.
+
+## FORGEAI-ANALYST-DESIGN-EVAL-1 implementation — 2026-10-07
+
+**IMPLEMENTED — LOCAL VALIDATION PENDING.** Separately authorized after both
+redesign prerequisites were locally qualified. The new [offline design condition](../examples/forgeai/evaluation/analyst_design_eval1/README.md)
+freezes 28 new families / 52 held-out conditions, 12 paired families and four
+non-gating q19–q22 regressions. Separate fixture/oracle/schema/gate identities,
+content-based oracle rationales and scorer mutation tests distinguish semantic
+accuracy, requests, progression, authority, human repair and grounding.
+
+Operator command: `uv run python .\validate_forgeai_analyst_design_eval_1.py`.
+The 55-phase validator qualifies evaluator behavior, not live model quality.
+No prompt, model-backed assessment, production worker, runtime, authority or
+historical R3/R4 change is included. Operator qualification remains pending.
+A model-backed sufficiency assessment contract/prompt and any later live run
+require separate explicit maintainer authorization. G07 remains open.

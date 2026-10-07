@@ -1,0 +1,10 @@
+{
+  "condition": "forgeai-analyst-design-eval/1",
+  "artifacts": {
+    "fixtures-v1.json": "93d6d01c5081f25252c7320653fc88d3b4b4434b489264bc30d60d41e62b2fe3",
+    "oracle-v1.json": "07ada35f1fff31f9f055f5ec2fda82944addbcc5ce16187986449b279af127be",
+    "gates-v1.json": "71ea8efcdb0c82c4c7140c38c403f7735d50c271fc3010eb1d489801ddfed941",
+    "schema-v1.json": "8c4f09de20887594d529ca6d30aaf2697a542c73ec88fca0b652ca30f5cb9988",
+    "CASES.md": "8c74ba3fa7af281f9a38555458626a1b1c4555dbbbed0aefecb74ce369a2d019"
+  }
+}
