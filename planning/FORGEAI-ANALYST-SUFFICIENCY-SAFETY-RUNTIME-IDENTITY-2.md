@@ -186,3 +186,13 @@ This is offline evidence only: no model, provider or Docker, no synthetic
 inference call, and no live/2 run directory. It does not authorize the live/2
 PREFLIGHT or the BASELINE; each needs separate authorization and a clean
 tracked tree.
+
+## 11. Live/2 PREFLIGHT and custody (appended)
+
+The authorized live/2 PREFLIGHT passed on 2026-10-07: run
+`8b147424-5231-4758-9e0f-05730f6174bc`, directory
+`examples/forgeai/safety2-preflight-300452037205/`, at HEAD `dff9cc0`, with
+zero semantic calls. Its committed directory is admitted to exact custody by
+[preflight custody 1](FORGEAI-ANALYST-SUFFICIENCY-SAFETY-LIVE-2-PREFLIGHT-CUSTODY-1.md).
+This validator's own historical scope (base `ecbdf24`) is not changed. No
+baseline has run.

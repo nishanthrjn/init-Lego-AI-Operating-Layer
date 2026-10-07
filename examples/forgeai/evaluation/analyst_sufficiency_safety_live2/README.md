@@ -1,7 +1,8 @@
 # forgeai-analyst-sufficiency-safety-live/2
 
 **Status: LOCALLY QUALIFIED (2026-10-07; offline; 41/41 validator phases).
-No preflight or baseline has been run under live/2; neither is authorized.** See
+Live/2 PREFLIGHT passed (run `8b147424`, zero semantic calls; admitted to
+custody). No baseline has run; the baseline is not authorized.** See
 [the decision record](../../../../planning/FORGEAI-ANALYST-SUFFICIENCY-SAFETY-RUNTIME-IDENTITY-2.md).
 
 This is a runtime identity revision only. Live/2 pins **Ollama 0.40.0**
