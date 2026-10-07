@@ -1,0 +1,130 @@
+# SECRET-REF-1A — wider owner/arbitration decision required
+
+**Status: PROPOSED — no redesign authorized or implemented.**
+**Date:** 2026-10-07.
+**Outcome:** SECRET-REF-1A BLOCKED — WIDER OWNER/ARBITRATION DECISION REQUIRED.
+
+This is the separate maintainer decision required by
+[the accepted staged scope, §8](LEGOAI-SECRET-REF-1-DECISION.md#8-accepted-implementation-order--2026-10-07).
+Stage A remains unimplemented and unqualified. Stage B remains gated. G03 remains
+open. No ADR is allocated or amended by this document.
+
+## 1. Exact unmet guarantee
+
+ADR-010 §8.2 requires current authority, Secret eligibility and all participating
+invalidators to share an effective order with the actual protected use. Section
+8.3 requires a revocation that becomes effective before use acceptance to prevent
+that use. ADR-007 §§4–6 requires participation at the authoritative mutation
+commit, not merely a caller convention. A permit, queued task or earlier
+authorization decision is not protected acceptance.
+
+Current source has neither a shared mutation/acceptance participation seam nor
+an actual-consumer-acceptance operation within the dispatch arbiter. Satisfying
+these requirements with existing authority owners would change their mutation
+and arbitration contracts beyond the authorized additive Secret Access scope.
+The blocker applies to a synchronous synthetic consumer too; HTTP is not its cause.
+
+## 2. Concrete source inventory
+
+| Existing fact/path | Source seam | Ordering currently established |
+| --- | --- | --- |
+| Grant revocation | `src/legoai/reference/governance.py`: `InMemoryGrantRegistry.revoke`, `current_revocation_status` | Direct set mutation/read; no participation in dispatch's lock |
+| Policy supersession | Same file: `InMemoryPolicyRegistry.supersede`, `current_status` | Direct set mutation/read; no participation in dispatch's lock |
+| Approval use exhaustion, when applicable | Same file: `InMemoryApprovalRegistry.consume`, `current_use_state` | Direct count mutation; arbiter calls consume under its own lock, but the owner does not enforce that lock on other callers |
+| Consumer capability eligibility | `src/legoai/reference/catalog.py`: `publish`, `withdraw`, `snapshot` | Local catalog revision/list; no shared arbitration participation; withdrawal is an existing eligibility invalidator, not a Secret-specific consumer-revocation service |
+| Final dispatch check | `src/legoai/reference/execution.py`: `DeterministicDispatchArbiter.__init__`, `arbitrate` | Private `threading.Lock`; checks authority/catalog/evidence, consumes applicable approval, returns an inert `DispatchPermit` and releases the lock |
+| Invocation uniqueness | Same file: `ExecutionCoordinator.claim_invocation` | Separate `asyncio.Lock` guards RUNNING/claimed state; does not jointly revalidate Grant/Policy/Catalog or accept protected material |
+| Authority expiry | `reference/governance.py`: `_grant_covers`, `_approval_covers`; `governance/ports.py`: `SecurityContext.established_at` | Evaluation uses supplied context time; not an atomic expiry guard at a later Secret-use acceptance point |
+| Required evidence availability | `src/legoai/reference/evidence.py`: `InMemoryEvidenceCustody.record`, `read` | Append-only process-local custody; no delete/revoke API and no concurrency or durability claim. Do not invent an evidence-removal invalidator |
+| Secret mapping/revision/eligibility invalidation | No Secret Access realization in current `src/legoai/governance` or `reference/secret` | Not implemented; not counted as existing participants |
+| Dedicated Secret consumer invalidation | Not implemented | Catalog withdrawal is relevant existing eligibility behavior, but does not supply this missing Secret contract |
+| Tenant/owner/configuration identity | Existing immutable nominal values and captured configuration | Scope constraints, not a discovered live Secret mutation API; mismatch must be rejected by any future implementation |
+
+The observation sink projects safe observation fields; it is not mandatory
+evidence custody or a repair ledger. Configuration capture/composition retains
+revision identity; it does not establish Secret currentness. The Model adapter's
+`to_thread` invocation does not provide the missing gate. None of these modules
+was changed or used to acquire material.
+
+## 3. Counterexample derived from source
+
+This is a source-derived interleaving, **not an executed race-test result**:
+
+1. The authorization evaluator reads ACTIVE from the Grant registry.
+2. `revoke(grant_id)` changes that registry and returns; it need not acquire
+   the arbiter's private lock.
+3. Authorization continues with policy/approval checks and can return ALLOWED
+   without rereading grant status.
+4. The arbiter can issue its inert permit. The separate invocation claim does
+   not check grant status; a hypothetical consumer then accepts use.
+
+A still simpler gap exists between permit issuance and any later acceptance:
+revocation can finish entirely in that interval. Moving a final recheck into a
+new Secret-only lock leaves a check-to-use interval that current mutation APIs
+do not honor. Adding repeated reads does not establish an atomic ordering proof.
+The same structural issue exists for policy supersession and applicable catalog
+withdrawal. This is a missing guarantee for the new Secret-bearing scope, not a
+retraction of credential-free provider qualification.
+
+## 4. Smallest candidate change for maintainer review
+
+Authorize a narrowly scoped **shared local arbitration participation design**,
+before resuming SECRET-REF-1A implementation:
+
+1. Specify one explicit, process-local ordering domain, injected through trusted
+   composition. It owns ordering only; Governance, Catalog, Evidence and Execution
+   retain their decisions and state. No global singleton or distributed protocol.
+2. Make every supported invalidating owner commit participate by construction,
+   beginning with grant revocation, policy supersession and applicable approval/
+   catalog mutations. Direct owner APIs must not bypass it. Determine compatible
+   legacy construction and reject mismatched participant domains for protected use.
+3. Specify a bounded, non-reentrant private exact-acceptance operation combining
+   final revalidation, applicable consumption and a synchronous synthetic consumer's
+   acceptance. Do not expose the arbiter's lock as a public convenience API or hold
+   it during network waits. Review lock order against the Coordinator's claim and
+   cancellation paths before choosing concrete signatures.
+4. Define acceptance-time clock assumptions and unsupported expiry guarantees.
+   A deterministic clock test does not establish a hard real-time CPython bound.
+5. Define safe accepted-use attribution and post-use evidence repair ownership.
+   Existing in-memory custody cannot justify a durable repair claim; any required
+   durable extension needs explicit scope approval rather than an in-memory substitute.
+
+This is a candidate design, not a completed proof or an instruction to implement
+a general Coordinator rewrite. The first known required changes cross Governance
+mutation and dispatch arbitration seams. Whether the Coordinator itself needs
+changes must be resolved in that design; no necessity for a complete rewrite is
+asserted. An independent synthetic authority universe would not prove participation
+of today's supported owners and is not a substitute.
+
+## 5. Affected authority and verification requirements
+
+- ADR-010 §§7–11, 14, 21: exact purpose/use, currentness, lifetime, safe evidence.
+- ADR-007 §§4–8: all mutation paths, actual acceptance, partial consumption, time.
+- ADR-005: current authority and requester/deputy/tenant scope.
+- ADR-009: pre-use custody and truthful post-effect repair obligations.
+- CONTRACTS §15.5 and existing authorization/dispatch/claim contracts: reference-only
+  public operations; any new participation surface must preserve owner direction.
+- SECURITY SEC-020, SEC-057–060 and §20: current applicability and restricted disclosure.
+- ADR-014: composition may wire admitted implementations but does not authorize a
+  new credential-bearing path by itself. ModelPort and model settings stay unchanged.
+
+If the candidate is authorized, first specify deterministic event/barrier tests
+for revoke/policy/catalog changes before and after acceptance, all supported owner
+mutation entry points, competing uses, cancellation and expiry. Test pre-evidence
+failure and post-acceptance recording failure without retrying use. Then resume
+the complete Stage A contract, canary, single-use, restart and regression matrix.
+
+No tests or `validate_secret_ref_1.py` were created: the explicit stop condition
+was reached before implementation. No successful race proof or Stage A validation
+is claimed. This documentation change is checked with `git diff --check`.
+
+## 6. Requested decision and unchanged gates
+
+Decide whether to authorize the bounded shared-domain design in §4, including its
+owner-mutation and actual-acceptance changes, or revise/defer that scope. Do not
+mark Stage A qualified until its eventual executable proof passes. Do not
+implement the wider changes on the strength of this proposed document.
+
+Stage B, environment sources, model credential fields/headers, authenticated
+providers, remote disclosure and KISSKI remain disabled. No credentials,
+environment variables, network endpoints or Docker were accessed by this work.
