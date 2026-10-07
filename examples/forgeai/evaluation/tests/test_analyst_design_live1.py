@@ -178,7 +178,7 @@ def test_actual_governed_agent_complete_condition_parity(
 
     async def assess(m: Any, f: Any, v: str, phase: str) -> EvidenceSufficiencyResult:
         calls.append((f.id, v, phase))
-        value, digest = await runtime.governed(
+        value, digest, _ = await runtime.governed(
             m, runtime.projection(m, f, v, phase), 1, output(m, f, v, phase)
         )
         assert digest is not None
@@ -457,7 +457,7 @@ def test_full_controller_68_calls_and_report(tmp_path: Path) -> None:
             return pool.submit(
                 asyncio.run,
                 runtime.governed(m, expected, timeout, output(m, f, variant, phase)),
-            ).result()
+            ).result()[:2]
 
     result = asyncio.run(
         harness.execute(

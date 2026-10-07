@@ -42,6 +42,7 @@ from analyst_design_live1.diagnostics import (
     safe_class,
 )
 from analyst_design_live1.identity import MODEL, URL
+from analyst_design_live1.output_diagnostics import DIAGNOSED, OutputDiagnosis, diagnose
 from legoai.execution.agent.ports import (
     AgentDefinition,
     AgentRequest,
@@ -122,6 +123,9 @@ class GuardedRuntime:
         self.mark = mark
         self.payload_digest: str | None = None
         self.calls = 0
+        # Transient, in-memory only: read once for PARSER-DIAGNOSTICS-1, then
+        # discarded. Never persisted or sent to the parent.
+        self.result: AgentResult | None = None
 
     async def run(
         self, definition: AgentDefinition, request: AgentRequest
@@ -138,7 +142,8 @@ class GuardedRuntime:
         self.payload_digest = hashlib.sha256(request.text.encode()).hexdigest()
         self.mark(ChildStage.PAYLOAD_GUARD_COMPLETED)
         self.mark(ChildStage.GOVERNED_RUNTIME_ENTERED)
-        return await self.runtime.run(definition, request)
+        self.result = await self.runtime.run(definition, request)
+        return self.result
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -155,7 +160,7 @@ async def governed(
     output: str | None = None,
     *,
     mark: Callable[[ChildStage], None] = lambda stage: None,
-) -> tuple[EvidenceSufficiencyResult, str | None]:
+) -> tuple[EvidenceSufficiencyResult, str | None, OutputDiagnosis | None]:
     mark(ChildStage.HOST_COMPOSITION_STARTED)
     if output is not None:
         host, _ = host_for(Replay(output))
@@ -198,8 +203,11 @@ async def governed(
     result = await EvidenceSufficiencyAgent(guard).assess(
         host.model_execution(ModelPurpose.CHAT), m, current_manifest=lambda: m
     )
+    # Observation only: the Agent's result is final before this label exists.
+    diagnosis = diagnose(result.failure, guard.result, m)
+    guard.result = None
     mark(ChildStage.RESULT_COMPLETED)
-    return result, guard.payload_digest
+    return result, guard.payload_digest, diagnosis
 
 
 def child(
@@ -218,8 +226,10 @@ def child(
 
     try:
         mark(ChildStage.CHILD_STARTED)
-        result, digest = asyncio.run(governed(m, expected, timeout, output, mark=mark))
-        pipe.send(("result", result, digest))
+        result, digest, diagnosis = asyncio.run(
+            governed(m, expected, timeout, output, mark=mark)
+        )
+        pipe.send(("result", result, digest, diagnosis))
     except BaseException as error:
         pipe.send(("failure", classify(stage), safe_class(error)))
     finally:
@@ -325,11 +335,15 @@ def supervised(
                 diagnostics.ipc = IPCStatus.ENVELOPE_RECEIVED
                 diagnostics.exception_class = envelope[2]
                 raise stop("child_failure", envelope[1])
-            if kind == "result" and len(envelope) == 3:
+            if kind == "result" and len(envelope) == 4:
                 diagnostics.ipc = IPCStatus.ENVELOPE_RECEIVED
-                result, digest = envelope[1:]
+                result, digest, diagnosis = envelope[1:]
                 if (
                     not isinstance(result, EvidenceSufficiencyResult)
+                    or (
+                        diagnosis is not None and type(diagnosis) is not OutputDiagnosis
+                    )
+                    or (diagnosis is not None) != (result.failure in DIAGNOSED)
                     or diagnostics.stage != ChildStage.RESULT_COMPLETED
                     or (
                         digest is not None
@@ -341,6 +355,7 @@ def supervised(
                     )
                 ):
                     raise stop("child_failure", FailureCategory.INVALID_RESULT)
+                diagnostics.output = diagnosis
                 return result, digest
             diagnostics.ipc = IPCStatus.INVALID_ENVELOPE
             raise stop("child_failure", FailureCategory.CHILD_PROTOCOL_FAILURE)

@@ -95,7 +95,7 @@ def broken_child(
     if output == "invalid":
         pipe.send(("SENSITIVE_SENTINEL_MUST_NOT_BE_PERSISTED",))
     elif output == "invalid_result":
-        pipe.send(("result", object(), None))
+        pipe.send(("result", object(), None, None))
     elif output == "unknown_class":
         pipe.send(("failure", FailureCategory.UNKNOWN_CHILD_FAILURE, "SECRET_CLASS"))
     pipe.close()

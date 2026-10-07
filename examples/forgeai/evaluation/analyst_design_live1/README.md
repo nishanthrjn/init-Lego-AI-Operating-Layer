@@ -195,3 +195,77 @@ evidence only; no provider endpoint, new smoke, FULL or Docker was invoked,
 and no live model-quality claim follows. Current implementation commit: `d592041`.
 Historical artifacts and SERVER_EFFECT_UNKNOWN are unchanged. Qualification
 alone does not authorize a new smoke or FULL; G07 remains open.
+
+## PARSER-DIAGNOSTICS-1 (2026-10-07; implemented, local validation pending)
+
+**Why.** Smoke 2 (`cafee55d-…`) stopped on d13 with `invalid_output`. The Agent
+collapses every rejection into that single value, and no reply text is kept, so
+the cause could not be established
+([diagnostic 2](../../../../planning/FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md)).
+This slice adds closed, content-free labels for future rejected replies. It
+claims nothing about d13's historical cause.
+
+**Where.** `output_diagnostics.py`, run in the child after
+`EvidenceSufficiencyAgent.assess` has already returned. `GuardedRuntime` keeps the
+public `AgentResult` it relays in memory for that one attempt; `diagnose` labels
+it, and the reference is discarded before `RESULT_COMPLETED`. Diagnosis runs only
+when the Agent returned `invalid_output` or `prerequisites_unmet`. Valid
+assessments and other failures are never diagnosed.
+
+**Rejection codes (closed):**
+- `CORE_OUTPUT_CONTRACT`: the Core output contract rejected the reply (blank,
+  more than 32 768 bytes, or invalid UTF-8). Core discards the text, so these
+  three are not distinguished.
+- Document level: `NON_JSON_DOCUMENT` (prose, a malformed fence, trailing prose),
+  `MULTIPLE_JSON_DOCUMENTS`, `JSON_DECODE_INVALID`, `DUPLICATE_JSON_KEY`.
+- Field level: `FIELD_SET_INVALID`, `FIELD_TYPE_INVALID`, `DISPOSITION_INVALID`,
+  `GOVERNING_SOURCES_INVALID`.
+- Request level: `REQUEST_SET_INVALID`, `REQUEST_KIND_INVALID`,
+  `REQUEST_PATH_INVALID`, `REQUEST_CHOICES_INVALID`.
+- `VALUE_BOUND_EXCEEDED` (explanation, description or choice text blank or
+  oversize).
+- `DISPOSITION_REQUEST_INCOHERENT`.
+- `PREREQUISITES_UNMET` (the Agent's own failure value, confirmed by replay).
+- `UNKNOWN_INVALID_OUTPUT`.
+
+**Length classes:** `SMALL` (1–1024 UTF-8 bytes), `MEDIUM` (≤8192), `LARGE`
+(≤32 768), and `UNAVAILABLE` when Core discarded the reply. No numeric length is
+stored. Empty and over-limit replies can never be observed by the harness, so
+they have no classes of their own.
+
+**Branch:** `CORE_OUTPUT_CONTRACT`, `AGENT_PARSE` or `AGENT_PREREQUISITES`.
+
+**Same rules, no second parser.** The replay follows the Agent parser's order
+using only the public value constructors (`EvidenceRequest`,
+`EvidenceSufficiencyAssessment`, `RepositoryPath`, the enums), plus public
+constructor probes to name which rule failed. The ADR-021 envelope is mirrored
+and parity-tested against `json_document`. Each label names a rule the reply
+actually violated. With several simultaneous violations it may not be the
+parser's first.
+
+**Precedence.** The Agent result is authoritative and is never changed. If the
+replay accepts a reply the Agent rejected, or the classifier itself fails, the
+label is `UNKNOWN_INVALID_OUTPUT` with `diagnostic_disagreement: true`.
+`SMOKE_CONTRACT_FAILURE` precedence, the smoke stop rule, profile outcomes and
+semantic metrics are unchanged. There is no retry and no second model or
+diagnostic call.
+
+**Custody.** The child sends one closed `OutputDiagnosis` (a frozen value of
+enums) in the result envelope. The parent rejects any other type, or a diagnosis
+inconsistent with the result's failure, as `INVALID_RESULT`. When present,
+`ChildDiagnostics.record()` adds `invalid_output_rejection_code`,
+`output_length_class`, `invalid_output_branch` and `diagnostic_disagreement`.
+These appear in the final per-call diagnostic file, the call-finish record and
+report timings. Records for valid calls keep exactly their previous fields.
+No reply text, JSON fragment, prompt, exception message or traceback is
+persisted (canary-tested).
+
+**Unchanged:** EvidenceSufficiencyAgent 1.0.0, its prompt and parser,
+revision 2, profile-1, the experiment decision, `qwen2.5-coder:14b`, smoke
+membership and order, call and time ceilings, and thresholds. Historical smoke 1
+and smoke 2 artifacts are byte-verified and not backfilled. d09 remains a
+structurally valid semantic request-quality miss.
+
+Operator qualification uses the same command:
+`uv run python .\validate_forgeai_analyst_design_live_1.py` (offline). Qualification
+does not authorize a new smoke or FULL.

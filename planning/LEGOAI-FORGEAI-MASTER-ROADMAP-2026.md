@@ -585,6 +585,8 @@ when the decision is already made; never reopen it merely to rename a feature.
 
 ## 11. Immediate next action
 
+FORGEAI-ANALYST-DESIGN-LIVE-1 PARSER-DIAGNOSTICS-1 (2026-10-07): harness-only closed invalid-output labels (rejection code, length class, branch, disagreement; no model text) for future smokes. Agent 1.0.0, prompt, parser, revision 2 and profile unchanged; d13 history remains cause not established. Implemented, local validation pending; see [diagnostic 2](FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md). No smoke or FULL authorized.
+
 FORGEAI-ANALYST-DESIGN-LIVE-1 smoke 2 (2026-10-07, run `cafee55d`): **SMOKE_CONTRACT_FAILURE** (d13 `invalid_output`; d20/d21 never attempted; zero safety, authority or leakage findings). [Diagnostic 2](FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md): disposition E. d13 cause not established (no parser reason retained), so a harness-only PARSER-DIAGNOSTICS-1 slice is needed first; d09 is a model `named_evidence`-for-role miss against explicit guidance, with no Agent, prompt or oracle change. No new smoke or FULL authorized; G07 open.
 
 FORGEAI-ANALYST-DESIGN-EVAL-2 remains **LOCALLY QUALIFIED**; LIVE-1 [HARNESS-RUNTIME-FIX-1](FORGEAI-ANALYST-DESIGN-LIVE-1-CHILD-FAILURE-DIAGNOSTIC.md#harness-runtime-fix-1-implementation-record--2026-10-07) **LOCALLY QUALIFIED** (operator 99/99 phases, 617 tests including 88 harness tests; implementation `d592041`). Next: authorized qualification-record commit/clean tree, then separately authorized NEW smoke. Historical smoke runtime failure and SERVER_EFFECT_UNKNOWN unchanged; no smoke/FULL authorization or semantic quality claim; G07 open.

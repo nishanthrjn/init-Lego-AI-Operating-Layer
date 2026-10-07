@@ -1,5 +1,6 @@
 r"""Offline operator qualification: uv run python .\validate_forgeai_analyst_design_live_1.py."""
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -15,12 +16,16 @@ PACKAGE = "evaluation/analyst_design_live1"
 TEST = "evaluation/tests/test_analyst_design_live1.py"
 SELF = "validate_forgeai_analyst_design_live_1.py"
 FIX_TEST = "evaluation/tests/test_analyst_design_live1_fix.py"
+DIAG_TEST = "evaluation/tests/test_analyst_design_live1_diag.py"
+DIAGNOSTIC_2 = "planning/FORGEAI-ANALYST-DESIGN-LIVE-1-SMOKE-FAILURE-DIAGNOSTIC-2.md"
 ALLOWED = {
     SELF,
     "examples/forgeai/" + TEST,
     "examples/forgeai/" + FIX_TEST,
+    "examples/forgeai/" + DIAG_TEST,
     "planning/LEGOAI-FORGEAI-MASTER-ROADMAP-2026.md",
     "planning/FORGEAI-ANALYST-DESIGN-LIVE-1-CHILD-FAILURE-DIAGNOSTIC.md",
+    DIAGNOSTIC_2,
 } | {
     "examples/forgeai/" + PACKAGE + "/" + name
     for name in (
@@ -30,6 +35,7 @@ ALLOWED = {
         "storage.py",
         "harness.py",
         "README.md",
+        "output_diagnostics.py",
     )
 }
 # Only these historical files may be untracked; phase 4 checks every byte
@@ -51,6 +57,40 @@ HISTORY = {
     )
     for name in names
 }
+# Smoke 2 (cafee55d) and its preflight: byte-verified against DIAGNOSTIC_2.
+SMOKE_2 = "examples/forgeai/live1-smoke-227bdd3cec0b"
+PREFLIGHT_2 = "examples/forgeai/live1-preflight-9bdb9f5867b6"
+SMOKE_2_INVENTORY = "68f4e1ae6a637010ab38ce361717a6d3a17c9f104d6e4b9f25ff9201539ecf6a"
+PREFLIGHT_2_FILES = {
+    "run.json": "14b5f3634903bbf99b1173ec91b7e41dec230c308bb27c4041d6631f0580f159",
+    "report.json": "4cafdcf07b4b3dc215a7f650575a6897617c55837c85370315821113e99d8edb",
+    "report.md": "4a02f2640ca563c70d1c031e09811fe0fcfcfc841c35192359b4420e68c1018d",
+}
+
+
+def smoke_2_history() -> set[str]:
+    """Exactly the recorded smoke-2/preflight-2 files, every byte verified."""
+    text = (ROOT / DIAGNOSTIC_2).read_text(encoding="utf-8")
+    smoke = sorted((ROOT / SMOKE_2).iterdir(), key=lambda p: p.name)
+    listing = "".join(
+        f"{hashlib.sha256(p.read_bytes()).hexdigest()} *{p.name}\n" for p in smoke
+    )
+    if (
+        SMOKE_2_INVENTORY not in text
+        or len(smoke) != 55
+        or hashlib.sha256(listing.encode()).hexdigest() != SMOKE_2_INVENTORY
+    ):
+        raise ValueError("smoke 2 artifacts differ from the recorded inventory")
+    preflight = sorted(p.name for p in (ROOT / PREFLIGHT_2).iterdir())
+    if preflight != sorted(PREFLIGHT_2_FILES) or any(
+        value not in text
+        or hashlib.sha256((ROOT / PREFLIGHT_2 / name).read_bytes()).hexdigest() != value
+        for name, value in PREFLIGHT_2_FILES.items()
+    ):
+        raise ValueError("preflight 2 artifacts differ from the recorded hashes")
+    return {f"{SMOKE_2}/{p.name}" for p in smoke} | {
+        f"{PREFLIGHT_2}/{name}" for name in preflight
+    }
 
 
 def git(*args: str) -> str:
@@ -118,9 +158,11 @@ def main() -> int:
                     SELF,
                 ).splitlines()
             )
-            if changed - ALLOWED - HISTORY:
+            history_2 = smoke_2_history()
+            if changed - ALLOWED - HISTORY - history_2:
                 raise ValueError(
-                    "unexpected files: " + repr(sorted(changed - ALLOWED - HISTORY))
+                    "unexpected files: "
+                    + repr(sorted(changed - ALLOWED - HISTORY - history_2))
                 )
             for name in (
                 "ENG-ANALYST-SUFFICIENCY-CONTRACT-1",
@@ -161,12 +203,14 @@ def main() -> int:
                 FORGE,
                 TEST,
                 FIX_TEST,
+                DIAG_TEST,
                 f"--junitxml={report}",
             )
             cases = list(ET.parse(report).getroot().iter("testcase"))
             if not cases or any(list(c) for c in cases):
                 raise ValueError("no failed/skipped qualification cases allowed")
             names = {c.attrib["name"].split("[")[0] for c in cases}
+            names |= {c.attrib["name"] for c in cases}  # parametrized evidence
             coverage = [
                 ("live condition identity", "identity_preflight_zero_calls"),
                 ("live report identity", "identity_preflight_zero_calls"),
@@ -326,6 +370,88 @@ def main() -> int:
                     ),
                 ]
             )
+            parity = "invalid_output_classification_and_agent_parity"
+            coverage.extend(
+                [
+                    (
+                        "PARSER-DIAGNOSTICS-1: historical smoke 2 unchanged",
+                        "historical_smoke2_unchanged_and_d13_cause_unknown",
+                    ),
+                    (
+                        "d13 historical cause remains unknown (no backfill)",
+                        "historical_smoke2_unchanged_and_d13_cause_unknown",
+                    ),
+                    (
+                        "closed rejection and length taxonomies",
+                        "closed_taxonomies_and_length_buckets",
+                    ),
+                    (
+                        "Core output-contract classification",
+                        "core_output_contract_classification",
+                    ),
+                    (
+                        "ADR-021 document mirror parity",
+                        "document_mirror_matches_adr021",
+                    ),
+                    ("non-JSON document", parity + "[prose_around_json]"),
+                    ("malformed JSON", parity + "[malformed_json]"),
+                    ("multiple JSON documents", parity + "[multiple_documents]"),
+                    ("duplicate JSON key", parity + "[duplicate_key]"),
+                    ("field-set failure", parity + "[missing_field]"),
+                    ("field-type failure", parity + "[requests_type]"),
+                    ("disposition failure", parity + "[invalid_disposition]"),
+                    ("governing-source failure", parity + "[source_not_supplied]"),
+                    ("request-set failure", parity + "[too_many_requests]"),
+                    ("request-kind failure", parity + "[invalid_kind]"),
+                    ("request-path failure", parity + "[named_without_path]"),
+                    (
+                        "request-choices failure",
+                        parity + "[single_clarification_choice]",
+                    ),
+                    ("value-bound failure", parity + "[explanation_oversize]"),
+                    ("coherence failure", parity + "[sufficient_with_request]"),
+                    ("prerequisites classification", "prerequisites_classification"),
+                    ("unknown fallback", "unknown_fallback_when_classifier_fails"),
+                    ("disagreement behavior", "disagreement_keeps_agent_result"),
+                    (
+                        "valid output bypasses diagnostics",
+                        "valid_output_bypasses_diagnostics",
+                    ),
+                    (
+                        "Agent result authoritative; no semantic synthesis",
+                        "disagreement_keeps_agent_result",
+                    ),
+                    (
+                        "other failures not diagnosed",
+                        "other_failures_and_success_are_not_diagnosed",
+                    ),
+                    (
+                        "no raw output, prompt or exception text persisted",
+                        "spawn_invalid_output_persists_closed_fields_only",
+                    ),
+                    (
+                        "closed, consistent envelope diagnosis only",
+                        "envelope_diagnosis_must_be_closed_and_consistent",
+                    ),
+                    (
+                        "additive report fields; valid records unchanged",
+                        "successful_call_records_have_no_output_fields",
+                    ),
+                    (
+                        "smoke contract failure precedence unchanged",
+                        "spawn_invalid_output_persists_closed_fields_only",
+                    ),
+                    ("no retry or second diagnostic call", parity),
+                    (
+                        "d09 semantic request-quality failure unchanged",
+                        "d09_remains_semantic_request_quality_failure",
+                    ),
+                    (
+                        "Agent, prompt, parser, revision-2 and profile pins unchanged",
+                        "agent_evaluator_and_profile_sources_match_pins",
+                    ),
+                ]
+            )
             offset = len(coverage) - 50
             for number, (label, case) in enumerate(coverage, 5):
                 phase(number, label)
@@ -384,7 +510,7 @@ def main() -> int:
             ):
                 raise ValueError("offline fence missing")
             done.append(current)
-            checked = [PACKAGE, TEST, FIX_TEST, str(ROOT / SELF)]
+            checked = [PACKAGE, TEST, FIX_TEST, DIAG_TEST, str(ROOT / SELF)]
             phase(62 + offset, "mypy")
             run(FORGE, "mypy", "--cache-dir", str(temp / "mypy"), *checked)
             done.append(current)
@@ -416,7 +542,8 @@ def main() -> int:
     for name in done:
         print("PASS " + name)
     print(
-        "FORGEAI-ANALYST-DESIGN-LIVE-1 HARNESS-RUNTIME-FIX-1 LOCALLY QUALIFIED — no live model; no Docker"
+        "FORGEAI-ANALYST-DESIGN-LIVE-1 PARSER-DIAGNOSTICS-1 LOCAL VALIDATION PASSED"
+        " — no live model; no Docker"
     )
     return 0
 
