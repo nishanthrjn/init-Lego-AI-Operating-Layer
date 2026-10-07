@@ -235,3 +235,14 @@ changes; the existing offline validator remains the operator regression command:
 Do not run a model to validate this decision. No commit is performed.
 
 Outcome: **LIVE EXPERIMENT DESIGN STILL INCOMPLETE**.
+
+## Superseding interpretation — 2026-10-07
+
+[FORGEAI-ANALYST-SUFFICIENCY-LIVE-PROFILE-1](FORGEAI-ANALYST-SUFFICIENCY-LIVE-PROFILE-1.md)
+authorizes the separate sufficiency interpretation and resolves the grounding
+blocker recorded above. Grounding is NOT_MEASURED; the revision-2 aggregate verdict
+is NOT_APPLICABLE, never F or an aggregate failure for absent grounding. The
+profile defines its own outcome without changing revision 2 or these execution
+parameters. Earlier incomplete-design wording records the prior disposition.
+Next: explicit maintainer authorization for LIVE-1 harness implementation; no
+harness, smoke, full run or final analysis is authorized by this continuation.
