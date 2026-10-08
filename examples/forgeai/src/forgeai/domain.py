@@ -128,7 +128,7 @@ class TaskFailure(Enum):
     REVIEW_CHANGES_REQUIRED = "the independent review requires changes"
     REVIEW_INSUFFICIENT_EVIDENCE = "the independent review found evidence insufficient"
     # Review #1 required changes but its findings did not fit a bounded rework.
-    REWORK_INPUT_FAILED = "review findings do not fit a bounded rework request"
+    REWORK_INPUT_FAILED = "rework feedback does not fit a bounded rework request"
 
 
 class ReviewInputFailure(Enum):
@@ -150,6 +150,13 @@ _REJECTIONS = frozenset(
 )
 
 
+class ReworkTrigger(Enum):
+    """What consumed the run's single rework budget (at most one per run)."""
+
+    CHECK_FINDINGS = "deterministic checks reported code findings"
+    REVIEW_CHANGES_REQUIRED = "the independent review required changes"
+
+
 class RunStage(Enum):
     """Operator-visible progress; presentation only, never control flow."""
 
@@ -160,6 +167,7 @@ class RunStage(Enum):
     CHECKS_COMPLETED = "checks completed"
     REVIEW_COMPLETED = "review completed"
     REWORK_STARTED = "rework started"
+    CHECK_REWORK_STARTED = "check-feedback rework started"
 
 
 type ProposalIdentity = tuple[tuple[str, str, str | None, str | None], ...]
@@ -200,6 +208,10 @@ class ProposalReview:
     proposal: CodingProposal = field(repr=False)
     identity: ProposalIdentity = field(repr=False)
     before: tuple[str | None, ...] = field(repr=False)
+    # For a rework: what triggered it and the exact bounded feedback the
+    # Coding Agent received, shown so the operator sees what drove the change.
+    rework: ReworkTrigger | None = None
+    feedback: tuple[str, ...] = field(default=(), repr=False)
 
     def __post_init__(self) -> None:
         if type(self.proposal) is not CodingProposal:
@@ -215,6 +227,13 @@ class ProposalReview:
                     raise ValueError("a created file has no current text")
             elif type(text) is not str or digest_text(text) != change.expected:
                 raise ValueError("current text does not match the precondition")
+        if self.rework is not None and type(self.rework) is not ReworkTrigger:
+            raise TypeError("rework trigger requires ReworkTrigger")
+        if (self.rework is None and self.feedback) or (
+            type(self.feedback) is not tuple
+            or any(type(item) is not str for item in self.feedback)
+        ):
+            raise ValueError("only a rework proposal carries feedback text")
 
 
 @dataclass(frozen=True, slots=True)
@@ -327,6 +346,8 @@ class TaskEvidence:
     start_failure: GitFailure | None = None
     planned_checks: tuple[CheckRequest, ...] = ()
     attempts: tuple[AttemptEvidence, ...] = ()
+    # The single rework budget: which event consumed it, if any.
+    rework_trigger: ReworkTrigger | None = None
     limitations: tuple[str, ...] = LIMITATIONS
 
     def __post_init__(self) -> None:
@@ -345,10 +366,25 @@ class TaskEvidence:
                 )
             ):
                 raise ValueError("check evidence must follow the configured order")
-        if len(self.attempts) == MAX_ATTEMPTS and (
-            self.attempts[0].review_decision is not ReviewDecision.CHANGES_REQUIRED
+        if self.rework_trigger is not None and (
+            type(self.rework_trigger) is not ReworkTrigger
+        ):
+            raise TypeError("rework trigger requires ReworkTrigger")
+        trigger = self.rework_trigger
+        if trigger is None and len(self.attempts) == MAX_ATTEMPTS:
+            # Pre-v0.1 evidence: a rework could only follow review #1.
+            trigger = ReworkTrigger.REVIEW_CHANGES_REQUIRED
+        if trigger is ReworkTrigger.REVIEW_CHANGES_REQUIRED and (
+            not self.attempts
+            or self.attempts[0].review_decision is not ReviewDecision.CHANGES_REQUIRED
         ):
             raise ValueError("rework requires review #1 to require changes")
+        if trigger is ReworkTrigger.CHECK_FINDINGS and not (
+            self.attempts
+            and self.findings_reworkable_for(1)
+            and self.attempts[0].review is None
+        ):
+            raise ValueError("check rework requires attempt-1 code findings")
 
     @property
     def latest(self) -> AttemptEvidence:
@@ -380,6 +416,36 @@ class TaskEvidence:
             and bool(self.planned_checks)
             and len(item.checks) == len(self.planned_checks)
             and all(record.passed for record in item.checks)
+            and item.final.head == self.start.head
+            and {entry.path for entry in item.final.entries}
+            == set(self.changed_through(attempt))
+        )
+
+    def findings_reworkable_for(self, attempt: int) -> bool:
+        """The attempt's checks all completed and reported only code findings.
+
+        Every planned check produced a result, at least one did not pass, and
+        every one that did not pass is FAILED (the tool completed and reported
+        findings). Interrupted, no-tests, error or missing results are
+        execution failures, never findings. Git integrity must also hold.
+        """
+        if not 1 <= attempt <= len(self.attempts):
+            return False
+        item = self.attempts[attempt - 1]
+        results = [record.result for record in item.checks]
+        return (
+            item.applied is not None
+            and self.start is not None
+            and item.final is not None
+            and bool(self.planned_checks)
+            and len(item.checks) == len(self.planned_checks)
+            and all(result is not None for result in results)
+            and any(not record.passed for record in item.checks)
+            and all(
+                result.outcome in {CheckOutcome.PASSED, CheckOutcome.FAILED}
+                for result in results
+                if result is not None
+            )
             and item.final.head == self.start.head
             and {entry.path for entry in item.final.entries}
             == set(self.changed_through(attempt))
@@ -515,9 +581,12 @@ class TaskResult:
             raise TypeError("an unsuccessful task requires TaskFailure")
         if self.failure is TaskFailure.REWORK_INPUT_FAILED and (
             len(evidence.attempts) != 1
-            or evidence.latest.review_decision is not ReviewDecision.CHANGES_REQUIRED
+            or (
+                evidence.latest.review_decision is not ReviewDecision.CHANGES_REQUIRED
+                and not evidence.findings_reworkable_for(1)
+            )
         ):
-            raise ValueError("rework input failure follows review #1 only")
+            raise ValueError("rework input failure follows attempt 1 only")
         if self.disposition is TaskDisposition.REJECTED:
             if self.failure not in _REJECTIONS:
                 raise ValueError("disposition does not match the failure step")

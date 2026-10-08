@@ -290,14 +290,17 @@ def test_real_stale_precondition_is_a_conflict(tmp_path: Path) -> None:
 def test_check_finding_fails_task_but_keeps_changes_and_runs_all(
     tmp_path: Path,
 ) -> None:
+    # v0.1: pure code findings consume the single rework (test_v01_check_rework);
+    # a batch that includes an execution failure (mypy exit 2 = ERROR) does not.
     root = repository(tmp_path)
-    result, _, sandbox = execute(root, sandbox=FakeSandbox((0, 1, 1)))
+    result, _, sandbox = execute(root, sandbox=FakeSandbox((0, 2, 1)))
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.CHECKS_FAILED
     assert sandbox.calls == 3
     outcomes = [r.result.outcome for r in result.evidence.checks if r.result]
-    assert outcomes == [CheckOutcome.PASSED, CheckOutcome.FAILED, CheckOutcome.FAILED]
+    assert outcomes == [CheckOutcome.PASSED, CheckOutcome.ERROR, CheckOutcome.FAILED]
     assert result.evidence.applied is not None and result.evidence.final is not None
+    assert result.evidence.rework_trigger is None and not result.evidence.reworked
 
 
 @pytest.mark.parametrize(

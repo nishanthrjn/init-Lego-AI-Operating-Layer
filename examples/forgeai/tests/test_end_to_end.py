@@ -46,7 +46,7 @@ from legoai_engineering.sandbox.values import (
 
 from forgeai.cli import ReplayModel
 from forgeai.composition import ForgeAIConfig, prepare_run
-from forgeai.domain import TaskDisposition, TaskFailure, TaskResult
+from forgeai.domain import ReworkTrigger, TaskDisposition, TaskFailure, TaskResult
 from forgeai.guard import WorkspaceGuard
 
 pytestmark = pytest.mark.skipif(
@@ -126,12 +126,17 @@ def test_fixture_task_succeeds_in_the_real_sandbox(tmp_path: Path) -> None:
 def test_sandbox_finding_fails_the_task(tmp_path: Path) -> None:
     root = repository(tmp_path)
     changes = proposal_with_wrong_test()
-    result, sandbox, _ = run(config(root, replay(changes), docker=docker()))
+    # v0.1: the real finding consumes the single rework; the scripted rework
+    # repeats the wrong test, so the real checks fail again and the run stops.
+    model = ReplayModel(changes, changes)
+    result, sandbox, _ = run(config(root, model, docker=docker()))
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.CHECKS_FAILED
-    assert sandbox.calls == 3
-    # A real sandbox finding stops the run before the reviewer is called.
+    assert sandbox.calls == 6 and model.calls == 2
+    assert result.evidence.rework_trigger is ReworkTrigger.CHECK_FINDINGS
+    # A real sandbox finding never reaches the reviewer.
     assert result.evidence.review is None
+    assert all(attempt.review is None for attempt in result.evidence.attempts)
     outcomes = {
         r.request.kind: r.result.outcome for r in result.evidence.checks if r.result
     }

@@ -4,9 +4,12 @@ The worker depends only on public LegoAI Ports, the two Agents and values.
 The composition root chooses every adapter. An attempt is: one Coding Agent
 proposal, authorized application, the configured sandboxed checks, a Git
 integrity check and, only if every deterministic gate passed, one independent
-review. A run has attempt 1 and, only when review #1 completed with
-CHANGES_REQUIRED, exactly one rework attempt 2 whose review is terminal. There
-is no loop: at most 2 proposals, 2 applies, 2 check batches and 2 reviews.
+review. A run has attempt 1 and at most one rework attempt 2, which is
+terminal. The single rework budget is consumed by exactly one trigger: the
+attempt-1 checks completed and reported only code findings (no review of that
+candidate), or review #1 completed with CHANGES_REQUIRED. Check execution
+failures never trigger a rework. There is no loop: at most 2 proposals, 2
+applies, 2 check batches and 2 reviews.
 Review findings reach the Coding Agent only as bounded labeled text; they
 never authorize, patch, apply or rerun anything themselves.
 
@@ -63,6 +66,7 @@ from forgeai.domain import (
     OperatorDecision,
     ProposalReview,
     ReviewInputFailure,
+    ReworkTrigger,
     RunStage,
     TaskDisposition,
     TaskEvidence,
@@ -73,6 +77,7 @@ from forgeai.domain import (
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.review import (
+    check_rework_constraints,
     checks_material,
     file_material,
     material_ids,
@@ -203,21 +208,29 @@ class RepositoryTaskWorker:
         )
         if isinstance(first, TaskResult):
             return first
-        # Review #1 completed with CHANGES_REQUIRED: exactly one rework.
+        # Attempt 1 consumed the single rework budget (check findings or
+        # review #1 CHANGES_REQUIRED): exactly one rework.
         return await self._rework(task, context, first)
 
     async def _rework(
         self, task: TaskRequest, context: ExecutionContext, evidence: TaskEvidence
     ) -> TaskResult:
-        review = evidence.latest.review
-        assert review is not None and review.review is not None
+        trigger = evidence.rework_trigger
+        assert trigger is not None
         try:
             # Same scope and objective; current content is re-read by the
             # Coding Agent's authorized evidence reader, never reused.
             targets = rework_targets(task.targets, evidence.changed_paths)
-            constraints = rework_constraints(
-                task.constraints, review.review, evidence.latest.checks
-            )
+            if trigger is ReworkTrigger.CHECK_FINDINGS:
+                constraints = check_rework_constraints(
+                    task.constraints, evidence.latest.checks
+                )
+            else:
+                review = evidence.latest.review
+                assert review is not None and review.review is not None
+                constraints = rework_constraints(
+                    task.constraints, review.review, evidence.latest.checks
+                )
             CodingRequest(task.objective, targets, constraints, context)
         except ValueError:
             return self._stop(task, TaskFailure.REWORK_INPUT_FAILED, evidence)
@@ -228,7 +241,12 @@ class RepositoryTaskWorker:
                 evidence, attempts=(*evidence.attempts, AttemptEvidence(2))
             )
             return self._stop(task, TaskFailure.MODEL_FAILED, reworked)
-        self.progress(RunStage.REWORK_STARTED, 2)
+        self.progress(
+            RunStage.CHECK_REWORK_STARTED
+            if trigger is ReworkTrigger.CHECK_FINDINGS
+            else RunStage.REWORK_STARTED,
+            2,
+        )
         second = await self._attempt(
             task,
             CodingRequest(task.objective, targets, constraints, rework_context),
@@ -247,7 +265,8 @@ class RepositoryTaskWorker:
         evidence: TaskEvidence,
     ) -> TaskResult | TaskEvidence:
         """One attempt. Returns evidence (not a result) only when this is
-        attempt 1 and its review completed with CHANGES_REQUIRED."""
+        attempt 1 and it consumed the rework budget: its checks reported only
+        code findings, or its review completed with CHANGES_REQUIRED."""
         number = len(evidence.attempts) + 1
         evidence = replace(
             evidence, attempts=(*evidence.attempts, AttemptEvidence(number))
@@ -307,7 +326,14 @@ class RepositoryTaskWorker:
         )
         self.progress(RunStage.AWAITING_APPROVAL, number)
         try:
-            review = ProposalReview(number, coding.proposal, identity, before)
+            review = ProposalReview(
+                number,
+                coding.proposal,
+                identity,
+                before,
+                evidence.rework_trigger if number == 2 else None,
+                request.constraints[len(task.constraints) :] if number == 2 else (),
+            )
             decision = self.approve(review)
         except Exception:
             decision = None  # an approver failure never approves
@@ -389,6 +415,9 @@ class RepositoryTaskWorker:
             record.result is None or record.result.outcome is not CheckOutcome.PASSED
             for record in records
         ):
+            if number == 1 and evidence.findings_reworkable_for(1):
+                # Code findings, not an execution failure: the single rework.
+                return replace(evidence, rework_trigger=ReworkTrigger.CHECK_FINDINGS)
             return self._stop(task, TaskFailure.CHECKS_FAILED, evidence)
         # Independent review, only after every deterministic gate passed.
         assert evidence.gates_passed
@@ -437,7 +466,9 @@ class RepositoryTaskWorker:
             # The reviewed text must be exactly the applied text.
             return self._stop(task, TaskFailure.UNEXPECTED_CHANGES, evidence)
         try:
-            proposal_text = render_proposal(proposal, materials, number)
+            proposal_text = render_proposal(
+                proposal, materials, number, evidence.rework_trigger
+            )
             supporting = (
                 checks_material(item.checks),
                 *(
@@ -497,7 +528,10 @@ class RepositoryTaskWorker:
         decision = evidence.review_decision
         if decision is ReviewDecision.CHANGES_REQUIRED:
             if number == 1:
-                return evidence  # the caller may start the single rework
+                # The caller may start the single rework.
+                return replace(
+                    evidence, rework_trigger=ReworkTrigger.REVIEW_CHANGES_REQUIRED
+                )
             return self._stop(task, TaskFailure.REVIEW_CHANGES_REQUIRED, evidence)
         if decision is ReviewDecision.INSUFFICIENT_EVIDENCE:
             return self._stop(task, TaskFailure.REVIEW_INSUFFICIENT_EVIDENCE, evidence)
