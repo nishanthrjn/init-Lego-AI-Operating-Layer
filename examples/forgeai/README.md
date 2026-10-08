@@ -90,11 +90,25 @@ uv run forgeai run `
    not a Git repository, invalid target, Ollama unreachable or model not
    installed, or no Git/Docker executable. A repository with no commit or
    with uncommitted changes is rejected before the model is called.
-3. **Progress lines:** `[1/7] Repository verified`, `[2/7] Proposal
+3. **Docker readiness**, checked before the scope is shown and before any
+   model call. It uses the Engineering sandbox's metadata-only preflight:
+   `docker info`, then `docker image inspect` of the pinned checks image. A
+   not-ready sandbox refuses the run with `startup refused: ...` and one next
+   action, exit code `2`. Nothing is called, written, checked or reviewed.
+   - Docker CLI missing, or the Docker Desktop Linux engine unreachable: start
+     Docker Desktop (Linux containers).
+   - Qualified checks image absent: build it from
+     `sandbox-images/python-checks` (CR-2a).
+   - Required sandbox controls missing: use the Desktop Linux engine.
+
+   ForgeAI never starts Docker and never pulls or builds images. Ready means
+   only "ready right now". Checks can still fail later and are reported
+   normally.
+4. **Progress lines:** `[1/7] Repository verified`, `[2/7] Proposal
    generated`, `[3/7] Waiting for approval`, `[4/7] Changes applied`,
    `[5/7] Checks completed`, `[6/7] Review completed` and `[7/7] Final
    result`. A rework is announced with `[rework]`.
-4. **The proposal**, before anything is written: each changed path with
+5. **The proposal**, before anything is written: each changed path with
    create/update and its size, the per-file reason, the summary, risks and
    unknowns. File contents are not printed.
 
@@ -127,9 +141,9 @@ succeeded, `2` rejected before any model call, `1` everything else.
 
 **Known v0.1 limits.**
 - Live-model quality is **unqualified**; only replay runs are qualified.
-- Docker *daemon* availability is not probed before the run. If the daemon
-  is down, the run fails at the check step after the approved changes were
-  written, and the warning lists them.
+- Docker readiness is a point-in-time check. If Docker stops after
+  startup, the check step fails after the approved changes were written,
+  and the warning lists them.
 - Startup checks the Ollama model list only, not the model's quality.
 
 ## Workflow

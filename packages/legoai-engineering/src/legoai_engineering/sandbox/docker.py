@@ -109,6 +109,32 @@ class DockerSandbox:
         if type(self.policy) is not SandboxPolicy:
             raise TypeError("sandbox requires SandboxPolicy")
 
+    def verify_ready(self, cancellation: CancellationSignal | None = None) -> None:
+        """Startup readiness: the metadata-only preflight every `execute` runs.
+
+        `docker info` (engine reachable, Linux, required resource and seccomp
+        controls), `docker image inspect` of the pinned image and, only if that
+        fails, `docker version` to tell a disconnect from a missing image. It
+        never creates, starts, pulls or builds anything and runs no workload.
+
+        Raises SandboxError: RUNTIME_UNAVAILABLE (CLI missing or engine
+        unreachable), ENVIRONMENT_UNAVAILABLE (pinned image absent),
+        UNSUPPORTED (controls missing, or not the Windows reference host),
+        TIMEOUT or CANCELLED. Success is a point-in-time observation only: a
+        later `execute` may still fail, and it repeats this preflight itself.
+        """
+        deadline = time.monotonic() + min(30.0, float(self.policy.timeout_seconds))
+        _check(deadline, cancellation)
+        if os.name != "nt":
+            raise SandboxError(SandboxFailure.UNSUPPORTED)
+        try:
+            with tempfile.TemporaryDirectory(prefix="legoai-m6-") as directory:
+                cli = _Cli(self.config.executable, Path(directory))
+                _preflight(cli, self.config.image, deadline, cancellation)
+        except OSError as error:
+            # Only the private, input-free CLI config directory can fail here.
+            raise SandboxError(SandboxFailure.CLEANUP) from error
+
     def execute(
         self, request: SandboxRequest, cancellation: CancellationSignal | None = None
     ) -> SandboxResult:
