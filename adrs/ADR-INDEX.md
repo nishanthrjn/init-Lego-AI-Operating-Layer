@@ -34,6 +34,17 @@ maintainer the same day. Evidence: implementation commit `f3d824d`, locally
 qualified with 63/63 offline validator phases. Live provider behavior is not
 qualified. Like ADR-017 to ADR-021, it is not yet entered in the register table
 and is excluded from these counts.
+[ADR-023](ADR-023.md) (remote Bearer credential profile for single-operator
+Model providers, SRCP-1) was drafted on 2026-10-09 after
+OPENAI-COMPATIBLE-REMOTE-CREDENTIAL-1 was stopped for conflicting with accepted
+ADRs. It was **Accepted** by explicit maintainer decision the same day.
+Acceptance appended scoped addenda: ADR-010 §23, ADR-007 §18 and ADR-014
+§14.18. It authorizes no implementation, and remote providers remain
+unsupported in the runtime.
+[ADR-024](ADR-024.md) (remote Model disclosure admission,
+REMOTE-MODEL-DISCLOSURE-1) is **Proposed** (2026-10-09) and awaits a
+maintainer decision. Like ADR-017 to ADR-022, neither is entered in the
+register table, and both are excluded from these counts.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.
