@@ -39,7 +39,7 @@ def test_dirty_repository_exits_rejected_without_model(
     arguments = [str(root), "--objective", OBJECTIVE, "--replay", str(replay)]
     for target in TARGETS:
         arguments += ["--target", target]
-    assert main(arguments) == 2
+    assert main(arguments, ready=lambda config: None) == 2
     output = capsys.readouterr().out
     assert "disposition: rejected" in output
     assert "repository has pre-existing changes" in output

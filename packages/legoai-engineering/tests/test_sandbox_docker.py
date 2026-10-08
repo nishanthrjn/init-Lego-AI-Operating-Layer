@@ -19,6 +19,7 @@ from legoai_engineering.sandbox._process import _Cli
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
     DockerSandboxConfig,
+    SandboxImage,
     _preflight,
 )
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
@@ -375,3 +376,11 @@ def test_input_control_characters_and_empty_artifact(backend: DockerSandbox) -> 
     )
     assert result.exit_code == 0, result.stderr
     assert result.artifacts[0].content == b""
+
+
+def test_real_checks_environment_is_ready() -> None:
+    """Startup readiness on the qualified Desktop engine: metadata only."""
+    executable = shutil.which("docker")
+    assert executable is not None, "requires Docker Desktop; no skip"
+    for profile in (SandboxImage.PYTHON_CHECKS, SandboxImage.PYTHON_STDLIB):
+        DockerSandbox(DockerSandboxConfig(Path(executable), profile)).verify_ready()

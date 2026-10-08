@@ -66,6 +66,7 @@ from legoai_engineering.sandbox.docker import (
     DockerSandboxConfig,
     SandboxImage,
 )
+from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 from legoai_engineering.sandbox.ports import SandboxExecutionPort
 from legoai_engineering.sandbox.values import SandboxPolicy
 
@@ -229,6 +230,28 @@ def prepare_run(
         progress,
     )
     return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
+
+
+def sandbox_readiness(config: ForgeAIConfig) -> SandboxFailure | None:
+    """Startup probe of the configured Docker checks sandbox, or why not ready.
+
+    Metadata only through the Engineering adapter (no workload, pull, build or
+    Docker start). Ready is a point-in-time observation, not a check result.
+    """
+    if type(config) is not ForgeAIConfig:
+        raise TypeError("sandbox readiness requires ForgeAIConfig")
+    try:
+        sandbox = DockerSandbox(
+            DockerSandboxConfig(config.docker_executable, config.sandbox_image),
+            config.sandbox_policy,
+        )
+    except TypeError, ValueError:
+        return SandboxFailure.RUNTIME_UNAVAILABLE  # not a usable docker.exe path
+    try:
+        sandbox.verify_ready()
+    except SandboxError as error:
+        return error.reason
+    return None
 
 
 async def run_task(

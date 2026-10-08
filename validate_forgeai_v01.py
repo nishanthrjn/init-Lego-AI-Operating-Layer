@@ -22,9 +22,18 @@ ROOT = Path(__file__).resolve().parent
 FORGEAI = ROOT / "examples" / "forgeai"
 ENGINEERING = ROOT / "packages" / "legoai-engineering"
 SELF = ROOT / "validate_forgeai_v01.py"
-BASE = "3993320"  # last commit before the v0.1 product slice
+BASE = "3993320"  # last commit before the v0.1 product slices
 IMAGE = "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
 SOURCES = ["src", "tests", "demo.py"]
+ENGINEERING_ALLOWED = {
+    "packages/legoai-engineering/src/legoai_engineering/sandbox/docker.py",
+    "packages/legoai-engineering/tests/test_sandbox_readiness.py",
+    "packages/legoai-engineering/tests/test_sandbox_docker.py",
+}
+READINESS = [
+    "src/legoai_engineering/sandbox/docker.py",
+    "tests/test_sandbox_readiness.py",
+]
 
 
 def main() -> int:
@@ -116,9 +125,35 @@ def main() -> int:
                 env=project_environment,
             )
             run(
-                "2 no LegoAI or Engineering source change in this slice",
-                [git, "diff", "--exit-code", "--stat", BASE, "--", "src", "packages"],
+                "2 no LegoAI Core source change",
+                [git, "diff", "--exit-code", "--stat", BASE, "--", "src"],
             )
+            phase = "2b Engineering change limited to the sandbox readiness seam"
+            changed = set(
+                subprocess.run(
+                    [git, "diff", "--name-only", BASE, "--", "packages"],
+                    cwd=ROOT,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.split()
+            )
+            changed |= set(
+                subprocess.run(
+                    [git, "ls-files", "--others", "--exclude-standard", "packages"],
+                    cwd=ROOT,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.split()
+            )
+            if changed - ENGINEERING_ALLOWED:
+                raise RuntimeError(
+                    "unexpected Engineering change: "
+                    + ", ".join(sorted(changed - ENGINEERING_ALLOWED))
+                )
+            print("\n[PHASE] " + phase, flush=True)
+            completed.append(phase)
             project(
                 "3 typing",
                 FORGEAI,
@@ -160,7 +195,7 @@ def main() -> int:
                 [python, "-m", "ruff", "format", "--check", str(SELF)],
             )
             tests(
-                "6 v0.1 product: CLI, approval boundary, final result, exclusion",
+                "6 v0.1 product: CLI, approval, readiness refusal, result, exclusion",
                 "tests/test_v01_product.py",
             )
             tests("7 architecture / import boundaries", "tests/test_architecture.py")
@@ -175,6 +210,49 @@ def main() -> int:
             tests("9 real-Docker end-to-end", "tests/test_end_to_end.py")
             tests(
                 "10 clean install with explicit approval", "tests/test_clean_install.py"
+            )
+            tests(
+                "10b Engineering sandbox readiness (offline) and sandbox regressions",
+                "tests/test_sandbox_readiness.py",
+                "tests/test_sandbox.py",
+                "tests/test_architecture.py",
+                cwd=ENGINEERING,
+            )
+            tests(
+                "10c real Docker Desktop readiness (metadata only)",
+                "tests/test_sandbox_docker.py::test_real_checks_environment_is_ready",
+                cwd=ENGINEERING,
+            )
+            project(
+                "10d typing (readiness seam)",
+                ENGINEERING,
+                "python",
+                "-m",
+                "mypy",
+                "--cache-dir",
+                str(base / "mypy-e"),
+                *READINESS,
+            )
+            project(
+                "10e Ruff lint (readiness seam)",
+                ENGINEERING,
+                "python",
+                "-m",
+                "ruff",
+                "check",
+                "--no-cache",
+                *READINESS,
+            )
+            project(
+                "10f Ruff format (readiness seam)",
+                ENGINEERING,
+                "python",
+                "-m",
+                "ruff",
+                "format",
+                "--check",
+                "--no-cache",
+                *READINESS,
             )
             tests(
                 "11 Engineering Coding/Reviewer regressions",

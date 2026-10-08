@@ -25,15 +25,24 @@ from forgeai_support import (
     config,
     git_executable,
     proposal,
+    replay,
     repository,
     snapshot,
     task,
 )
 from legoai.intelligence.model.ports import ModelResponseUncertainError
+from legoai_engineering.sandbox.errors import SandboxFailure
 
 from demo import OBJECTIVE, TARGETS
-from forgeai.cli import main, ollama_ready, reporter, summarize, terminal_approver
-from forgeai.composition import prepare_run
+from forgeai.cli import (
+    ReplayModel,
+    ollama_ready,
+    reporter,
+    summarize,
+    terminal_approver,
+)
+from forgeai.cli import main as cli_main
+from forgeai.composition import prepare_run, sandbox_readiness
 from forgeai.domain import (
     OperatorDecision,
     ProposalReview,
@@ -46,6 +55,12 @@ from forgeai.guard import WorkspaceGuard
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "forgeai"
 DOCKER = shutil.which("docker")  # path only; never executed by these tests
 needs_docker_path = pytest.mark.skipif(DOCKER is None, reason="Docker CLI path")
+
+
+def main(argv: list[str], **options: Any) -> int:
+    """The CLI with Docker readiness stubbed ready unless a test sets it."""
+    options.setdefault("ready", lambda config: None)
+    return cli_main(argv, **options)
 
 
 def supervised(
@@ -178,7 +193,7 @@ def test_dirty_repository_rejected_before_model(tmp_path: Path) -> None:
     (root / "untracked.txt").write_text("x\n", encoding="utf-8")
     out: list[str] = []
     asked: list[str] = []
-    code = main(cli(root, tmp_path), ask=asked.append, out=out.append)  # type: ignore[arg-type]
+    code = main(cli(root, tmp_path), ask=asked.append, out=out.append)
     assert code == 2 and not asked
     assert "reason: repository has pre-existing changes" in out[-1]
 
@@ -407,3 +422,99 @@ def test_ollama_route_is_configuration_only() -> None:
     assert "qwen" not in (SOURCE / "worker.py").read_text(encoding="utf-8")
     assert "qwen" not in (SOURCE / "domain.py").read_text(encoding="utf-8")
     assert '"--ollama-model", default="qwen2.5-coder:7b"' in text
+
+
+# Docker readiness precheck (before any model call or effect)
+
+
+@needs_docker_path
+@pytest.mark.parametrize(
+    ("failure", "action"),
+    [
+        (SandboxFailure.RUNTIME_UNAVAILABLE, "Start Docker Desktop"),
+        (SandboxFailure.ENVIRONMENT_UNAVAILABLE, "never pulls or builds images"),
+        (SandboxFailure.UNSUPPORTED, "Linux engine"),
+        (SandboxFailure.TIMEOUT, "could not be confirmed"),
+    ],
+)
+def test_docker_not_ready_refuses_before_any_model_call_or_effect(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure: SandboxFailure,
+    action: str,
+) -> None:
+    root = repository(tmp_path)
+    before = snapshot(root)
+    calls: list[str] = []
+
+    async def chat(self: ReplayModel, request: object) -> object:
+        calls.append("model")
+        raise AssertionError("model called before readiness")
+
+    monkeypatch.setattr(ReplayModel, "chat", chat)
+    out: list[str] = []
+
+    def ask(prompt: str) -> str:
+        calls.append("ask")
+        return "y"
+
+    code = main(
+        cli(root, tmp_path),
+        ask=ask,
+        out=out.append,
+        ready=lambda config: failure,
+    )
+    text = "\n".join(out)
+    assert code == 2 and calls == []
+    assert text.startswith("startup refused: ") and action in text
+    assert "no model was called and nothing was written" in text
+    assert "[1/7]" not in text and "Proposal" not in text and "Traceback" not in text
+    assert snapshot(root) == before and git_clean(root)
+
+
+@needs_docker_path
+def test_readiness_runs_before_scope_and_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = repository(tmp_path)
+    order: list[str] = []
+    original = ReplayModel.chat
+
+    async def chat(self: ReplayModel, request: object) -> object:
+        order.append("model")
+        return await original(self, request)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(ReplayModel, "chat", chat)
+
+    def ready(config: object) -> None:
+        order.append("ready")
+
+    def out(line: str) -> None:
+        if line.startswith("ForgeAI v0.1"):
+            order.append("scope")
+
+    assert main(cli(root, tmp_path), ask=lambda p: "n", out=out, ready=ready) == 1
+    assert order == ["ready", "scope", "model"]
+
+
+def test_adapter_reports_missing_or_invalid_docker_cli(tmp_path: Path) -> None:
+    root = repository(tmp_path)
+    missing = config(root, replay(), docker=tmp_path / "missing" / "docker.exe")
+    assert sandbox_readiness(missing) is SandboxFailure.RUNTIME_UNAVAILABLE
+    not_docker = config(root, replay(), docker=git_executable())
+    assert sandbox_readiness(not_docker) is SandboxFailure.RUNTIME_UNAVAILABLE
+
+
+@needs_docker_path
+def test_real_docker_desktop_is_ready_for_the_checks_image(tmp_path: Path) -> None:
+    """Qualified environment: metadata-only readiness; no workload runs."""
+    root = repository(tmp_path)
+    assert sandbox_readiness(config(root, replay(), docker=Path(str(DOCKER)))) is None
+
+
+def test_readiness_stays_in_the_composition_root() -> None:
+    for name in ("cli", "domain", "worker", "review", "guard"):
+        text = (SOURCE / f"{name}.py").read_text(encoding="utf-8")
+        assert "sandbox.docker" not in text and "subprocess" not in text, name
+    composition = (SOURCE / "composition.py").read_text(encoding="utf-8")
+    assert "verify_ready()" in composition and "subprocess" not in composition

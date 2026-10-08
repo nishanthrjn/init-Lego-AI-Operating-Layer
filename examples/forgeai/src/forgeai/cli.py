@@ -51,8 +51,14 @@ from legoai_engineering.repository.errors import WorkspaceError
 from legoai_engineering.repository.mutation import FileChangeKind
 from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.reviewer.values import FindingSeverity
+from legoai_engineering.sandbox.errors import SandboxFailure
 
-from forgeai.composition import ForgeAIConfig, local_profile, prepare_run
+from forgeai.composition import (
+    ForgeAIConfig,
+    local_profile,
+    prepare_run,
+    sandbox_readiness,
+)
 from forgeai.domain import (
     OperatorDecision,
     ProposalReview,
@@ -135,6 +141,31 @@ def ollama_ready(url: str, model: str, timeout: float = 5.0) -> str | None:
     if model not in names:
         return f"model {model} is not installed; run `ollama pull {model}`"
     return None
+
+
+def readiness_message(failure: SandboxFailure) -> str:
+    """One readable startup failure with one next action; no traceback."""
+    if failure is SandboxFailure.RUNTIME_UNAVAILABLE:
+        return (
+            "Docker is not ready: the Docker CLI or the Docker Desktop Linux engine "
+            "is unavailable. Start Docker Desktop (Linux containers) and retry."
+        )
+    if failure is SandboxFailure.ENVIRONMENT_UNAVAILABLE:
+        return (
+            "Docker is running, but the qualified ForgeAI checks image is not "
+            "present locally. Build it from sandbox-images/python-checks (CR-2a) "
+            "and retry; ForgeAI never pulls or builds images."
+        )
+    if failure is SandboxFailure.UNSUPPORTED:
+        return (
+            "Docker is running without the sandbox controls ForgeAI requires "
+            "(Windows host, Linux engine, cgroup v2, seccomp, resource limits). "
+            "Use Docker Desktop's Linux engine and retry."
+        )
+    return (
+        f"Docker readiness could not be confirmed ({failure.value}). "
+        "Check Docker Desktop and retry."
+    )
 
 
 def _kind(value: FileChangeKind) -> str:
@@ -360,6 +391,7 @@ def main(
     *,
     ask: Ask | None = input,
     out: Out = print,
+    ready: Callable[[ForgeAIConfig], SandboxFailure | None] = sandbox_readiness,
 ) -> int:
     """The answer is read from stdin; only an explicit y/yes approves.
 
@@ -405,6 +437,12 @@ def main(
         )
     except (TypeError, ValueError) as error:
         parser.error(f"invalid configuration: {error}")
+    # Before any model call or effect: refuse unless the checks sandbox is ready.
+    failure = ready(config)
+    if failure is not None:
+        out("startup refused: " + readiness_message(failure))
+        out("no model was called and nothing was written")
+        return 2
     out(header(config, task, model))
     try:
         # Host and adapter composition only; no model call or effect yet.
