@@ -42,9 +42,12 @@ Acceptance appended scoped addenda: ADR-010 §23, ADR-007 §18 and ADR-014
 §14.18. It authorizes no implementation, and remote providers remain
 unsupported in the runtime.
 [ADR-024](ADR-024.md) (remote Model disclosure admission,
-REMOTE-MODEL-DISCLOSURE-1) is **Proposed** (2026-10-09) and awaits a
-maintainer decision. Like ADR-017 to ADR-022, neither is entered in the
-register table, and both are excluded from these counts.
+REMOTE-MODEL-DISCLOSURE-1) was proposed on 2026-10-09 and **Accepted** by
+explicit maintainer decision the same day. It decides the disclosure
+architecture only. There is no implementation, no remote provider support and
+no KISSKI support; the runtime still refuses REMOTE. Like ADR-017 to ADR-022,
+neither ADR-023 nor ADR-024 is entered in the register table, and both are
+excluded from these counts.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.
