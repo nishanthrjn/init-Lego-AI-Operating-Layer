@@ -27,12 +27,18 @@ class ModelRequirement:
 
 @dataclass(frozen=True, slots=True)
 class ModelBinding:
-    """Inert operator configuration, never a provider client or availability proof."""
+    """Inert operator configuration, never a provider client or availability proof.
+
+    `structured_output` declares that the admitted binding's adapter honors a
+    `ChatRequest.response_format` requirement (ADR-022). It is a capability
+    fact, never an authorization grant. Default False.
+    """
 
     binding_id: str = field(repr=False)
     requirement: ModelRequirement
     model_id: ModelId
     provider_id: ProviderId
+    structured_output: bool = False
 
     def __post_init__(self) -> None:
         _validate(self.binding_id)
@@ -44,6 +50,8 @@ class ModelBinding:
             raise TypeError("model binding requires ModelId")
         if type(self.provider_id) is not ProviderId:
             raise TypeError("model binding requires ProviderId")
+        if type(self.structured_output) is not bool:
+            raise TypeError("structured_output must be bool")
 
 
 def _validate_bindings(bindings: tuple[ModelBinding, ...]) -> None:

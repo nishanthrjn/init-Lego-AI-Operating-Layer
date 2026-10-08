@@ -172,6 +172,12 @@ class OpenAICompatibleModelAdapter:
     async def chat(self, request: ChatRequest) -> ChatResult:
         if type(request) is not ChatRequest:
             raise TypeError("chat requires ChatRequest")
+        if request.response_format is not None:
+            # ADR-022 support is not implemented or qualified for this adapter.
+            # Refuse before any request rather than silently ignore it.
+            raise ModelPreflightError(
+                "structured output is not supported by this adapter"
+            )
         body: dict[str, object] = {
             "model": self._config.chat_model,
             "messages": [

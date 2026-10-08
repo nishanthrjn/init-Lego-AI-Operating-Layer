@@ -209,6 +209,9 @@ class TrustedModelContribution:
     model_id: ModelId
     purposes: frozenset[ModelPurpose]
     construct: Callable[[], ModelPort] = field(repr=False, compare=False)
+    # ADR-022: the operator declares that this ModelPort honors
+    # ChatRequest.response_format. It is a capability fact, never authority.
+    structured_output: bool = False
 
     def __post_init__(self) -> None:
         if type(self.plugin_id) is not PluginId:
@@ -225,6 +228,8 @@ class TrustedModelContribution:
             raise HostError(HostFailure.INVALID_CONFIGURATION)
         if not callable(self.construct):
             raise TypeError("contribution requires an operator-supplied constructor")
+        if type(self.structured_output) is not bool:
+            raise TypeError("structured_output must be bool")
 
 
 @dataclass(frozen=True, slots=True)

@@ -159,6 +159,7 @@ def _realization(
                 selected.requirement,
                 ModelId(provider.chat_model),
                 provider_id,
+                structured_output=True,  # the Ollama adapter maps ADR-022
             )
 
             def construct() -> ModelPort:
@@ -202,6 +203,7 @@ def _realization(
             selected.requirement,
             provider.model_id,
             provider.provider_id,
+            structured_output=provider.structured_output,
         )
         declaration = PluginDeclaration(
             provider.plugin_id,

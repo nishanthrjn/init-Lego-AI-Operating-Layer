@@ -38,8 +38,12 @@ model backs that offer. This mirrors exactly how `DispatchPermit`/
 selection.
 """
 
+import hashlib
+import json
+import re
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import ClassVar
 
 from legoai.kernel.identity import _validate
 
@@ -96,14 +100,184 @@ class ChatMessage:
             raise TypeError("chat message content must be str")
 
 
+# --- ADR-022: provider-neutral structured-output requirement -----------------
+# A caller may require one JSON document constrained by a bounded, closed
+# JSON-Schema subset (object with closed properties; string with optional enum,
+# maxLength and nullability; array with items and optional maxItems). These
+# values describe intent only: no provider mechanism, options bag, parsing or
+# authority. Adapters map them; consumers still parse and validate.
+class StructuredOutputLimits:
+    """Fixed, conservative bounds for ADR-022 schemas (not configurable)."""
+
+    MAX_DEPTH: ClassVar[int] = 6  # root object = depth 1
+    MAX_PROPERTIES: ClassVar[int] = 32  # per object
+    MAX_NODES: ClassVar[int] = 128  # schema nodes in one format
+    MAX_ENUM_VALUES: ClassVar[int] = 32
+    MAX_ENUM_CHARS: ClassVar[int] = 128
+    MAX_STRING_LENGTH: ClassVar[int] = 65_536
+    MAX_ARRAY_ITEMS: ClassVar[int] = 256
+    MAX_SCHEMA_BYTES: ClassVar[int] = 16_384  # canonical serialized schema
+    NAME: ClassVar[str] = r"[a-z_][a-z0-9_]{0,63}"
+
+
+def _bound(value: int | None, limit: int, label: str) -> None:
+    if value is None:
+        return
+    if type(value) is not int or not 1 <= value <= limit:
+        raise ValueError(f"{label} must be an int within 1..{limit}")
+
+
+@dataclass(frozen=True, slots=True)
+class JsonString:
+    max_length: int | None = None
+    enum: tuple[str, ...] = ()
+    nullable: bool = False
+
+    def __post_init__(self) -> None:
+        _bound(self.max_length, StructuredOutputLimits.MAX_STRING_LENGTH, "maxLength")
+        if type(self.enum) is not tuple or any(type(v) is not str for v in self.enum):
+            raise TypeError("enum must be a tuple of str")
+        if len(self.enum) > StructuredOutputLimits.MAX_ENUM_VALUES:
+            raise ValueError("too many enum values")
+        if len(set(self.enum)) != len(self.enum):
+            raise ValueError("duplicate enum value")
+        if any(
+            not v or len(v) > StructuredOutputLimits.MAX_ENUM_CHARS for v in self.enum
+        ):
+            raise ValueError("enum values must be 1..128 characters")
+        if type(self.nullable) is not bool:
+            raise TypeError("nullable must be bool")
+
+
+@dataclass(frozen=True, slots=True)
+class JsonArray:
+    items: JsonSchema
+    max_items: int | None = None
+
+    def __post_init__(self) -> None:
+        if type(self.items) not in (JsonString, JsonArray, JsonObject):
+            raise TypeError("array items must be a supported schema node")
+        _bound(self.max_items, StructuredOutputLimits.MAX_ARRAY_ITEMS, "maxItems")
+
+
+@dataclass(frozen=True, slots=True)
+class JsonObject:
+    """Closed object: no property beyond `properties` is permitted."""
+
+    properties: tuple[tuple[str, JsonSchema], ...]
+    required: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if type(self.properties) is not tuple or not self.properties:
+            raise ValueError("object requires a non-empty properties tuple")
+        if len(self.properties) > StructuredOutputLimits.MAX_PROPERTIES:
+            raise ValueError("too many object properties")
+        names = []
+        for entry in self.properties:
+            if type(entry) is not tuple or len(entry) != 2:
+                raise TypeError("properties must be (name, schema) pairs")
+            name, node = entry
+            if type(name) is not str or not re.fullmatch(
+                StructuredOutputLimits.NAME, name
+            ):
+                raise ValueError("property names must be lower-case identifiers")
+            if type(node) not in (JsonString, JsonArray, JsonObject):
+                raise TypeError("property schema must be a supported node")
+            names.append(name)
+        if len(set(names)) != len(names):
+            raise ValueError("duplicate property name")
+        if type(self.required) is not tuple or any(
+            type(r) is not str for r in self.required
+        ):
+            raise TypeError("required must be a tuple of str")
+        if len(set(self.required)) != len(self.required) or not set(
+            self.required
+        ) <= set(names):
+            raise ValueError("required names must be unique declared properties")
+
+
+type JsonSchema = JsonString | JsonArray | JsonObject
+
+
+def _canonical(node: JsonSchema) -> dict[str, object]:
+    if isinstance(node, JsonString):
+        out: dict[str, object] = {
+            "type": ["string", "null"] if node.nullable else "string"
+        }
+        if node.enum:
+            out["enum"] = [*node.enum, None] if node.nullable else list(node.enum)
+        if node.max_length is not None:
+            out["maxLength"] = node.max_length
+        return out
+    if isinstance(node, JsonArray):
+        out = {"type": "array", "items": _canonical(node.items)}
+        if node.max_items is not None:
+            out["maxItems"] = node.max_items
+        return out
+    return {
+        "type": "object",
+        "properties": {name: _canonical(child) for name, child in node.properties},
+        "required": list(node.required),
+        "additionalProperties": False,
+    }
+
+
+def _measure(node: JsonSchema, depth: int) -> int:
+    if depth > StructuredOutputLimits.MAX_DEPTH:
+        raise ValueError("schema nesting is too deep")
+    if isinstance(node, JsonString):
+        return 1
+    if isinstance(node, JsonArray):
+        return 1 + _measure(node.items, depth + 1)
+    return 1 + sum(_measure(child, depth + 1) for _, child in node.properties)
+
+
+@dataclass(frozen=True, slots=True)
+class StructuredResponseFormat:
+    """Require one JSON document matching `schema` (a closed root object).
+
+    Provider enforcement improves first-attempt shape only. It is never
+    product validation, and it grants no authority.
+    """
+
+    schema: JsonObject = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if type(self.schema) is not JsonObject:
+            raise TypeError("structured output requires a root JsonObject")
+        if _measure(self.schema, 1) > StructuredOutputLimits.MAX_NODES:
+            raise ValueError("schema has too many nodes")
+        if len(self._encoded()) > StructuredOutputLimits.MAX_SCHEMA_BYTES:
+            raise ValueError("schema is too large")
+
+    def json_schema(self) -> dict[str, object]:
+        """A fresh canonical JSON-Schema object; callers may not mutate state."""
+        return _canonical(self.schema)
+
+    def _encoded(self) -> bytes:
+        return json.dumps(
+            self.json_schema(), sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+
+    def digest(self) -> str:
+        """SHA-256 of the canonical schema: safe identity for diagnostics."""
+        return hashlib.sha256(self._encoded()).hexdigest()
+
+
 @dataclass(frozen=True, slots=True)
 class ChatRequest:
     """An ordered conversation to complete. Carries no model/provider
     selection (see module docstring), no raw provider options bag, and no
     Agent/Goal/Team concept. `messages` must be non-empty -- an empty
-    conversation has no meaningful completion."""
+    conversation has no meaningful completion.
+
+    `response_format` (ADR-022) optionally requires one JSON document matching
+    a bounded schema. `None`, the default, is ordinary text chat, unchanged. A
+    binding that cannot honor a requirement fails closed; it never silently
+    downgrades to unconstrained text."""
 
     messages: tuple[ChatMessage, ...]
+    response_format: StructuredResponseFormat | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if type(self.messages) is not tuple or any(
@@ -114,6 +288,11 @@ class ChatRequest:
             )
         if len(self.messages) == 0:
             raise ValueError("chat request requires at least one message")
+        if (
+            self.response_format is not None
+            and type(self.response_format) is not StructuredResponseFormat
+        ):
+            raise TypeError("response_format must be StructuredResponseFormat or None")
 
 
 @dataclass(frozen=True, slots=True)

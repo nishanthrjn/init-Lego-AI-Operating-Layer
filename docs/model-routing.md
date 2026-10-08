@@ -77,6 +77,30 @@ Operator labels/IDs must not be used to smuggle secret material; opaque strings
 cannot prove whether their contents are sensitive. Credentials remain a future
 qualified adapter/composition concern. No Evidence is automatically created.
 
+## Structured output (ADR-022)
+
+`ChatRequest.response_format` optionally requires one JSON document matching
+a bounded `StructuredResponseFormat`. It is a closed subset of JSON Schema:
+- objects with closed properties;
+- strings with enum, maxLength or nullability;
+- arrays with maxItems.
+
+`None`, the default, is unchanged text chat.
+
+`ModelBinding.structured_output` states whether the admitted binding honors
+the requirement:
+- built-in Ollama: yes;
+- OpenAI-compatible: not yet;
+- trusted contributions: by explicit declaration, default no.
+
+Routing is unchanged, with no preference or fallback. A structured request
+whose resolved binding lacks the capability fails closed before any call
+(FAILED, effect NONE, `VALIDATION_ERROR`). It is never downgraded or
+rerouted.
+
+Core returns the reply as text and never parses it; consumers still validate.
+The capability is not authority. Ollama behavior is not live-qualified yet.
+
 ## Local validation required
 
 Run from the repository root and stop on any nonzero exit. These commands follow

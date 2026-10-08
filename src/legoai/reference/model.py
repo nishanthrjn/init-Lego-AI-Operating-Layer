@@ -208,6 +208,10 @@ class OllamaModelAdapter:
             ],
             "stream": False,
         }
+        if request.response_format is not None:
+            # ADR-022: Ollama's chat `format` accepts a JSON-Schema object. The
+            # canonical schema is a fresh copy, so caller values are untouched.
+            body["format"] = request.response_format.json_schema()
         payload = await asyncio.to_thread(self._post, "/api/chat", body)
         message = payload.get("message")
         if not isinstance(message, dict) or "content" not in message:
