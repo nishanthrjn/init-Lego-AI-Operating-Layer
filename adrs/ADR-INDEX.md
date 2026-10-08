@@ -29,8 +29,11 @@ ForgeAI-LQ1.2 diagnostics and accepted by the maintainer the same day
 (implementation slice ENG-JSON-1). Like ADR-017 to ADR-019 it is not yet
 entered in the register table and is excluded from these counts.
 [ADR-022](ADR-022.md) (provider-neutral structured output for Model chat) was
-allocated on 2026-10-08 by MODEL-STRUCTURED-OUTPUT-1. It is Proposed, pending
-maintainer acceptance, and is likewise not yet in the register table.
+allocated on 2026-10-08 by MODEL-STRUCTURED-OUTPUT-1 and accepted by the
+maintainer the same day. Evidence: implementation commit `f3d824d`, locally
+qualified with 63/63 offline validator phases. Live provider behavior is not
+qualified. Like ADR-017 to ADR-021, it is not yet entered in the register table
+and is excluded from these counts.
 Counts, source-start observations and next-step instructions in the original
 planning record below describe its prior scope; this addendum is the current
 register/forward pointer and does not retroactively alter those review findings.
