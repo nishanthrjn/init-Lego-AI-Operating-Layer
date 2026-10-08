@@ -1,13 +1,13 @@
 # MODEL-STRUCTURED-OUTPUT-1
 
 Status: **LOCALLY QUALIFIED (2026-10-08; offline; 63/63 validator phases);
-live provider probe required separately.** This is a reusable LegoAI Core capability, and it
+ADR-022 ACCEPTED; live provider probe required separately.** This is a reusable LegoAI Core capability, and it
 is offline only. No model or provider call was made. Unchanged:
 - the EvidenceSufficiencyAgent, Analyst prompt and serialization;
 - H1 and SAFETY-EVAL-2/3;
 - the live harnesses.
 
-Decision record: [ADR-022](../adrs/ADR-022.md) (Proposed).
+Decision record: [ADR-022](../adrs/ADR-022.md) (**Accepted** 2026-10-08).
 
 ## 1. What changed (Core)
 
@@ -163,3 +163,21 @@ This is offline evidence only, and no provider was contacted. ADR-022 remains
 **Proposed** until the maintainer accepts it. Ollama 0.40.0's handling of the
 schema is **not live-qualified**: a separately authorized minimal probe is
 still required before any Agent adopts structured output.
+
+## 9. ADR-022 acceptance
+
+On 2026-10-08 the LegoAI platform maintainer explicitly accepted ADR-022. Its
+scope is unchanged:
+- an optional, provider-neutral structured-output requirement for Model chat
+  (`ChatRequest.response_format`);
+- the bounded schema subset;
+- the `structured_output` binding capability;
+- fail-closed routing.
+
+It does not cover tool calling, provider options, Core parsing, generic Agent
+schema contracts, retry/fallback, capability negotiation or production
+qualification. No source changed for acceptance.
+
+The implementation remains **locally qualified, not live qualified.** The next
+gate is a separately authorized MODEL-STRUCTURED-OUTPUT-1-LIVE-PROBE. H2 waits
+for that compatibility evidence.
