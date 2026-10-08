@@ -10,6 +10,7 @@ from enum import Enum
 
 from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.kernel.effects import EffectExtent
+from legoai_engineering.agent_output import OutputDiagnostic
 from legoai_engineering.analyst.values import AcquisitionFailure
 from legoai_engineering.authorization import EffectAuthorizationFailure
 from legoai_engineering.checks.errors import CheckFailure
@@ -18,6 +19,7 @@ from legoai_engineering.coding.values import CodingProposal, CodingStatus, Codin
 from legoai_engineering.git.errors import GitFailure
 from legoai_engineering.git.values import GitRepositoryState
 from legoai_engineering.repository.mutation import (
+    RepositoryChangeSet,
     RepositoryMutationResult,
     digest_text,
 )
@@ -168,6 +170,11 @@ def proposal_identity(proposal: CodingProposal) -> ProposalIdentity:
 
     Approval is bound to this value; a different change set never matches.
     """
+    return changeset_identity(proposal.changeset)
+
+
+def changeset_identity(changeset: RepositoryChangeSet) -> ProposalIdentity:
+    """The same identity computed from the change set handed to mutation."""
     return tuple(
         (
             change.path.value,
@@ -175,23 +182,39 @@ def proposal_identity(proposal: CodingProposal) -> ProposalIdentity:
             change.expected.value if change.expected is not None else None,
             digest_text(change.text).value if change.text is not None else None,
         )
-        for change in proposal.changeset.changes
+        for change in changeset.changes
     )
 
 
 @dataclass(frozen=True, slots=True)
 class ProposalReview:
-    """What the operator is asked to approve: one validated proposal."""
+    """What the operator is asked to approve: one validated proposal.
+
+    `before` holds, per change, the exact current text the proposal's
+    precondition digest was computed from (None for a create). It is
+    verified against that digest, so a preview diffed from it shows the
+    change the mutation preconditions will enforce.
+    """
 
     attempt: int
     proposal: CodingProposal = field(repr=False)
     identity: ProposalIdentity = field(repr=False)
+    before: tuple[str | None, ...] = field(repr=False)
 
     def __post_init__(self) -> None:
         if type(self.proposal) is not CodingProposal:
             raise TypeError("proposal review requires CodingProposal")
         if self.identity != proposal_identity(self.proposal):
             raise ValueError("proposal review identity mismatch")
+        changes = self.proposal.changeset.changes
+        if type(self.before) is not tuple or len(self.before) != len(changes):
+            raise ValueError("proposal review needs one current text per change")
+        for change, text in zip(changes, self.before, strict=True):
+            if change.expected is None:
+                if text is not None:
+                    raise ValueError("a created file has no current text")
+            elif type(text) is not str or digest_text(text) != change.expected:
+                raise ValueError("current text does not match the precondition")
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,6 +270,8 @@ class AttemptEvidence:
     coding_status: CodingStatus | None = None
     acquisition_failure: AcquisitionFailure | None = None
     agent_status: AgentExecutionStatus | None = None
+    # Why the Coding Agent output was rejected (display-safe; no model text).
+    coding_diagnostic: OutputDiagnostic | None = None
     model_effect: EffectExtent | None = None
     proposal: CodingProposal | None = field(default=None, repr=False)
     # None: not asked (no valid proposal); True/False: the operator's decision.
@@ -267,6 +292,11 @@ class AttemptEvidence:
     def __post_init__(self) -> None:
         if type(self.number) is not int or not 1 <= self.number <= MAX_ATTEMPTS:
             raise ValueError("attempt number must be 1 or 2")
+        if self.coding_diagnostic is not None and (
+            type(self.coding_diagnostic) is not OutputDiagnostic
+            or self.coding_status is not CodingStatus.OUTPUT_INVALID
+        ):
+            raise ValueError("only rejected coding output carries a diagnostic")
         if len(self.checks) > 8:
             raise ValueError("check evidence exceeds the configured plan")
         if len(self.temporary_paths) > 128:

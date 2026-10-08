@@ -172,6 +172,7 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
         "EffectExtent | None",
         "CodingProposal | None",
         "bool | None",  # the operator's approval decision (v0.1)
+        "OutputDiagnostic | None",  # display-safe rejected-output reason (v0.1)
         "RepositoryMutationResult | None",
         "EffectAuthorizationFailure | None",
         "MutationConflictReason | None",

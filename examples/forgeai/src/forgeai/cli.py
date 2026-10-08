@@ -19,6 +19,8 @@ with the same approval step.
 
 import argparse
 import asyncio
+import difflib
+import hashlib
 import json
 import shutil
 import sys
@@ -71,6 +73,11 @@ from forgeai.domain import (
 from forgeai.guard import WorkspaceGuard
 
 _MAX_LISTED = 20
+_PATCH_LINES = 800  # the whole patch is shown or approval is refused
+_PATCH_BYTES = 98_304
+_BIDI = frozenset(
+    "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+)
 _STEPS = 7
 type Ask = Callable[[str], str]
 type Out = Callable[[str], None]
@@ -189,20 +196,88 @@ def header(config: ForgeAIConfig, task: TaskRequest, model: str) -> str:
     return "\n".join(lines)
 
 
+def safe(text: str) -> str:
+    """Terminal-safe rendering: control and bidi characters become visible escapes.
+
+    Proposed content is model output; it must not move the cursor, recolor,
+    overwrite or reorder what the operator sees.
+    """
+    return "".join(
+        char
+        if char == "\t" or (char.isprintable() and char not in _BIDI)
+        else f"\\u{ord(char):04x}"
+        for char in text
+    )
+
+
+def _lines(text: str) -> list[str]:
+    """Split on LF only: CR, form feed and Unicode separators stay visible data."""
+    lines = text.split(chr(10))
+    return lines[:-1] if lines[-1] == "" else lines
+
+
+def patch(review: ProposalReview) -> list[str]:
+    """Unified diff of the exact proposal against its digest-bound current text."""
+    lines: list[str] = []
+    for change, before in zip(
+        review.proposal.changeset.changes, review.before, strict=True
+    ):
+        path = change.path.value
+        after = change.text or ""
+        diff = difflib.unified_diff(
+            _lines(before or ""),
+            _lines(after),
+            "/dev/null" if before is None else f"a/{path}",
+            f"b/{path}",
+            lineterm="",
+        )
+        lines += [safe(line) for line in diff]
+        if after and not after.endswith("\n"):
+            lines.append("\\ No newline at end of file")
+    return lines
+
+
+def fingerprint(review: ProposalReview) -> str:
+    """Short display id of the exact proposal identity the decision binds to."""
+    encoded = json.dumps(review.identity, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()[:12]
+
+
 def preview(review: ProposalReview) -> str:
-    """Bounded proposal preview; never full file contents."""
+    """The proposal and its full unified diff, or an explicit bound refusal."""
     proposal = review.proposal
-    lines = [f"Proposal (attempt {review.attempt}): {proposal.summary[:400]}"]
+    lines = [
+        f"Proposal (attempt {review.attempt}, id {fingerprint(review)}): "
+        f"{safe(proposal.summary[:400])}"
+    ]
     for change, reason in zip(
         proposal.changeset.changes, proposal.reasons, strict=True
     ):
         text = change.text or ""
         size = f"{len(text.splitlines())} lines, {len(text.encode('utf-8'))} bytes"
         lines.append(f"  {_kind(change.kind)} {change.path.value} ({size})")
-        lines.append(f"    why: {reason[:300]}")
-    lines += [f"  risk: {risk[:300]}" for risk in proposal.risks]
-    lines += [f"  unknown: {item[:300]}" for item in proposal.unknowns]
+        lines.append(f"    why: {safe(reason[:300])}")
+    lines += [f"  risk: {safe(risk[:300])}" for risk in proposal.risks]
+    lines += [f"  unknown: {safe(item[:300])}" for item in proposal.unknowns]
+    diff = patch(review)
+    if fits(diff):
+        lines.append("--- proposed patch (exactly what will be written) ---")
+        lines += diff
+        lines.append("--- end of patch ---")
+    else:
+        lines.append(
+            f"PREVIEW EXCEEDS DISPLAY BOUND: {len(diff)} diff lines "
+            f"(limit {_PATCH_LINES} lines, {_PATCH_BYTES} bytes); the full change "
+            "cannot be shown, so it cannot be approved here."
+        )
     return "\n".join(lines)
+
+
+def fits(diff: list[str]) -> bool:
+    return (
+        len(diff) <= _PATCH_LINES
+        and sum(len(line.encode("utf-8")) + 1 for line in diff) <= _PATCH_BYTES
+    )
 
 
 def terminal_approver(
@@ -212,6 +287,9 @@ def terminal_approver(
 
     def approve(review: ProposalReview) -> OperatorDecision:
         out(preview(review))
+        if not fits(patch(review)):
+            out("Not approved: a change you cannot fully see is never applied.")
+            return OperatorDecision.decline(review)
         if ask is None:
             out("Not approved: no interactive terminal (approval is never automatic).")
             return OperatorDecision.decline(review)
@@ -272,6 +350,21 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
         lines.append(f"attempt 1 review: {decision.value if decision else 'none'}")
     if result.failure is TaskFailure.PROPOSAL_DECLINED:
         lines.append("approval: declined; no file was written, checked or reviewed")
+    diagnostics = (
+        ("coding output invalid:", evidence.latest.coding_diagnostic),
+        (
+            "review output invalid:",
+            evidence.review.diagnostic if evidence.review is not None else None,
+        ),
+    )
+    for title, diagnostic in diagnostics:
+        if diagnostic is not None:
+            lines.append(title)
+            lines.append(
+                f"  reason: {diagnostic.rejection.name} ({diagnostic.rejection.value})"
+            )
+            lines.append(f"  field: {diagnostic.location or '(whole reply)'}")
+            lines.append("  no retry or repair was attempted; raw output is not shown")
     changed = [path.value for path in evidence.changed_paths]
     lines.append(f"changed files: {', '.join(changed[:_MAX_LISTED]) or 'none'}")
     for record in evidence.checks:

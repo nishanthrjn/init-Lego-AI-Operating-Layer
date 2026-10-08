@@ -7,6 +7,7 @@ from legoai.execution.agent.ports import AgentResult
 from legoai.execution.agent.values import AgentExecutionStatus, AgentId
 from legoai.execution.values import ExecutionContext
 
+from legoai_engineering.agent_output import OutputDiagnostic
 from legoai_engineering.reviewer.definition import reviewer_definition
 
 
@@ -183,6 +184,8 @@ class ReviewResult:
     agent_result: AgentResult | None
     review: Review | None
     submission_failure: SubmissionFailure | None = None
+    # Why output was rejected (OUTPUT_INVALID only); safe to display and keep.
+    diagnostic: OutputDiagnostic | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -190,6 +193,11 @@ class ReviewResult:
             or type(self.request) is not ReviewRequest
         ):
             raise TypeError("review result requires status and request")
+        if self.diagnostic is not None and (
+            self.status is not ReviewStatus.OUTPUT_INVALID
+            or type(self.diagnostic) is not OutputDiagnostic
+        ):
+            raise ValueError("only rejected output carries an output diagnostic")
         definition = reviewer_definition()
         if self.status is ReviewStatus.INVALID_SUBMISSION:
             if (

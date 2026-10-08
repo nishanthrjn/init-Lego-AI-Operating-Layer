@@ -276,6 +276,7 @@ class RepositoryTaskWorker:
         item = replace(
             item,
             agent_status=agent.status,
+            coding_diagnostic=coding.diagnostic,
             model_effect=(
                 agent.model_execution.effect
                 if agent.model_execution is not None
@@ -296,9 +297,18 @@ class RepositoryTaskWorker:
 
         # Operator approval of this exact proposal before any effect.
         identity = proposal_identity(coding.proposal)
+        assert coding.evidence is not None
+        current = {
+            file.target.path: file.current.text if file.current else None
+            for file in coding.evidence.files
+        }
+        before = tuple(
+            current[change.path] for change in coding.proposal.changeset.changes
+        )
         self.progress(RunStage.AWAITING_APPROVAL, number)
         try:
-            decision = self.approve(ProposalReview(number, coding.proposal, identity))
+            review = ProposalReview(number, coding.proposal, identity, before)
+            decision = self.approve(review)
         except Exception:
             decision = None  # an approver failure never approves
         approved = (
