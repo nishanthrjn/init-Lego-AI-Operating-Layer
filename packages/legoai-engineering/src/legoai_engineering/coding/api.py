@@ -40,12 +40,17 @@ class CodingEvidencePort(Protocol):
     """Trusted bound acquisition; authorize reads and configured Model disclosure.
 
     Return exactly the requested targets, sorted; CREATE means observed absence
-    under an existing parent, UPDATE means exact acquired text. Raise a safe
-    EvidenceAcquisitionError on failure; never return a partial bundle.
+    under an existing parent, UPDATE means exact acquired text. Return exactly
+    the requested read-only references (None when there are none); they are
+    disclosure only, never write scope. Raise a safe EvidenceAcquisitionError
+    on failure; never return a partial bundle.
     """
 
     async def acquire(
-        self, targets: tuple[CodingTarget, ...], tenant: TenantContext
+        self,
+        targets: tuple[CodingTarget, ...],
+        tenant: TenantContext,
+        references: tuple[RepositoryPath, ...] = (),
     ) -> CodingEvidence: ...
 
 
@@ -153,7 +158,7 @@ class CodingAgent:
             raise TypeError("coding requires CodingRequest")
         try:
             evidence = await self.evidence_reader.acquire(
-                request.targets, request.context.tenant_context
+                request.targets, request.context.tenant_context, request.references
             )
         except EvidenceAcquisitionError as error:
             return CodingResult(
@@ -163,24 +168,27 @@ class CodingAgent:
             raise TypeError("coding acquisition must return CodingEvidence")
         if {file.target for file in evidence.files} != set(request.targets):
             raise ValueError("coding evidence does not match requested targets")
-        prompt = json.dumps(
-            {
-                "objective": request.objective,
-                "constraints": request.constraints,
-                "targets": [
-                    {
-                        "path": file.target.path.value,
-                        "operation": file.target.operation.value,
-                        "current_text": None
-                        if file.current is None
-                        else file.current.text,
-                    }
-                    for file in evidence.files
-                ],
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
+        if set(evidence.reference_paths) != set(request.references):
+            raise ValueError("coding evidence does not match requested references")
+        payload: dict[str, object] = {
+            "objective": request.objective,
+            "constraints": request.constraints,
+            "targets": [
+                {
+                    "path": file.target.path.value,
+                    "operation": file.target.operation.value,
+                    "current_text": None if file.current is None else file.current.text,
+                }
+                for file in evidence.files
+            ],
+        }
+        if evidence.references is not None:
+            # Separate key, sorted by path: data to learn from, never targets.
+            payload["read_only_context"] = [
+                {"path": text.path, "text": text.text}
+                for text in evidence.references.files
+            ]
+        prompt = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         definition = coding_definition()
         if len(prompt.encode("utf-8")) > definition.max_input_bytes:
             return CodingResult(

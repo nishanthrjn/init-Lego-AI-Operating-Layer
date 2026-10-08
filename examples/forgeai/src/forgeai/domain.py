@@ -58,11 +58,17 @@ def _text(value: object, maximum: int) -> None:
 
 @dataclass(frozen=True, slots=True)
 class TaskRequest:
-    """One bounded coding task: what to change, never how or where to run it."""
+    """One bounded coding task: what to change, never how or where to run it.
+
+    `context` names operator-selected files disclosed read-only to the Coding
+    Agent. It is disclosure, not write scope: only `targets` are editable, and
+    a path cannot be both.
+    """
 
     objective: str = field(repr=False)
     targets: tuple[CodingTarget, ...]
     constraints: tuple[str, ...] = field(default=(), repr=False)
+    context: tuple[RepositoryPath, ...] = ()
 
     def __post_init__(self) -> None:
         _text(self.objective, 2048)
@@ -82,6 +88,23 @@ class TaskRequest:
             raise ValueError("a task allows at most eight constraints")
         for constraint in self.constraints:
             _text(constraint, 1024)
+        if type(self.context) is not tuple or len(self.context) > 8:
+            raise ValueError("a task allows at most eight read-only context files")
+        if any(type(path) is not RepositoryPath for path in self.context):
+            raise TypeError("task context requires RepositoryPath")
+        keys = [path.value.casefold() for path in self.context]
+        if len(set(keys)) != len(keys):
+            raise ValueError("duplicate or case-alias read-only context files")
+        if any(
+            part.startswith(".")
+            for path in self.context
+            for part in path.value.split("/")
+        ):
+            raise ValueError("read-only context excludes hidden path components")
+        if set(keys) & set(paths):
+            raise ValueError(
+                "a path cannot be both an editable target and read-only context"
+            )
 
 
 MAX_ATTEMPTS = 2  # the initial proposal plus exactly one rework; not configurable

@@ -26,8 +26,9 @@ BASE = "3993320"  # last commit before the v0.1 product slices
 IMAGE = "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
 SOURCES = ["src", "tests", "demo.py"]
 ENGINEERING_PREFIX = "packages/legoai-engineering/"
-# Engineering seams added by v0.1 slices: Docker readiness, then safe
-# rejected-output diagnostics for the Coding Agent and Reviewer.
+# Engineering seams added by v0.1 slices: Docker readiness, safe
+# rejected-output diagnostics for the Coding Agent and Reviewer, then
+# operator-selected read-only Coding Agent context.
 READINESS = [
     "src/legoai_engineering/sandbox/docker.py",
     "tests/test_sandbox_readiness.py",
@@ -37,6 +38,10 @@ READINESS = [
     "src/legoai_engineering/reviewer/api.py",
     "src/legoai_engineering/reviewer/values.py",
     "tests/test_agent_output.py",
+    "src/legoai_engineering/coding/authorized.py",
+    "src/legoai_engineering/coding/definition.py",
+    "tests/test_coding_context.py",
+    "tests/test_coding_prompt.py",
 ]
 ENGINEERING_ALLOWED = {
     ENGINEERING_PREFIX + name
@@ -140,9 +145,7 @@ def main() -> int:
                 "2 no LegoAI Core source change",
                 [git, "diff", "--exit-code", "--stat", BASE, "--", "src"],
             )
-            phase = (
-                "2b Engineering change limited to the readiness and diagnostics seams"
-            )
+            phase = "2b Engineering change limited to the readiness, diagnostics and context seams"
             changed = set(
                 subprocess.run(
                     [git, "diff", "--name-only", BASE, "--", "packages"],
@@ -220,6 +223,11 @@ def main() -> int:
                 "6c v0.1 check-feedback bounded rework (incl. real-Docker B011 regression)",
                 "tests/test_v01_check_rework.py",
             )
+            tests(
+                "6d v0.1 read-only Coding context: disclosure is never write "
+                "scope (incl. real-Docker create-only regression)",
+                "tests/test_v01_context.py",
+            )
             tests("7 architecture / import boundaries", "tests/test_architecture.py")
             tests(
                 "8 ForgeAI-1/2/3 regressions",
@@ -277,7 +285,9 @@ def main() -> int:
                 *READINESS,
             )
             tests(
-                "11 Engineering Coding/Reviewer diagnostics and regressions",
+                "11 Engineering Coding context, Coding/Reviewer diagnostics "
+                "and regressions",
+                "tests/test_coding_context.py",
                 "tests/test_agent_output.py",
                 "tests/test_coding.py",
                 "tests/test_coding_m4.py",
