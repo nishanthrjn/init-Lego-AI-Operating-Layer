@@ -196,3 +196,35 @@ offline/process-local contract and conformance evidence only. No external or liv
 provider was contacted, no Docker was invoked, and no remote endpoint or
 credentialed provider was used. No live model quality was measured or live
 output-quality equivalence established; remote/credential support remains absent.
+
+## Remote disclosure configuration (ADR-024; governance only)
+
+REMOTE-DISCLOSURE-GOVERNANCE-1 adds the values that ADR-024 decided, in
+`legoai.governance.disclosure`:
+- the closed provenance vocabulary `model-disclosure/1` (`SYNTHETIC`,
+  `PLATFORM_INSTRUCTION`, `TASK_TEXT`, `REPOSITORY_CONTENT`,
+  `DERIVED_DIAGNOSTIC`; an empty declaration is UNCLASSIFIED);
+- a fact basis (`VERIFIED` is reserved for LegoAI's own mechanical checks and
+  is never declarable; `PROVIDER_DECLARED` needs a source reference);
+- versioned processor declarations, operator disclosure admissions and an
+  opaque operator-declared `RepositoryIdentity`;
+- one pure evaluator, `evaluate_disclosure`, with a closed refusal taxonomy.
+
+`LocalHostConfig` gains an optional `disclosure: RemoteDisclosureConfig | None`
+(default `None`, so existing configurations are unchanged). At host open the
+configuration is checked for consistency only. Each admission must pin an
+existing exact declaration revision, and name only existing REMOTE-declared
+OpenAI-compatible bindings whose provider, https endpoint, API root and served
+models match. Inconsistency fails with `INVALID_CONFIGURATION`; duplicates fail
+with `CONTRIBUTION_CONFLICT`.
+
+**This enables nothing.** REMOTE bindings are still refused at open with
+`UNSUPPORTED_COMPOSITION`, however complete the disclosure configuration. No
+invocation-time gate, declaration carrier or disclosure evidence exists yet
+(the next slice is REMOTE-DISCLOSURE-GATE-1). No provider is contacted.
+ModelPort, `ChatRequest`, `EmbeddingRequest` and `AgentRequest` are unchanged.
+Remote providers, credentials and KISSKI remain unsupported.
+
+```powershell
+uv run python .\validate_remote_disclosure_governance_1.py
+```

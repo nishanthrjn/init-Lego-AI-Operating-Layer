@@ -19,6 +19,7 @@ from typing import Protocol
 from legoai.capabilities.values import CapabilityId
 from legoai.execution.agent.ports import AgentRuntimePort
 from legoai.execution.values import ExecutionContext, ExecutionResult, ExecutionState
+from legoai.governance.disclosure import DisclosureAdmission, ProcessorDeclaration
 from legoai.governance.ports import AuthorizationPort, SecurityContext
 from legoai.governance.values import GrantId, PolicyRef
 from legoai.intelligence.model.ports import ModelPort
@@ -253,12 +254,50 @@ class ModelBindingConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class RemoteDisclosureConfig:
+    """Operator remote-disclosure configuration (ADR-024 §5–6).
+
+    Processor declarations and disclosure admissions, validated for
+    consistency when the host opens. Configuring them enables nothing: the
+    host still refuses REMOTE bindings, and no invocation gate exists yet.
+    """
+
+    declarations: tuple[ProcessorDeclaration, ...]
+    admissions: tuple[DisclosureAdmission, ...]
+
+    def __post_init__(self) -> None:
+        if type(self.declarations) is not tuple or any(
+            type(item) is not ProcessorDeclaration for item in self.declarations
+        ):
+            raise TypeError("disclosure requires tuple[ProcessorDeclaration, ...]")
+        if type(self.admissions) is not tuple or any(
+            type(item) is not DisclosureAdmission for item in self.admissions
+        ):
+            raise TypeError("disclosure requires tuple[DisclosureAdmission, ...]")
+        # Bounds: 1–16 declarations and 1–16 admissions when configured.
+        if not 1 <= len(self.declarations) <= 16 or not 1 <= len(self.admissions) <= 16:
+            raise HostError(HostFailure.INVALID_CONFIGURATION)
+        # One current revision per declaration and per admission identity, and
+        # at most one admission per binding: evaluation never has to choose.
+        declared = [item.declaration_id for item in self.declarations]
+        admitted = [item.admission_id for item in self.admissions]
+        bound = [b for item in self.admissions for b in item.bindings]
+        if (
+            len(set(declared)) != len(declared)
+            or len(set(admitted)) != len(admitted)
+            or len(set(bound)) != len(bound)
+        ):
+            raise HostError(HostFailure.CONTRIBUTION_CONFLICT)
+
+
+@dataclass(frozen=True, slots=True)
 class LocalHostConfig:
     """Trusted operator configuration for one local governed host.
 
     `configuration` pins the revision and is the sole source of tenant and
     application scope. `max_executions` is a reference-host lifetime control,
-    not a measured scalability limit.
+    not a measured scalability limit. `disclosure` is optional operator
+    remote-disclosure configuration (ADR-024); absent, behavior is unchanged.
     """
 
     configuration: ConfigurationRevisionRef
@@ -267,6 +306,7 @@ class LocalHostConfig:
     grants: tuple[OperatorGrant, ...]
     bindings: tuple[ModelBindingConfig, ...]
     max_executions: int
+    disclosure: RemoteDisclosureConfig | None = None
 
     def __post_init__(self) -> None:
         if type(self.configuration) is not ConfigurationRevisionRef:
@@ -301,6 +341,11 @@ class LocalHostConfig:
             or len(binding_ids) != len(self.bindings)
         ):
             raise HostError(HostFailure.CONTRIBUTION_CONFLICT)
+        if (
+            self.disclosure is not None
+            and type(self.disclosure) is not RemoteDisclosureConfig
+        ):
+            raise TypeError("disclosure must be RemoteDisclosureConfig or None")
 
 
 @dataclass(frozen=True, slots=True)

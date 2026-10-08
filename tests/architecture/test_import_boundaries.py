@@ -623,6 +623,8 @@ def violations(sources: dict[str, str]) -> set[str]:
                                 "execution.agent.ports",
                                 "governance.values",
                                 "governance.ports",
+                                # ADR-024: disclosure values for host config.
+                                "governance.disclosure",
                                 "intelligence.model.values",
                                 "intelligence.model.ports",
                                 "intelligence.model.routing",
