@@ -121,6 +121,14 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.analyst.values",
             "legoai_engineering.repository.workspace",
         },
+        # H1 request policy: pure values and validation, no I/O or model access.
+        "analyst.request_policy": {
+            "enum",
+            "hashlib",
+            "json",
+            "legoai_engineering.analyst.sufficiency",
+            "legoai_engineering.repository.workspace",
+        },
         "analyst.values": {
             "enum",
             "legoai.execution.agent.ports",
@@ -435,6 +443,7 @@ def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
         "analyst.values",
         "analyst.authorized",
         "analyst.sufficiency",
+        "analyst.request_policy",
     ):
         assert import_violations(source, module)
 

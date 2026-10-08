@@ -70,6 +70,7 @@ The table lists the whole supported surface. Modules or names beginning with
 | `legoai_engineering.git.ports` / `.local` / `.values` / `.errors` | `GitRepositoryPort`, `LocalGitRepository`, `LocalGitExecutable`, `GitReadPolicy`, Git values, `GitError`, `GitFailure` | base |
 | `legoai_engineering.analyst.authorized` | `AuthorizedRepositoryEvidence`, `REPOSITORY_READ_ACTION` | `analyst` |
 | `legoai_engineering.analyst.api` / `.values` | `RepositoryAnalyst`, `RepositoryEvidencePort`, analysis values | `analyst` |
+| `legoai_engineering.analyst.request_policy` | `EvidenceRequestPolicy`, `EvidenceClassification`, `RequestDecision`, `RequestViolation`, `RequestViolationReason`, `evaluate`, `is_established`, `known_paths`, `POLICY_SCHEMA` | `analyst` |
 | `legoai_engineering.coding.authorized` | `AuthorizedCodingEvidence` | `analyst` |
 | `legoai_engineering.coding.api` / `.values` | `CodingAgent`, `CodingRequest`, `CodingTarget`, `CodingResult`, `CodingProposal` | `analyst` |
 | `legoai_engineering.reviewer.api` / `.values` | Independent Reviewer | `analyst` |
