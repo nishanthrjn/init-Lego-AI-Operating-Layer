@@ -69,7 +69,13 @@ from legoai_engineering.sandbox.docker import (
 from legoai_engineering.sandbox.ports import SandboxExecutionPort
 from legoai_engineering.sandbox.values import SandboxPolicy
 
-from forgeai.domain import TaskRequest, TaskResult
+from forgeai.domain import (
+    OperatorDecision,
+    ProposalReview,
+    RunStage,
+    TaskRequest,
+    TaskResult,
+)
 from forgeai.guard import WorkspaceGuard
 from forgeai.worker import RepositoryTaskWorker
 
@@ -144,11 +150,16 @@ def prepare_run(
     config: ForgeAIConfig,
     guard: WorkspaceGuard,
     *,
+    approve: Callable[[ProposalReview], OperatorDecision],
+    progress: Callable[[RunStage, int], None] = lambda stage, attempt: None,
     clock: Callable[[], datetime] = utc_now,
     sandbox: SandboxExecutionPort | None = None,
 ) -> PreparedRun:
     """Open a host and wire one workspace. `sandbox` replaces Docker only with
-    another SandboxExecutionPort backend; there is never a host fallback."""
+    another SandboxExecutionPort backend; there is never a host fallback.
+
+    `approve` is the operator's decision on each validated proposal before any
+    mutation. It is required; there is no automatic approval."""
     if type(config) is not ForgeAIConfig:
         raise TypeError("prepare_run requires ForgeAIConfig")
     host = open_local_host(config.host, config.model_selection, clock=clock)
@@ -214,6 +225,8 @@ def prepare_run(
         reads,
         config.review_criteria,
         fresh_context,
+        approve,
+        progress,
     )
     return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
 
@@ -223,10 +236,19 @@ async def run_task(
     task: TaskRequest,
     guard: WorkspaceGuard,
     *,
+    approve: Callable[[ProposalReview], OperatorDecision],
+    progress: Callable[[RunStage, int], None] = lambda stage, attempt: None,
     clock: Callable[[], datetime] = utc_now,
     sandbox: SandboxExecutionPort | None = None,
 ) -> TaskResult:
-    prepared = prepare_run(config, guard, clock=clock, sandbox=sandbox)
+    prepared = prepare_run(
+        config,
+        guard,
+        approve=approve,
+        progress=progress,
+        clock=clock,
+        sandbox=sandbox,
+    )
     return await prepared.worker.run(task, prepared.context)
 
 

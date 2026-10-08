@@ -18,6 +18,7 @@ from forgeai_support import (
     REVIEW_ACCEPT,
     REVIEW_CHANGES,
     REWORK,
+    approve,
     config,
     proposal,
     replay,
@@ -90,7 +91,7 @@ def run(
             cfg.sandbox_policy,
         )
     )
-    prepared = prepare_run(cfg, WorkspaceGuard(), sandbox=sandbox)
+    prepared = prepare_run(cfg, WorkspaceGuard(), approve=approve, sandbox=sandbox)
     mutation = CountingMutation(prepared.worker.mutation)
     worker = replace(prepared.worker, mutation=mutation)
     return asyncio.run(worker.run(task(), prepared.context)), sandbox, mutation

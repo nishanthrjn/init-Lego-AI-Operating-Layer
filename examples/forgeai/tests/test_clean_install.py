@@ -20,9 +20,17 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def run(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str], cwd: Path, answers: str | None = None
+) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
-        args, cwd=cwd, capture_output=True, text=True, timeout=300, check=False
+        args,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+        input=answers,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     return result
@@ -113,9 +121,11 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     assert all(Path(file).is_relative_to(environment) for file in files)
     assert agents == "CodingAgent IndependentReviewer"
     # -I: no checkout, no PYTHONPATH, no user site; only the installed wheels.
-    result = run([str(python), "-I", str(application / "demo.py")], application)
+    # The operator approves the one proposal explicitly on stdin.
+    result = run([str(python), "-I", str(application / "demo.py")], application, "y\n")
     lines = result.stdout.splitlines()
-    assert lines[0] == "disposition: succeeded", result.stdout
+    assert "disposition: succeeded" in lines, result.stdout
+    assert any(line.startswith("Proposal (attempt 1)") for line in lines)
     assert "changed files: src/inventory/stock.py, tests/test_stock.py" in lines
     assert "check ruff_check: passed" in lines
     assert "check mypy: passed" in lines
@@ -124,14 +134,18 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     # Two replay model calls: the Coding Agent, then the reviewer's ACCEPT.
     assert "review: accept" in lines
     assert not any(line.startswith("attempts:") for line in lines)
+    assert "attempt count: 1" in lines
     # ForgeAI-3 bounded rework from the installed wheels: four replay calls
     # (coding, review CHANGES_REQUIRED, rework, review ACCEPT), two authorized
     # applies and two real sandboxed check passes.
     rework = run(
-        [str(python), "-I", str(application / "demo.py"), "rework"], application
+        [str(python), "-I", str(application / "demo.py"), "rework"],
+        application,
+        "y\ny\n",  # one explicit approval per proposal
     )
     lines = rework.stdout.splitlines()
-    assert lines[0] == "disposition: succeeded", rework.stdout
+    assert "disposition: succeeded" in lines, rework.stdout
+    assert any(line.startswith("Proposal (attempt 2)") for line in lines)
     assert "attempts: 2 (one rework after review #1 required changes)" in lines
     assert "attempt 1 checks: ruff_check passed, mypy passed, pytest passed" in lines
     assert "attempt 1 review: changes_required" in lines

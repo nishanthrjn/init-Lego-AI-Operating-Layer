@@ -21,6 +21,7 @@ from forgeai_support import (
     Clock,
     FakeSandbox,
     LoggedReplay,
+    approve,
     config,
     logged_run,
     proposal,
@@ -208,7 +209,9 @@ def test_second_mutation_failure_is_terminal(tmp_path: Path) -> None:
     root = repository(tmp_path)
     log: list[str] = []
     model = LoggedReplay(log, *REWORKED, REVIEW_ACCEPT)
-    prepared = prepare_run(config(root, model), WorkspaceGuard(), sandbox=FakeSandbox())
+    prepared = prepare_run(
+        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+    )
     inner = prepared.worker.mutation
 
     class FailSecond:
@@ -271,7 +274,9 @@ def test_rework_unexpected_change_stops_before_review_two(tmp_path: Path) -> Non
     root = repository(tmp_path)
     log: list[str] = []
     model = LoggedReplay(log, *REWORKED, REVIEW_ACCEPT)
-    prepared = prepare_run(config(root, model), WorkspaceGuard(), sandbox=FakeSandbox())
+    prepared = prepare_run(
+        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+    )
     inner = prepared.worker.mutation
 
     class StrayAfterSecond:
@@ -411,7 +416,9 @@ def test_workspace_guard_held_through_rework(tmp_path: Path) -> None:
             return await super().chat(request)
 
     model = Probe(log, *REWORKED, REVIEW_ACCEPT)
-    prepared = prepare_run(config(root, model), guard, sandbox=FakeSandbox())
+    prepared = prepare_run(
+        config(root, model), guard, approve=approve, sandbox=FakeSandbox()
+    )
     workspace.append(prepared.worker.workspace)
     result = asyncio.run(prepared.worker.run(task(), prepared.context))
     assert result.disposition is TaskDisposition.SUCCEEDED

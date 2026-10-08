@@ -21,6 +21,7 @@ from forgeai_support import (
     LoggedMutation,
     LoggedReplay,
     SpyReader,
+    approve,
     config,
     logged_run,
     proposal,
@@ -109,7 +110,9 @@ def test_no_review_when_final_git_integrity_fails(tmp_path: Path) -> None:
     root = repository(tmp_path)
     log: list[str] = []
     model = LoggedReplay(log, *replay().outputs)
-    prepared = prepare_run(config(root, model), WorkspaceGuard(), sandbox=FakeSandbox())
+    prepared = prepare_run(
+        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+    )
     real = prepared.worker.git
 
     class FailingFinal:

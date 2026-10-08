@@ -25,6 +25,110 @@ memory.
   single rework.
 - **ForgeAI-1** (single task worker without review): locally qualified on
   2026-09-29.
+- **ForgeAI v0.1** (supervised local engineering assistant): `forgeai run`
+  plus an explicit operator approval before any repository change; see
+  "ForgeAI v0.1" below. Qualified offline with replay models only.
+
+## ForgeAI v0.1: supervised local engineering assistant
+
+**Scope.** v0.1 is deliberately small. You get:
+- one local Git repository and one task per run;
+- targets that you choose, and that the model can never add to;
+- the existing reviewed flow with at most one rework.
+
+It does **not** include target discovery, the Repository Analyst or
+sufficiency agents, secrets, Git commit/push/PR, durable resume, or hosted
+use.
+
+**Supported repositories.** The built-in profile checks a Python repository
+laid out as `src/` + `tests/` + `pyproject.toml`. It runs Ruff (`src`,
+`tests`), mypy (`src`) and pytest (`tests`) in the qualified Docker checks
+image. Other layouts are not supported yet.
+
+**Prerequisites** (Windows + Docker Desktop is the qualified scope):
+- Git;
+- Docker Desktop (Linux engine) with the CR-2a `PYTHON_CHECKS` image built
+  locally;
+- `uv`;
+- for live use, Ollama with a coding model.
+
+**Setup:**
+
+```powershell
+cd examples/forgeai
+uv sync --locked
+ollama pull qwen2.5-coder:7b   # or any installed model; see --ollama-model
+ollama serve                   # if not already running
+```
+
+**Run a task.** Start from a committed, clean working tree:
+
+```powershell
+uv run forgeai run `
+    --repo C:\path\to\repo `
+    --task "Reject negative quantities in reserve() and test it" `
+    --target src/inventory/stock.py `
+    --target tests/test_stock.py
+```
+
+- Give 1-8 `--target` paths, relative to the repository. A target is
+  updated by default; write `PATH:create` for a new file.
+- Add `--constraint TEXT` (up to 8) for extra instructions.
+- Model options: `--ollama-model`, `--ollama-url` (default
+  `http://127.0.0.1:11434`) and `--ollama-timeout`.
+- `--binding replay --replay FILE ...` uses recorded outputs instead of a
+  live model.
+- The older form `forgeai <repo> --objective ... --target ...` still works
+  and also asks for approval.
+
+**What you see:**
+1. **Before any model call:** the repository, task, editable targets,
+   constraints, checks and model.
+2. **Startup failures** stop here with a clear message: missing repository,
+   not a Git repository, invalid target, Ollama unreachable or model not
+   installed, or no Git/Docker executable. A repository with no commit or
+   with uncommitted changes is rejected before the model is called.
+3. **Progress lines:** `[1/7] Repository verified`, `[2/7] Proposal
+   generated`, `[3/7] Waiting for approval`, `[4/7] Changes applied`,
+   `[5/7] Checks completed`, `[6/7] Review completed` and `[7/7] Final
+   result`. A rework is announced with `[rework]`.
+4. **The proposal**, before anything is written: each changed path with
+   create/update and its size, the per-file reason, the summary, risks and
+   unknowns. File contents are not printed.
+
+**Approval.** Then comes `Apply this proposal? [y/N]`:
+- Only `y` or `yes` applies the proposal. Anything else, an empty answer,
+  EOF (closed or empty stdin) or Ctrl+C declines.
+- A declined proposal writes **nothing** and runs no checks and no review.
+- There is no automatic approval, and no `--yes` flag.
+- Approval is bound to the exact change set shown. Approving one proposal
+  can never apply a different one, and the existing content preconditions
+  still refuse a file that changed in the meantime.
+- A rework proposal needs its own approval.
+
+**Final result.** The final block lists:
+- the disposition and reason;
+- run id, starting HEAD and attempt count;
+- changed files and each check result;
+- the review decision, findings and blocking-finding count;
+- risks and unknowns;
+- whether HEAD is unchanged;
+- a `git -C <repo> diff -- <files>` command for inspecting the change.
+
+No model is used to summarize.
+
+**Failures.** There is no retry, no fallback and no rollback. If a run fails
+after changes were applied (checks, review, or a declined rework), the result
+says so with `WARNING: changes remain in the working tree` and lists the
+files. ForgeAI never commits, resets, stashes or cleans. Exit codes: `0`
+succeeded, `2` rejected before any model call, `1` everything else.
+
+**Known v0.1 limits.**
+- Live-model quality is **unqualified**; only replay runs are qualified.
+- Docker *daemon* availability is not probed before the run. If the daemon
+  is down, the run fails at the check step after the approved changes were
+  written, and the warning lists them.
+- Startup checks the Ollama model list only, not the model's quality.
 
 ## Workflow
 
@@ -278,12 +382,12 @@ runtime objects.
 ```powershell
 cd examples/forgeai
 uv sync --locked
-uv run python demo.py            # review #1 accepts: 2 model calls
-uv run python demo.py rework     # review #1 requires changes, one rework: 4 model calls
-uv run forgeai <repo> --objective "..." --target src/pkg/mod.py --target tests/test_mod.py --replay coding-1.json --replay review-1.json [--replay coding-2.json --replay review-2.json]
+uv run python demo.py            # review #1 accepts: 2 model calls; answer y
+uv run python demo.py rework     # review #1 requires changes, one rework: 4 model calls; answer y twice
+uv run forgeai run --repo <repo> --task "..." --target src/pkg/mod.py --target tests/test_mod.py --binding replay --replay coding-1.json --replay review-1.json [--replay coding-2.json --replay review-2.json]
 ```
 
-`demo.py` is a test harness. It commits the fixture into a temporary
+`demo.py` is a test harness. It asks for approval like the CLI does. It commits the fixture into a temporary
 repository and replays recorded outputs **strictly in call order**. A call
 beyond the recorded outputs fails loudly.
 
@@ -303,7 +407,8 @@ From the repository root, on Windows with Docker Desktop and the CR-2a image
 present:
 
 ```powershell
-uv run python .\validate_forgeai_3.py
+uv run python .\validate_forgeai_v01.py   # v0.1 (pipes an explicit "y" to the demos)
+uv run python .\validate_forgeai_3.py     # historical; its demo phases now prompt for approval
 ```
 
 ## ForgeAI-3 qualification evidence

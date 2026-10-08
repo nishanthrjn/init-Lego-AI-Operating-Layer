@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 from forgeai_support import (
     FakeSandbox,
+    approve,
     config,
     replay,
     repository,
@@ -63,7 +64,7 @@ def prepared(
     sandbox: FakeSandbox,
     guard: WorkspaceGuard | None = None,
 ) -> PreparedRun:
-    return prepare_run(cfg, guard or WorkspaceGuard(), sandbox=sandbox)
+    return prepare_run(cfg, guard or WorkspaceGuard(), approve=approve, sandbox=sandbox)
 
 
 def run(run: PreparedRun, worker: RepositoryTaskWorker | None = None) -> TaskResult:

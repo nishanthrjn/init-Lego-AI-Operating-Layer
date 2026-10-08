@@ -17,7 +17,10 @@ from legoai_engineering.checks.values import CheckOutcome, CheckRequest, CheckRe
 from legoai_engineering.coding.values import CodingProposal, CodingStatus, CodingTarget
 from legoai_engineering.git.errors import GitFailure
 from legoai_engineering.git.values import GitRepositoryState
-from legoai_engineering.repository.mutation import RepositoryMutationResult
+from legoai_engineering.repository.mutation import (
+    RepositoryMutationResult,
+    digest_text,
+)
 from legoai_engineering.repository.mutation_errors import MutationConflictReason
 from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.reviewer.values import (
@@ -103,6 +106,9 @@ class TaskFailure(Enum):
     EVIDENCE_UNAVAILABLE = "bounded repository evidence could not be acquired"
     MODEL_FAILED = "the model call did not complete"
     PROPOSAL_INVALID = "the model output was not a valid proposal"
+    # The operator did not approve the validated proposal (or could not be
+    # asked); nothing was written, checked or reviewed.
+    PROPOSAL_DECLINED = "the operator did not approve the proposal; nothing written"
     MUTATION_DENIED = "change application was not authorized; nothing written"
     MUTATION_CONFLICT = "a change precondition failed; nothing written"
     MUTATION_PARTIAL = "change application failed; effects may be partial"
@@ -140,6 +146,68 @@ _REJECTIONS = frozenset(
         TaskFailure.EVIDENCE_UNAVAILABLE,
     }
 )
+
+
+class RunStage(Enum):
+    """Operator-visible progress; presentation only, never control flow."""
+
+    REPOSITORY_VERIFIED = "repository verified"
+    PROPOSAL_GENERATED = "proposal generated"
+    AWAITING_APPROVAL = "waiting for approval"
+    CHANGES_APPLIED = "changes applied"
+    CHECKS_COMPLETED = "checks completed"
+    REVIEW_COMPLETED = "review completed"
+    REWORK_STARTED = "rework started"
+
+
+type ProposalIdentity = tuple[tuple[str, str, str | None, str | None], ...]
+
+
+def proposal_identity(proposal: CodingProposal) -> ProposalIdentity:
+    """Exact change-set identity: path, kind, precondition and content digest.
+
+    Approval is bound to this value; a different change set never matches.
+    """
+    return tuple(
+        (
+            change.path.value,
+            change.kind.value,
+            change.expected.value if change.expected is not None else None,
+            digest_text(change.text).value if change.text is not None else None,
+        )
+        for change in proposal.changeset.changes
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ProposalReview:
+    """What the operator is asked to approve: one validated proposal."""
+
+    attempt: int
+    proposal: CodingProposal = field(repr=False)
+    identity: ProposalIdentity = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if type(self.proposal) is not CodingProposal:
+            raise TypeError("proposal review requires CodingProposal")
+        if self.identity != proposal_identity(self.proposal):
+            raise ValueError("proposal review identity mismatch")
+
+
+@dataclass(frozen=True, slots=True)
+class OperatorDecision:
+    """The operator's answer, bound to the exact proposal identity shown."""
+
+    approved: bool
+    identity: ProposalIdentity = field(repr=False)
+
+    @classmethod
+    def approve(cls, review: ProposalReview) -> OperatorDecision:
+        return cls(True, review.identity)
+
+    @classmethod
+    def decline(cls, review: ProposalReview) -> OperatorDecision:
+        return cls(False, review.identity)
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,6 +249,8 @@ class AttemptEvidence:
     agent_status: AgentExecutionStatus | None = None
     model_effect: EffectExtent | None = None
     proposal: CodingProposal | None = field(default=None, repr=False)
+    # None: not asked (no valid proposal); True/False: the operator's decision.
+    approval: bool | None = None
     applied: RepositoryMutationResult | None = None
     mutation_denial: EffectAuthorizationFailure | None = None
     conflict: MutationConflictReason | None = None
@@ -382,6 +452,19 @@ class TaskResult:
         if type(self.evidence) is not TaskEvidence:
             raise TypeError("task result requires TaskEvidence")
         evidence = self.evidence
+        for attempt in evidence.attempts:
+            if attempt.approval is False and (
+                attempt.applied is not None
+                or attempt.mutation_denial is not None
+                or attempt.conflict is not None
+                or attempt.checks
+                or attempt.review is not None
+            ):
+                raise ValueError("a declined proposal has no effect or later step")
+        if self.failure is TaskFailure.PROPOSAL_DECLINED and (
+            evidence.latest.approval is not False or evidence.latest.proposal is None
+        ):
+            raise ValueError("a declined run records the declined proposal")
         for number, attempt in enumerate(evidence.attempts, 1):
             reviewed = attempt.review is not None or attempt.review_input_failure
             if reviewed and not evidence.gates_passed_for(number):
