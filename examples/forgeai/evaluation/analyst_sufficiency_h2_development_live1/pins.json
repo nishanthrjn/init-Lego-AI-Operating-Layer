@@ -1,0 +1,12 @@
+{
+  "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_envelope.py": "0a98224bb08fe1df82401388c77076ee2cbcf7fbcfa22847fe8e9c1195d478fc",
+  "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_definition.py": "d2950b5658cfb05fd8db4ee01da575118159753965506182d5469703d769bfd2",
+  "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_agent.py": "0debfbf5743317a9e3ed11de4438a395b3ec9c0c67eb05ad641b45999323da79",
+  "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency.py": "298a74a865dd57d599f8df92a80ad635dc49ee07dab47ca5ab3c817a09389f76",
+  "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102",
+  "packages/legoai-engineering/src/legoai_engineering/analyst/request_policy.py": "913f3536c54b5f4e885ae59c9eab6aad35327a63656cee22492a1665ab88e2ab",
+  "examples/forgeai/evaluation/analyst_evidence_loop/policy_gate.py": "258d0ca1223e2120ba52b082ba7079c4a180ba507c3b9c71d850aebf812bee4e",
+  "examples/forgeai/evaluation/analyst_evidence_loop/sequence.py": "05eb9631724649f7a6c70af66a923b48226c44a58c5982b2be019c0fe5d18049",
+  "examples/forgeai/evaluation/analyst_sufficiency_h2_development_live1/policy.json": "913a2fa969cf2a3ff7dc14df5826247137fdcba71c5103b884f05fd9d77a8545",
+  "examples/forgeai/evaluation/analyst_sufficiency_h2_development_live1/decision-rules.json": "1e6be51cfb1301db3c85146b063b63e1e24ddbbb65d98e33cd7126d087b0e25b"
+}
