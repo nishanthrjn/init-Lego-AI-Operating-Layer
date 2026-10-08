@@ -212,30 +212,43 @@ def safe(text: str) -> str:
 
 
 def _lines(text: str) -> list[str]:
-    """Split on LF only: CR, form feed and Unicode separators stay visible data."""
-    lines = text.split(chr(10))
-    return lines[:-1] if lines[-1] == "" else lines
+    """Split on LF only, keeping each LF: CR, form feed and Unicode separators
+    stay visible data, and a missing final newline is a visible difference."""
+    parts = text.split(chr(10))
+    return [part + chr(10) for part in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
 
 
 def patch(review: ProposalReview) -> list[str]:
-    """Unified diff of the exact proposal against its digest-bound current text."""
+    """Unified diff of the exact proposal against its digest-bound current text.
+
+    A file whose proposed content equals its current content yields no lines
+    (the listing marks it unchanged). The missing-final-newline marker follows
+    exactly the diff line that lacks one, on either side, never anywhere else.
+    """
     lines: list[str] = []
     for change, before in zip(
         review.proposal.changeset.changes, review.before, strict=True
     ):
         path = change.path.value
-        after = change.text or ""
         diff = difflib.unified_diff(
             _lines(before or ""),
-            _lines(after),
+            _lines(change.text or ""),
             "/dev/null" if before is None else f"a/{path}",
             f"b/{path}",
-            lineterm="",
         )
-        lines += [safe(line) for line in diff]
-        if after and not after.endswith("\n"):
-            lines.append("\\ No newline at end of file")
+        for index, line in enumerate(diff):
+            if index < 2 or line.startswith("@@"):  # file headers and hunk ranges
+                lines.append(safe(line.removesuffix(chr(10))))
+            elif line.endswith(chr(10)):
+                lines.append(safe(line[:-1]))
+            else:
+                lines.append(safe(line))
+                lines.append("\\ No newline at end of file")
     return lines
+
+
+def unchanged(change_text: str | None, before: str | None) -> bool:
+    return before is not None and before == (change_text or "")
 
 
 def fingerprint(review: ProposalReview) -> str:
@@ -260,11 +273,13 @@ def preview(review: ProposalReview) -> str:
             for item in review.feedback
             for line in item.split("\n")
         ]
-    for change, reason in zip(
-        proposal.changeset.changes, proposal.reasons, strict=True
+    for change, reason, before in zip(
+        proposal.changeset.changes, proposal.reasons, review.before, strict=True
     ):
         text = change.text or ""
         size = f"{len(text.splitlines())} lines, {len(text.encode('utf-8'))} bytes"
+        if unchanged(change.text, before):
+            size += "; unchanged, content identical to the current file"
         lines.append(f"  {_kind(change.kind)} {change.path.value} ({size})")
         lines.append(f"    why: {safe(reason[:300])}")
     lines += [f"  risk: {safe(risk[:300])}" for risk in proposal.risks]
