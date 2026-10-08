@@ -31,6 +31,7 @@ from legoai.execution.values import (
     ExecutionResult,
     SecurityContextRef,
 )
+from legoai.governance.disclosure import endpoint_parts
 from legoai.governance.ports import AuthorizationPort, SecurityContext
 from legoai.governance.values import Grant, Principal
 from legoai.intelligence.model.ports import ModelPort
@@ -124,6 +125,51 @@ def _composition_failure(failure: CompositionFailure) -> HostFailure:
             # INACTIVE_PLUGIN / ACTIVATION_MISMATCH: the host activates its own
             # contribution, so either means the composition itself is unsupported.
             return HostFailure.UNSUPPORTED_COMPOSITION
+
+
+def _validate_disclosure(config: LocalHostConfig) -> None:
+    """ADR-024 configuration consistency only; it admits and enables nothing.
+
+    Every admission must pin an existing exact declaration revision and name
+    only existing REMOTE-declared OpenAI-compatible bindings whose provider,
+    https endpoint and models match. REMOTE stays refused by `_realization`.
+    """
+    disclosure = config.disclosure
+    if disclosure is None:
+        return
+    bindings = {binding.binding_id: binding for binding in config.bindings}
+    declarations = {d.declaration_id: d for d in disclosure.declarations}
+    purposes = {purpose.value for purpose in ModelPurpose}
+    for admission in disclosure.admissions:
+        declaration = declarations.get(admission.declaration_id)
+        if (
+            declaration is None
+            or declaration.revision != admission.declaration_revision
+            or declaration.provider_id != admission.provider_id
+            or declaration.endpoint_origin != admission.endpoint_origin
+            or declaration.api_root != admission.api_root
+            or not admission.purposes <= purposes
+        ):
+            raise HostError(HostFailure.INVALID_CONFIGURATION)
+        for binding_id in admission.bindings:
+            binding = bindings.get(binding_id)
+            if binding is None:
+                raise HostError(HostFailure.INVALID_CONFIGURATION)
+            provider = binding.provider
+            if (
+                not isinstance(provider, OpenAICompatibleSettings)
+                or provider.deployment is not ModelDeployment.REMOTE
+                or provider.provider_id.value != admission.provider_id
+                or endpoint_parts(provider.base_url)
+                != (admission.endpoint_origin, admission.api_root)
+            ):
+                raise HostError(HostFailure.INVALID_CONFIGURATION)
+            served = {provider.chat_model, provider.embedding_model} - {None}
+            if not admission.models <= served or (
+                ModelPurpose.EMBEDDING.value in admission.purposes
+                and provider.embedding_model is None
+            ):
+                raise HostError(HostFailure.INVALID_CONFIGURATION)
 
 
 def _offer(purpose: ModelPurpose) -> CapabilityOffer:
@@ -460,6 +506,7 @@ def open_local_host(
     now = clock()
     if type(now) is not datetime or now.utcoffset() is None:
         raise TypeError("clock must return a timezone-aware datetime")
+    _validate_disclosure(config)
     try:
         desired = capture_model_selection(
             model_selection, pinned_revision=config.configuration
