@@ -9,6 +9,12 @@ CHANGES_REQUIRED, exactly one rework attempt 2 whose review is terminal. There
 is no loop: at most 2 proposals, 2 applies, 2 check batches and 2 reviews.
 Review findings reach the Coding Agent only as bounded labeled text; they
 never authorize, patch, apply or rerun anything themselves.
+
+Every validated proposal is shown to the operator before mutation. Only an
+OperatorDecision that approves the exact proposal identity lets it be applied;
+a decline, a mismatched identity, a wrong type or an approver error writes
+nothing and runs no check or review. Model output can never approve itself:
+the decision comes only from the composition root's approver.
 """
 
 from collections.abc import Callable
@@ -54,12 +60,16 @@ from legoai_engineering.reviewer.values import (
 from forgeai.domain import (
     AttemptEvidence,
     CheckRecord,
+    OperatorDecision,
+    ProposalReview,
     ReviewInputFailure,
+    RunStage,
     TaskDisposition,
     TaskEvidence,
     TaskFailure,
     TaskRequest,
     TaskResult,
+    proposal_identity,
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.review import (
@@ -87,6 +97,10 @@ class RepositoryTaskWorker:
     reader: RepositoryEvidencePort = field(repr=False)
     review_criteria: tuple[str, ...]
     fresh_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
+    approve: Callable[[ProposalReview], OperatorDecision] = field(repr=False)
+    progress: Callable[[RunStage, int], None] = field(
+        default=lambda stage, attempt: None, repr=False
+    )
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -120,6 +134,8 @@ class RepositoryTaskWorker:
             raise ValueError("worker requires one to eight review criteria")
         if not callable(self.fresh_context):
             raise TypeError("worker requires a fresh Chat context factory")
+        if not callable(self.approve) or not callable(self.progress):
+            raise TypeError("worker requires an operator approver and progress")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -178,6 +194,7 @@ class RepositoryTaskWorker:
             return _rejected(task, TaskFailure.UNSUPPORTED_REPOSITORY, evidence)
         if start.entries:
             return _rejected(task, TaskFailure.DIRTY_START, evidence)
+        self.progress(RunStage.REPOSITORY_VERIFIED, 0)
         first = await self._attempt(
             task,
             CodingRequest(task.objective, task.targets, task.constraints, context),
@@ -211,6 +228,7 @@ class RepositoryTaskWorker:
                 evidence, attempts=(*evidence.attempts, AttemptEvidence(2))
             )
             return self._stop(task, TaskFailure.MODEL_FAILED, reworked)
+        self.progress(RunStage.REWORK_STARTED, 2)
         second = await self._attempt(
             task,
             CodingRequest(task.objective, targets, constraints, rework_context),
@@ -274,6 +292,24 @@ class RepositoryTaskWorker:
             return self._stop(task, failure, evidence)
         item = replace(item, proposal=coding.proposal)
         evidence = _set(evidence, item)
+        self.progress(RunStage.PROPOSAL_GENERATED, number)
+
+        # Operator approval of this exact proposal before any effect.
+        identity = proposal_identity(coding.proposal)
+        self.progress(RunStage.AWAITING_APPROVAL, number)
+        try:
+            decision = self.approve(ProposalReview(number, coding.proposal, identity))
+        except Exception:
+            decision = None  # an approver failure never approves
+        approved = (
+            type(decision) is OperatorDecision
+            and decision.approved is True
+            and decision.identity == identity
+        )
+        item = replace(item, approval=approved)
+        evidence = _set(evidence, item)
+        if not approved:
+            return self._stop(task, TaskFailure.PROPOSAL_DECLINED, evidence)
 
         # Apply through the authorized mutation Port; never retried.
         try:
@@ -298,6 +334,7 @@ class RepositoryTaskWorker:
             )
         item = replace(item, applied=applied)
         evidence = _set(evidence, item)
+        self.progress(RunStage.CHANGES_APPLIED, number)
 
         # Configured checks, in order, through the authorized Port. Findings
         # are results and later checks still run; any failure to run stops.
@@ -322,6 +359,7 @@ class RepositoryTaskWorker:
             records.append(CheckRecord(check, result))
         item = replace(item, checks=tuple(records))
         evidence = _set(evidence, item)
+        self.progress(RunStage.CHECKS_COMPLETED, number)
 
         # Git integrity: HEAD unchanged and only this run's applied paths differ.
         final = self._observe()
@@ -430,6 +468,7 @@ class RepositoryTaskWorker:
         )
         item = replace(item, review=result)
         evidence = _set(evidence, item)
+        self.progress(RunStage.REVIEW_COMPLETED, number)
         if result.status is ReviewStatus.INVALID_SUBMISSION:
             budget = result.submission_failure is SubmissionFailure.CONTEXT_BUDGET
             reason = (

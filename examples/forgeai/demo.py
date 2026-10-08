@@ -4,7 +4,8 @@ Test-harness code, not part of the ForgeAI package. It provisions a fresh
 committed fixture repository (ForgeAI itself never creates, commits or
 cleans repositories), then runs the `forgeai` CLI with the deterministic
 replay model (one Coding Agent output, one reviewer output). Checks run in
-the real Docker sandbox. Usage:
+the real Docker sandbox. Each proposal is shown and needs your explicit "y"
+(stdin) before anything is written. Usage:
 
     python demo.py           # review #1 accepts (2 model calls)
     python demo.py rework    # review #1 requires changes; one rework (4 calls)
@@ -92,7 +93,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Git is required")
     with TemporaryDirectory(prefix="forgeai-demo-") as temporary:
         repository = create_repository(Path(temporary) / "repo", Path(executable))
-        arguments = [str(repository), "--objective", OBJECTIVE, "--binding", "replay"]
+        arguments = ["run", "--repo", str(repository), "--task", OBJECTIVE]
+        arguments += ["--binding", "replay"]
         # Recorded outputs in strict call order (Coding Agent, reviewer, ...).
         for name in SCENARIOS[scenario[0]]:
             arguments += ["--replay", str(FIXTURE / name)]

@@ -28,8 +28,14 @@ from legoai_engineering.sandbox.values import SandboxRequest, SandboxResult
 
 from demo import FIXTURE, OBJECTIVE, TARGETS, create_repository
 from forgeai.cli import ReplayModel, replay_binding
-from forgeai.composition import ForgeAIConfig, PreparedRun, local_profile, prepare_run
-from forgeai.domain import TaskRequest, TaskResult
+from forgeai.composition import (
+    ForgeAIConfig,
+    PreparedRun,
+    local_profile,
+    prepare_run,
+    utc_now,
+)
+from forgeai.domain import OperatorDecision, ProposalReview, TaskRequest, TaskResult
 from forgeai.guard import WorkspaceGuard
 from forgeai.worker import RepositoryTaskWorker
 
@@ -39,6 +45,11 @@ REVIEW_ACCEPT = (FIXTURE / "review_accept.json").read_text(encoding="utf-8")
 REWORK = (FIXTURE / "proposal_rework.json").read_text(encoding="utf-8")
 REVIEW_CHANGES = (FIXTURE / "review_changes_required.json").read_text(encoding="utf-8")
 REVIEW_INSUFFICIENT = (FIXTURE / "review_insufficient.json").read_text(encoding="utf-8")
+
+
+def approve(review: ProposalReview) -> OperatorDecision:
+    """Explicit test-operator approval of the exact proposal shown."""
+    return OperatorDecision.approve(review)
 
 
 def git_executable() -> Path:
@@ -225,8 +236,9 @@ def logged_run(
     prepared: PreparedRun = prepare_run(
         base,
         WorkspaceGuard(),
+        approve=approve,
         sandbox=LoggedSandbox(log, exits),
-        **({"clock": clock} if clock is not None else {}),
+        clock=clock if clock is not None else utc_now,
     )
     mutation = LoggedMutation(log, prepared.worker.mutation)
     reader = SpyReader(prepared.worker.reader)

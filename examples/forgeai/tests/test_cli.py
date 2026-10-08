@@ -5,7 +5,15 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from forgeai_support import FakeSandbox, config, proposal, replay, repository, task
+from forgeai_support import (
+    FakeSandbox,
+    approve,
+    config,
+    proposal,
+    replay,
+    repository,
+    task,
+)
 from legoai_engineering.repository.mutation import FileChangeKind
 
 from demo import OBJECTIVE, TARGETS
@@ -45,7 +53,7 @@ def test_replay_binding_requires_recorded_output(tmp_path: Path) -> None:
 def test_summary_is_bounded_and_omits_contents(tmp_path: Path) -> None:
     root = repository(tmp_path)
     prepared = prepare_run(
-        config(root, replay()), WorkspaceGuard(), sandbox=FakeSandbox()
+        config(root, replay()), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
     )
     result = asyncio.run(prepared.worker.run(task(), prepared.context))
     text = summarize(result)
@@ -64,5 +72,7 @@ def test_ollama_binding_is_configuration_only(tmp_path: Path) -> None:
         extra=(ollama_binding("http://127.0.0.1:11434", "qwen2.5-coder:7b", 30.0),),
         binding="ollama",
     )
-    prepared = prepare_run(cfg, WorkspaceGuard(), sandbox=FakeSandbox())
+    prepared = prepare_run(
+        cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+    )
     assert type(prepared.worker).__name__ == "RepositoryTaskWorker"
