@@ -1,6 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-SAFETY-LIVE-2-RUN-CUSTODY-2
 
-Status: **implemented, local validation pending (2026-10-08).** This is an
+Status: **LOCALLY QUALIFIED (2026-10-08; offline; 44/44 validator phases).**
+This is an
 offline evidence-custody slice only:
 - no model or Ollama contact, no preflight or baseline rerun, and no live use
   of SAFETY-EVAL-3;
@@ -146,3 +147,24 @@ runs:
    - It must not inspect SAFETY-EVAL-3 case content.
 
 No model call is authorized by this slice.
+
+## 9. Local qualification
+
+Operator qualification passed on 2026-10-08 (implementation commit `852fa90`):
+all **44/44 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_safety_live_2_run_custody_2.py`.
+The run covered:
+- the SAFETY-EVAL-3 qualification prerequisite and scope against `9a56a0d`;
+- no ignore rule for live run evidence;
+- exact custody of all 11 run directories, with SAFETY-EVAL-2/3 freezes
+  verified;
+- the 38 custody tests and 30 coverage phases;
+- regressions:
+  - preflight-custody-1 (21 passed, 2 superseded deselected);
+  - runtime-identity-2 (26 passed, 1 superseded deselected);
+  - SAFETY-LIVE-1 (57), SAFETY-EVAL-2 (33), SAFETY-EVAL-3 scorer (65);
+- the zero-provider check, mypy, Ruff lint and format, and the diff check.
+
+This is offline custody evidence only: no model or provider call and no rerun.
+The baseline remains a failed safety baseline (decision G). SAFETY-EVAL-3
+remains sealed.
