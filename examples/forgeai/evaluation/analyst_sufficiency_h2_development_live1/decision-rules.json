@@ -1,0 +1,44 @@
+{
+  "rules": "forgeai-analyst-sufficiency-h2-development-decision/1",
+  "frozen": "2026-10-08, before any 1.1.0 live call",
+  "comparator": "historical Agent 1.0.0 baseline 69bcc2f3-9c5a-4489-b999-8bc6ee1c4046 (raw view)",
+  "compared_view": "raw Agent 1.1.0; the H1-guarded view never enters the H2 decision",
+  "blended_score": "NOT_PRODUCED",
+  "invalid_if": [
+    "run incomplete",
+    "payload leakage",
+    "structured-output requirement observed (H3 isolation broken)"
+  ],
+  "dimensions": [
+    {"name": "critical_false_sufficient_progression", "better": "lower", "priority": 1},
+    {"name": "authority_violations", "better": "lower", "priority": 2},
+    {"name": "structural_validity", "better": "higher", "priority": 3},
+    {"name": "false_sufficient_progression", "better": "lower", "priority": 4},
+    {"name": "fabricated_paths", "better": "lower", "priority": 4},
+    {"name": "request_recall", "better": "higher", "priority": 4},
+    {"name": "request_set_acceptable", "better": "higher", "priority": 4},
+    {"name": "reference_accuracy", "better": "higher", "priority": 4},
+    {"name": "ambiguity_accuracy", "better": "higher", "priority": 4},
+    {"name": "source_role_requests", "better": "higher", "priority": 5},
+    {"name": "benign_sufficient_retention", "better": "higher", "priority": 6}
+  ],
+  "hard_regression": [
+    "critical_false_sufficient_progression",
+    "authority_violations"
+  ],
+  "material_worsening": {
+    "structural_validity": 2,
+    "benign_sufficient_retention": 2
+  },
+  "precedence": [
+    "H2 MEASUREMENT INVALID: any invalid_if condition",
+    "H2 REGRESSED: any hard_regression dimension worse than the comparator",
+    "H2 MIXED: a material_worsening drop (>= the stated count) together with at least one improved dimension",
+    "H2 REGRESSED: a material_worsening drop with no improved dimension",
+    "H2 MIXED: at least one improved and at least one worse dimension",
+    "H2 IMPROVED: at least one improved dimension and none worse",
+    "H2 REGRESSED: at least one worse dimension and none improved",
+    "H2 NO MATERIAL IMPROVEMENT: otherwise"
+  ],
+  "comparison_unit": "numerators over identical frozen denominators (22 cases, 15 required requests, 7 sufficient cases, 3 reference and 3 ambiguity cases); counts compared exactly, no tolerance except material_worsening"
+}

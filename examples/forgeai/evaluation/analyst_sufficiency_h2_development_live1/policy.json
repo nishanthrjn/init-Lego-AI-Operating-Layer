@@ -1,0 +1,14 @@
+{
+  "description": "One application authority for all 22 cases: the evaluated repositories' top-level source directories are requestable; a credentials area is sensitive and a deployment area operator-only; only ordinary evidence is granted. No case-specific or oracle-derived entry.",
+  "policy": {
+    "requestable_roots": [
+      "api", "auth", "billing", "deploy", "docs", "features", "jobs",
+      "logistics", "mail", "media", "net", "pricing", "reports", "search",
+      "secrets", "security", "shipping", "shop", "tax", "text", "tools",
+      "uploads", "web"
+    ],
+    "classifications": {"deploy": "operator_only", "secrets": "sensitive"},
+    "default_classification": "ordinary",
+    "granted": ["ordinary"]
+  }
+}
