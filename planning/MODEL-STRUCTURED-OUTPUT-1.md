@@ -1,7 +1,7 @@
 # MODEL-STRUCTURED-OUTPUT-1
 
-Status: **implemented, local validation pending; live provider probe required
-separately (2026-10-08).** This is a reusable LegoAI Core capability, and it
+Status: **LOCALLY QUALIFIED (2026-10-08; offline; 63/63 validator phases);
+live provider probe required separately.** This is a reusable LegoAI Core capability, and it
 is offline only. No model or provider call was made. Unchanged:
 - the EvidenceSufficiencyAgent, Analyst prompt and serialization;
 - H1 and SAFETY-EVAL-2/3;
@@ -140,3 +140,26 @@ Validator: `validate_model_structured_output_1.py`.
    adoption.
 
 Neither the probe nor H2 is authorized by this slice.
+
+## 8. Local qualification
+
+Operator qualification passed on 2026-10-08 (implementation commit `f3d824d`):
+all **63/63 phases** of
+`uv run python .\validate_model_structured_output_1.py`.
+The run covered:
+- the H1 prerequisite and scope against `3916451`;
+- ADR-022 recorded and indexed;
+- 57 structured-output tests and 50 coverage phases;
+- regressions:
+  - the full Core suite (1964 passed, 1 pre-existing wheel-inventory test
+    deselected);
+  - Engineering Agent and analyst (398);
+  - ForgeAI H1, evidence loop, SAFETY-LIVE-1 and application tests (248
+    passed, 2 superseded proxy assertions deselected);
+  - SAFETY-EVAL-2/3 (98) and DocuMind (19);
+- the zero-provider check, mypy, Ruff lint and format, and the diff check.
+
+This is offline evidence only, and no provider was contacted. ADR-022 remains
+**Proposed** until the maintainer accepts it. Ollama 0.40.0's handling of the
+schema is **not live-qualified**: a separately authorized minimal probe is
+still required before any Agent adopts structured output.
