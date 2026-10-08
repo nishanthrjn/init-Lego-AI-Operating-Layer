@@ -2,7 +2,16 @@
 
 Status: **LOCALLY QUALIFIED (2026-10-08; offline; 63/63 validator phases);
 ADR-022 ACCEPTED; live provider probe required separately.** This is a reusable LegoAI Core capability, and it
-is offline only. No model or provider call was made. Unchanged:
+is offline only.
+
+Status update (2026-10-08, §10):
+- **Core capability:** LOCALLY QUALIFIED.
+- **Provider compatibility:** live compatibility evidence exists only for
+  Ollama 0.40.0 + `qwen2.5-coder:14b` at the exact pinned digest, under one
+  controlled schema: one-call probe **PASSED**.
+
+The capability is not generally live qualified across providers, models or
+schemas. No model or provider call was made. Unchanged:
 - the EvidenceSufficiencyAgent, Analyst prompt and serialization;
 - H1 and SAFETY-EVAL-2/3;
 - the live harnesses.
@@ -181,3 +190,91 @@ qualification. No source changed for acceptance.
 The implementation remains **locally qualified, not live qualified.** The next
 gate is a separately authorized MODEL-STRUCTURED-OUTPUT-1-LIVE-PROBE. H2 waits
 for that compatibility evidence.
+
+## 10. Live compatibility probe
+
+MODEL-STRUCTURED-OUTPUT-1-LIVE-PROBE ran on 2026-10-08 under separate
+maintainer authorization. Result: **PASSED.**
+
+| Fact | Value |
+| --- | --- |
+| Probe UUID | `d54d022d-9928-4f5d-a9b8-8745929e97f5` |
+| Git HEAD at execution | `d9645d0f05d8beff61ed4fd7febe2f142fcc1b6d` (clean tracked tree) |
+| Runtime | Ollama 0.40.0 (exact), `http://127.0.0.1:11434`, loopback, no credentials |
+| Model | `qwen2.5-coder:14b`, `sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849` |
+| Schema digest | `dd522666abf2ef6cb884ab37fb25da4e56f123febc5ee1f7064cbb570aeab4e2` |
+| Calls | ceiling 1; 1 semantic call; 0 retries; 0 fallbacks; 2 metadata GETs before it |
+| Elapsed / bound | 100.878 s / 600 s |
+| Outcome | SUCCEEDED, effect COMPLETED; Core returned text |
+| Evidence | `examples/model-structured-output-probe/runs/probe-d54d022d-9928-4f5d-a9b8-8745929e97f5/` |
+
+**Path.** The probe used the governed local host: `ChatRequest` with
+`StructuredResponseFormat`, then routed chat, the capable Ollama binding and
+the Ollama adapter. A narrow pass-through observer confirmed that the request
+carried the canonical schema as `format`; it recorded no messages.
+
+**Schema and prompt.** The schema is synthetic and covers every construct
+whose live behavior was unresolved:
+- a closed root object (`additionalProperties: false`) with all four fields
+  required;
+- a `status` enum;
+- a `label` string with `maxLength` 8;
+- an `items` array with `maxItems` 2 and string items with `maxLength` 3;
+- a `note` field that is a nullable string enum (`"n/a"` or `null`).
+
+The prompt deliberately asked for a value that broke every one of these
+constraints.
+
+**What was observed.** The probe layer parsed exactly one JSON document and
+validated it against the exact schema. All observations A–I held:
+- object root and exact declared properties;
+- no additional property (the requested extra property was absent);
+- enum respected (`beta`, not the requested `gamma`);
+- `maxLength` respected (label 8 characters; items 1 character each);
+- `maxItems` respected (2 items, not the requested 5);
+- the nullable field valid;
+- all required fields present.
+
+**Nullable limitation.** The provider accepted a schema containing a
+nullable string enum, but this run exercised the **string branch**
+(`"n/a"`). The `null` branch was not exercised. Null-branch enforcement is
+not established.
+
+**Supported claim (exact).** Ollama 0.40.0 with `qwen2.5-coder:14b` at the
+pinned digest honored the bounded ADR-022 schema in one controlled synthetic
+call through LegoAI's governed structured-output path.
+
+**Not claimed:**
+- general structured-output reliability or repeatability;
+- support for all of JSON Schema;
+- null-branch enforcement;
+- Analyst or Agent-safety improvement;
+- semantic correctness;
+- OpenAI-compatible support;
+- other Ollama versions or models;
+- production readiness.
+
+**Probe-source provenance.** `examples/model-structured-output-probe/probe.py`
+was **untracked** at execution. `run.json` records this as
+`probe_source_tracked: false`, which is a historical fact and was not
+rewritten. Its exact digest was recorded at execution:
+`3fdaf87179f512b9ca0ddc1bf9e8f209cf4954f1969f2f2c360eb74898cff532`. The
+identical source, verified against that digest, was then committed with the
+evidence in `d5c5b39`.
+
+**Custody.** `tests/architecture/test_structured_output_live_probe_custody.py`
+gives exact, probe-specific custody. It is separate from the ForgeAI
+safety-run registry. It checks that:
+- the run directory is pinned by Git tree id
+  `8027518e16ff282ce5950514f3c4173ee5173e68`;
+- the probe source matches its recorded digest;
+- the recorded execution facts are unchanged;
+- no ignore rule hides probe evidence.
+
+Any other entry under `runs/` is refused until it is separately reviewed and
+pinned. There is no wildcard admission or ignore rule.
+
+**Next gate.** FORGEAI-ANALYST-SUFFICIENCY-HARDENING-H2-EVIDENCE-ENVELOPE
+covers the EvidenceSufficiencyAgent's model-visible serialization and generic
+trust framing, with Agent version 1.1.0. It does not adopt ADR-022 structured
+output; that remains H3. H2 is **not authorized** by this record.
