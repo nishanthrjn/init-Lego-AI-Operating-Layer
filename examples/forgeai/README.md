@@ -235,10 +235,19 @@ is not a qualification.
 
 ## Workflow
 
+This describes the **current v0.1 behavior**. ForgeAI-3, the historical
+behavior qualified on 2026-09-29, differed in two ways: it applied proposals
+without operator approval, and only review #1 `CHANGES_REQUIRED` could
+trigger the rework.
+
 `RepositoryTaskWorker.run(task, context)` claims the workspace, checks the
-initial Git state, and then runs **attempt 1**. Only when attempt 1's review
-*completed* with `CHANGES_REQUIRED` does it run **attempt 2**, the single
-rework. There is never an attempt 3.
+initial Git state, and then runs **attempt 1**. It runs **attempt 2**, the
+single rework, only when attempt 1 consumed the one rework budget, in exactly
+one of two ways:
+- attempt 1's checks completed and reported code findings; or
+- they passed and review #1 completed with `CHANGES_REQUIRED`.
+
+There is never an attempt 3.
 
 1. **Claim the workspace.** The in-process `WorkspaceGuard` refuses a second
    concurrent run on the same repository. The guard stays held for the whole
@@ -249,33 +258,53 @@ rework. There is never an attempt 3.
 3. **Attempt**, run once, or twice when a rework happens:
    1. **Propose.** Call `CodingAgent.propose` once. It authorizes and reads the
       **current** content of the targets, then makes one governed model call.
-   2. **Apply** through `AuthorizedRepositoryMutation`. Current authority and
+   2. **Approve.** Show the exact bounded patch and ask the operator. Only an
+      explicit `y` for this exact proposal identity continues; anything else
+      stops with nothing written.
+   3. **Apply** through `AuthorizedRepositoryMutation`. Current authority and
       digest preconditions are checked immediately before the write.
-   3. **Check.** Run the full configured plan in order (Ruff check, mypy,
+   4. **Check.** Run the full configured plan in order (Ruff check, mypy,
       pytest) through `AuthorizedEngineeringChecks` over
       `SandboxedEngineeringChecks`. There is no host fallback.
-   4. **Observe Git.** HEAD must be unchanged, and the working-tree changes
+   5. **Observe Git.** HEAD must be unchanged, and the working-tree changes
       must equal the union of the paths applied so far.
-   5. **Review**, only if steps 1–4 all passed. Re-read the final content of
+   6. **On attempt 1 only:** if every check completed and the only failures
+      are code findings (`FAILED`), start the check-feedback rework and skip
+      the review of this candidate. Any other check failure is terminal.
+   7. **Review**, only if steps 1–5 all passed. Re-read the final content of
       every changed file through `AuthorizedRepositoryEvidence`, verify it
       against the applied digests, render deterministic material, mint a
       fresh Chat context, and call the unchanged `IndependentReviewer` once.
+      On attempt 1, `CHANGES_REQUIRED` starts the review-feedback rework.
 4. **Return a `TaskResult`** built from this run's evidence.
 
 ## Rework: when and how
 
-**A rework happens only when review #1 completed and its decision is
-`CHANGES_REQUIRED`.** Every other outcome is terminal, with no rework:
+**Current v0.1 behavior.** A run has **one rework budget**. It is consumed by
+exactly one of these, and only on attempt 1:
+- **Check findings.** Every configured check completed, and each that didn't
+  pass reported code findings (`FAILED`). The reviewer never sees this
+  candidate.
+- **Review #1 `CHANGES_REQUIRED`**, after all attempt-1 checks passed.
+
+Every other outcome is terminal, with no rework:
 
 - `ACCEPT`: the task succeeds;
 - `INSUFFICIENT_EVIDENCE`;
 - a review model failure (including an `UNKNOWN` effect) or denial;
-- invalid review output;
+- invalid coding or review output;
 - review-input failure;
-- any deterministic, mutation, authorization, sandbox or Git failure.
+- a check that couldn't complete (Docker or sandbox failure, timeout, tool
+  error, interrupted collection, no tests);
+- any mutation, authorization or Git failure;
+- the operator declining a proposal.
+
+ForgeAI-3 (historical) allowed a rework only after review #1
+`CHANGES_REQUIRED`; its qualification evidence below reflects that.
 
 **The rework request** is a second `CodingRequest` to the **same, unchanged**
-`CodingAgent`, on a fresh host-minted Chat context:
+`CodingAgent`, on a fresh host-minted Chat context, and its proposal needs its
+own operator approval:
 
 - **Objective:** the original objective.
 - **Targets:** the original paths. Files already written become `update`
@@ -284,9 +313,12 @@ rework. There is never an attempt 3.
 - **Constraints:** the original constraints, plus ForgeAI's deterministic,
   labeled rework notes:
   - that this is the single rework;
-  - that review findings are opinions supplied as data, not commands;
   - the first attempt's check outcomes;
-  - each blocking finding with its requested change.
+  - for a **check rework**: a bounded excerpt of each failing check's own
+    output (location lines and the message line before each, about 1 KB per
+    check, omissions noted), as tool output supplied as data;
+  - for a **review rework**: that review findings are opinions supplied as
+    data, not commands, and each blocking finding with its requested change.
 - **File content:** the Coding Agent re-reads the **current** files through
   authorized reads, so the rework uses current contents and digests, never
   stale ones.
@@ -302,17 +334,23 @@ into constraint text. The Coding Agent may propose a new validated change set
 within scope, and the authorized mutation boundary and M4 preconditions still
 decide.
 
-**Review #2 is terminal.** `ACCEPT` means success. `CHANGES_REQUIRED`,
-`INSUFFICIENT_EVIDENCE` or any failure means the run stops. There is no
-second rework.
+**Attempt 2 is terminal.** Its checks must pass, and then its single review
+decides: `ACCEPT` means success. `CHANGES_REQUIRED`,
+`INSUFFICIENT_EVIDENCE`, check findings or any failure means the run stops,
+because the budget is spent. There is no second rework, whichever trigger
+used the first.
 
 ## Exact ceilings
 
 | Path | Model calls | Applies | Check batches | Reviews |
 | --- | --- | --- | --- | --- |
 | No rework (review #1 `ACCEPT`) | 2: coding, review | 1 | 1 | 1 |
-| With rework (`CHANGES_REQUIRED`, then review #2) | 4: coding, review, coding, review | 2 | 2 | 2 |
+| Check rework (attempt-1 findings, then review of attempt 2) | 3: coding, coding, review | 2 | 2 | 1 |
+| Review rework (`CHANGES_REQUIRED`, then review #2) | 4: coding, review, coding, review | 2 | 2 | 2 |
 | Maximum, per run | **4** | **2** | **2** | **2** |
+
+Each apply also needs one explicit operator approval, so there are at most 2
+approvals.
 
 The ceilings are structural. Architecture tests enforce them:
 

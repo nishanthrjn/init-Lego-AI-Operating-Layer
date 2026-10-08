@@ -35,7 +35,7 @@ from legoai_engineering.repository.mutation import (
 from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.reviewer.definition import reviewer_definition
 
-from forgeai.cli import preview, reporter, summarize, terminal_approver
+from forgeai.cli import patch, preview, reporter, summarize, terminal_approver
 from forgeai.composition import prepare_run
 from forgeai.domain import (
     OperatorDecision,
@@ -306,3 +306,98 @@ def test_19_to_22_no_retry_fallback_repair_and_same_disposition(
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.PROPOSAL_INVALID  # unchanged mapping
     assert result.evidence.proposal is None and mutation.changesets == []
+
+
+# Release-candidate cleanup: unchanged files and the missing-newline marker
+
+
+MARKER_LINE = chr(92) + " No newline at end of file"
+
+
+def test_rc1_unchanged_update_has_no_orphan_marker_or_fake_hunk() -> None:
+    review = review_of(("a.py", FileChangeKind.UPDATE, "x = 1", "x = 1"))
+    assert patch(review) == []  # no hunk, no orphan marker
+    text = preview(review)
+    assert MARKER_LINE not in text and "@@" not in text
+    assert "  update a.py (1 lines, 5 bytes; unchanged, content identical" in text
+
+
+def test_rc3_marker_follows_the_line_that_lacks_a_newline() -> None:
+    new_side = patch(review_of(("b.py", FileChangeKind.UPDATE, "y = 1\n", "y = 2")))
+    assert new_side[-2:] == ["+y = 2", MARKER_LINE]
+    old_side = patch(review_of(("c.py", FileChangeKind.UPDATE, "z = 1", "z = 1\n")))
+    assert old_side[-3:] == ["-z = 1", MARKER_LINE, "+z = 1"]  # newline-only change
+    far = "".join(f"l{i}\n" for i in range(20))
+    changed_early = patch(
+        review_of(("d.py", FileChangeKind.UPDATE, far + "end", "X\n" + far[3:] + "end"))
+    )
+    assert MARKER_LINE not in changed_early  # last line is outside every hunk
+    created = patch(review_of(("e.py", FileChangeKind.CREATE, None, "A = 1")))
+    assert created[-2:] == ["+A = 1", MARKER_LINE]
+
+
+def test_rc4_rendering_never_changes_identity() -> None:
+    review = review_of(
+        ("a.py", FileChangeKind.UPDATE, "x = 1\n", "x = 1\n"),
+        ("b.py", FileChangeKind.UPDATE, "y = 1\n", "y = 2\n"),
+    )
+    identity = review.identity
+    preview(review)
+    patch(review)
+    assert review.identity == identity and len(identity) == 2  # unchanged file kept
+
+
+def test_rc5_6_7_rework_resending_an_unchanged_file_is_exact(
+    tmp_path: Path,
+) -> None:
+    # The live 14B shape: the rework re-sends one file identical to candidate 1.
+    first = json.loads(proposal())
+    second = json.loads(REWORK)
+    second["changes"] = [first["changes"][0], *second["changes"]]
+    second["changes"][0]["reason"] = "Unchanged from the first proposal."
+    root = repository(tmp_path)
+    seen: list[ProposalReview] = []
+    out: list[str] = []
+
+    def approver(review: ProposalReview) -> OperatorDecision:
+        seen.append(review)
+        out.append(preview(review))
+        return OperatorDecision.approve(review)
+
+    result, _, mutation, *_ = run(
+        root,
+        proposal(),
+        REVIEW_CHANGES,
+        json.dumps(second),
+        REVIEW_ACCEPT,
+        approver=approver,
+    )
+    assert result.disposition is TaskDisposition.SUCCEEDED
+    rework_preview = out[1]
+    assert "src/inventory/stock.py (" in rework_preview
+    assert "; unchanged, content identical to the current file)" in rework_preview
+    assert "+++ b/src/inventory/stock.py" not in rework_preview
+    assert "+++ b/tests/test_stock.py" in rework_preview
+    body = rework_preview.split("--- proposed patch")[1].splitlines()
+    assert body[1].startswith("--- a/tests/test_stock.py")  # nothing orphaned first
+    # Approval and mutation still carry the exact proposal, unchanged file included.
+    assert len(mutation.changesets[1].changes) == 2
+    assert changeset_identity(mutation.changesets[1]) == seen[1].identity
+
+
+def test_rc8_unchanged_files_do_not_count_against_the_bound() -> None:
+    big = "x\n" * 900
+    review = review_of(
+        ("big.py", FileChangeKind.UPDATE, big, big),
+        ("a.py", FileChangeKind.UPDATE, "x = 1\n", "x = 2\n"),
+    )
+    assert "proposed patch" in preview(review)
+    still_too_big = review_of(("new.py", FileChangeKind.CREATE, None, big))
+    assert "PREVIEW EXCEEDS DISPLAY BOUND" in preview(still_too_big)
+
+
+def test_rc9_escaping_still_applies_next_to_the_marker() -> None:
+    hostile = "ok = 1" + chr(27) + "[2K"
+    lines = patch(review_of(("a.py", FileChangeKind.UPDATE, "ok = 0\n", hostile)))
+    escaped = "+ok = 1" + chr(92) + "u001b[2K"  # the visible escape, not ESC
+    assert lines[-2:] == [escaped, MARKER_LINE]
