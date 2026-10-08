@@ -37,6 +37,11 @@ class FixedModel:
     async def chat(self, request: ChatRequest) -> ChatResult:
         if type(request) is not ChatRequest:
             raise TypeError("chat requires ChatRequest")
+        if request.response_format is not None:
+            # ADR-022: a fixed reply cannot honor a schema; refuse, never ignore.
+            raise ModelPreflightError(
+                "structured output is not supported by FixedModel"
+            )
         self.chat_calls += 1
         return self._chat_result
 

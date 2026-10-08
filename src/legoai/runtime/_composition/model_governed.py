@@ -82,6 +82,18 @@ async def _settle_mismatch(
     )
 
 
+async def _settle_capability_refusal(
+    coordinator: ExecutionCoordinator, result: CoordinationResult
+) -> ExecutionResult:
+    """ADR-022: the bound model cannot honor the request; no call is made."""
+    return await coordinator.settle(
+        result,
+        final_state=ExecutionState.FAILED,
+        effect=EffectExtent.NONE,
+        error=ErrorDetail(ErrorCategory.VALIDATION_ERROR, Recoverability.TERMINAL, ()),
+    )
+
+
 async def _settle_preflight_error(
     coordinator: ExecutionCoordinator, result: CoordinationResult
 ) -> ExecutionResult:
@@ -247,6 +259,10 @@ async def invoke_routed_chat(
         # claimed invocation. Consume the same claim before a no-call failure.
         await coordinator.claim_invocation(result.execution_id)
         return await _settle_mismatch(coordinator, result), None
+    if request.response_format is not None and not configured.binding.structured_output:
+        # Fail closed: never drop the requirement or downgrade to free text.
+        await coordinator.claim_invocation(result.execution_id)
+        return await _settle_capability_refusal(coordinator, result), None
     return await _invoke_chat(
         coordinator, result, request, configured.adapter, configured.binding
     )

@@ -129,4 +129,6 @@ def test_generic_values_expose_only_typed_inert_selection_data() -> None:
         "requirement": ModelRequirement,
         "model_id": ModelId,
         "provider_id": ProviderId,
+        # ADR-022: additive capability fact (default False), never authority.
+        "structured_output": bool,
     }
