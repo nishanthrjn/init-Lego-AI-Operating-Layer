@@ -1,6 +1,7 @@
 # FORGEAI-ANALYST-SUFFICIENCY-HARDENING-H1-REQUEST-POLICY
 
-Status: **implemented, local validation pending (2026-10-08).** This is an
+Status: **LOCALLY QUALIFIED (2026-10-08; offline; 65/65 validator phases).**
+This is an
 offline implementation and qualification slice. No model or provider call was
 made. EvidenceSufficiencyAgent 1.0.0 and its prompt, serialization and parser
 are unchanged, as are ModelPort, the Ollama adapter, Core, SAFETY-EVAL-2 and
@@ -217,3 +218,23 @@ protected-path list).
    - the Ollama adapter mapping.
 
 No live probe is authorized automatically. H2 comes later.
+
+## 10. Local qualification
+
+Operator qualification passed on 2026-10-08 (implementation commit `8aaf3bf`):
+all **65/65 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_hardening_h1_request_policy.py`.
+The run covered:
+- the design prerequisite and scope against `7fdee8f`;
+- the SAFETY-EVAL-3 seal (freeze verified, content unused);
+- 40 Engineering and 24 ForgeAI H1 tests, with 51 coverage phases;
+- regressions: Engineering analyst and architecture (361), evidence loop
+  (50), SAFETY-EVAL-2/3 scorers (98), SAFETY-LIVE-1 plus run-custody-2
+  (94 passed, 1 superseded assertion deselected) and Core architecture (251);
+- the zero-model check, mypy, Ruff lint and format, and the diff check.
+
+Permitted claim: **ForgeAI has a locally qualified deterministic
+request-policy guard for the bounded H1 scope.** This is offline evidence only:
+no model run. The raw baseline remains G. H1 does not fix the model's
+reference/import-as-content reasoning, false-sufficient progression or
+SOURCE_ROLE avoidance.
