@@ -228,3 +228,11 @@ Remote providers, credentials and KISSKI remain unsupported.
 ```powershell
 uv run python .\validate_remote_disclosure_governance_1.py
 ```
+
+Operator qualification (2026-10-09): **LOCALLY QUALIFIED**. That command passed
+**20/20 phases** offline on commit `19d0e39`. That includes 95 focused
+governance tests, 24 host-open tests, the REMOTE-still-refused regression, and
+Core (1760), DocuMind (16) and ForgeAI (89) regressions. Qualification covers
+the governance values, the pure evaluator and host-open validation only. No
+provider, network or credential was used. REMOTE remains refused, and no
+invocation-time gate exists.
