@@ -64,6 +64,7 @@ from forgeai.composition import (
 from forgeai.domain import (
     OperatorDecision,
     ProposalReview,
+    ReworkTrigger,
     RunStage,
     TaskDisposition,
     TaskFailure,
@@ -246,10 +247,19 @@ def fingerprint(review: ProposalReview) -> str:
 def preview(review: ProposalReview) -> str:
     """The proposal and its full unified diff, or an explicit bound refusal."""
     proposal = review.proposal
+    kind = "Rework proposal" if review.rework is not None else "Proposal"
     lines = [
-        f"Proposal (attempt {review.attempt}, id {fingerprint(review)}): "
+        f"{kind} (attempt {review.attempt}, id {fingerprint(review)}): "
         f"{safe(proposal.summary[:400])}"
     ]
+    if review.rework is not None:
+        lines.append(f"  reason for rework: {review.rework.value}")
+        lines.append("  feedback given to the Coding Agent (bounded, as data):")
+        lines += [
+            f"    | {safe(line)}"
+            for item in review.feedback
+            for line in item.split("\n")
+        ]
     for change, reason in zip(
         proposal.changeset.changes, proposal.reasons, strict=True
     ):
@@ -294,7 +304,11 @@ def terminal_approver(
             out("Not approved: no interactive terminal (approval is never automatic).")
             return OperatorDecision.decline(review)
         try:
-            answer = ask("Apply this proposal? [y/N] ")
+            answer = ask(
+                "Apply this rework proposal? [y/N] "
+                if review.rework is not None
+                else "Apply this proposal? [y/N] "
+            )
         except EOFError, KeyboardInterrupt:
             out("\nNot approved.")
             return OperatorDecision.decline(review)
@@ -319,6 +333,12 @@ def reporter(out: Out) -> Callable[[RunStage, int], None]:
     def progress(stage: RunStage, attempt: int) -> None:
         if stage is RunStage.REWORK_STARTED:
             out("[rework] review #1 requested changes; one bounded rework (attempt 2)")
+            return
+        if stage is RunStage.CHECK_REWORK_STARTED:
+            out(
+                "[rework] checks reported code findings; one bounded rework "
+                "(attempt 2) using that check output"
+            )
             return
         suffix = " (attempt 2)" if attempt == 2 else ""
         out(f"[{steps[stage]}/{_STEPS}] {stage.value.capitalize()}{suffix}")
@@ -345,9 +365,13 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
             for r in first.checks
         )
         decision = first.review_decision
-        lines.append("attempts: 2 (one rework after review #1 required changes)")
+        lines.append(
+            "attempts: 2 (one rework after attempt 1 checks reported findings)"
+            if evidence.rework_trigger is ReworkTrigger.CHECK_FINDINGS
+            else "attempts: 2 (one rework after review #1 required changes)"
+        )
         lines.append(f"attempt 1 checks: {outcomes}")
-        lines.append(f"attempt 1 review: {decision.value if decision else 'none'}")
+        lines.append(f"attempt 1 review: {decision.value if decision else 'not run'}")
     if result.failure is TaskFailure.PROPOSAL_DECLINED:
         lines.append("approval: declined; no file was written, checked or reviewed")
     diagnostics = (

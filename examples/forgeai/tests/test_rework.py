@@ -167,11 +167,14 @@ def test_no_rework_after_other_first_review_outcomes(
 
 
 def test_no_rework_after_deterministic_failure(tmp_path: Path) -> None:
+    # A check execution failure (mypy exit 2 = ERROR), not a code finding:
+    # never a rework (v0.1 reworks only on completed code findings).
     result, model, log, _, _ = logged_run(
-        repository(tmp_path), *REWORKED, REVIEW_ACCEPT, exits=(0, 1, 0)
+        repository(tmp_path), *REWORKED, REVIEW_ACCEPT, exits=(0, 2, 0)
     )
     assert result.failure is TaskFailure.CHECKS_FAILED
     assert model.calls == 1 and len(result.evidence.attempts) == 1
+    assert result.evidence.rework_trigger is None
 
 
 # --- G/H. Rework proposal failures are terminal --------------------------------

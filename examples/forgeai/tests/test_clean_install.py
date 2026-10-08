@@ -145,7 +145,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     )
     lines = rework.stdout.splitlines()
     assert "disposition: succeeded" in lines, rework.stdout
-    assert any(line.startswith("Proposal (attempt 2, id ") for line in lines)
+    assert any(line.startswith("Rework proposal (attempt 2, id ") for line in lines)
     assert "attempts: 2 (one rework after review #1 required changes)" in lines
     assert "attempt 1 checks: ruff_check passed, mypy passed, pytest passed" in lines
     assert "attempt 1 review: changes_required" in lines

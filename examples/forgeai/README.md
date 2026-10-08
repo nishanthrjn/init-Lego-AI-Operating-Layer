@@ -140,7 +140,34 @@ uv run forgeai run `
 - Approval is bound to the exact change set shown. Approving one proposal
   can never apply a different one, and the existing content preconditions
   still refuse a file that changed in the meantime.
-- A rework proposal needs its own approval.
+- A rework proposal needs its own approval: `Rework proposal (attempt 2,
+  id …)`, the reason, the exact feedback the Coding Agent received, the full
+  patch, then `Apply this rework proposal? [y/N]`.
+
+**One bounded rework.** A run has at most two proposals. It gets one rework,
+triggered by exactly one of these:
+- **The attempt-1 checks reported code findings.** Every configured check
+  completed, and each one that didn't pass is `failed` (the tool ran and
+  found problems). The Coding Agent gets a bounded excerpt of those checks'
+  own output as data: location-bearing lines such as `file.py:14` plus the
+  message line before each, at most about 1 KB per check, with a note of any
+  lines left out. It gets the same task and the same targets, and it reads
+  the *current* candidate files, so the preconditions bind to candidate 1.
+  Its new proposal is shown and approved like any other, applied through the
+  same authorized mutation, and all checks run again. Candidate 1 is never
+  reviewed. If the checks pass, the reviewer reviews candidate 2 once. If
+  the reviewer then requires changes, the run stops: the budget is spent.
+- **Review #1 required changes**, after all attempt-1 checks passed. This
+  is unchanged from ForgeAI-3.
+
+There is never a third proposal. ForgeAI never runs `ruff --fix` or any
+other auto-fix, and changes code only through approved proposals.
+
+A check that **could not complete** is never "repaired" by the model:
+Docker or sandbox failure, timeout, a tool error, interrupted pytest
+collection, or no tests collected. The run stops. A check finding can't
+widen the scope either: a rework proposal touching a file outside your
+targets is rejected.
 
 **Final result.** The final block lists:
 - the disposition and reason;
@@ -182,8 +209,25 @@ says so with `WARNING: changes remain in the working tree` and lists the
 files. ForgeAI never commits, resets, stashes or cleans. Exit codes: `0`
 succeeded, `2` rejected before any model call, `1` everything else.
 
+**Live pilot evidence** (same customers repository, task and targets):
+- `qwen2.5-coder:7b`, ×2: correct guard but **vacuous** tests, which pass
+  even without the guard. One review ACCEPTed them; one review output was
+  invalid.
+- `qwen2.5-coder:14b`, ×2: correct guard and **meaningful** tests (they
+  fail without the guard), but written with `assert False`, which the
+  repository's Ruff rules reject (B011). Without a rework the run stopped at
+  checks. That's the case the check-feedback rework now handles: one
+  supervised correction, still approved by you. On this machine Ollama ran
+  CPU-only, so 14B needed `--ollama-timeout 1200`.
+
+Neither model is qualified by these observations. 14B being better than 7B
+is not a qualification.
+
 **Known v0.1 limits.**
 - Live-model quality is **unqualified**; only replay runs are qualified.
+- The rework gets a bounded excerpt of check output. A finding that needs
+  more context, or a file outside the targets, may not be fixable within one
+  rework.
 - Docker readiness is a point-in-time check. If Docker stops after
   startup, the check step fails after the approved changes were written,
   and the warning lists them.
@@ -420,7 +464,9 @@ runtime objects.
 - **Findings reach the Coding Agent as constraint text.** It is labeled
   review data, but a model may still treat it as instruction; scope and
   authorization bound what can happen.
-- **Exactly one rework.** A second `CHANGES_REQUIRED` stops the run.
+- **Exactly one rework.** A second `CHANGES_REQUIRED` stops the run. Since
+  v0.1, attempt-1 check findings can consume that same single rework
+  instead; see "One bounded rework" above.
 - **No rollback.** Failed runs leave both attempts' changes in place.
 - **Union-based Git check.** If a rework restores a file to its committed
   content, that file no longer appears changed, and the run reports

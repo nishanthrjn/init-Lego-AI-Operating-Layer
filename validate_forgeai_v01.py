@@ -216,6 +216,10 @@ def main() -> int:
                 "6b v0.1 supervision: exact patch preview, invalid-output diagnostics",
                 "tests/test_v01_supervision.py",
             )
+            tests(
+                "6c v0.1 check-feedback bounded rework (incl. real-Docker B011 regression)",
+                "tests/test_v01_check_rework.py",
+            )
             tests("7 architecture / import boundaries", "tests/test_architecture.py")
             tests(
                 "8 ForgeAI-1/2/3 regressions",

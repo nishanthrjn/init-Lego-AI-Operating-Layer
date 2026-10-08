@@ -98,12 +98,15 @@ def test_no_review_when_mutation_denied(tmp_path: Path) -> None:
 
 
 def test_no_review_when_checks_fail(tmp_path: Path) -> None:
+    # v0.1: attempt-1 findings consume the single rework; the scripted exits
+    # repeat, so the rework's checks fail too. No review ever runs.
     result, model, log, _, reader = logged_run(
-        repository(tmp_path), *replay().outputs, exits=(0, 0, 1)
+        repository(tmp_path), proposal(), REWORK, exits=(0, 0, 1)
     )
     assert result.failure is TaskFailure.CHECKS_FAILED
-    assert model.calls == 1 and log.count("model") == 1
+    assert model.calls == 2 and log.count("model") == 2
     assert result.evidence.review is None and reader.requests == []
+    assert all(attempt.review is None for attempt in result.evidence.attempts)
 
 
 def test_no_review_when_final_git_integrity_fails(tmp_path: Path) -> None:

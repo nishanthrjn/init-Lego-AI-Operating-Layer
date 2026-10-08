@@ -209,11 +209,16 @@ def test_11_rework_shows_a_second_exact_patch_and_asks_again(tmp_path: Path) -> 
     )
     assert result.disposition is TaskDisposition.SUCCEEDED
     patches = [line for line in out if "proposed patch" in line]
-    asks = [line for line in out if line.startswith("Apply this proposal?")]
+    asks = [line for line in out if line.startswith("Apply this ")]
     assert len(patches) == 2 and len(asks) == 2 and len(mutation.changesets) == 2
-    ids = [line for line in out if line.startswith("Proposal (attempt")]
+    ids = [
+        line
+        for line in out
+        if line.startswith(("Proposal (attempt", "Rework proposal (attempt"))
+    ]
     assert ids[0].startswith("Proposal (attempt 1, id ")
-    assert ids[1].startswith("Proposal (attempt 2, id ")
+    assert ids[1].startswith("Rework proposal (attempt 2, id ")
+    assert "reason for rework: the independent review required changes" in ids[1]
     assert ids[0].split("id ")[1][:12] != ids[1].split("id ")[1][:12]
 
 

@@ -358,9 +358,10 @@ def test_success_summary_is_complete_and_bounded(tmp_path: Path) -> None:
 
 def test_check_failure_warns_changes_remain(tmp_path: Path) -> None:
     root = repository(tmp_path)
-    result, *_ = supervised(root, proposal(), REVIEW_ACCEPT, exits=(0, 0, 1))
+    # Attempt-1 findings consume the rework; the rework's checks fail again.
+    result, *_ = supervised(root, proposal(), REWORK, exits=(0, 0, 1))
     text = summarize(result, root)
-    assert result.failure is TaskFailure.CHECKS_FAILED
+    assert result.failure is TaskFailure.CHECKS_FAILED and result.evidence.reworked
     assert "check pytest: failed" in text
     assert "WARNING: changes remain in the working tree" in text
     assert "src/inventory/stock.py" in text.split("WARNING")[1]
