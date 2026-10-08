@@ -63,7 +63,10 @@ ollama pull qwen2.5-coder:7b   # or any installed model; see --ollama-model
 ollama serve                   # if not already running
 ```
 
-**Run a task.** Start from a committed, clean working tree:
+**Run a task.** Start from a committed, clean working tree. Run from
+`examples/forgeai`. From the repository root, add `--project
+examples/forgeai` (`uv run --project examples/forgeai forgeai run ...`): the
+root project does not install the `forgeai` command.
 
 ```powershell
 uv run forgeai run `
@@ -108,9 +111,26 @@ uv run forgeai run `
    generated`, `[3/7] Waiting for approval`, `[4/7] Changes applied`,
    `[5/7] Checks completed`, `[6/7] Review completed` and `[7/7] Final
    result`. A rework is announced with `[rework]`.
-5. **The proposal**, before anything is written: each changed path with
-   create/update and its size, the per-file reason, the summary, risks and
-   unknowns. File contents are not printed.
+5. **The proposal**, before anything is written: a short proposal id, each
+   changed path with create/update and its size, the per-file reason, the
+   summary, risks and unknowns, and then **the exact patch**.
+   - The patch is a unified diff of the proposed content against the
+     current text the proposal was based on, bounded by
+     `--- proposed patch ---` and `--- end of patch ---`. It is rendered in
+     memory: no file read, no Git command, no write.
+   - Its "before" side is verified against the same content digest the
+     mutation precondition enforces, and approval is bound to the shown
+     proposal id. What you see is exactly what will be written.
+   - Control and bidirectional-text characters in proposed code are shown
+     as `\uXXXX` escapes. They can't move the cursor, recolor or reorder
+     the screen.
+   - Only the whole patch is ever shown. If it exceeds 800 diff lines or
+     96 KiB, ForgeAI prints `PREVIEW EXCEEDS DISPLAY BOUND`, does not ask,
+     and declines. A change you can't fully see is never applied.
+
+   Read the patch before answering. The checks and the reviewer can both
+   miss weak code. In the first live pilot, tests that could never fail
+   passed every check and were accepted by the 7B reviewer.
 
 **Approval.** Then comes `Apply this proposal? [y/N]`:
 - Only `y` or `yes` applies the proposal. Anything else, an empty answer,
@@ -132,6 +152,29 @@ uv run forgeai run `
 - a `git -C <repo> diff -- <files>` command for inspecting the change.
 
 No model is used to summarize.
+
+**Invalid model output.** If the Coding Agent or the reviewer returns output
+that fails its contract, the result names why. For example:
+
+```
+review output invalid:
+  reason: REQUIRED_FIELD_MISSING (a required field is missing)
+  field: findings[0].required_action
+  no retry or repair was attempted; raw output is not shown
+```
+
+- **Reasons** are a closed set from the Engineering parsers:
+  - `OUTPUT_CONTRACT`, `JSON_DOCUMENT_INVALID`;
+  - `DUPLICATE_FIELD`, `REQUIRED_FIELD_MISSING`, `UNKNOWN_FIELD`,
+    `FIELD_TYPE_INVALID`, `ARRAY_BOUNDS_EXCEEDED`, `ENUM_INVALID`;
+  - `PATH_INVALID`, `PATH_OUT_OF_SCOPE`, `VALUE_INVALID`,
+    `FINDING_REFERENCE_INVALID`.
+- **The field** is a schema locator, such as `changes[1].reason`. It is
+  never model text.
+- **Raw model output and prompts are never printed or kept.** The failure is
+  unchanged: invalid coding output stops the run with nothing written, and
+  invalid review output stops it without retry or rework. Changes already
+  applied remain, as the warning says.
 
 **Failures.** There is no retry, no fallback and no rollback. If a run fails
 after changes were applied (checks, review, or a declined rework), the result

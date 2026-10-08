@@ -44,6 +44,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "coding.values": {
             "enum",
+            "legoai_engineering.agent_output",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
             "legoai.execution.values",
@@ -54,6 +55,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "coding.api": {
             "json",
+            "legoai_engineering.agent_output",
             "legoai_engineering._json_document",
             "typing",
             "legoai.execution.agent.ports",
@@ -81,8 +83,11 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai.intelligence.model.routing",
             "legoai.kernel.versions",
         },
+        # Display-safe rejected-output diagnostics shared by Coding and Reviewer.
+        "agent_output": {"enum"},
         "reviewer.values": {
             "enum",
+            "legoai_engineering.agent_output",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",
             "legoai.execution.values",
@@ -90,6 +95,8 @@ def import_violations(source: str, module: str = "") -> set[str]:
         },
         "reviewer.api": {
             "json",
+            "enum",
+            "legoai_engineering.agent_output",
             "legoai_engineering._json_document",
             "legoai.execution.agent.ports",
             "legoai.execution.agent.values",

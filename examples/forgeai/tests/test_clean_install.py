@@ -125,7 +125,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     result = run([str(python), "-I", str(application / "demo.py")], application, "y\n")
     lines = result.stdout.splitlines()
     assert "disposition: succeeded" in lines, result.stdout
-    assert any(line.startswith("Proposal (attempt 1)") for line in lines)
+    assert any(line.startswith("Proposal (attempt 1, id ") for line in lines)
     assert "changed files: src/inventory/stock.py, tests/test_stock.py" in lines
     assert "check ruff_check: passed" in lines
     assert "check mypy: passed" in lines
@@ -145,7 +145,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     )
     lines = rework.stdout.splitlines()
     assert "disposition: succeeded" in lines, rework.stdout
-    assert any(line.startswith("Proposal (attempt 2)") for line in lines)
+    assert any(line.startswith("Proposal (attempt 2, id ") for line in lines)
     assert "attempts: 2 (one rework after review #1 required changes)" in lines
     assert "attempt 1 checks: ruff_check passed, mypy passed, pytest passed" in lines
     assert "attempt 1 review: changes_required" in lines

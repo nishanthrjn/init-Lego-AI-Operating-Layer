@@ -138,7 +138,7 @@ def test_run_syntax_parses_and_shows_scope_before_any_model_call(
     ):
         assert line in text
     # Scope first, then the proposal, then the decision.
-    assert text.index("editable targets") < text.index("Proposal (attempt 1)")
+    assert text.index("editable targets") < text.index("Proposal (attempt 1, id ")
 
 
 @needs_docker_path
@@ -239,7 +239,12 @@ def test_approval_yes_applies_then_checks_then_reviews(tmp_path: Path) -> None:
     text = "\n".join(out)
     assert "  update src/inventory/stock.py (" in text
     assert "    why: Reject negative stock" in text
-    assert "raise ValueError" not in text  # no full contents in the preview
+    # The exact patch is shown before approval (v0.1 supervision slice).
+    assert "--- proposed patch (exactly what will be written) ---" in text
+    assert (
+        "+++ b/src/inventory/stock.py" in text and "+        raise ValueError(" in text
+    )
+    assert text.index("--- end of patch ---") < text.index("Apply this proposal?")
     assert [line for line in out if line.startswith("[")] == [
         "[1/7] Repository verified",
         "[2/7] Proposal generated",

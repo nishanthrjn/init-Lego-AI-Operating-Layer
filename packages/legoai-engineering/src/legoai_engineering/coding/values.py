@@ -7,6 +7,7 @@ from legoai.execution.agent.ports import AgentResult
 from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.execution.values import ExecutionContext
 
+from legoai_engineering.agent_output import OutputDiagnostic
 from legoai_engineering.analyst.values import AcquisitionFailure
 from legoai_engineering.coding.definition import coding_definition
 from legoai_engineering.repository.mutation import (
@@ -184,6 +185,8 @@ class CodingResult:
     agent_result: AgentResult | None
     proposal: CodingProposal | None
     acquisition_failure: AcquisitionFailure | None = None
+    # Why output was rejected (OUTPUT_INVALID only); safe to display and keep.
+    diagnostic: OutputDiagnostic | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -191,6 +194,11 @@ class CodingResult:
             or type(self.request) is not CodingRequest
         ):
             raise TypeError("coding result requires status and request")
+        if self.diagnostic is not None and (
+            self.status is not CodingStatus.OUTPUT_INVALID
+            or type(self.diagnostic) is not OutputDiagnostic
+        ):
+            raise ValueError("only rejected output carries an output diagnostic")
         if self.evidence is not None:
             if type(self.evidence) is not CodingEvidence:
                 raise TypeError("coding result requires CodingEvidence")

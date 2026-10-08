@@ -9,6 +9,11 @@ from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.kernel.context import TenantContext
 
 from legoai_engineering._json_document import json_document
+from legoai_engineering.agent_output import (
+    OutputDiagnostic,
+    OutputRejected,
+    OutputRejection,
+)
 from legoai_engineering.analyst.values import (
     AcquisitionFailure,
     EvidenceAcquisitionError,
@@ -44,21 +49,34 @@ class CodingEvidencePort(Protocol):
     ) -> CodingEvidence: ...
 
 
-def _object(value: object, fields: set[str]) -> dict[str, object]:
-    if type(value) is not dict or set(value) != fields:
-        raise ValueError("coding object has unexpected fields")
+def _at(where: str, name: str) -> str:
+    return f"{where}.{name}" if where else name
+
+
+def _object(value: object, fields: set[str], where: str) -> dict[str, object]:
+    if type(value) is not dict:
+        raise OutputRejected(OutputRejection.FIELD_TYPE_INVALID, where or None)
+    missing = sorted(fields - set(value))
+    if missing:
+        raise OutputRejected(
+            OutputRejection.REQUIRED_FIELD_MISSING, _at(where, missing[0])
+        )
+    if set(value) != fields:
+        raise OutputRejected(OutputRejection.UNKNOWN_FIELD, where or None)
     return value
 
 
-def _array(value: object) -> list[object]:
-    if type(value) is not list or len(value) > 8:
-        raise ValueError("coding requires bounded arrays")
+def _array(value: object, where: str) -> list[object]:
+    if type(value) is not list:
+        raise OutputRejected(OutputRejection.FIELD_TYPE_INVALID, where)
+    if len(value) > 8:
+        raise OutputRejected(OutputRejection.ARRAY_BOUNDS_EXCEEDED, where)
     return value
 
 
-def _string(value: object) -> str:
+def _string(value: object, where: str) -> str:
     if type(value) is not str:
-        raise TypeError("coding requires text")
+        raise OutputRejected(OutputRejection.FIELD_TYPE_INVALID, where)
     return value
 
 
@@ -66,35 +84,63 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     result: dict[str, object] = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError("duplicate coding JSON key")
+            raise OutputRejected(OutputRejection.DUPLICATE_FIELD)
         result[key] = value
     return result
 
 
 def _parse(output: str, evidence: CodingEvidence) -> CodingProposal:
-    value: object = json.loads(json_document(output), object_pairs_hook=_unique_object)
-    obj = _object(value, {"summary", "changes", "risks", "unknowns"})
+    """Same checks and order as before; each rejection names where it failed."""
+    try:
+        value: object = json.loads(
+            json_document(output), object_pairs_hook=_unique_object
+        )
+    except OutputRejected:
+        raise
+    except ValueError, RecursionError:
+        raise OutputRejected(OutputRejection.JSON_DOCUMENT_INVALID) from None
+    obj = _object(value, {"summary", "changes", "risks", "unknowns"}, "")
     files = {file.target.path.value: file for file in evidence.files}
     changes = []
     reasons = []
-    for raw in _array(obj["changes"]):
-        change = _object(raw, {"path", "operation", "content", "reason"})
-        path = RepositoryPath(_string(change["path"]))
-        operation = FileChangeKind(_string(change["operation"]))
+    for index, raw in enumerate(_array(obj["changes"], "changes")):
+        where = f"changes[{index}]"
+        change = _object(raw, {"path", "operation", "content", "reason"}, where)
+        try:
+            path = RepositoryPath(_string(change["path"], _at(where, "path")))
+        except WorkspaceError:
+            raise OutputRejected(
+                OutputRejection.PATH_INVALID, _at(where, "path")
+            ) from None
+        text = _string(change["operation"], _at(where, "operation"))
+        try:
+            operation = FileChangeKind(text)
+        except ValueError:
+            raise OutputRejected(
+                OutputRejection.ENUM_INVALID, _at(where, "operation")
+            ) from None
         current = files.get(path.value)
         if current is None or operation is not current.target.operation:
-            raise ValueError("proposed path or operation is outside requested scope")
-        changes.append(
-            FileChange(path, operation, current.digest, _string(change["content"]))
-        )
-        reasons.append(_string(change["reason"]))
-    return CodingProposal(
-        RepositoryChangeSet(tuple(changes)),
-        _string(obj["summary"]),
-        tuple(reasons),
-        tuple(_string(item) for item in _array(obj["risks"])),
-        tuple(_string(item) for item in _array(obj["unknowns"])),
+            raise OutputRejected(OutputRejection.PATH_OUT_OF_SCOPE, where)
+        content = _string(change["content"], _at(where, "content"))
+        try:
+            changes.append(FileChange(path, operation, current.digest, content))
+        except ValueError, TypeError:
+            raise OutputRejected(OutputRejection.VALUE_INVALID, where) from None
+        reasons.append(_string(change["reason"], _at(where, "reason")))
+    try:
+        changeset = RepositoryChangeSet(tuple(changes))
+    except ValueError, TypeError:
+        raise OutputRejected(OutputRejection.VALUE_INVALID, "changes") from None
+    summary = _string(obj["summary"], "summary")
+    risks = tuple(_string(item, "risks") for item in _array(obj["risks"], "risks"))
+    unknowns = tuple(
+        _string(item, "unknowns") for item in _array(obj["unknowns"], "unknowns")
     )
+    try:
+        return CodingProposal(changeset, summary, tuple(reasons), risks, unknowns)
+    except ValueError, TypeError:
+        raise OutputRejected(OutputRejection.VALUE_INVALID, "proposal") from None
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,19 +202,34 @@ class CodingAgent:
         ):
             raise ValueError("coding runtime returned unrelated attribution")
         if agent.status is not AgentExecutionStatus.SUCCEEDED:
-            status = (
-                CodingStatus.OUTPUT_INVALID
-                if agent.status is AgentExecutionStatus.OUTPUT_INVALID
-                else CodingStatus.MODEL_FAILURE
+            if agent.status is AgentExecutionStatus.OUTPUT_INVALID:
+                contract = OutputDiagnostic(OutputRejection.OUTPUT_CONTRACT)
+                return CodingResult(
+                    CodingStatus.OUTPUT_INVALID,
+                    request,
+                    evidence,
+                    agent,
+                    None,
+                    diagnostic=contract,
+                )
+            return CodingResult(
+                CodingStatus.MODEL_FAILURE, request, evidence, agent, None
             )
-            return CodingResult(status, request, evidence, agent, None)
         assert agent.output is not None
         try:
             proposal = _parse(agent.output, evidence)
             return CodingResult(
                 CodingStatus.SUCCEEDED, request, evidence, agent, proposal
             )
+        except OutputRejected as error:
+            diagnostic = error.diagnostic
         except ValueError, TypeError, RecursionError, WorkspaceError:
-            return CodingResult(
-                CodingStatus.OUTPUT_INVALID, request, evidence, agent, None
-            )
+            diagnostic = OutputDiagnostic(OutputRejection.VALUE_INVALID)
+        return CodingResult(
+            CodingStatus.OUTPUT_INVALID,
+            request,
+            evidence,
+            agent,
+            None,
+            diagnostic=diagnostic,
+        )

@@ -25,15 +25,27 @@ SELF = ROOT / "validate_forgeai_v01.py"
 BASE = "3993320"  # last commit before the v0.1 product slices
 IMAGE = "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
 SOURCES = ["src", "tests", "demo.py"]
-ENGINEERING_ALLOWED = {
-    "packages/legoai-engineering/src/legoai_engineering/sandbox/docker.py",
-    "packages/legoai-engineering/tests/test_sandbox_readiness.py",
-    "packages/legoai-engineering/tests/test_sandbox_docker.py",
-}
+ENGINEERING_PREFIX = "packages/legoai-engineering/"
+# Engineering seams added by v0.1 slices: Docker readiness, then safe
+# rejected-output diagnostics for the Coding Agent and Reviewer.
 READINESS = [
     "src/legoai_engineering/sandbox/docker.py",
     "tests/test_sandbox_readiness.py",
+    "src/legoai_engineering/agent_output.py",
+    "src/legoai_engineering/coding/api.py",
+    "src/legoai_engineering/coding/values.py",
+    "src/legoai_engineering/reviewer/api.py",
+    "src/legoai_engineering/reviewer/values.py",
+    "tests/test_agent_output.py",
 ]
+ENGINEERING_ALLOWED = {
+    ENGINEERING_PREFIX + name
+    for name in (
+        *READINESS,
+        "tests/test_sandbox_docker.py",
+        "tests/test_architecture.py",
+    )
+}
 
 
 def main() -> int:
@@ -128,7 +140,9 @@ def main() -> int:
                 "2 no LegoAI Core source change",
                 [git, "diff", "--exit-code", "--stat", BASE, "--", "src"],
             )
-            phase = "2b Engineering change limited to the sandbox readiness seam"
+            phase = (
+                "2b Engineering change limited to the readiness and diagnostics seams"
+            )
             changed = set(
                 subprocess.run(
                     [git, "diff", "--name-only", BASE, "--", "packages"],
@@ -198,6 +212,10 @@ def main() -> int:
                 "6 v0.1 product: CLI, approval, readiness refusal, result, exclusion",
                 "tests/test_v01_product.py",
             )
+            tests(
+                "6b v0.1 supervision: exact patch preview, invalid-output diagnostics",
+                "tests/test_v01_supervision.py",
+            )
             tests("7 architecture / import boundaries", "tests/test_architecture.py")
             tests(
                 "8 ForgeAI-1/2/3 regressions",
@@ -224,7 +242,7 @@ def main() -> int:
                 cwd=ENGINEERING,
             )
             project(
-                "10d typing (readiness seam)",
+                "10d typing (Engineering seams)",
                 ENGINEERING,
                 "python",
                 "-m",
@@ -234,7 +252,7 @@ def main() -> int:
                 *READINESS,
             )
             project(
-                "10e Ruff lint (readiness seam)",
+                "10e Ruff lint (Engineering seams)",
                 ENGINEERING,
                 "python",
                 "-m",
@@ -244,7 +262,7 @@ def main() -> int:
                 *READINESS,
             )
             project(
-                "10f Ruff format (readiness seam)",
+                "10f Ruff format (Engineering seams)",
                 ENGINEERING,
                 "python",
                 "-m",
@@ -255,9 +273,14 @@ def main() -> int:
                 *READINESS,
             )
             tests(
-                "11 Engineering Coding/Reviewer regressions",
+                "11 Engineering Coding/Reviewer diagnostics and regressions",
+                "tests/test_agent_output.py",
                 "tests/test_coding.py",
+                "tests/test_coding_m4.py",
+                "tests/test_coding_prompt.py",
                 "tests/test_reviewer.py",
+                "tests/test_json_document.py",
+                "tests/test_consumer_readiness.py",
                 cwd=ENGINEERING,
             )
             project(
