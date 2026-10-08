@@ -1,0 +1,86 @@
+{
+  "approval": "Maintainer authorization 2026-10-08: MODEL-STRUCTURED-OUTPUT-1-LIVE-PROBE (metadata identity checks + exactly one synthetic structured-output call)",
+  "fallback": false,
+  "probe": "model-structured-output-1-live-probe/1",
+  "probe_id": "d54d022d-9928-4f5d-a9b8-8745929e97f5",
+  "repository": {
+    "adr_022_acceptance_commit": "d9645d0",
+    "clean_tracked_tree": true,
+    "git_head": "d9645d0f05d8beff61ed4fd7febe2f142fcc1b6d",
+    "h1_and_safety_eval_2_3_unchanged_since": "3916451",
+    "implementation_commit": "f3d824d",
+    "probe_source": "examples/model-structured-output-probe/probe.py",
+    "probe_source_sha256": "3fdaf87179f512b9ca0ddc1bf9e8f209cf4954f1969f2f2c360eb74898cff532",
+    "probe_source_tracked": false
+  },
+  "request_identity": {
+    "binding_id": "ollama",
+    "binding_provider": "OllamaSettings (built-in local Ollama)",
+    "binding_requirement": "structured-output-probe",
+    "message_count": 1,
+    "prompt_characters": 279,
+    "prompt_sha256": "4a388b68719d54103cb85862b4f531807425366dadbdba746bedc509b2cb9c01",
+    "response_format_present": true,
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "maxLength": 3,
+            "type": "string"
+          },
+          "maxItems": 2,
+          "type": "array"
+        },
+        "label": {
+          "maxLength": 8,
+          "type": "string"
+        },
+        "note": {
+          "enum": [
+            "n/a",
+            null
+          ],
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "alpha",
+            "beta"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "label",
+        "items",
+        "note"
+      ],
+      "type": "object"
+    },
+    "schema_digest": "dd522666abf2ef6cb884ab37fb25da4e56f123febc5ee1f7064cbb570aeab4e2",
+    "structured_output_capability": true
+  },
+  "retry": false,
+  "runtime": {
+    "credentials": "NONE",
+    "endpoint": "http://127.0.0.1:11434",
+    "endpoint_class": "loopback",
+    "model_digest_expected": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+    "model_digest_observed": "sha256:9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+    "model_tag_expected": "qwen2.5-coder:14b",
+    "model_tag_observed": "qwen2.5-coder:14b",
+    "ollama_version_expected": "0.40.0",
+    "ollama_version_observed": "0.40.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.5",
+    "url_userinfo": null
+  },
+  "semantic_call_ceiling": 1,
+  "started_at": "2026-10-08T03:49:21.068494+00:00",
+  "timeout_seconds": 600.0
+}

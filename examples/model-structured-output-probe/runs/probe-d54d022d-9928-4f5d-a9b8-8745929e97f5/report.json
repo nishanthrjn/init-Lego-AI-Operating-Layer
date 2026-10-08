@@ -1,0 +1,90 @@
+{
+  "failures": [],
+  "finished_at": "2026-10-08T03:51:02.879719+00:00",
+  "interpretation_limit": "One controlled synthetic call with the exact recorded runtime and model identity. Compatibility evidence only; not statistical reliability, Agent quality, safety, OpenAI-compatible support or production readiness.",
+  "probe": "model-structured-output-1-live-probe/1",
+  "probe_id": "d54d022d-9928-4f5d-a9b8-8745929e97f5",
+  "result": {
+    "checks": {
+      "A_root_object": true,
+      "B_exact_declared_properties": true,
+      "C_no_additional_property": true,
+      "D_status_in_enum": true,
+      "E_label_within_max_length": true,
+      "F_items_within_max_items": true,
+      "G_items_elements_valid": true,
+      "H_note_nullable_valid": true,
+      "I_required_present": true
+    },
+    "core_returned_text": true,
+    "effect": "COMPLETED",
+    "elapsed_seconds": 100.878,
+    "error_category": null,
+    "final_state": "SUCCEEDED",
+    "json_parse": "SUCCESS",
+    "json_parse_error": null,
+    "normalized": {
+      "additional_properties": [],
+      "item_lengths": [
+        1,
+        1
+      ],
+      "items_count": 2,
+      "keys": [
+        "items",
+        "label",
+        "note",
+        "status"
+      ],
+      "label_length": 8,
+      "note": "n/a",
+      "status": "beta"
+    },
+    "pass_conditions": {
+      "Core returned text": true,
+      "effect known and COMPLETED": true,
+      "exactly one semantic call": true,
+      "execution SUCCEEDED": true,
+      "governed route reached the Ollama adapter": true,
+      "loopback endpoint": true,
+      "no exception": true,
+      "one parseable JSON document": true,
+      "schema A_root_object": true,
+      "schema B_exact_declared_properties": true,
+      "schema C_no_additional_property": true,
+      "schema D_status_in_enum": true,
+      "schema E_label_within_max_length": true,
+      "schema F_items_within_max_items": true,
+      "schema G_items_elements_valid": true,
+      "schema H_note_nullable_valid": true,
+      "schema I_required_present": true,
+      "structured requirement sent as format": true
+    },
+    "response_characters": 85,
+    "response_model_identity": "qwen2.5-coder:14b",
+    "response_provider_identity": "ollama",
+    "response_sha256": "90aab1dd4738fb200c3239f01d27460ed29c914892e15213420df5991de06ade",
+    "semantic_calls": 1,
+    "wire": [
+      {
+        "body_keys": [
+          "format",
+          "messages",
+          "model",
+          "stream"
+        ],
+        "client_timeout_seconds": 600.0,
+        "endpoint_class": "loopback",
+        "format_equals_canonical_schema": true,
+        "format_present": true,
+        "format_sha256": "dd522666abf2ef6cb884ab37fb25da4e56f123febc5ee1f7064cbb570aeab4e2",
+        "message_count": 1,
+        "method": "POST",
+        "model": "qwen2.5-coder:14b",
+        "path": "/api/chat",
+        "stream": false
+      }
+    ]
+  },
+  "verdict": "PASSED"
+}
