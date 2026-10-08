@@ -94,6 +94,7 @@ def config(
     extra: tuple[ModelBindingConfig, ...] = (),
     binding: str = "replay",
     docker: Path | None = None,
+    context: tuple[str, ...] = (),
 ) -> ForgeAIConfig:
     return local_profile(
         root,
@@ -104,6 +105,7 @@ def config(
         docker_executable=docker or git_executable(),
         now=datetime.now(UTC),
         denied_actions=denied,
+        context_paths=tuple(RepositoryPath(path) for path in context),
     )
 
 

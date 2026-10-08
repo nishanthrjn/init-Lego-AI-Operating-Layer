@@ -13,6 +13,7 @@ from legoai_engineering.coding.values import (
     CodingEvidence,
     CodingFile,
     CodingTarget,
+    _references,
     _targets,
 )
 from legoai_engineering.repository.errors import WorkspaceError, WorkspaceFailure
@@ -39,23 +40,40 @@ class AuthorizedCodingEvidence:
     issues a new grant. Listings are not disclosed. Absence is only an observation;
     independently authorized M4 application must recheck later. Stable M2 workspace
     and synchronous I/O limits remain. No parent creation, writes or retries.
+
+    `references` is a separate operator association for read-only disclosure:
+    its allowed paths are never target scope, and target scope is never
+    reference scope. Without it, any requested reference is denied.
     """
 
     reads: AuthorizedRepositoryEvidence = field(repr=False)
+    references: AuthorizedRepositoryEvidence | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
-        if type(self.reads) is not AuthorizedRepositoryEvidence:
+        if type(self.reads) is not AuthorizedRepositoryEvidence or (
+            self.references is not None
+            and type(self.references) is not AuthorizedRepositoryEvidence
+        ):
             raise TypeError(
                 "coding acquisition requires authorized repository composition"
             )
 
     async def acquire(
-        self, targets: tuple[CodingTarget, ...], tenant: TenantContext
+        self,
+        targets: tuple[CodingTarget, ...],
+        tenant: TenantContext,
+        references: tuple[RepositoryPath, ...] = (),
     ) -> CodingEvidence:
         _targets(targets)
+        _references(references, targets)
         if type(tenant) is not TenantContext:
             raise TypeError("coding acquisition requires TenantContext")
         if any(target.path not in self.reads.allowed_paths for target in targets):
+            raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
+        if references and (
+            self.references is None
+            or any(path not in self.references.allowed_paths for path in references)
+        ):
             raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
         files: list[CodingFile] = []
         for target in sorted(targets, key=lambda item: item.path.value):
@@ -92,5 +110,14 @@ class AuthorizedCodingEvidence:
                 CodingEvidence(tuple(files))
             except ValueError:
                 raise EvidenceAcquisitionError(AcquisitionFailure.BUDGET) from None
+        disclosed = None
+        if references:
+            assert self.references is not None
+            # Same authorized read boundary and per-read policy check.
+            disclosed = await self.references.acquire(references, tenant)
+        try:
+            evidence = CodingEvidence(tuple(files), disclosed)
+        except ValueError:
+            raise EvidenceAcquisitionError(AcquisitionFailure.BUDGET) from None
         self.reads._authorize(tenant)
-        return CodingEvidence(tuple(files))
+        return evidence

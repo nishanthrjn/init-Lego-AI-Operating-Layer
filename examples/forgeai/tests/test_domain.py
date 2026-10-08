@@ -33,7 +33,8 @@ HEAD = GitHead(GitHeadKind.ATTACHED, "main", GitCommitId("ab" * 20))
 
 def test_task_request_carries_intent_only() -> None:
     names = {item.name for item in dataclasses.fields(TaskRequest)}
-    assert names == {"objective", "targets", "constraints"}
+    # `context` is operator-selected read-only disclosure scope, not infrastructure.
+    assert names == {"objective", "targets", "constraints", "context"}
     assert "objective" not in repr(task())
 
 

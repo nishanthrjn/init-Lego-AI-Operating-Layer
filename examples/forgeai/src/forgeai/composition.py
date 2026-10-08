@@ -109,6 +109,8 @@ class ForgeAIConfig:
     review_criteria: tuple[str, ...] = field(repr=False)
     workspace_scope: str = "workspace"
     sandbox_image: SandboxImage = SandboxImage.PYTHON_CHECKS
+    # Read-only disclosure to the Coding Agent; never editable, never reviewed.
+    context_paths: tuple[RepositoryPath, ...] = ()
 
     def __post_init__(self) -> None:
         for value, expected in (
@@ -139,6 +141,15 @@ class ForgeAIConfig:
             or any(type(item) is not str for item in self.review_criteria)
         ):
             raise ValueError("configure one to eight review criteria")
+        if (
+            type(self.context_paths) is not tuple
+            or len(self.context_paths) > 8
+            or any(type(path) is not RepositoryPath for path in self.context_paths)
+        ):
+            raise ValueError("configure at most eight read-only context paths")
+        editable = {path.value.casefold() for path in self.editable_paths}
+        if any(path.value.casefold() in editable for path in self.context_paths):
+            raise ValueError("read-only context paths must not be editable paths")
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,13 +181,28 @@ def prepare_run(
     scope = config.workspace_scope
     root = LocalWorkspaceRoot(config.repository)
     workspace = LocalRepositoryWorkspace(root, config.workspace_policy)
+    read_context = host.security_context(reference, REPOSITORY_READ_ACTION, scope)
+    # Editable targets only: the Coding Agent's targets and the reviewer's reads.
     reads = AuthorizedRepositoryEvidence(
         reference,
         workspace,
-        host.security_context(reference, REPOSITORY_READ_ACTION, scope),
+        read_context,
         host.authorization,
         config.editable_paths,
         clock,
+    )
+    # A separate association for read-only context: disclosure, never targets.
+    context_reads = (
+        AuthorizedRepositoryEvidence(
+            reference,
+            workspace,
+            read_context,
+            host.authorization,
+            config.context_paths,
+            clock,
+        )
+        if config.context_paths
+        else None
     )
     mutation = AuthorizedRepositoryMutation(
         reference,
@@ -218,7 +244,7 @@ def prepare_run(
         LocalGitRepository(
             root, LocalGitExecutable(config.git_executable), config.git_policy
         ),
-        CodingAgent(AuthorizedCodingEvidence(reads), runtime),
+        CodingAgent(AuthorizedCodingEvidence(reads, context_reads), runtime),
         mutation,
         checks,
         config.check_plan,
@@ -296,6 +322,7 @@ def local_profile(
     now: datetime,
     grant_hours: int = 1,
     denied_actions: frozenset[str] = frozenset(),
+    context_paths: tuple[RepositoryPath, ...] = (),
 ) -> ForgeAIConfig:
     """The ForgeAI-1 local operator profile for a src/tests Python repository.
 
@@ -360,4 +387,5 @@ def local_profile(
         model_selection={"revision": REVISION, "binding": binding},
         review_criteria=REVIEW_CRITERIA,
         workspace_scope=scope,
+        context_paths=context_paths,
     )

@@ -8,7 +8,7 @@ from legoai.execution.agent.values import AgentExecutionStatus
 from legoai.execution.values import ExecutionContext
 
 from legoai_engineering.agent_output import OutputDiagnostic
-from legoai_engineering.analyst.values import AcquisitionFailure
+from legoai_engineering.analyst.values import AcquisitionFailure, RepositoryEvidence
 from legoai_engineering.coding.definition import coding_definition
 from legoai_engineering.repository.mutation import (
     ContentDigest,
@@ -74,12 +74,43 @@ def _targets(targets: tuple[CodingTarget, ...]) -> None:
         raise ValueError("duplicate, case alias or ancestor targets are unsupported")
 
 
+# Read-only reference context: disclosed to the model, never editable scope.
+MAX_REFERENCES = 8
+MAX_REFERENCE_BYTES = 8192  # per file, the existing evidence file bound
+MAX_REFERENCE_TOTAL_BYTES = 16384  # half of the Coding Agent input budget
+
+
+def _references(
+    references: tuple[RepositoryPath, ...], targets: tuple[CodingTarget, ...]
+) -> None:
+    if type(references) is not tuple or len(references) > MAX_REFERENCES:
+        raise ValueError("coding allows at most eight reference paths")
+    if any(type(path) is not RepositoryPath for path in references):
+        raise TypeError("coding references require RepositoryPath")
+    for path in references:
+        _bytes(path.value, 960)
+        if any(part.startswith(".") for part in path.value.split("/")):
+            raise ValueError("coding excludes hidden administrative path components")
+    keys = [path.value.casefold() for path in references]
+    if len(set(keys)) != len(keys):
+        raise ValueError("duplicate or case alias reference paths are unsupported")
+    # A reference never doubles as a target: disclosure is not write scope.
+    if set(keys) & {target.path.value.casefold() for target in targets}:
+        raise ValueError("a reference path is also a target")
+
+
 @dataclass(frozen=True, slots=True)
 class CodingRequest:
+    """`references` are read-only repository files disclosed to the model.
+
+    They grant no mutation scope: only `targets` may appear in a proposal.
+    """
+
     objective: str = field(repr=False)
     targets: tuple[CodingTarget, ...]
     constraints: tuple[str, ...] = field(repr=False)
     context: ExecutionContext
+    references: tuple[RepositoryPath, ...] = ()
 
     def __post_init__(self) -> None:
         _bytes(self.objective, 2048)
@@ -87,6 +118,7 @@ class CodingRequest:
         _strings(self.constraints)
         if type(self.context) is not ExecutionContext:
             raise TypeError("coding requires ExecutionContext")
+        _references(self.references, self.targets)
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,9 +147,13 @@ class CodingFile:
 
 @dataclass(frozen=True, slots=True)
 class CodingEvidence:
-    """Trusted bounded observations, not an atomic snapshot or current permission."""
+    """Trusted bounded observations, not an atomic snapshot or current permission.
+
+    `references` is read-only disclosed text, never a proposal precondition.
+    """
 
     files: tuple[CodingFile, ...] = field(repr=False)
+    references: RepositoryEvidence | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if type(self.files) is not tuple or not 1 <= len(self.files) <= 8:
@@ -137,6 +173,29 @@ class CodingEvidence:
             > 24576
         ):
             raise ValueError("coding evidence exceeds total byte limit")
+        if self.references is not None:
+            if type(self.references) is not RepositoryEvidence:
+                raise TypeError("coding references require RepositoryEvidence")
+            texts = self.references.files
+            if len(texts) > MAX_REFERENCES or any(
+                len(text.text.encode("utf-8")) > MAX_REFERENCE_BYTES for text in texts
+            ):
+                raise ValueError("coding reference exceeds its bound")
+            if (
+                sum(len(text.text.encode("utf-8")) for text in texts)
+                > MAX_REFERENCE_TOTAL_BYTES
+            ):
+                raise ValueError("coding references exceed total byte limit")
+            _references(
+                tuple(RepositoryPath(text.path) for text in texts),
+                tuple(file.target for file in self.files),
+            )
+
+    @property
+    def reference_paths(self) -> tuple[RepositoryPath, ...]:
+        if self.references is None:
+            return ()
+        return tuple(RepositoryPath(text.path) for text in self.references.files)
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,6 +266,10 @@ class CodingResult:
             ):
                 raise ValueError(
                     "coding result evidence does not match requested scope"
+                )
+            if set(self.evidence.reference_paths) != set(self.request.references):
+                raise ValueError(
+                    "coding result references do not match requested references"
                 )
         if self.status is CodingStatus.INVALID_REQUEST:
             if (

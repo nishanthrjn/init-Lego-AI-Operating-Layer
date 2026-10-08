@@ -202,7 +202,9 @@ class RepositoryTaskWorker:
         self.progress(RunStage.REPOSITORY_VERIFIED, 0)
         first = await self._attempt(
             task,
-            CodingRequest(task.objective, task.targets, task.constraints, context),
+            CodingRequest(
+                task.objective, task.targets, task.constraints, context, task.context
+            ),
             context,
             evidence,
         )
@@ -218,8 +220,10 @@ class RepositoryTaskWorker:
         trigger = evidence.rework_trigger
         assert trigger is not None
         try:
-            # Same scope and objective; current content is re-read by the
-            # Coding Agent's authorized evidence reader, never reused.
+            # Same scope, objective and operator-selected read-only context;
+            # current content is re-read by the Coding Agent's authorized
+            # evidence reader, never reused. Feedback is text only: it can
+            # never add a target or a context file.
             targets = rework_targets(task.targets, evidence.changed_paths)
             if trigger is ReworkTrigger.CHECK_FINDINGS:
                 constraints = check_rework_constraints(
@@ -231,7 +235,7 @@ class RepositoryTaskWorker:
                 constraints = rework_constraints(
                     task.constraints, review.review, evidence.latest.checks
                 )
-            CodingRequest(task.objective, targets, constraints, context)
+            CodingRequest(task.objective, targets, constraints, context, task.context)
         except ValueError:
             return self._stop(task, TaskFailure.REWORK_INPUT_FAILED, evidence)
         try:
@@ -249,7 +253,9 @@ class RepositoryTaskWorker:
         )
         second = await self._attempt(
             task,
-            CodingRequest(task.objective, targets, constraints, rework_context),
+            CodingRequest(
+                task.objective, targets, constraints, rework_context, task.context
+            ),
             context,
             evidence,
         )

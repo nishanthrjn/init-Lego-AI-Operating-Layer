@@ -79,6 +79,8 @@ uv run forgeai run `
 - Give 1-8 `--target` paths, relative to the repository. A target is
   updated by default; write `PATH:create` for a new file.
 - Add `--constraint TEXT` (up to 8) for extra instructions.
+- Add `--context PATH` (up to 8) for existing files the Coding Agent may
+  **read but never edit**. See "Read-only context" below.
 - Model options: `--ollama-model`, `--ollama-url` (default
   `http://127.0.0.1:11434`) and `--ollama-timeout`.
 - `--binding replay --replay FILE ...` uses recorded outputs instead of a
@@ -86,13 +88,55 @@ uv run forgeai run `
 - The older form `forgeai <repo> --objective ... --target ...` still works
   and also asks for approval.
 
+**Read-only context.** `--target` is write scope. `--context` is disclosure
+only: the listed files are sent to the Coding Agent as repository data, so
+it can follow the project's imports, APIs, typing, test style and
+configuration. Use it when the targets alone don't show the conventions,
+typically when every target is `:create`:
+
+```powershell
+uv run forgeai run `
+    --repo C:\path\to\repo `
+    --task "Add restock(available, received) with tests" `
+    --target src/inventory/restock.py:create `
+    --target tests/test_restock.py:create `
+    --context pyproject.toml `
+    --context src/inventory/stock.py `
+    --context tests/test_stock.py
+```
+
+- **Never write scope.** A proposal that changes a context-only file is
+  rejected (`PATH_OUT_OF_SCOPE`) before approval, with nothing written.
+  Editable scope comes from `--target` alone. A path can't be both a target
+  and context; that is refused at startup.
+- **You choose every file.** ForgeAI never searches, globs, follows imports
+  or adds sibling files, and model or review output can never add one.
+- **Bounds** (fail closed, never truncated): up to 8 files, 8192 bytes per
+  file, 16384 bytes in total, and the Coding Agent's existing 32768-byte
+  input limit for targets plus context together.
+- **Path rules.** Paths are repository-relative. Absolute paths, `..`, hidden
+  components such as `.env`, duplicates and case aliases are refused before
+  anything runs. Files are read through the same authorized repository read
+  boundary as targets, so workspace policy exclusions apply. A missing file,
+  a directory or an oversized file rejects the run before the model is
+  called, with an `evidence:` line explaining why.
+- **Data, not instructions.** Context is framed as read-only data. Text
+  inside it that looks like an instruction grants nothing. That's a prompt
+  framing, not a guarantee about what a model does with it, so the patch
+  preview and approval stay the control.
+- **Both attempts, Coding Agent only.** A rework sees the same context. The
+  independent reviewer does not receive it and reviews only the changed
+  files.
+
 **What you see:**
-1. **Before any model call:** the repository, task, editable targets,
+1. **Before any model call:** the repository, task, editable targets, the
+   read-only context (listed separately and marked `read-only`),
    constraints, checks and model.
 2. **Startup failures** stop here with a clear message: missing repository,
-   not a Git repository, invalid target, Ollama unreachable or model not
-   installed, or no Git/Docker executable. A repository with no commit or
-   with uncommitted changes is rejected before the model is called.
+   not a Git repository, invalid target or context path, Ollama unreachable
+   or model not installed, or no Git/Docker executable. A repository with no
+   commit or with uncommitted changes is rejected before the model is
+   called.
 3. **Docker readiness**, checked before the scope is shown and before any
    model call. It uses the Engineering sandbox's metadata-only preflight:
    `docker info`, then `docker image inspect` of the pinned checks image. A
@@ -222,6 +266,12 @@ succeeded, `2` rejected before any model call, `1` everything else.
 
 Neither model is qualified by these observations. 14B being better than 7B
 is not a qualification.
+
+A later 14B run on a task whose targets were all `:create` produced code that
+ignored the repository's conventions: package import path, strict typing and
+test isolation. With only new files as targets, the Coding Agent had seen no
+existing code. That motivated `--context`. It makes the conventions
+available; it does not make a model follow them.
 
 **Known v0.1 limits.**
 - Live-model quality is **unqualified**; only replay runs are qualified.

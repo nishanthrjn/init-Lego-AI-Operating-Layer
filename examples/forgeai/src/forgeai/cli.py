@@ -12,6 +12,10 @@ anything is written. The default answer is No; EOF, Ctrl+C and a
 non-interactive terminal all decline, and there is no automatic approval.
 
     forgeai run --repo PATH --task TEXT --target PATH[:create] [--target ...]
+                [--context PATH ...]
+
+`--context` files are disclosed read-only to the Coding Agent; they are never
+editable and a proposal that touches one is rejected.
 
 The pre-v0.1 form `forgeai PATH --objective TEXT --target ...` still works,
 with the same approval step.
@@ -48,6 +52,7 @@ from legoai.runtime.api import (
     OllamaSettings,
     TrustedModelContribution,
 )
+from legoai_engineering.analyst.values import AcquisitionFailure
 from legoai_engineering.coding.values import CodingTarget
 from legoai_engineering.repository.errors import WorkspaceError
 from legoai_engineering.repository.mutation import FileChangeKind
@@ -189,6 +194,13 @@ def header(config: ForgeAIConfig, task: TaskRequest, model: str) -> str:
         "editable targets (operator-selected; the model cannot add any):",
         *(f"  - {t.path.value} ({_kind(t.operation)})" for t in task.targets),
     ]
+    if task.context:
+        lines.append(
+            "read-only model context (disclosed to the Coding Agent; NOT editable):"
+        )
+        lines += [f"  - {path.value} (read-only)" for path in task.context]
+    else:
+        lines.append("read-only model context: none")
     lines += [f"constraint: {c[:200]}" for c in task.constraints]
     checks = ", ".join(c.kind.value for c in config.check_plan)
     lines.append(f"checks: {checks} (sandboxed, image {config.sandbox_image.value})")
@@ -389,6 +401,12 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
         lines.append(f"attempt 1 review: {decision.value if decision else 'not run'}")
     if result.failure is TaskFailure.PROPOSAL_DECLINED:
         lines.append("approval: declined; no file was written, checked or reviewed")
+    acquisition = (
+        evidence.attempts[-1].acquisition_failure if evidence.attempts else None
+    )
+    if acquisition is not None:
+        lines.append(f"evidence: {evidence_message(acquisition)}")
+        lines.append("the Coding Agent model was not called for this attempt")
     diagnostics = (
         ("coding output invalid:", evidence.latest.coding_diagnostic),
         (
@@ -457,6 +475,41 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
     return "\n".join(lines)
 
 
+def evidence_message(failure: AcquisitionFailure) -> str:
+    """Why target or read-only context evidence could not be disclosed."""
+    if failure is AcquisitionFailure.DENIED:
+        return (
+            "disclosure was not authorized for an editable target or read-only "
+            "context path (denied)"
+        )
+    if failure is AcquisitionFailure.BOUNDARY:
+        return (
+            "a target or read-only context path is outside the repository "
+            "workspace (boundary)"
+        )
+    if failure is AcquisitionFailure.BUDGET:
+        return (
+            "a target or read-only context file exceeds a size bound: 8192 bytes "
+            "per context file, 16384 bytes of context in total, 32768 bytes of "
+            "Coding Agent input (budget)"
+        )
+    return (
+        "an editable target or read-only context file could not be read: "
+        "missing, not a regular file, excluded by the workspace policy, or a "
+        f"create target that already exists ({failure.value})"
+    )
+
+
+def _context(text: str) -> RepositoryPath:
+    try:
+        return RepositoryPath(text)
+    except TypeError, ValueError, WorkspaceError:
+        raise argparse.ArgumentTypeError(
+            f"invalid read-only context {text!r}: use a relative file path "
+            "inside the repository"
+        ) from None
+
+
 def _target(text: str) -> CodingTarget:
     path, _, kind = text.partition(":")
     operation = FileChangeKind.CREATE if kind == "create" else FileChangeKind.UPDATE
@@ -477,6 +530,16 @@ def _common(parser: argparse.ArgumentParser, binding: str) -> None:
         required=True,
         type=_target,
         help="editable path, optionally PATH:create (repeat; 1-8)",
+    )
+    parser.add_argument(
+        "--context",
+        action="append",
+        default=[],
+        type=_context,
+        help=(
+            "existing file disclosed read-only to the Coding Agent, never "
+            "editable (repeat; 0-8)"
+        ),
     )
     parser.add_argument("--constraint", action="append", default=[])
     parser.add_argument("--binding", choices=("replay", "ollama"), default=binding)
@@ -553,14 +616,21 @@ def main(
         )
         model = f"ollama {args.ollama_model} at {args.ollama_url}"
     try:
-        task = TaskRequest(args.task, tuple(args.target), tuple(args.constraint))
+        task = TaskRequest(
+            args.task,
+            tuple(args.target),
+            tuple(args.constraint),
+            tuple(args.context),
+        )
     except (TypeError, ValueError) as error:
         parser.error(f"invalid task: {error}")
     root = repository.resolve()
     try:
         config = local_profile(
             root,
+            # Editable scope comes from targets only; context never joins it.
             tuple(target.path for target in task.targets),
+            context_paths=task.context,
             bindings=(binding,),
             binding=args.binding,
             git_executable=args.git.resolve(),
