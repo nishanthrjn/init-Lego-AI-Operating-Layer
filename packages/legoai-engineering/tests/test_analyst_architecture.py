@@ -28,6 +28,7 @@ with patch.object(os, 'getenv', denied), patch.object(type(os.environ), '__getit
     import legoai_engineering.analyst.sufficiency
     import legoai_engineering.analyst.sufficiency_agent
     import legoai_engineering.analyst.sufficiency_definition
+    import legoai_engineering.analyst.sufficiency_envelope
     import legoai_engineering.reviewer.values
     import legoai_engineering.reviewer.definition
     import legoai_engineering.reviewer.api

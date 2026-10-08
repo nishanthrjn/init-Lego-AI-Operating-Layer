@@ -114,6 +114,19 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.repository.errors",
             "legoai_engineering.repository.workspace",
         },
+        # H2 evidence envelope (Agent 1.1.0): reuses the 1.0.0 parser unchanged.
+        "analyst.sufficiency_envelope": {
+            "json",
+            "collections.abc",
+            "legoai.execution.agent.ports",
+            "legoai.execution.agent.values",
+            "legoai.execution.values",
+            "legoai.intelligence.model.routing",
+            "legoai.kernel.versions",
+            "legoai_engineering.analyst.sufficiency",
+            "legoai_engineering.analyst.sufficiency_agent",
+            "legoai_engineering.repository.errors",
+        },
         "analyst.sufficiency": {
             "enum",
             "hashlib",
@@ -444,6 +457,7 @@ def test_analyst_cannot_import_effectful_implementations(source: str) -> None:
         "analyst.authorized",
         "analyst.sufficiency",
         "analyst.request_policy",
+        "analyst.sufficiency_envelope",
     ):
         assert import_violations(source, module)
 

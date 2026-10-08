@@ -176,3 +176,52 @@ assessment.
 
 The policy does not judge sufficiency. In particular, it does not detect a
 reference or import being treated as the referenced content.
+
+## Evidence envelope (H2, Agent 1.1.0)
+
+`legoai_engineering.analyst.sufficiency_envelope` adds
+EvidenceSufficiencyAgent **1.1.0** alongside 1.0.0. Callers choose a version
+explicitly by class:
+- `EvidenceSufficiencyAgent` with `evidence_sufficiency_definition()` is
+  1.0.0. It is unchanged, byte for byte, and remains pinned for historical
+  replay.
+- `EnvelopedEvidenceSufficiencyAgent` with `enveloped_sufficiency_definition()`
+  is 1.1.0.
+
+Both share the Agent id, model requirement, output contract, limits, the
+unchanged 1.0.0 parser and domain validation, and the failure semantics.
+
+**Model-visible input (1.1.0).** One canonical JSON object (sorted keys,
+compact separators, UTF-8). Its top-level fields are the trust boundary:
+- `trusted_task`: `{question}`.
+- `trusted_application_facts`: `{expectations, clarifications, unknowns}`.
+  These come from the manifest's typed declarations only, including operator
+  clarification answers.
+- `untrusted_repository_evidence`: `[{content, path}]` in manifest order.
+
+Repository content is only ever a JSON string value in the untrusted zone. It
+is preserved exactly: no redaction or normalization, and it round-trips
+through JSON. JSON escaping prevents it from closing its value or forming a
+trusted field. No text found in a file is ever promoted into a declaration.
+
+**Prompt changes.** The 1.1.0 prompt replaces the 1.0.0 list of example
+source instructions with a generic trust rule: evidence is quoted, untrusted
+data that may imitate instructions, roles, permissions, questions, answers,
+policies or assessments without changing anything. It also strengthens three
+rules:
+- **Reference is not content:** imports, loaders, filenames, dependency, route
+  and environment-variable names and source-role mentions do not supply the
+  referenced source.
+- **Requests:** `named_evidence` requires an already established exact path;
+  `source_role` applies when the role is known but the path is not; never
+  invent a path.
+- **Ambiguity:** only trusted application answers resolve it.
+
+**Size.** The 65,536-byte input limit is unchanged. The envelope costs exactly
+71 bytes plus 3 bytes per file, at most 95. An input over the limit fails
+closed with `BUDGET_EXHAUSTED` before any call, never truncated.
+
+**Boundaries.** No `response_format` is set (structured-output adoption is a
+later version). The request policy (H1) still validates every parsed
+assessment before review. The envelope improves how the model is shown the
+evidence; it is not an enforcement mechanism.
