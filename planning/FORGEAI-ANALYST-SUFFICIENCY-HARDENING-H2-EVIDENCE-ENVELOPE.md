@@ -1,6 +1,6 @@
 # FORGEAI-ANALYST-SUFFICIENCY-HARDENING-H2-EVIDENCE-ENVELOPE
 
-Status: **IMPLEMENTED — LOCAL VALIDATION PENDING (2026-10-08).** This slice is
+Status: **LOCALLY QUALIFIED (2026-10-08; offline; 62/62 validator phases; commit `c49825b`).** Not live tested. This slice is
 implementation and offline validation only. No model, provider or Ollama
 call was made, and no live run is authorized. SAFETY-EVAL-3 was not opened.
 
@@ -236,3 +236,39 @@ guard for it.
 3. Only after reviewing that result: H3, structured-output adoption.
 
 Neither the measurement nor H3 is authorized by this slice.
+
+## 12. Local qualification
+
+Operator qualification passed on 2026-10-08 (implementation commit `c49825b`):
+all **62/62 phases** of
+`uv run python .\validate_forgeai_analyst_sufficiency_hardening_h2_evidence_envelope.py`.
+
+The run covered:
+- prerequisites: H1, MODEL-STRUCTURED-OUTPUT-1 with the live probe, and
+  ADR-022 accepted;
+- exact scope and protected inputs against `f5b969a`;
+- live-probe custody (13);
+- the SAFETY-EVAL-3 freeze, by digest only;
+- the Engineering envelope tests (42) and ForgeAI H1-composition and replay
+  tests (7);
+- 46 coverage phases, including 8 mutation checks;
+- regressions:
+  - Engineering analyst and architecture (401);
+  - H1 and evidence loop (73 passed, 1 superseded deselected);
+  - SAFETY-EVAL-2 (33);
+  - SAFETY-LIVE-1, RUNTIME-IDENTITY-2 and custody (140 passed, 5 superseded
+    deselected);
+  - Core architecture and structured output (275);
+- the zero-provider check, mypy, Ruff lint and format, and the diff check.
+
+Supported claim: EvidenceSufficiencyAgent 1.1.0 has a locally qualified
+deterministic trust-boundary/evidence-envelope representation, layered with
+the existing H1 request policy.
+
+This is offline evidence only. No model has tested 1.1.0, and none of the
+§10 non-claims change.
+
+**Next gate:** a separately authorized DEVELOPMENT live measurement of
+Agent 1.1.0 with H1 against SAFETY-EVAL-2, compared with the historical 1.0.0
+baseline. SAFETY-EVAL-3 stays sealed, and H3 waits for that result. Neither is
+authorized by this record.
