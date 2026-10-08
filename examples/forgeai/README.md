@@ -27,7 +27,9 @@ memory.
   2026-09-29.
 - **ForgeAI v0.1** (supervised local engineering assistant): `forgeai run`
   plus an explicit operator approval before any repository change; see
-  "ForgeAI v0.1" below. Qualified offline with replay models only.
+  "ForgeAI v0.1" below. Locally qualified on 2026-10-08 (`validate_forgeai_v01.py`,
+  18/18 phases) with replay models and real sandboxed checks; live-model use is
+  unqualified.
 
 ## ForgeAI v0.1: supervised local engineering assistant
 
