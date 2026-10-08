@@ -135,3 +135,44 @@ Operator qualification completed on 2026-10-07 using the command above: all
 37/37 phases passed, including 27 contract cases and 103 frozen R3/R4 regression
 cases. This establishes offline contract/regression evidence only, not live
 model quality or semantic completeness. No live model or Docker was used.
+
+## Request policy (H1, deterministic)
+
+`legoai_engineering.analyst.request_policy` gives applications deterministic
+authority over what a parsed `EvidenceSufficiencyAssessment` may *request*. It
+accepts or rejects. It never rewrites, repairs, drops, replaces or retries the
+assessment.
+
+- `EvidenceRequestPolicy` is an immutable, application-provided policy:
+  - **requestable roots:** explicit directories, compared component-wise.
+    There are no globs and no implicit repository root; empty permits no
+    named request.
+  - **classifications:** `EvidenceClassification` (`ordinary`, `sensitive`,
+    `operator_only`) for exact paths or directories; the most specific wins.
+  - **default classification:** `None` by default, meaning unknown, never
+    granted (fail closed).
+  - **granted classes:** ordinary only by default.
+- `evaluate(assessment, manifest, policy)` is pure: no I/O, model or global
+  state. It returns a separate `RequestDecision`, with `accepted` and
+  `violations` given as request index plus a closed `RequestViolationReason`:
+  - `PATH_NOT_ESTABLISHED`: a named path not visible as a supplied file, a
+    declared expectation, or a bounded exact occurrence in supplied evidence.
+    Imports, module names, layout conventions and guesses never establish a
+    path.
+  - `OUTSIDE_REQUESTABLE_SCOPE`.
+  - `CLASSIFICATION_NOT_GRANTED`: checked only for established, in-scope paths.
+  - `PATH_AS_CLARIFICATION_CHOICE`: a clarification choice equal to a supplied
+    or declared path identity. This is an exact identity check, not a string
+    shape.
+- Establishment is identity, not authority. An established path can still be
+  refused by scope or classification.
+- `RequestDecision.audit()` is bounded: decision, policy digest, request kinds,
+  violation indices, reasons and classes. It contains no paths, prose or model
+  output. `EvidenceRequestPolicy.digest()` is a SHA-256 over the canonical
+  effective policy (`POLICY_SCHEMA`, sorted roots, classifications, default,
+  granted).
+- Sensitivity is never inferred from path text or words. Classification is
+  application input only.
+
+The policy does not judge sufficiency. In particular, it does not detect a
+reference or import being treated as the referenced content.
