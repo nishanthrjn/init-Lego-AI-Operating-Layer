@@ -1,4 +1,8 @@
-"""Closed safe-value codec for the two custody owners; no executable decoding."""
+"""Closed safe-value codec for the custody owners; no executable decoding.
+
+Used by the Secret source ledger, durable Evidence and the remote-attempt
+store. Only the closed registry below can be represented.
+"""
 
 import json
 from collections.abc import Callable
@@ -32,6 +36,7 @@ from legoai.kernel.references import (
     ApplicationRef,
     ConfigurationRef,
     ConfigurationRevisionRef,
+    OperationRef,
     PrincipalRef,
     ReferenceScope,
 )
@@ -56,6 +61,8 @@ def _types() -> tuple[type, ...]:
         ApplicationRef,
         ConfigurationRef,
         ConfigurationRevisionRef,
+        # REMOTE-ATTEMPT-CUSTODY-1: the invoking operation's kernel reference.
+        OperationRef,
         PrincipalRef,
         ReferenceScope,
         Version,
