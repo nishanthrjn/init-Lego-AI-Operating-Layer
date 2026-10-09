@@ -66,6 +66,7 @@ def test_only_trusted_runtime_and_evidence_paths_import_disclosure() -> None:
         "src/legoai/evidence/ports.py",
         "src/legoai/runtime/_composition/disclosure.py",
         "src/legoai/runtime/_composition/model_governed.py",
+        "src/legoai/runtime/_composition/remote_attempt.py",
         "src/legoai/runtime/api.py",
         "src/legoai/runtime/local.py",
     }
@@ -124,6 +125,8 @@ def test_only_the_host_binds_declarations_to_executions() -> None:
     assert importers == {
         "src/legoai/runtime/_composition/agent.py",
         "src/legoai/runtime/_composition/model_governed.py",
+        # Builds an attempt from an admitted check; binds no declaration.
+        "src/legoai/runtime/_composition/remote_attempt.py",
         "src/legoai/runtime/local.py",
     }
     # Provider adapters never see or evaluate disclosure policy.

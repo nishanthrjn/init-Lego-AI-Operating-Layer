@@ -549,6 +549,19 @@ def violations(sources: dict[str, str]) -> set[str]:
                                 )
                             )
                         )
+                        # REMOTE-ATTEMPT-CUSTODY-1: build one exact attempt from
+                        # an admitted disclosure decision; identities only.
+                        or (
+                            name == "legoai.runtime._composition.remote_attempt"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.governance.disclosure",
+                                    "legoai.governance.secret",
+                                    "legoai.reference._remote_attempts",
+                                )
+                            )
+                        )
                         or (
                             name == "legoai.runtime._composition.model_governed"
                             and (
@@ -1111,6 +1124,8 @@ def test_no_database_driver_imported_by_production_source() -> None:
         "reference/_custody_sqlite.py",
         "reference/_durable_evidence.py",
         "reference/_secret_ledger.py",
+        # REMOTE-ATTEMPT-CUSTODY-1: the Model invocation plane's own store.
+        "reference/_remote_attempts.py",
     }
     forbidden_everywhere_roots = {
         "psycopg",

@@ -296,3 +296,61 @@ cancellation, and LOCAL/REMOTE checks), and Core (1801), DocuMind (16) and Forge
 and the disclosure Evidence through an internal test seam only. REMOTE is still
 refused at open; no credential, provider, network or KISSKI was involved; and
 ForgeAI is not remote-enabled.
+
+## Remote attempt custody (REMOTE-ATTEMPT-CUSTODY-1)
+
+The Model invocation plane owns a narrow durable record of responsibility for
+each exact prospective remote Model invocation (ADR-007 §6.2, ADR-023 §9). The
+private store is `legoai.reference._remote_attempts`, reached only through
+`runtime/_composition/remote_attempt.py`.
+
+**When an attempt exists.** `prepare_attempt` builds a `RemoteAttempt` only
+from an **admitted** disclosure decision of the gate bound to that execution.
+The attempt binds:
+- the execution and operation, and the configuration revision;
+- the admission id and revision, and the declaration id and revision;
+- the binding, provider, endpoint origin and API root, model and capability;
+- the credential's `SecretRevisionRef`, or `None` for a future credential-free
+  provider;
+- the creation time.
+
+It never holds a prompt, repository content, a response, credential material
+or a header. Preparing an attempt never realizes the Secret.
+
+**INTENDED before any handoff.** `intend` durably commits `INTENDED` and
+returns an `IntendedReceipt`. A future transport must call
+`claim_for_handoff(receipt)`, which works once, only for that incarnation's
+durable, still-INTENDED attempt. A failed or uncertain commit yields no
+receipt, so no send is possible. Duplicate attempt or execution identities
+are refused, never overwritten.
+
+**Outcomes.** Exactly one terminal category: `NOT_SENT`, `PROVIDER_REJECTED`,
+`COMPLETED` or `UNKNOWN`. Each must be justified by ADR-023 §9 observations:
+- `NOT_SENT` needs positive proof. Before handoff that is refusal,
+  cancellation or a zero-byte send; after handoff, only the transport's own
+  zero-byte proof.
+- A provider outcome needs a complete response.
+- Absence of evidence never becomes success or no-effect. `UNKNOWN` is always
+  truthful.
+
+No transition leaves a terminal state.
+
+**Recovery never resends.** Read-only inspection lists attempts still
+`INTENDED`, reported effectively as `UNKNOWN`. A later writer incarnation may
+only reconcile them to `UNKNOWN`. It cannot claim them or settle them any
+other way. Nothing calls a provider, a transport or Secret realization.
+Corrupt or inconsistent rows fail closed. Capacity is bounded (4096 attempts)
+and refuses new work rather than deleting anything.
+
+**Separate owners.** Disclosure Evidence (`DisclosureObservation`) records the
+information flow. The attempt store records external-effect responsibility.
+Neither authorizes the other, and neither authorizes Secret use. The store
+reuses the qualified intact-local-storage SQLite custody mechanics; no
+further durability is claimed.
+
+LOCAL invocations create no attempt rows. REMOTE is still refused at open, and
+there is no transport, Authorization header, KISSKI support or provider call.
+
+```powershell
+uv run python .\validate_remote_attempt_custody_1.py
+```
