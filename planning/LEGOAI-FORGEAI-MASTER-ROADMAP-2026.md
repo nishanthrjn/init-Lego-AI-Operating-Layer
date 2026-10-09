@@ -25,7 +25,9 @@ Focused local qualification is tracked by `validate_forgeai_project_check_profil
 this does not qualify arbitrary repositories or broaden historical M6 evidence.
 The complete agent-run validator passed on 2026-10-10, including real Docker
 dependency preparation, offline checks and all historical v0.1 regression phases;
-a separate maintainer rerun remains pending. No real user-repository pilot ran.
+the maintainer's complete successful rerun transcript supplied on 2026-10-10
+confirms those results. This bounded profile is **LOCALLY QUALIFIED**.
+No real user-repository pilot ran.
 The next product gate is one separately authorized real-project pilot whose
 metadata, tool versions and workload fit the documented bounds. No ComfyUI,
 GPU/platform integration or live provider work is included.

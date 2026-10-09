@@ -661,8 +661,14 @@ and both replay demos). These phase counts overlap with historical regressions.
 The qualified derived image was
 `sha256:287e84039478daa135062674ccd1aff423ac8320b2f2fcebac9261d12e6bf033`.
 Preparation acquired the locked wheel from PyPI; checks had only loopback
-networking. No live model or real user-repository pilot was run. A separate
-maintainer rerun remains pending.
+networking. No live model or real user-repository pilot was run.
+
+The maintainer subsequently supplied a complete successful rerun transcript on
+2026-10-10, confirming all the phases above and the final
+`PROJECT CHECK PROFILE LOCAL VALIDATION PASSED` result. Its prepared image was
+`sha256:1dc9678f8cfe2d29a8fa22b8ca9d81fd5bd572f8b1b35fe332479294b7d5e2cc`.
+This closes the pending maintainer local-validation gate for this bounded profile;
+real-project pilot and live-model qualification remain separate.
 
 From the repository root, on Windows with Docker Desktop and the CR-2a image
 present:
