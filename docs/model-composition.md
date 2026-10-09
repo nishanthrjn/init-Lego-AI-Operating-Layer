@@ -448,8 +448,8 @@ atomic expiry and no provider-side revocation ordering.
 
 ## Credentialed REMOTE OpenAI-compatible binding (OPENAI-COMPATIBLE-REMOTE-1)
 
-**Status: IMPLEMENTED (2026-10-09); local qualification pending the operator's
-validator run.** This joins the qualified disclosure, Secret, attempt-custody
+**Status: LOCALLY QUALIFIED (2026-10-09; commit `f411fc4`), within the scope
+recorded at the end of this section.** This joins the qualified disclosure, Secret, attempt-custody
 and T2 mechanisms behind the existing provider-neutral OpenAI-compatible
 binding. There is no new ModelPort, adapter, Secret system, disclosure system
 or attempt store, and no provider-specific code.
@@ -552,3 +552,20 @@ material.
 ```powershell
 uv run python .\validate_openai_compatible_remote_1.py
 ```
+
+**OPENAI-COMPATIBLE-REMOTE-1 LOCALLY QUALIFIED** (2026-10-09). The operator's run
+of that command passed **21/21 phases** offline on commit `f411fc4`. That includes
+83 REMOTE-1 tests (public-host chat, embedding and Agent end to end;
+per-invocation Secret uses; scenarios A-D; host-open admission; the failure
+matrix; cancellation; canaries; ambient inputs), ownership and import boundaries
+(357, with the pre-existing stale wheel-manifest test deselected), T2, attempt
+custody, S1, disclosure and Secret (426), OpenAI-compatible LOCAL, Ollama, Model
+and Agent (274), and Core (2027), DocuMind (16) and ForgeAI (89) regressions.
+Qualified claim: LegoAI locally qualifies one single-operator credentialed
+REMOTE OpenAI-compatible Model profile over verified HTTPS. Each invocation
+independently passes remote-disclosure admission, durable attempt custody,
+purpose-bound current Secret use and the SRCP-1 credential handoff before one
+request; no retry or fallback occurs. Synthetic local TLS and S1 material only.
+Not qualified: KISSKI, cloud providers generally, hosted or multi-tenant
+support, remote model quality, ForgeAI remote support and ComfyUI remote
+support.
