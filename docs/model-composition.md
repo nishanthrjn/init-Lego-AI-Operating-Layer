@@ -220,8 +220,8 @@ with `CONTRIBUTION_CONFLICT`.
 
 **This enables nothing.** REMOTE bindings are still refused at open with
 `UNSUPPORTED_COMPOSITION`, however complete the disclosure configuration. No
-invocation-time gate, declaration carrier or disclosure evidence exists yet
-(the next slice is REMOTE-DISCLOSURE-GATE-1). No provider is contacted.
+invocation-time gate, declaration carrier or disclosure evidence existed in
+that slice; REMOTE-DISCLOSURE-GATE-1 adds them (below). No provider is contacted.
 ModelPort, `ChatRequest`, `EmbeddingRequest` and `AgentRequest` are unchanged.
 Remote providers, credentials and KISSKI remain unsupported.
 
@@ -236,3 +236,54 @@ Core (1760), DocuMind (16) and ForgeAI (89) regressions. Qualification covers
 the governance values, the pure evaluator and host-open validation only. No
 provider, network or credential was used. REMOTE remains refused, and no
 invocation-time gate exists.
+
+## Invocation-time disclosure gate (REMOTE-DISCLOSURE-GATE-1)
+
+**Carrier.** A composition declares what one model execution will disclose
+when it mints it:
+
+```python
+host.model_execution(
+    ModelPurpose.CHAT,
+    disclosure=ExecutionDisclosure(
+        "forgeai", DisclosureDeclaration(classes, repository)
+    ),
+)
+```
+
+The host stores the declaration privately against that exact `ExecutionId`. It
+is immutable; different classes need a different execution. It never enters
+`ChatRequest`, `EmbeddingRequest`, `AgentRequest`, ModelPort or the provider
+wire. Model output, content and responses cannot assign or widen it.
+
+**Gate.** For a REMOTE binding only, the governed Model path (chat, embedding
+and the Agent runtime alike) evaluates `evaluate_disclosure` after claiming
+the invocation and **before** the adapter. It uses the host's configured
+admissions and declarations and the current time. A missing declaration is
+UNCLASSIFIED.
+- **Refusal:** no provider work. The execution settles FAILED, effect `NONE`,
+  `PolicyViolation`/`TERMINAL`. Its single `ErrorCause` names the disclosure
+  Evidence record, never the reason text, the prompt or the provider terms.
+- **Admission:** the call proceeds unchanged. The exact request object is
+  sent, with no redaction or rewrite.
+
+**Evidence.** Each gated invocation records a typed `DisclosureObservation`
+through the existing `EvidenceCustodyPort` (ADR-009), under id
+`disclosure-<execution id>`. It holds only identities, classes, the repository
+identity when one applies, the disposition and the disclosure effect: `NONE`
+for refusals and preflight failures; `COMPLETED` for complete replies,
+including rejections; `UNKNOWN` for uncertain outcomes and cancellation. It
+never holds prompts, repository text, responses, credentials or headers. The
+gate records Evidence but never reads it back: Evidence is not admission. A
+custody failure propagates after the execution has settled truthfully.
+
+**LOCAL is unchanged and REMOTE is still refused.** The public host installs no
+gate, because REMOTE bindings are refused at open with `UNSUPPORTED_COMPOSITION`.
+LOCAL calls never consult disclosure policy, and declarations are ignored for
+them. The gate is exercised through a bounded internal test seam, never a real
+remote provider. No credential, KISSKI or external provider is involved.
+ForgeAI is not remote-enabled.
+
+```powershell
+uv run python .\validate_remote_disclosure_gate_1.py
+```

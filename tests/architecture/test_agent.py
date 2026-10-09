@@ -34,6 +34,8 @@ def _violations(module: str, source: str) -> set[str]:
             "legoai.kernel.effects",
             "legoai.kernel.errors",
             "legoai.reference.execution",
+            # ADR-024: the Agent path forwards the host-bound disclosure check.
+            "legoai.runtime._composition.disclosure",
             "legoai.runtime._composition.model_governed",
         },
     }[module] | common

@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from legoai.capabilities.ports import CatalogEntry
 from legoai.execution.ports import CoordinationOutcome, CoordinationResult
 from legoai.execution.values import ExecutionResult, ExecutionState
+from legoai.governance.disclosure import DisclosureDecision
 from legoai.intelligence.model.ports import (
     ModelPort,
     ModelPreflightError,
@@ -51,7 +52,7 @@ from legoai.intelligence.model.values import (
     EmbeddingResult,
 )
 from legoai.kernel.effects import EffectExtent
-from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
+from legoai.kernel.errors import ErrorCategory, ErrorCause, ErrorDetail, Recoverability
 from legoai.kernel.references import ConfigurationRevisionRef
 from legoai.reference.execution import ExecutionCoordinator
 from legoai.reference.model import (
@@ -59,6 +60,7 @@ from legoai.reference.model import (
     ollama_release,
 )
 from legoai.reference.model_capabilities import model_chat_offer, model_embedding_offer
+from legoai.runtime._composition.disclosure import DisclosureCheck
 
 
 def _matches_known_offer(entry: CatalogEntry, expected_offer: object) -> bool:
@@ -106,6 +108,58 @@ async def _settle_preflight_error(
             ErrorCategory.DEPENDENCY_FAILURE, Recoverability.POTENTIALLY_RETRYABLE, ()
         ),
     )
+
+
+async def _refuse_disclosure(
+    coordinator: ExecutionCoordinator,
+    result: CoordinationResult,
+    check: DisclosureCheck,
+    decision: DisclosureDecision,
+) -> ExecutionResult:
+    """ADR-024: refused before the provider; settle NONE with a safe cause.
+
+    The cause names only the disclosure Evidence record. If custody fails the
+    execution still settles NONE (nothing was sent) and the custody error
+    propagates rather than being swallowed.
+    """
+    try:
+        evidence = check.observe(decision, EffectExtent.NONE)
+    except BaseException:
+        await coordinator.settle(
+            result,
+            final_state=ExecutionState.FAILED,
+            effect=EffectExtent.NONE,
+            error=ErrorDetail(
+                ErrorCategory.POLICY_VIOLATION, Recoverability.TERMINAL, ()
+            ),
+        )
+        raise
+    cause = ErrorCause(
+        ErrorCategory.POLICY_VIOLATION, check.context.operation, evidence.value
+    )
+    return await coordinator.settle(
+        result,
+        final_state=ExecutionState.FAILED,
+        effect=EffectExtent.NONE,
+        error=ErrorDetail(
+            ErrorCategory.POLICY_VIOLATION, Recoverability.TERMINAL, (cause,)
+        ),
+    )
+
+
+def _disclosed(
+    check: DisclosureCheck | None,
+    decision: DisclosureDecision | None,
+    effect: EffectExtent,
+) -> None:
+    """Record what an admitted remote invocation actually disclosed.
+
+    Derived only from the observed outcome: a preflight failure sent nothing;
+    a complete provider reply (success or rejection) means the request was
+    received; anything uncertain stays UNKNOWN. Never fabricated.
+    """
+    if check is not None and decision is not None:
+        check.observe(decision, effect)
 
 
 async def _settle_uncertain_error(
@@ -164,9 +218,19 @@ async def _invoke_chat(
     request: ChatRequest,
     adapter: ModelPort,
     expected_binding: ModelBinding | None,
+    check: DisclosureCheck | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
-    """One shared invocation claim and phase mapping for both composition paths."""
+    """One shared invocation claim and phase mapping for both composition paths.
+
+    `check` is present only for a REMOTE binding (ADR-024): it is evaluated
+    after the claim and before the adapter; a refusal never reaches it.
+    """
     await coordinator.claim_invocation(result.execution_id)
+    decision = None
+    if check is not None:
+        decision = check.decide()
+        if not decision.admitted:
+            return await _refuse_disclosure(coordinator, result, check, decision), None
     try:
         chat_result = await adapter.chat(request)
         if expected_binding is not None and (
@@ -176,13 +240,26 @@ async def _invoke_chat(
         ):
             raise ModelResponseRejectedError("response does not match model binding")
     except ModelPreflightError:
-        return await _settle_preflight_error(coordinator, result), None
+        execution = await _settle_preflight_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.NONE)
+        return execution, None
     except ModelResponseUncertainError:
-        return await _settle_uncertain_error(coordinator, result), None
+        execution = await _settle_uncertain_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.UNKNOWN)
+        return execution, None
     except ModelResponseRetryableRejectedError:
-        return await _settle_preflight_error(coordinator, result), None
+        execution = await _settle_preflight_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.COMPLETED)
+        return execution, None
     except ModelResponseRejectedError:
-        return await _settle_rejected_error(coordinator, result), None
+        execution = await _settle_rejected_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.COMPLETED)
+        return execution, None
+    except BaseException:
+        # Cancellation or an unexpected fault: propagate unchanged, but never
+        # leave an admitted remote disclosure unattributed.
+        _disclosed(check, decision, EffectExtent.UNKNOWN)
+        raise
 
     execution_result = await coordinator.settle(
         result,
@@ -190,6 +267,7 @@ async def _invoke_chat(
         effect=EffectExtent.COMPLETED,
         error=None,
     )
+    _disclosed(check, decision, EffectExtent.COMPLETED)
     return execution_result, chat_result
 
 
@@ -229,6 +307,7 @@ async def invoke_routed_chat(
     request: ChatRequest,
     route: ModelRouteDecision,
     configured: ConfiguredModelBinding,
+    check: DisclosureCheck | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
     """Match the pinned selection to explicit wiring, then use governed Chat.
 
@@ -263,8 +342,10 @@ async def invoke_routed_chat(
         # Fail closed: never drop the requirement or downgrade to free text.
         await coordinator.claim_invocation(result.execution_id)
         return await _settle_capability_refusal(coordinator, result), None
+    if check is not None and type(check) is not DisclosureCheck:
+        raise TypeError("routed chat disclosure check must be DisclosureCheck")
     return await _invoke_chat(
-        coordinator, result, request, configured.adapter, configured.binding
+        coordinator, result, request, configured.adapter, configured.binding, check
     )
 
 
@@ -299,6 +380,7 @@ async def invoke_routed_embedding(
     entry: CatalogEntry,
     adapter: ModelPort,
     configuration_revision: ConfigurationRevisionRef,
+    check: DisclosureCheck | None = None,
 ) -> tuple[ExecutionResult, EmbeddingResult | None]:
     """ADR-014 §3.5: embedding through the same pinned selected binding.
 
@@ -328,7 +410,9 @@ async def invoke_routed_embedding(
         # Same no-call discipline as routed Chat: consume the claim first.
         await coordinator.claim_invocation(result.execution_id)
         return await _settle_mismatch(coordinator, result), None
-    return await _invoke_embedding(coordinator, result, request, adapter)
+    if check is not None and type(check) is not DisclosureCheck:
+        raise TypeError("routed embedding disclosure check must be DisclosureCheck")
+    return await _invoke_embedding(coordinator, result, request, adapter, check)
 
 
 async def _invoke_embedding(
@@ -336,19 +420,37 @@ async def _invoke_embedding(
     result: CoordinationResult,
     request: EmbeddingRequest,
     adapter: ModelPort,
+    check: DisclosureCheck | None = None,
 ) -> tuple[ExecutionResult, EmbeddingResult | None]:
-    """One shared embedding invocation claim and phase mapping."""
+    """One shared embedding invocation claim and phase mapping; same
+    ADR-024 gate placement as chat."""
     await coordinator.claim_invocation(result.execution_id)
+    decision = None
+    if check is not None:
+        decision = check.decide()
+        if not decision.admitted:
+            return await _refuse_disclosure(coordinator, result, check, decision), None
     try:
         embedding_result = await adapter.embed(request)
     except ModelPreflightError:
-        return await _settle_preflight_error(coordinator, result), None
+        execution = await _settle_preflight_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.NONE)
+        return execution, None
     except ModelResponseUncertainError:
-        return await _settle_uncertain_error(coordinator, result), None
+        execution = await _settle_uncertain_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.UNKNOWN)
+        return execution, None
     except ModelResponseRetryableRejectedError:
-        return await _settle_preflight_error(coordinator, result), None
+        execution = await _settle_preflight_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.COMPLETED)
+        return execution, None
     except ModelResponseRejectedError:
-        return await _settle_rejected_error(coordinator, result), None
+        execution = await _settle_rejected_error(coordinator, result)
+        _disclosed(check, decision, EffectExtent.COMPLETED)
+        return execution, None
+    except BaseException:
+        _disclosed(check, decision, EffectExtent.UNKNOWN)
+        raise
 
     execution_result = await coordinator.settle(
         result,
@@ -356,4 +458,5 @@ async def _invoke_embedding(
         effect=EffectExtent.COMPLETED,
         error=None,
     )
+    _disclosed(check, decision, EffectExtent.COMPLETED)
     return execution_result, embedding_result

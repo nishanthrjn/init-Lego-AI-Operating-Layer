@@ -20,9 +20,11 @@ explicitly commits through `EvidenceCustodyPort.record`. Construction of an
 `EvidenceRecord` value never writes it -- custody occurs only through an
 explicit Port call (task SS65).
 
-`subject` is a deliberately narrow, explicit union of the two evidence
-subject types this batch has a genuine consumer for -- not a placeholder
-for "any future subject":
+`subject` is a deliberately narrow, explicit union of the evidence subject
+types with a genuine consumer -- not a placeholder for "any future subject".
+ADR-024 (REMOTE-DISCLOSURE-GATE-1) adds `DisclosureObservation`
+(`legoai.governance.disclosure`): a safe remote-disclosure fact that, like an
+`AuthorizationDecision` record, never authorizes later work.
 
   - `ConfigurationRevisionRef` (Kernel) -- satisfies F4's existing
     `EvidenceRequirement.subject` shape.
@@ -51,6 +53,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol
 
+from legoai.governance.disclosure import DisclosureObservation
 from legoai.governance.ports import AuthorizationDecision
 from legoai.governance.values import Principal
 from legoai.kernel.context import TenantContext
@@ -97,7 +100,7 @@ class EvidenceRecord:
     """
 
     evidence_id: EvidenceId
-    subject: ConfigurationRevisionRef | AuthorizationDecision
+    subject: ConfigurationRevisionRef | AuthorizationDecision | DisclosureObservation
     issuer: Principal
     tenant_context: TenantContext
     content_reference: str = field(repr=False)
@@ -110,10 +113,12 @@ class EvidenceRecord:
             subject_tenant = self.subject.configuration.application.scope.tenant_id
         elif type(self.subject) is AuthorizationDecision:
             subject_tenant = self.subject.operation.scope.tenant_id
+        elif type(self.subject) is DisclosureObservation:
+            subject_tenant = self.subject.operation.scope.tenant_id
         else:
             raise TypeError(
-                "evidence record subject must be ConfigurationRevisionRef "
-                "or AuthorizationDecision"
+                "evidence record subject must be ConfigurationRevisionRef, "
+                "AuthorizationDecision or DisclosureObservation"
             )
         if type(self.issuer) is not Principal:
             raise TypeError("evidence record requires Principal issuer")

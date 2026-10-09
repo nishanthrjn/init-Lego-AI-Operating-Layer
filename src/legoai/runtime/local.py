@@ -78,6 +78,10 @@ from legoai.reference.model_routing import DeterministicModelRouter
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
 from legoai.reference.resolution import resolve
 from legoai.runtime._composition.agent import GovernedAgentChat
+from legoai.runtime._composition.disclosure import (
+    DisclosureCheck,
+    RemoteDisclosureGate,
+)
 from legoai.runtime._composition.model_governed import invoke_routed_embedding
 from legoai.runtime._composition.model_selection import (
     CompositionFailure,
@@ -87,6 +91,7 @@ from legoai.runtime._composition.model_selection import (
     compose_model,
 )
 from legoai.runtime.api import (
+    ExecutionDisclosure,
     GovernedChatResult,
     GovernedEmbeddingResult,
     GovernedHost,
@@ -299,8 +304,9 @@ class _HostAgentChat:
         self, context: ExecutionContext, route: ModelRouteDecision, request: ChatRequest
     ) -> AgentChatResult:
         self._host._enter_async()
-        self._host._require(context, ModelPurpose.CHAT)
-        return await self._chat.invoke(context, route, request)
+        disclosure = self._host._require(context, ModelPurpose.CHAT)
+        check = self._host._check(context, ModelPurpose.CHAT, disclosure)
+        return await self._chat.invoke(context, route, request, check)
 
 
 class _LocalGovernedHost:
@@ -337,7 +343,15 @@ class _LocalGovernedHost:
         self._route = route
         self._embedding_entry = embedding_entry
         self._adapter = adapter
-        self._minted: dict[ExecutionId, tuple[ModelPurpose, ExecutionContext]] = {}
+        # ADR-024 carrier: each minted execution's trusted declaration lives
+        # here, bound to its exact ExecutionId and context, never mutated.
+        self._minted: dict[
+            ExecutionId,
+            tuple[ModelPurpose, ExecutionContext, ExecutionDisclosure | None],
+        ] = {}
+        # The REMOTE disclosure gate. None while REMOTE bindings are refused
+        # at open: LOCAL invocations never consult disclosure policy.
+        self._gate: RemoteDisclosureGate | None = None
         self._thread = current_thread_ident()
         self._loop: object | None = None
         assert route.selected is not None
@@ -362,11 +376,32 @@ class _LocalGovernedHost:
         elif self._loop is not loop:
             raise HostError(HostFailure.WRONG_EVENT_LOOP)
 
-    def _require(self, context: ExecutionContext, purpose: ModelPurpose) -> None:
+    def _require(
+        self, context: ExecutionContext, purpose: ModelPurpose
+    ) -> ExecutionDisclosure | None:
         if type(context) is not ExecutionContext:
             raise TypeError("host invocation requires ExecutionContext")
-        if self._minted.get(context.execution_id) != (purpose, context):
+        minted = self._minted.get(context.execution_id)
+        if minted is None or minted[:2] != (purpose, context):
             raise HostError(HostFailure.FOREIGN_CONTEXT)
+        return minted[2]
+
+    def _check(
+        self,
+        context: ExecutionContext,
+        purpose: ModelPurpose,
+        disclosure: ExecutionDisclosure | None,
+    ) -> DisclosureCheck | None:
+        """Bind the REMOTE gate to this exact execution's own declaration."""
+        if self._gate is None:
+            return None
+        return DisclosureCheck(
+            self._gate,
+            context,
+            purpose.value,
+            disclosure.consumer if disclosure is not None else None,
+            disclosure.declaration if disclosure is not None else None,
+        )
 
     def _security(self, operation: OperationRef, grant: Grant) -> SecurityContext:
         return SecurityContext(
@@ -388,12 +423,15 @@ class _LocalGovernedHost:
         deadline: datetime | None = None,
         correlation: CorrelationId | None = None,
         causation: OperationRef | None = None,
+        disclosure: ExecutionDisclosure | None = None,
     ) -> ExecutionContext:
         self._require_thread()
         if type(purpose) is not ModelPurpose:
             raise TypeError("model execution requires ModelPurpose")
         if correlation is not None and type(correlation) is not CorrelationId:
             raise TypeError("correlation must be CorrelationId or None")
+        if disclosure is not None and type(disclosure) is not ExecutionDisclosure:
+            raise TypeError("disclosure must be ExecutionDisclosure or None")
         if purpose not in self._purposes:
             raise HostError(HostFailure.PURPOSE_UNAVAILABLE)
         grant = self._grants.get(("invoke-capability", purpose.capability_id.value))
@@ -420,7 +458,7 @@ class _LocalGovernedHost:
         self._contexts.register(
             context.security_context_ref, self._security(operation, grant)
         )
-        self._minted[context.execution_id] = (purpose, context)
+        self._minted[context.execution_id] = (purpose, context, disclosure)
         return context
 
     def security_context(
@@ -451,8 +489,9 @@ class _LocalGovernedHost:
         self._enter_async()
         if type(request) is not ChatRequest:
             raise TypeError("governed chat requires ChatRequest")
-        self._require(context, ModelPurpose.CHAT)
-        outcome = await self._chat.invoke(context, self._route, request)
+        disclosure = self._require(context, ModelPurpose.CHAT)
+        check = self._check(context, ModelPurpose.CHAT, disclosure)
+        outcome = await self._chat.invoke(context, self._route, request, check)
         return GovernedChatResult(outcome.execution, outcome.response)
 
     async def governed_embed(
@@ -461,7 +500,8 @@ class _LocalGovernedHost:
         self._enter_async()
         if type(request) is not EmbeddingRequest:
             raise TypeError("governed embedding requires EmbeddingRequest")
-        self._require(context, ModelPurpose.EMBEDDING)
+        disclosure = self._require(context, ModelPurpose.EMBEDDING)
+        check = self._check(context, ModelPurpose.EMBEDDING, disclosure)
         entry = self._embedding_entry
         assert entry is not None  # EMBEDDING contexts are minted only when published
         coordination = await self._coordinator.coordinate(
@@ -482,6 +522,7 @@ class _LocalGovernedHost:
             entry,
             self._adapter,
             self._config.configuration,
+            check,
         )
         return GovernedEmbeddingResult(result, response)
 

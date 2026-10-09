@@ -10,6 +10,7 @@ from legoai.intelligence.model.values import ChatRequest
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorDetail, Recoverability
 from legoai.reference.execution import ExecutionCoordinator
+from legoai.runtime._composition.disclosure import DisclosureCheck
 from legoai.runtime._composition.model_governed import (
     ConfiguredModelBinding,
     invoke_routed_chat,
@@ -22,8 +23,14 @@ class GovernedAgentChat:
     configured: ConfiguredModelBinding = field(repr=False)
 
     async def invoke(
-        self, context: ExecutionContext, route: ModelRouteDecision, request: ChatRequest
+        self,
+        context: ExecutionContext,
+        route: ModelRouteDecision,
+        request: ChatRequest,
+        check: DisclosureCheck | None = None,
     ) -> AgentChatResult:
+        """`check` (ADR-024) is supplied only by the host, for REMOTE bindings,
+        from this exact execution's minted declaration."""
         if (
             type(context) is not ExecutionContext
             or type(route) is not ModelRouteDecision
@@ -49,7 +56,9 @@ class GovernedAgentChat:
                 ),
                 None,
             )
+        if check is not None and check.context != context:
+            raise ValueError("disclosure check belongs to another execution")
         execution, response = await invoke_routed_chat(
-            self.coordinator, coordination, request, route, self.configured
+            self.coordinator, coordination, request, route, self.configured, check
         )
         return AgentChatResult(execution, response)
