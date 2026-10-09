@@ -572,8 +572,9 @@ support.
 
 ## Governed model discovery (PROVIDER-MODEL-DISCOVERY-1)
 
-**Status: IMPLEMENTED (2026-10-09); local qualification pending the operator's
-validator run.** This adds one credentialed provider-control operation: it
+**Status: LOCALLY QUALIFIED (2026-10-09; commit `198956a`), within the scope
+recorded at the end of this section.** This adds one credentialed
+provider-control operation: it
 retrieves a remote OpenAI-compatible provider's advertised model ids. It is an
 operator/provider-setup step, not a Model invocation, and lives outside
 ModelPort, every request type, the public host and ForgeAI. It discloses no
@@ -643,3 +644,20 @@ process-local synthetic TLS servers only.
 ```powershell
 uv run python .\validate_provider_model_discovery_1.py
 ```
+
+**PROVIDER-MODEL-DISCOVERY-1 LOCALLY QUALIFIED** (2026-10-09). The operator's
+run of that command passed **19/19 phases** offline on commit `198956a`. That
+includes 90 discovery tests (admission values and evaluator, bounded parser and
+the fixed `/models` target, the governed flow, authority separation, Secret
+purpose and currentness, canaries), ownership and import boundaries (363, with
+the pre-existing stale wheel-manifest test deselected), REMOTE chat and
+embedding (83), T2, attempt custody, S1, disclosure and Secret (426),
+OpenAI-compatible LOCAL, Ollama, Model and Agent (274), and Core (2111),
+DocuMind (16) and ForgeAI (89) regressions. Qualified claim: LegoAI locally
+qualifies one explicitly operator-authorized, provider-neutral credentialed
+model-discovery operation over the existing SRCP-1 HTTPS path. It can retrieve
+a bounded set of advertised model ids without disclosing application or model
+content, changing application bindings, retrying or falling back. Synthetic
+local TLS and S1 material only. Not qualified: KISSKI compatibility, dynamic
+model routing, provider discovery in general, model availability beyond the
+observed call, ForgeAI remote support and production provider management.
