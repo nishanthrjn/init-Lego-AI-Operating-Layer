@@ -341,3 +341,58 @@ The earlier implementation-time pending/stopped assessments are historical.
 Repository implementation at reconciliation: `1105a02`. The supplied transcript
 does not embed a commit identity; this record does not assert an independently
 verified run-to-commit binding.
+
+## SECRET-SOURCE-S1: operator-provisioned process-local material (ADR-023 §8)
+
+S1 is the first real material source, for ADR-023's single-operator SRCP-1
+profile. It is a private reference realization behind Secret Access
+(`legoai.reference.secret._ProvisionedSecretSource`). There is no second
+Secret subsystem: the Stage-A exact-use composition is reused unchanged,
+except that the material it realizes is the operator's provisioned revision
+instead of fresh synthetic bytes.
+
+**Provisioning.**
+- An explicit operator act: `provision(identity, purpose, consumer, material)`.
+- It returns only a `SecretRef` of class `operator-provisioned`.
+- The revision and mapping revision are owner-issued random identities, never
+  digests of the material.
+- Material must be visible ASCII, 1-4096 bytes (the existing material bound).
+  Empty, whitespace, control and non-ASCII input is rejected without echo.
+- The bootstrap helper `_provision_interactively` (private composition) reads
+  hidden input via `getpass`. It refuses without an interactive terminal, and
+  passes the material straight into the source.
+- There is no environment, `.env`, configuration-file, command-line, keyring
+  or SDK source, and no fallback.
+
+**Immutability and lifetime.**
+- A revision's bytes never change. Provisioning the same identity again issues
+  a new revision and retires the previous one (no overlap).
+- `retire` and `close` participate in the shared ordering domain. A retired,
+  closed or replaced revision never yields material to a later use; one that
+  was already accepted stays accepted.
+- Material lives only in the source's private buffer for this process. Retire
+  and close overwrite that buffer as best-effort hygiene only; no memory
+  erasure is claimed. After a restart the operator provisions again, under a
+  new revision. Close keeps safe revision metadata, and historical attribution
+  is untouched.
+
+**Use.**
+- Provisioning authorizes nothing. Material is realized only inside the
+  existing exact-use path: current Grant, Policy, Catalog and Approval checks,
+  revision and mapping validity, expiry and cancellation, all under the shared
+  domain.
+- The use must also match the provisioned revision, the `SecretRef` (class and
+  purpose) and the consumer.
+- The only consumer is still the Stage-A source acceptance. There is no
+  public plaintext API (`reveal`, `value`, `token` or `get_secret`), no
+  Authorization header and no transport.
+- Synthetic canaries are absent from references, statuses, facts, errors and
+  their causal chains, logs, and the source and Evidence databases. Plaintext
+  is never persisted.
+
+S1 adds no credentialed transport, no REMOTE enablement, no KISSKI support and
+no provider call. Environment-variable credentials remain unsupported.
+
+```powershell
+uv run python .\validate_secret_source_s1.py
+```

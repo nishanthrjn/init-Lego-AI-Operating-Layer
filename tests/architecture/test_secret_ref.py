@@ -57,6 +57,9 @@ def test_secret_owner_separation():
         "secrets",
         "legoai.governance.ports",
         "legoai.governance.secret",
+        # SECRET-SOURCE-S1: identity validation and the owner's scope (kernel).
+        "legoai.kernel.identity",
+        "legoai.kernel.references",
         "legoai.reference._secret_domain",
     }
     for name in ("reference/secret.py", "runtime/_composition/secret.py"):
