@@ -317,6 +317,7 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.sandbox.ports",
         },
         "sandbox.docker": {
+            "legoai_engineering.sandbox.prepared",
             "base64",
             "enum",
             "json",
@@ -332,6 +333,31 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "legoai_engineering.sandbox.ports",
             "legoai_engineering.sandbox.values",
         },
+    }
+    additions["sandbox.prepared"] = {"enum"}
+    additions["checks._prepare_program"] = set()
+    additions["checks.preparation"] = {
+        "hashlib",
+        "json",
+        "re",
+        "sys",
+        "tempfile",
+        "time",
+        "tomllib",
+        "uuid",
+        "pathlib",
+        "legoai_engineering.checks._prepare_program",
+        "legoai_engineering.checks._process",
+        "legoai_engineering.checks.errors",
+        "legoai_engineering.checks.values",
+        "legoai_engineering.repository.errors",
+        "legoai_engineering.repository.ports",
+        "legoai_engineering.repository.workspace",
+        "legoai_engineering.sandbox._process",
+        "legoai_engineering.sandbox.docker",
+        "legoai_engineering.sandbox.errors",
+        "legoai_engineering.sandbox.prepared",
+        "legoai_engineering.sandbox.values",
     }
     allowed.update(additions.get(module, set()))
     errors: set[str] = set()
@@ -365,7 +391,10 @@ def import_violations(source: str, module: str = "") -> set[str]:
             "cwd",
             "getcwd",
         }:
-            if not (module == "mutation_local" and node.attr == "unlink"):
+            if not (
+                (module == "mutation_local" and node.attr == "unlink")
+                or (module == "checks.preparation" and node.attr == "write_text")
+            ):
                 errors.add(node.attr)
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             if (

@@ -59,6 +59,8 @@ from legoai_engineering.reviewer.values import (
     ReviewStatus,
     SubmissionFailure,
 )
+from legoai_engineering.sandbox.errors import SandboxError
+from legoai_engineering.sandbox.prepared import PreparationError
 
 from forgeai.domain import (
     AttemptEvidence,
@@ -106,6 +108,9 @@ class RepositoryTaskWorker:
     progress: Callable[[RunStage, int], None] = field(
         default=lambda stage, attempt: None, repr=False
     )
+    prepare_checks: Callable[[], EngineeringCheckPort] | None = field(
+        default=None, repr=False
+    )
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -141,6 +146,8 @@ class RepositoryTaskWorker:
             raise TypeError("worker requires a fresh Chat context factory")
         if not callable(self.approve) or not callable(self.progress):
             raise TypeError("worker requires an operator approver and progress")
+        if self.prepare_checks is not None and not callable(self.prepare_checks):
+            raise TypeError("preparation must be a trusted composition callback")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -200,7 +207,29 @@ class RepositoryTaskWorker:
         if start.entries:
             return _rejected(task, TaskFailure.DIRTY_START, evidence)
         self.progress(RunStage.REPOSITORY_VERIFIED, 0)
-        first = await self._attempt(
+        worker = self
+        if self.prepare_checks is not None:
+            try:
+                worker = replace(
+                    self, checks=self.prepare_checks(), prepare_checks=None
+                )
+            except PreparationError as error:
+                return _rejected(
+                    task,
+                    TaskFailure.CHECK_ENVIRONMENT_UNAVAILABLE,
+                    replace(evidence, preparation_failure=error.reason),
+                )
+            except SandboxError as error:
+                return _rejected(
+                    task,
+                    TaskFailure.CHECK_ENVIRONMENT_UNAVAILABLE,
+                    replace(evidence, preparation_infrastructure_failure=error.reason),
+                )
+            # Preparation must not change the source checkout or anchor.
+            after = self._observe()
+            if not isinstance(after, GitRepositoryState) or after != start:
+                return _rejected(task, TaskFailure.REPOSITORY_UNAVAILABLE, evidence)
+        first = await worker._attempt(
             task,
             CodingRequest(
                 task.objective, task.targets, task.constraints, context, task.context
@@ -212,7 +241,7 @@ class RepositoryTaskWorker:
             return first
         # Attempt 1 consumed the single rework budget (check findings or
         # review #1 CHANGES_REQUIRED): exactly one rework.
-        return await self._rework(task, context, first)
+        return await worker._rework(task, context, first)
 
     async def _rework(
         self, task: TaskRequest, context: ExecutionContext, evidence: TaskEvidence

@@ -67,6 +67,7 @@ from forgeai.composition import (
     sandbox_readiness,
 )
 from forgeai.domain import (
+    CheckProfile,
     OperatorDecision,
     ProposalReview,
     ReworkTrigger,
@@ -203,7 +204,12 @@ def header(config: ForgeAIConfig, task: TaskRequest, model: str) -> str:
         lines.append("read-only model context: none")
     lines += [f"constraint: {c[:200]}" for c in task.constraints]
     checks = ", ".join(c.kind.value for c in config.check_plan)
-    lines.append(f"checks: {checks} (sandboxed, image {config.sandbox_image.value})")
+    image = (
+        config.sandbox_image.value
+        if config.check_profile is CheckProfile.GENERIC
+        else "prepared project environment"
+    )
+    lines.append(f"checks: {checks} (sandboxed, image {image})")
     lines.append(f"model: {model}")
     lines.append("Nothing is written until you approve the proposal.")
     return "\n".join(lines)
@@ -379,6 +385,13 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
     lines = [f"disposition: {result.disposition.value}"]
     if result.failure is not None:
         lines.append(f"reason: {result.failure.value}")
+    if evidence.preparation_failure is not None:
+        lines.append("environment preparation: " + evidence.preparation_failure.value)
+    if evidence.preparation_infrastructure_failure is not None:
+        lines.append(
+            "environment infrastructure: "
+            + evidence.preparation_infrastructure_failure.value
+        )
     lines.append(f"run: {evidence.run_id}")
     if evidence.start is not None and evidence.start.head.commit is not None:
         lines.append(f"start HEAD: {evidence.start.head.commit.value[:12]}")
@@ -525,6 +538,12 @@ def _target(text: str) -> CodingTarget:
 
 def _common(parser: argparse.ArgumentParser, binding: str) -> None:
     parser.add_argument(
+        "--check-profile",
+        choices=("generic", "project"),
+        default="generic",
+        help="generic: fixed checks image; project: locked Python dependencies, explicit network preparation and offline checks",
+    )
+    parser.add_argument(
         "--target",
         action="append",
         required=True,
@@ -625,6 +644,7 @@ def main(
     except (TypeError, ValueError) as error:
         parser.error(f"invalid task: {error}")
     root = repository.resolve()
+    uv_executable = shutil.which("uv")
     try:
         config = local_profile(
             root,
@@ -636,16 +656,27 @@ def main(
             git_executable=args.git.resolve(),
             docker_executable=args.docker.resolve(),
             now=datetime.now(UTC),
+            check_profile=CheckProfile(args.check_profile),
+            uv_executable=Path(uv_executable) if uv_executable else None,
         )
     except (TypeError, ValueError) as error:
         parser.error(f"invalid configuration: {error}")
     # Before any model call or effect: refuse unless the checks sandbox is ready.
-    failure = ready(config)
+    # PROJECT owns readiness inside its guarded preflight, after repository and
+    # metadata validation. GENERIC retains its existing startup probe.
+    failure = ready(config) if config.check_profile is CheckProfile.GENERIC else None
     if failure is not None:
         out("startup refused: " + readiness_message(failure))
         out("no model was called and nothing was written")
         return 2
-    out(header(config, task, model))
+    if config.check_profile is CheckProfile.GENERIC:
+        out(header(config, task, model))
+
+    def preflight(message: str) -> None:
+        out(message)
+        if message == "checks: Ruff, mypy, pytest; check network: disabled":
+            out(header(config, task, model))
+
     try:
         # Host and adapter composition only; no model call or effect yet.
         prepared = prepare_run(
@@ -653,6 +684,7 @@ def main(
             WorkspaceGuard(),
             approve=terminal_approver(ask, out),
             progress=reporter(out),
+            preflight=preflight,
         )
     except HostError as error:
         out(f"configuration error: {error.failure.value}")

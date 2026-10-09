@@ -17,6 +17,19 @@ or semantics still require code behind the appropriate public boundary.
 
 ## 1. Executive status
 
+2026-10-10 update: ENGINEERING-PREPARED-CHECK-ENV-1 +
+FORGEAI-PROJECT-CHECK-PROFILE-1 implements explicit locked Python dependency
+preparation before ForgeAI model calls. GENERIC retains its historical image;
+PROJECT derives an immutable local image and keeps actual checks offline.
+Focused local qualification is tracked by `validate_forgeai_project_check_profile_1.py`;
+this does not qualify arbitrary repositories or broaden historical M6 evidence.
+The complete agent-run validator passed on 2026-10-10, including real Docker
+dependency preparation, offline checks and all historical v0.1 regression phases;
+a separate maintainer rerun remains pending. No real user-repository pilot ran.
+The next product gate is one separately authorized real-project pilot whose
+metadata, tool versions and workload fit the documented bounds. No ComfyUI,
+GPU/platform integration or live provider work is included.
+
 **LegoAI today:** a Python-first reusable capability platform with a locally
 qualified, single-operator governed host, Model and one-step Agent contracts,
 authorization and effect boundaries, Engineering M1 through M8.3, and independently

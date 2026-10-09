@@ -3,7 +3,8 @@
 The only ForgeAI module that names concrete LegoAI adapters or opens the
 public governed host. Each run opens its own host, binds exactly one
 workspace and gets a fresh ExecutionContext. Checks always run in the
-sandbox on the qualified checks image; there is no host check adapter here.
+sandbox on the qualified checks base or a trusted prepared derivative; there is
+no host check adapter here.
 """
 
 import os
@@ -38,6 +39,11 @@ from legoai_engineering.checks.authorized import (
     ENGINEERING_CHECK_ACTION,
     AuthorizedEngineeringChecks,
 )
+from legoai_engineering.checks.ports import EngineeringCheckPort
+from legoai_engineering.checks.preparation import (
+    inspect_check_project,
+    prepare_check_environment,
+)
 from legoai_engineering.checks.sandboxed import (
     CheckInputPolicy,
     SandboxedEngineeringChecks,
@@ -68,9 +74,11 @@ from legoai_engineering.sandbox.docker import (
 )
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 from legoai_engineering.sandbox.ports import SandboxExecutionPort
+from legoai_engineering.sandbox.prepared import PreparationError, PreparationFailure
 from legoai_engineering.sandbox.values import SandboxPolicy
 
 from forgeai.domain import (
+    CheckProfile,
     OperatorDecision,
     ProposalReview,
     RunStage,
@@ -111,8 +119,23 @@ class ForgeAIConfig:
     sandbox_image: SandboxImage = SandboxImage.PYTHON_CHECKS
     # Read-only disclosure to the Coding Agent; never editable, never reviewed.
     context_paths: tuple[RepositoryPath, ...] = ()
+    check_profile: CheckProfile = CheckProfile.GENERIC
+    uv_executable: Path | None = None
 
     def __post_init__(self) -> None:
+        if type(self.check_profile) is not CheckProfile:
+            raise TypeError("check profile requires CheckProfile")
+        if self.uv_executable is not None and (
+            not isinstance(self.uv_executable, Path)
+            or not self.uv_executable.is_absolute()
+            or self.uv_executable.name.casefold() != "uv.exe"
+        ):
+            raise ValueError("uv requires an absolute uv.exe path")
+        if (
+            self.check_profile is CheckProfile.PROJECT
+            and self.sandbox_image is not SandboxImage.PYTHON_CHECKS
+        ):
+            raise ValueError("PROJECT requires the qualified checks base")
         for value, expected in (
             (self.workspace_policy, WorkspacePolicy),
             (self.git_policy, GitReadPolicy),
@@ -166,6 +189,7 @@ def prepare_run(
     progress: Callable[[RunStage, int], None] = lambda stage, attempt: None,
     clock: Callable[[], datetime] = utc_now,
     sandbox: SandboxExecutionPort | None = None,
+    preflight: Callable[[str], None] = lambda message: None,
 ) -> PreparedRun:
     """Open a host and wire one workspace. `sandbox` replaces Docker only with
     another SandboxExecutionPort backend; there is never a host fallback.
@@ -228,6 +252,37 @@ def prepare_run(
         host.authorization,
         clock,
     )
+
+    def project_checks() -> EngineeringCheckPort:
+        # Runs under WorkspaceGuard, after a clean committed Git start.
+        if config.uv_executable is None:
+            raise PreparationError(PreparationFailure.PREPARATION_TOOL_FAILED)
+        metadata = inspect_check_project(workspace)
+        preflight("check profile: project; pyproject.toml: present; uv.lock: present")
+        preflight("Python requirement: " + metadata.python_requirement)
+        preflight(
+            "dependency environment: preparation required (package-registry network)"
+        )
+        environment = prepare_check_environment(
+            metadata, config.docker_executable, config.uv_executable
+        )
+        prepared_sandbox = DockerSandbox(
+            DockerSandboxConfig(config.docker_executable, environment),
+            config.sandbox_policy,
+        )
+        prepared_sandbox.verify_ready()
+        preflight("dependency environment: prepared " + environment.image[:23])
+        preflight("checks: Ruff, mypy, pytest; check network: disabled")
+        return AuthorizedEngineeringChecks(
+            reference,
+            SandboxedEngineeringChecks(
+                workspace, prepared_sandbox, config.check_inputs, config.check_policy
+            ),
+            host.security_context(reference, ENGINEERING_CHECK_ACTION, scope),
+            host.authorization,
+            clock,
+        )
+
     runtime = host.agent_runtime()
 
     def fresh_context(coding: ExecutionContext) -> ExecutionContext:
@@ -254,6 +309,7 @@ def prepare_run(
         fresh_context,
         approve,
         progress,
+        project_checks if config.check_profile is CheckProfile.PROJECT else None,
     )
     return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
 
@@ -323,6 +379,8 @@ def local_profile(
     grant_hours: int = 1,
     denied_actions: frozenset[str] = frozenset(),
     context_paths: tuple[RepositoryPath, ...] = (),
+    check_profile: CheckProfile = CheckProfile.GENERIC,
+    uv_executable: Path | None = None,
 ) -> ForgeAIConfig:
     """The ForgeAI-1 local operator profile for a src/tests Python repository.
 
@@ -388,4 +446,6 @@ def local_profile(
         review_criteria=REVIEW_CRITERIA,
         workspace_scope=scope,
         context_paths=context_paths,
+        check_profile=check_profile,
+        uv_executable=uv_executable,
     )

@@ -596,6 +596,74 @@ Fixtures in `fixtures/stock_task/`:
 
 ## Validation
 
+### Explicit project check profile (PROJECT v1)
+
+`forgeai run --check-profile generic` remains the default historical fixed
+checks image. `--check-profile project` explicitly authorizes a separate trusted
+dependency-preparation operation before any Coding Agent, approval or mutation.
+Preparation may acquire packages from PyPI; Ruff, mypy and pytest subsequently
+run with Docker networking disabled and the unchanged check plan.
+
+The first supported shape is a committed clean Python repository with `src/`,
+`tests/`, static `[project]` metadata, `requires-python` compatible with the base
+image's actual CPython **3.14.7**, and an up-to-date **uv.lock**. Runtime dependencies
+and the optional `dev` dependency group are selected. uv **0.11.19** is required
+on PATH. The host Python must also satisfy uv's locked-export compatibility check.
+No target project install or build backend is executed. Only hashed binary wheels
+from PyPI are acquired. Source-only packages, local/Git/URL dependencies, workspaces,
+extras, other groups, custom uv configuration (except `package=false`), conflicting
+base-tool dependencies and startup `.pth` hooks are unsupported. Other custom tool
+tables and repository Dockerfiles/setup scripts supply no preparation commands.
+
+Existing workspace limits apply to both metadata files: at most **65,536 text
+characters**, at most 262,144 bytes; the manifest has a further 65,536-byte bound.
+Existing check-input limits and the 128 MiB execution sandbox remain unchanged.
+Projects requiring external services, additional pytest plugin selection or
+different check commands are not qualified by this profile.
+
+```powershell
+forgeai run --repo C:\path\to\supported-project --task "Describe one bounded change" --target src/example.py --check-profile project
+```
+
+Preflight prints the profile, metadata presence, bounded Python requirement,
+preparation status, abbreviated prepared image ID and offline check plan. The
+workspace guard covers preparation and all subsequent work. Preparation rejection
+has no proposal, approval, mutation, check batch, review or rework budget use;
+the operator sees a closed preparation reason or sandbox infrastructure reason.
+Actual code findings retain the existing single approved rework semantics.
+
+The prepared image is derived locally from the exact qualified checks base.
+The target checkout is never a build context. The immutable image ID selects
+execution; no image-string CLI option exists. Prepared images remain local,
+are not committed to this repository, and are not automatically reused on later
+runs. The operator can remove a reported image ID with Docker when no longer needed.
+This is bounded local qualification, not arbitrary-package safety, reproducible
+builds generally or production supply-chain security.
+
+Focused qualification (one explicitly labelled PyPI wheel-acquisition phase,
+then offline checks; replay models only):
+
+```powershell
+uv run python .\validate_forgeai_project_check_profile_1.py
+```
+
+The fixture at `fixtures/project_checks` uses the existing ecosystem's small
+`idna==3.20` dependency. GENERIC cannot import it; PROJECT must pass all three
+checks, preserve base tool executable hashes and expose only loopback networking.
+The focused validator also runs the full existing v0.1 regression validator.
+Historical M6/CR-2 qualification does not cover PROJECT; its evidence is separate.
+
+Agent-run qualification on 2026-10-10 passed the complete focused validator on
+Windows/Docker Desktop: 278 Engineering tests, 17 ForgeAI profile tests, one real
+dependency-preparation test, 106 Core composition regressions, affected static
+checks, and every phase of the unchanged v0.1 validator (including clean install
+and both replay demos). These phase counts overlap with historical regressions.
+The qualified derived image was
+`sha256:287e84039478daa135062674ccd1aff423ac8320b2f2fcebac9261d12e6bf033`.
+Preparation acquired the locked wheel from PyPI; checks had only loopback
+networking. No live model or real user-repository pilot was run. A separate
+maintainer rerun remains pending.
+
 From the repository root, on Windows with Docker Desktop and the CR-2a image
 present:
 

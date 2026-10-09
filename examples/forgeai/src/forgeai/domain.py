@@ -30,6 +30,8 @@ from legoai_engineering.reviewer.values import (
     ReviewResult,
     ReviewStatus,
 )
+from legoai_engineering.sandbox.errors import SandboxFailure
+from legoai_engineering.sandbox.prepared import PreparationFailure
 
 LIMITATIONS = (
     "Checks ran in the qualified sandbox; a pass is an observed contained "
@@ -120,6 +122,11 @@ class TaskDisposition(Enum):
     FAILED = "failed"
 
 
+class CheckProfile(Enum):
+    GENERIC = "generic"
+    PROJECT = "project"
+
+
 class TaskFailure(Enum):
     """Closed reasons; each names the step that stopped the run."""
 
@@ -127,6 +134,9 @@ class TaskFailure(Enum):
     REPOSITORY_UNAVAILABLE = "initial Git state could not be observed"
     UNSUPPORTED_REPOSITORY = "repository has no commit to anchor the run"
     DIRTY_START = "repository has pre-existing changes"
+    CHECK_ENVIRONMENT_UNAVAILABLE = (
+        "check environment preparation failed before model invocation"
+    )
     EVIDENCE_DENIED = "repository read authorization denied"
     EVIDENCE_UNAVAILABLE = "bounded repository evidence could not be acquired"
     MODEL_FAILED = "the model call did not complete"
@@ -167,6 +177,7 @@ _REJECTIONS = frozenset(
         TaskFailure.REPOSITORY_UNAVAILABLE,
         TaskFailure.UNSUPPORTED_REPOSITORY,
         TaskFailure.DIRTY_START,
+        TaskFailure.CHECK_ENVIRONMENT_UNAVAILABLE,
         TaskFailure.EVIDENCE_DENIED,
         TaskFailure.EVIDENCE_UNAVAILABLE,
     }
@@ -372,9 +383,28 @@ class TaskEvidence:
     # The single rework budget: which event consumed it, if any.
     rework_trigger: ReworkTrigger | None = None
     limitations: tuple[str, ...] = LIMITATIONS
+    preparation_failure: PreparationFailure | None = None
+    preparation_infrastructure_failure: SandboxFailure | None = None
 
     def __post_init__(self) -> None:
         _text(self.run_id, 256)
+        if (
+            self.preparation_failure is not None
+            and type(self.preparation_failure) is not PreparationFailure
+        ):
+            raise TypeError("preparation failure requires PreparationFailure")
+        if (
+            self.preparation_infrastructure_failure is not None
+            and type(self.preparation_infrastructure_failure) is not SandboxFailure
+        ):
+            raise TypeError(
+                "preparation infrastructure failure requires SandboxFailure"
+            )
+        if (
+            self.preparation_failure is not None
+            or self.preparation_infrastructure_failure is not None
+        ) and (self.attempts or self.rework_trigger is not None):
+            raise ValueError("preparation failure precedes all attempts and rework")
         if len(self.planned_checks) > 8:
             raise ValueError("check evidence exceeds the configured plan")
         if type(self.attempts) is not tuple or len(self.attempts) > MAX_ATTEMPTS:

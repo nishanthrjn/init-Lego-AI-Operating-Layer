@@ -175,6 +175,8 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
         "bool | None",  # the operator's approval decision (v0.1)
         "OutputDiagnostic | None",  # display-safe rejected-output reason (v0.1)
         "ReworkTrigger | None",  # what consumed the single rework budget (v0.1)
+        "PreparationFailure | None",  # closed pre-model failure; no raw tool output
+        "SandboxFailure | None",  # startup infrastructure, never check findings
         "RepositoryMutationResult | None",
         "EffectAuthorizationFailure | None",
         "MutationConflictReason | None",

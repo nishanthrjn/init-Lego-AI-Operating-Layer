@@ -15,6 +15,7 @@ from legoai_engineering.sandbox._process import _check, _Cli
 from legoai_engineering.sandbox._programs import _COLLECT, _IDLE, _PREPARE
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 from legoai_engineering.sandbox.ports import CancellationSignal
+from legoai_engineering.sandbox.prepared import PreparedCheckEnvironment, _digest
 from legoai_engineering.sandbox.values import (
     SandboxArtifact,
     SandboxPolicy,
@@ -65,11 +66,12 @@ class DockerSandboxConfig:
 
     The fixed endpoint corresponds to Desktop's local desktop-linux context.
     No context credentials, proxy settings or ambient Docker configuration load.
-    The image is selected only from the closed `SandboxImage` set.
+    The image comes from the closed `SandboxImage` set or trusted preparation's
+    immutable PreparedCheckEnvironment. No arbitrary image string is accepted.
     """
 
     executable: Path
-    profile: SandboxImage = SandboxImage.PYTHON_STDLIB
+    profile: SandboxImage | PreparedCheckEnvironment = SandboxImage.PYTHON_STDLIB
 
     def __post_init__(self) -> None:
         if not isinstance(self.executable, Path):
@@ -81,8 +83,26 @@ class DockerSandboxConfig:
             or self.executable.name.casefold() != "docker.exe"
         ):
             raise ValueError("explicit native absolute docker.exe path required")
+        if type(self.profile) is PreparedCheckEnvironment:
+            if (
+                self.profile.base_image != _approved_image(SandboxImage.PYTHON_CHECKS)
+                or self.profile.profile != "uv-wheels-1"
+                or self.profile.python != "3.14.7"
+                or not all(
+                    _digest(value)
+                    for value in (
+                        self.profile.image,
+                        self.profile.lock_digest,
+                        self.profile.manifest_digest,
+                    )
+                )
+            ):
+                raise ValueError("unsupported prepared check environment")
+            return
         if type(self.profile) is not SandboxImage:
-            raise TypeError("sandbox image requires SandboxImage")
+            raise TypeError(
+                "sandbox image requires SandboxImage or PreparedCheckEnvironment"
+            )
         # Unqualified or mutable references fail closed before any Docker call.
         reference = _approved_image(self.profile)
         if reference is None or not _immutable(reference):
@@ -90,6 +110,8 @@ class DockerSandboxConfig:
 
     @property
     def image(self) -> str:
+        if isinstance(self.profile, PreparedCheckEnvironment):
+            return self.profile.image
         reference = _approved_image(self.profile)
         if reference is None or not _immutable(reference):
             raise ValueError("unsupported reference environment")

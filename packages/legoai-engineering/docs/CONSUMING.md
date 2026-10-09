@@ -66,6 +66,8 @@ The table lists the whole supported surface. Modules or names beginning with
 | `legoai_engineering.checks.local` | `LocalEngineeringChecks`, `LocalCheckTools` | base |
 | `legoai_engineering.checks.sandboxed` | `SandboxedEngineeringChecks`, `CheckInputPolicy` | base |
 | `legoai_engineering.checks.authorized` | `AuthorizedEngineeringChecks`, `ENGINEERING_CHECK_ACTION` | `analyst` |
+| `legoai_engineering.checks.preparation` | `ProjectCheckMetadata`, `inspect_check_project`, `prepare_check_environment` | base |
+| `legoai_engineering.sandbox.prepared` | `PreparedCheckEnvironment`, `PreparationError`, `PreparationFailure` | base |
 | `legoai_engineering.sandbox.ports` / `.values` / `.errors` / `.docker` | `SandboxExecutionPort`, `CancellationSignal`, `SandboxPolicy`, `SandboxRequest`, `SandboxResult`, `SandboxError`, `SandboxFailure`, `DockerSandbox`, `DockerSandboxConfig`, `SandboxImage` | base |
 | `legoai_engineering.git.ports` / `.local` / `.values` / `.errors` | `GitRepositoryPort`, `LocalGitRepository`, `LocalGitExecutable`, `GitReadPolicy`, Git values, `GitError`, `GitFailure` | base |
 | `legoai_engineering.analyst.authorized` | `AuthorizedRepositoryEvidence`, `REPOSITORY_READ_ACTION` | `analyst` |
@@ -377,6 +379,74 @@ is not a production or multi-platform claim.
   `analyst` extra, which installs Core.
 
 ## 18. Compatibility and version expectations
+
+### Prepared check environment (ENGINEERING-PREPARED-CHECK-ENV-1)
+
+Maintainer-authorized extension: `checks.preparation.inspect_check_project(workspace)`
+reads bounded metadata through RepositoryWorkspacePort. The explicit effect
+`prepare_check_environment(metadata, docker_executable, uv_executable)` returns
+`sandbox.prepared.PreparedCheckEnvironment`. No new Port is introduced.
+`DockerSandboxConfig.profile` accepts either the existing `SandboxImage` enum or
+this trusted prepared value. `SandboxRequest` and `execute()` are unchanged:
+normal execution still performs no install, pull or network acquisition.
+
+The frozen, non-publicly-constructible value binds base/image SHA-256 identities,
+manifest/lock SHA-256 digests, CPython 3.14.7 and `uv-wheels-1`. Private minting
+happens only after successful installation, container exit, commit and image
+readiness. This uses trusted in-process composition, not cryptographic attestation
+against hostile Python or a compromised Docker daemon. Arbitrary strings/tags
+are refused at the Docker configuration boundary.
+
+uv 0.11.19 performs `export --locked --offline --no-config --no-sources --no-build
+--no-python-downloads --no-managed-python --python <host interpreter> --no-cache
+--no-emit-project --no-header --no-annotate --format requirements.txt` in a private
+directory containing only bounded pyproject/lock snapshots. No project backend,
+source, tests, repository Dockerfile or credentials are supplied. Locks must be
+version 1, single-root, registry-only PyPI, with wheel records. Runtime dependencies
+and optional `dev` are selected; no extras, workspace/path/Git/URL dependencies or
+custom uv options. Existing workspace text limits (65,536 characters/file) apply.
+The actual base Python is checked offline before export or acquisition; the host
+interpreter must also satisfy uv's compatibility check. Unsupported shapes fail.
+
+Preparation uses a dedicated container and `docker commit`, not Docker build.
+This deliberately reuses the finite Docker transport and permits explicit
+termination/cleanup on timeout, without an asynchronous build job or target build
+context. It starts from the exact locally present PYTHON_CHECKS identity with
+`--pull=never`. Only this fixed installer container has bridge networking. It has
+512 MiB memory, 1 CPU, 32 PIDs and 256 MiB tmpfs for downloads/logs; no host mounts.
+The container runs the trusted installer as root with capabilities dropped.
+This is a distinct preparation profile, not the historical M6 workload profile.
+
+Fixed pip download uses `--isolated --only-binary=:all: --require-hashes --no-deps`,
+PyPI only, no retries, 20-second connection timeout. Downloaded wheel members
+are checked before offline installation (8,192 members/128 MiB expanded data,
+no traversal, links, startup hooks or base/stdlib import shadowing). Installation
+uses `--no-index --find-links` and verifies hashes again. Packages go into
+`/opt/legoai-project-deps`, never the base tool directory. A fixed path-only `.pth`
+appends that directory after base packages; dependency `.pth` hooks are refused.
+Already-present base distributions are reused only at exactly matching versions;
+conflicts fail. Dependency executables never precede base tools on PATH.
+
+The deadline is 30 seconds per uv call, then 300 seconds for Docker preparation;
+container cleanup gets a separate 30 seconds. No automatic retry or custom cache.
+Cleanup reconciles only the generated container name and reports uncertainty.
+Successful images remain local, without automatic cross-run reuse; failed or
+interrupted commits can leave unreferenced image data for operator reconciliation.
+No usable value is returned after a failure. Host-process crash/daemon compromise,
+bit-for-bit build reproducibility and production disk quotas are not claimed.
+
+`PreparationError.reason` is one of UNSUPPORTED_PROJECT, PYTHON_INCOMPATIBLE,
+LOCK_REQUIRED, LOCK_INVALID, DEPENDENCY_UNAVAILABLE, PREPARATION_NETWORK_FAILED,
+PREPARATION_TOOL_FAILED, PREPARATION_TIMEOUT, PREPARED_IMAGE_UNAVAILABLE or
+PREPARED_IMAGE_IDENTITY_INVALID. Network/download classifications use bounded pip
+diagnostics; unrecognized failures remain PREPARATION_TOOL_FAILED. Base readiness
+and cleanup retain existing SandboxError semantics. No raw pip output is operator
+authority, model feedback or a CheckResult. Consumers must run this phase before
+proposal/mutation and keep its errors separate from check findings.
+
+Qualification: `uv run python .\validate_forgeai_project_check_profile_1.py` at the
+repository root. It has one labelled package-registry acquisition phase and
+otherwise offline/replay checks. Historical qualification claims remain unchanged.
 
 `legoai-engineering` is at `0.1.0.dev0` and requires Python 3.14. The Ports
 and the public names in §4 change only with a documented, additive change
