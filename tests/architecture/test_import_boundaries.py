@@ -532,6 +532,20 @@ def violations(sources: dict[str, str]) -> set[str]:
                                     "legoai.reference.catalog",
                                     "legoai.reference.governance",
                                     "legoai.reference.secret",
+                                    # CREDENTIAL-HTTPS-T2: the one consumer.
+                                    "legoai.reference._credential_https",
+                                )
+                            )
+                        )
+                        # CREDENTIAL-HTTPS-T2: the invocation plane's exchange.
+                        or (
+                            name == "legoai.runtime._composition.credential_https"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.governance.ports",
+                                    "legoai.reference._credential_https",
+                                    "legoai.reference._remote_attempts",
                                 )
                             )
                         )

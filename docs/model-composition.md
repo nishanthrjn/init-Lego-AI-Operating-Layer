@@ -365,3 +365,63 @@ one exact intended remote attempt before any future credential-bearing handoff,
 with no resend on recovery and UNKNOWN for unresolved attempts. There is no
 transport, no REMOTE support, no Bearer authentication, no KISSKI support and no
 live remote-effect qualification.
+
+## Credential-bearing HTTPS transport (CREDENTIAL-HTTPS-T2)
+
+A private SRCP-1 transport (`legoai.reference._credential_https`), driven only
+by the invocation plane's `runtime/_composition/credential_https.exchange`. It
+is not a ModelPort, a public HTTP client or a provider client.
+
+**Order.**
+1. Recipient binding: the target's https origin and API root must equal the
+   attempt's. The Secret revision and use id must equal the attempt's.
+2. DNS and TCP connect, then a TLS handshake with certificate and hostname
+   verification, over `ssl.SSLObject` and `MemoryBIO`. No credential exists
+   yet.
+3. `claim_for_handoff` on the durable INTENDED receipt, once.
+4. The Secret owner's `_handoff`. In one ordering-domain occupancy: final
+   currentness (with the SRCP-1 validity margin), durable Secret-use
+   acceptance, encryption of the single request into the outgoing BIO, and
+   **one nonblocking `send`**.
+5. Each continuation waits for writability **outside** the domain, re-enters,
+   rechecks currentness and makes one more nonblocking send. If an
+   invalidation wins, nothing further is sent.
+6. A bounded response read, outside the domain.
+7. The plane maps the observation to custody:
+   - zero credential bytes → `NOT_SENT`;
+   - partial or uncertain → `UNKNOWN`;
+   - all bytes without a complete response → `UNKNOWN`;
+   - complete 2xx → `COMPLETED`;
+   - any other complete status → `PROVIDER_REJECTED`.
+
+   The Secret use is then attributed (same id as the attempt).
+
+**Request.** `POST` to the exact API-root path, with only `Host`,
+`Content-Type`, `Accept`, `Authorization: Bearer <material>`, `Content-Length`
+and `Connection: close`. One connection per attempt. There are no redirects,
+proxies, cookies, compression, chunking, pooling or retries. The response must
+use `Content-Length` framing, with bounded headers (64) and body (4 MiB);
+malformed, chunked, oversized or truncated responses are incomplete. A single
+monotonic deadline bounds connect, TLS, send readiness and the response.
+Cancellation never retracts accepted bytes.
+
+**Guarantee scope.** Local event currentness is strictly ordered before every
+credential-bearing write. Wall-clock expiry is enforced by the margin at each
+gate, and a handoff observed after expiry is recorded
+(`TIME_VALIDITY_VIOLATION`) but **not prevented**. Provider-side revocation
+is not ordered. Material lives only in the protected scope: the plaintext
+request buffer is overwritten after encryption (best effort, no zeroization
+claim).
+
+The TLS context is built explicitly: system trust store, or an explicit test
+anchor; verification mandatory; TLS ≥ 1.2; key logging disabled. No proxy,
+CA-bundle, key-log or API-key environment variable is read. Qualification
+uses only a process-local synthetic TLS server with test-only certificates.
+
+REMOTE is still refused at open, and nothing here is wired into
+`OpenAICompatibleSettings` or the public host. There is no KISSKI support and
+no external provider call.
+
+```powershell
+uv run python .\validate_credential_https_t2.py
+```

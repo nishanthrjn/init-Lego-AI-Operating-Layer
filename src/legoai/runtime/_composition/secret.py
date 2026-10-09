@@ -13,6 +13,7 @@ import getpass
 import sys
 from collections.abc import Callable
 from dataclasses import replace
+from datetime import timedelta
 
 from legoai.capabilities.ports import CatalogEntry
 from legoai.evidence.custody import CustodyAccess, CustodyProfile, SourceEvidence
@@ -28,6 +29,8 @@ from legoai.governance.secret import (
     SecretUseStatus,
     SourceEvent,
 )
+from legoai.reference._credential_https import TransportError as _TransportError
+from legoai.reference._credential_https import _CredentialFlight
 from legoai.reference._durable_evidence import _EvidenceStore
 from legoai.reference._secret_domain import _OrderingDomain
 from legoai.reference._secret_ledger import _SecretLedger
@@ -176,15 +179,28 @@ class _SyntheticSecretAccess:
         ):
             raise PermissionError("Secret use unavailable")
 
-    def _current(self, request: SecretAccessRequest) -> AuthorizationDecision:
+    def _current(
+        self,
+        request: SecretAccessRequest,
+        *,
+        margin: timedelta | None = None,
+        continuing: bool = False,
+    ) -> AuthorizationDecision:
         self._domain.held()
         if not self._source._new_work:
             raise PermissionError("Secret use unavailable")
         now = self._clock.now()
-        self._state.current(request, now)
-        decision = self._authorization.evaluate(
-            replace(request.context, established_at=now)
-        )
+        self._state.current(request, now, continuing=continuing)
+        # SRCP-1: refuse unless the configured validity margin still remains.
+        if margin is not None and now + margin >= request.plan.expires_at:
+            raise PermissionError("Secret use unavailable")
+        context = replace(request.context, established_at=now)
+        if continuing:
+            # The Approval was consumed by this exact use at H; continuation
+            # writes of the same use recheck current Grant/Policy/Catalog
+            # authority, never a second Approval use.
+            context = replace(context, approval=None)
+        decision = self._authorization.evaluate(context)
         if (
             decision.outcome is not AuthorizationOutcome.ALLOWED
             or self._entry
@@ -251,6 +267,85 @@ class _SyntheticSecretAccess:
             self._state.discard()
             with self._domain.enter():
                 self._source._discard(request.plan.use_id)
+
+    def _handoff(
+        self,
+        request: SecretAccessRequest,
+        flight: _CredentialFlight,
+        *,
+        margin: timedelta,
+    ) -> SecretUseFact:
+        """CREDENTIAL-HTTPS-T2 protected use (ADR-007 §18, ADR-023 SRCP-1).
+
+        Same exact-use preparation as `_accept`. Inside one domain occupancy:
+        final currentness (with the SRCP-1 validity margin), durable Secret-use
+        acceptance, encryption into the flight's BIO and ONE nonblocking send.
+        Each continuation waits for writability outside the domain, then
+        re-enters and rechecks currentness before one more nonblocking send.
+        A losing continuation sends nothing further. The flight is the only
+        consumer; it is a concrete private transport, never a callback.
+        """
+        self._outside(request)
+        if type(flight) is not _CredentialFlight or type(margin) is not timedelta:
+            raise TypeError("trusted credential transport required")
+        expires = request.plan.expires_at
+        try:
+            self.authorize_secret_use(request)
+            p = request.plan
+            status = self._source.prepare(p, self._access)
+            if status.accepted_fact is not None or not self._source._new_work:
+                raise PermissionError("Secret use unavailable")
+            prepared = SecretUseFact(p, SourceEvent.PREPARED, p.prepared_at)
+            self._custody.acknowledge(
+                SourceEvidence(prepared, p.actor, CustodyProfile.INTACT_LOCAL_V1),
+                self._access,
+                recorded_at=self._clock.now(),
+            )
+            witness = self._custody.witness(p.pre_submission, self._access)
+            self._state.acquire()
+            with self._domain.enter():
+                decision = self._current(request, margin=margin)
+                self._source._ready(p, witness, decision.evaluated_at)
+                material = self._state.take()
+                try:
+                    observation = ApprovalObservation.NOT_APPLICABLE
+                    if request.context.approval is not None:
+                        self._approvals._consume(request.context.approval)
+                        observation = ApprovalObservation.CONSUMED
+                    fact = self._source.accept(
+                        p,
+                        witness,
+                        self._access,
+                        material=material,
+                        expected_material=material,
+                        now=decision.evaluated_at,
+                        approval=observation,
+                    )
+                    flight._begin(material)
+                finally:
+                    del material
+                flight._send_once()
+                if self._clock.now() >= expires:
+                    flight._note_time_violation()
+        finally:
+            self._state.discard()
+            with self._domain.enter():
+                self._source._discard(request.plan.use_id)
+        while flight._flight_pending:
+            try:
+                flight._wait_writable()
+            except _TransportError:
+                break  # bounded wait expired: send nothing further
+            with self._domain.enter():
+                try:
+                    self._current(request, margin=margin, continuing=True)
+                except PermissionError:
+                    flight._stop()
+                    break
+                flight._send_once()
+                if self._clock.now() >= expires:
+                    flight._note_time_violation()
+        return fact
 
     def _inspect(self, request: SecretAccessRequest) -> SecretUseStatus | None:
         """Retained exact outcome under the trusted custody access binding.

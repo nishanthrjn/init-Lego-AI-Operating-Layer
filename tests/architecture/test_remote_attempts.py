@@ -70,7 +70,11 @@ def test_only_the_invocation_plane_reaches_the_store() -> None:
     for path in sorted((ROOT / "src").rglob("*.py")):
         if any(t == "legoai.reference._remote_attempts" for t in _imports(path)):
             importers.add(path.relative_to(ROOT).as_posix())
-    assert importers == {"src/legoai/runtime/_composition/remote_attempt.py"}
+    assert importers == {
+        "src/legoai/runtime/_composition/remote_attempt.py",
+        # CREDENTIAL-HTTPS-T2: the invocation plane claims and settles.
+        "src/legoai/runtime/_composition/credential_https.py",
+    }
     for adapter in (
         "model.py",
         "model_openai_compatible.py",

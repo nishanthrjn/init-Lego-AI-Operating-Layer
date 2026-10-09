@@ -406,3 +406,12 @@ operator-provisioned, immutable, process-local material source behind the
 existing exact-use mechanism only. There is no credential transport, no
 Authorization header, no REMOTE enablement, no KISSKI support, no provider call
 and no environment source, and no memory-erasure claim is made.
+
+**CREDENTIAL-HTTPS-T2 (credential-bearing use).** The same exact-use
+composition gains a second protected consumer, `_handoff`. Its first
+occupancy performs the final checks, the durable Secret-use acceptance and
+one nonblocking credential-bearing send. Each continuation write rechecks
+current Grant, Policy, Catalog, revision, mapping, cancellation, expiry and
+S1 eligibility before one more send. The Approval consumed at the handoff is
+not required again for continuation writes of the same use. See
+`docs/model-composition.md` for the transport and its validator.
