@@ -549,6 +549,31 @@ def violations(sources: dict[str, str]) -> set[str]:
                                 )
                             )
                         )
+                        # OPENAI-COMPATIBLE-REMOTE-1: the REMOTE invocation
+                        # plane joins the qualified owners: disclosure decision
+                        # types, attempt custody, the per-invocation Secret use,
+                        # its custody stores and the T2 transport.
+                        or (
+                            name == "legoai.runtime._composition.remote_model"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.evidence.custody",
+                                    "legoai.governance.disclosure",
+                                    "legoai.governance.ports",
+                                    "legoai.governance.secret",
+                                    "legoai.governance.values",
+                                    "legoai.reference._credential_https",
+                                    "legoai.reference._durable_evidence",
+                                    "legoai.reference._remote_attempts",
+                                    "legoai.reference._secret_domain",
+                                    "legoai.reference._secret_ledger",
+                                    "legoai.reference.catalog",
+                                    "legoai.reference.governance",
+                                    "legoai.reference.secret",
+                                )
+                            )
+                        )
                         # ADR-024: the private disclosure gate composes the
                         # governance evaluator with Evidence custody; the
                         # governed Model path only types its decision.
@@ -676,6 +701,8 @@ def violations(sources: dict[str, str]) -> set[str]:
                                 "governance.ports",
                                 # ADR-024: disclosure values for host config.
                                 "governance.disclosure",
+                                # ADR-014 §14.18: the bearer_credential SecretRef.
+                                "governance.secret",
                                 "intelligence.model.values",
                                 "intelligence.model.ports",
                                 "intelligence.model.routing",

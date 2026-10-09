@@ -61,6 +61,7 @@ from legoai.reference.model import (
 )
 from legoai.reference.model_capabilities import model_chat_offer, model_embedding_offer
 from legoai.runtime._composition.disclosure import DisclosureCheck
+from legoai.runtime._composition.remote_model import RemoteModelPlane
 
 
 def _matches_known_offer(entry: CatalogEntry, expected_offer: object) -> bool:
@@ -219,12 +220,17 @@ async def _invoke_chat(
     adapter: ModelPort,
     expected_binding: ModelBinding | None,
     check: DisclosureCheck | None = None,
+    remote: RemoteModelPlane | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
     """One shared invocation claim and phase mapping for both composition paths.
 
     `check` is present only for a REMOTE binding (ADR-024): it is evaluated
     after the claim and before the adapter; a refusal never reaches it.
+    `remote` (OPENAI-COMPATIBLE-REMOTE-1) performs the admitted invocation's
+    one credentialed exchange; it never runs without an admitted decision.
     """
+    if remote is not None and check is None:
+        raise ValueError("a remote invocation requires its disclosure check")
     await coordinator.claim_invocation(result.execution_id)
     decision = None
     if check is not None:
@@ -232,7 +238,11 @@ async def _invoke_chat(
         if not decision.admitted:
             return await _refuse_disclosure(coordinator, result, check, decision), None
     try:
-        chat_result = await adapter.chat(request)
+        if remote is not None:
+            assert check is not None and decision is not None
+            chat_result = await remote.chat(check, decision, request)
+        else:
+            chat_result = await adapter.chat(request)
         if expected_binding is not None and (
             type(chat_result) is not ChatResult
             or chat_result.model_identity != expected_binding.model_id
@@ -308,6 +318,7 @@ async def invoke_routed_chat(
     route: ModelRouteDecision,
     configured: ConfiguredModelBinding,
     check: DisclosureCheck | None = None,
+    remote: RemoteModelPlane | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
     """Match the pinned selection to explicit wiring, then use governed Chat.
 
@@ -344,8 +355,16 @@ async def invoke_routed_chat(
         return await _settle_capability_refusal(coordinator, result), None
     if check is not None and type(check) is not DisclosureCheck:
         raise TypeError("routed chat disclosure check must be DisclosureCheck")
+    if remote is not None and type(remote) is not RemoteModelPlane:
+        raise TypeError("routed chat remote plane must be RemoteModelPlane")
     return await _invoke_chat(
-        coordinator, result, request, configured.adapter, configured.binding, check
+        coordinator,
+        result,
+        request,
+        configured.adapter,
+        configured.binding,
+        check,
+        remote,
     )
 
 
@@ -381,6 +400,7 @@ async def invoke_routed_embedding(
     adapter: ModelPort,
     configuration_revision: ConfigurationRevisionRef,
     check: DisclosureCheck | None = None,
+    remote: RemoteModelPlane | None = None,
 ) -> tuple[ExecutionResult, EmbeddingResult | None]:
     """ADR-014 §3.5: embedding through the same pinned selected binding.
 
@@ -412,7 +432,9 @@ async def invoke_routed_embedding(
         return await _settle_mismatch(coordinator, result), None
     if check is not None and type(check) is not DisclosureCheck:
         raise TypeError("routed embedding disclosure check must be DisclosureCheck")
-    return await _invoke_embedding(coordinator, result, request, adapter, check)
+    if remote is not None and type(remote) is not RemoteModelPlane:
+        raise TypeError("routed embedding remote plane must be RemoteModelPlane")
+    return await _invoke_embedding(coordinator, result, request, adapter, check, remote)
 
 
 async def _invoke_embedding(
@@ -421,9 +443,12 @@ async def _invoke_embedding(
     request: EmbeddingRequest,
     adapter: ModelPort,
     check: DisclosureCheck | None = None,
+    remote: RemoteModelPlane | None = None,
 ) -> tuple[ExecutionResult, EmbeddingResult | None]:
     """One shared embedding invocation claim and phase mapping; same
-    ADR-024 gate placement as chat."""
+    ADR-024 gate placement and REMOTE plane use as chat."""
+    if remote is not None and check is None:
+        raise ValueError("a remote invocation requires its disclosure check")
     await coordinator.claim_invocation(result.execution_id)
     decision = None
     if check is not None:
@@ -431,7 +456,11 @@ async def _invoke_embedding(
         if not decision.admitted:
             return await _refuse_disclosure(coordinator, result, check, decision), None
     try:
-        embedding_result = await adapter.embed(request)
+        if remote is not None:
+            assert check is not None and decision is not None
+            embedding_result = await remote.embed(check, decision, request)
+        else:
+            embedding_result = await adapter.embed(request)
     except ModelPreflightError:
         execution = await _settle_preflight_error(coordinator, result)
         _disclosed(check, decision, EffectExtent.NONE)

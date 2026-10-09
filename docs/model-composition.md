@@ -117,6 +117,9 @@ strings, registry, fallback, automatic retry or per-call routing is introduced.
 `max_output_tokens`, `provider_id`, and `deployment`. Optional values are expressed
 as `None`. `ModelDeployment` has LOCAL and REMOTE; REMOTE fails at open with
 `HostFailure.UNSUPPORTED_COMPOSITION` before admission or adapter construction.
+*(Amended by OPENAI-COMPATIBLE-REMOTE-1, below: the optional
+`bearer_credential` field and the one credentialed REMOTE profile; every other
+REMOTE configuration is still refused this way.)*
 LOCAL is an operator attestation about processing location, never inferred from
 the URL. A loopback tunnel to a remote service is REMOTE and unsupported.
 
@@ -279,6 +282,8 @@ custody failure propagates after the execution has settled truthfully.
 
 **LOCAL is unchanged and REMOTE is still refused.** The public host installs no
 gate, because REMOTE bindings are refused at open with `UNSUPPORTED_COMPOSITION`.
+*(Since OPENAI-COMPATIBLE-REMOTE-1 the host installs this gate for an admitted
+credentialed REMOTE binding only; see the last section.)*
 LOCAL calls never consult disclosure policy, and declarations are ignored for
 them. The gate is exercised through a bounded internal test seam, never a real
 remote provider. No credential, KISSKI or external provider is involved.
@@ -440,3 +445,110 @@ effect truth without retry or fallback. Synthetic local TLS only. There is no
 REMOTE provider support, no OpenAI-compatible REMOTE, no KISSKI or ForgeAI
 remote support, no production credential management, no strict wall-clock
 atomic expiry and no provider-side revocation ordering.
+
+## Credentialed REMOTE OpenAI-compatible binding (OPENAI-COMPATIBLE-REMOTE-1)
+
+**Status: IMPLEMENTED (2026-10-09); local qualification pending the operator's
+validator run.** This joins the qualified disclosure, Secret, attempt-custody
+and T2 mechanisms behind the existing provider-neutral OpenAI-compatible
+binding. There is no new ModelPort, adapter, Secret system, disclosure system
+or attempt store, and no provider-specific code.
+
+**Supported profile (the only one).** A single operator on a trusted local
+host, an OpenAI-compatible endpoint over verified HTTPS, a Bearer credential
+from S1 under SRCP-1, an explicit disclosure admission, one request per
+invocation, no retry or fallback, attended use. Hosted, multi-tenant,
+unattended and production-SaaS use are not supported.
+
+**Configuration.** `OpenAICompatibleSettings.bearer_credential: SecretRef |
+None = None` (ADR-014 §14.18) holds a reference only; there is no `api_key`,
+token or header field and no environment or CLI source. The operator obtains
+the `SecretRef` from `open_credential_source(scope).provision(identity)`, which
+reads the credential through hidden interactive input inside the source. The
+trusted runtime participants are passed separately from configuration data:
+`open_local_host(config, selection, clock=..., remote=RemoteModelRuntime(
+credentials, custody, validity_margin, trust_anchor=None))`. `custody` is a
+local directory for the attempt store and the Secret-use ledger.
+`validity_margin` is the SRCP-1 margin, between 0 and 1 hour. An explicit
+`trust_anchor` replaces the system trust store; it never disables
+verification. A Grant with action `secret-use` on the credential identity must
+be configured.
+
+**Host open.** The selected REMOTE binding opens only when it is an
+OpenAI-compatible binding admitted by the disclosure configuration, with an
+https endpoint matching the admission and declaration, a `bearer_credential`
+of the S1 class with the REMOTE Model purpose issued by this host's credential
+source and still current, the `secret-use` Grant, and `RemoteModelRuntime`.
+Failures:
+
+- a missing admission, credential or participants, or an unsupported
+  credential class or source: `UNSUPPORTED_COMPOSITION`;
+- a provider, endpoint, http or model mismatch, a wrong purpose, a missing
+  Grant or a missing custody directory or anchor: `INVALID_CONFIGURATION`;
+- a retired or unknown revision: `STALE_CONFIGURATION`.
+
+Credentialed LOCAL is `UNSUPPORTED_COMPOSITION`. Opening reads the trust store
+and opens SQLite custody; it performs no DNS, connection, TLS, Secret
+realization or request. Admission authorizes no request.
+
+**Per invocation**, after the governed path claims the invocation, each step
+is a separate check:
+
+1. The disclosure gate must ADMIT, with the execution's trusted
+   `ExecutionDisclosure` mandatory for REMOTE. A refusal reaches no attempt,
+   Secret use or network.
+2. The credential association (binding, provider, https origin, API root,
+   revision) must equal the admitted processor, the attempt and the TLS target.
+3. One exact `RemoteAttempt` (model of this purpose, capability, revisions,
+   credential revision) is committed INTENDED. If the commit fails, nothing
+   else happens.
+4. A new exact Secret use is composed for this invocation: its own plan,
+   `use_id` = the attempt id, Grant, expiry (Grant expiry and deadline, at
+   most one day) and attribution. Current Secret authority is checked before
+   any connection.
+5. T2 runs: verified TLS, a single-use claim, the final check with the margin
+   inside the ordering domain, gated writes, and a bounded response.
+6. The attempt is settled from the observation, and Secret-use attribution
+   is recorded only if the credential was actually handed off.
+7. The adapter's own status mapping and parser classify the complete response.
+
+The per-invocation Secret-use factory (`_SecretUses`) takes the ledger
+incarnation's single Stage-A binding once and admits each use id once. The
+credential revision is reused; a protected use never is.
+
+| Observation | Attempt | Governed effect / recoverability |
+| --- | --- | --- |
+| Refused before the handoff claim (association, custody, Secret, TLS, connect, timeout before send) | none or NOT_SENT | NONE / POTENTIALLY_RETRYABLE |
+| Partial send, or full send without a complete response | UNKNOWN | UNKNOWN / REQUIRES_INTERVENTION |
+| Complete 429 or 503 | PROVIDER_REJECTED | NONE / POTENTIALLY_RETRYABLE |
+| Complete 401, 403, 404, other non-2xx or 3xx | PROVIDER_REJECTED | NONE / TERMINAL |
+| Complete 2xx rejected by the parser (malformed, wrong model, finish reason, shape) | COMPLETED | NONE / TERMINAL |
+| Complete valid 2xx | COMPLETED | COMPLETED |
+
+A REMOTE timeout before any byte is sent is NONE, which is more precise than
+LOCAL, because T2 proves that zero bytes were sent. Protocol rejection never
+rewrites the attempt's transport truth. Nothing is retried, resent or routed
+elsewhere, and error bodies are never decoded or retained. Disclosure
+Evidence records the observed effect.
+
+**Limits.** The exchange runs on the host's confined thread, because the
+owner-local SQLite custody and the Secret owner are thread-confined. It
+blocks that event loop for at most `timeout_seconds`. asyncio cancellation is
+observed before the exchange or after it settles, never mid-write, and never
+rewrites recorded truth. Mid-write stopping is driven by in-domain
+invalidators: retirement, source close, Grant, Policy and Catalog. Each host
+open provisions a fresh Secret-use ledger in `custody`, because a reopened
+ledger allows repair only; the attempt store persists across hosts with a
+single writer. The reference host has no close operation, so its custody
+handles live as long as the host object.
+
+**Not claimed.** KISSKI, any named cloud provider, hosted or multi-tenant
+use, remote model quality, ForgeAI remote support, ComfyUI remote support,
+production credential management, strict wall-clock atomic expiry and
+provider-side revocation ordering. Qualification uses process-local synthetic
+TLS servers emulating the OpenAI-compatible contract, with synthetic S1
+material.
+
+```powershell
+uv run python .\validate_openai_compatible_remote_1.py
+```

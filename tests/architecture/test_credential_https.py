@@ -87,6 +87,9 @@ def test_private_and_unreachable_from_public_paths() -> None:
     assert importers == {
         "src/legoai/runtime/_composition/credential_https.py",
         "src/legoai/runtime/_composition/secret.py",
+        # OPENAI-COMPATIBLE-REMOTE-1: the REMOTE plane builds the exact target
+        # and the verified TLS context; it never touches the flight.
+        "src/legoai/runtime/_composition/remote_model.py",
     }
     for public in (
         "src/legoai/runtime/api.py",

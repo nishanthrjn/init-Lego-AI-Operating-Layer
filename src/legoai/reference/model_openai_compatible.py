@@ -1,9 +1,14 @@
-"""Private credential-free ADR-014 §14 ModelPort adapter.
+"""Private ADR-014 §14 ModelPort adapter: the OpenAI-compatible wire contract.
 
 Construction is inert. Blocking stdlib HTTP runs in to_thread; cancellation
 does not stop an in-flight provider request. No redirects, ambient proxies,
 credentials, streaming, retries or fallback. Complete bodies are buffered,
 as in the existing Ollama adapter; this is not a resource-budget system.
+
+OPENAI-COMPATIBLE-REMOTE-1: a REMOTE binding reuses exactly this request
+encoding, status mapping and response parsing. Its one exchange is supplied
+per governed invocation by trusted composition (the credential-bearing
+transport stays there); this module never sees a credential or header.
 """
 
 import asyncio
@@ -14,6 +19,7 @@ import socket
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import NoReturn
 
@@ -155,19 +161,54 @@ def _invalid_constant(value: str) -> NoReturn:
     raise ValueError("Non-JSON numeric constant")
 
 
+def _payload(status: int, raw: bytes) -> dict[str, object]:
+    """Shared status mapping and JSON decoding of one complete response.
+
+    Error bodies are never decoded or retained in diagnostics.
+    """
+    if status in (429, 503):
+        raise ModelResponseRetryableRejectedError(f"Model rejected HTTP {status}")
+    if not 200 <= status < 300:
+        raise ModelResponseRejectedError(f"Model rejected HTTP {status}")
+    try:
+        payload = json.loads(
+            raw, object_pairs_hook=_json_object, parse_constant=_invalid_constant
+        )
+    except ValueError, UnicodeError, RecursionError:
+        # Reject outside the handler so JSONDecodeError.doc (the provider
+        # body) is not retained in the public exception's causal chain.
+        payload = None
+    if not isinstance(payload, dict):
+        _reject()
+    return payload
+
+
 class OpenAICompatibleModelAdapter:
-    """One non-streaming request per invocation behind the unchanged ModelPort."""
+    """One non-streaming request per invocation behind the unchanged ModelPort.
+
+    `exchange`, when given, performs the one request instead of local HTTP:
+    it takes the path and encoded JSON body and returns the status and body
+    of one complete response, or raises a Model error. Trusted composition
+    supplies it per governed invocation; it runs on the calling thread.
+    """
 
     def __init__(
-        self, config: OpenAICompatibleModelConfig, provider_id: ProviderId
+        self,
+        config: OpenAICompatibleModelConfig,
+        provider_id: ProviderId,
+        *,
+        exchange: Callable[[str, bytes], tuple[int, bytes]] | None = None,
     ) -> None:
         if (
             type(config) is not OpenAICompatibleModelConfig
             or type(provider_id) is not ProviderId
         ):
             raise TypeError("adapter requires validated config and ProviderId")
+        if exchange is not None and not callable(exchange):
+            raise TypeError("exchange must be callable")
         self._config = config
         self._provider_id = provider_id
+        self._exchange = exchange
 
     async def chat(self, request: ChatRequest) -> ChatResult:
         if type(request) is not ChatRequest:
@@ -187,7 +228,7 @@ class OpenAICompatibleModelAdapter:
         }
         if self._config.max_output_tokens is not None:
             body["max_tokens"] = self._config.max_output_tokens
-        payload = await asyncio.to_thread(self._post, "/chat/completions", body)
+        payload = await self._request("/chat/completions", body)
         model = payload.get("model")
         if type(model) is not str or model != self._config.chat_model:
             _reject()
@@ -220,8 +261,7 @@ class OpenAICompatibleModelAdapter:
             raise TypeError("embed requires EmbeddingRequest")
         if self._config.embedding_model is None:
             raise ModelPreflightError("Embedding purpose unavailable")
-        payload = await asyncio.to_thread(
-            self._post,
+        payload = await self._request(
             "/embeddings",
             {
                 "model": self._config.embedding_model,
@@ -261,6 +301,12 @@ class OpenAICompatibleModelAdapter:
         except TypeError, ValueError:
             _reject()
 
+    async def _request(self, path: str, body: dict[str, object]) -> dict[str, object]:
+        if self._exchange is None:
+            return await asyncio.to_thread(self._post, path, body)
+        status, raw = self._exchange(path, json.dumps(body).encode("utf-8"))
+        return _payload(status, raw)
+
     def _post(self, path: str, body: dict[str, object]) -> dict[str, object]:
         request = urllib.request.Request(
             self._config.base_url.rstrip("/") + path,
@@ -291,18 +337,4 @@ class OpenAICompatibleModelAdapter:
             raise ModelResponseUncertainError("Model transport uncertain") from None
         except OSError, http.client.HTTPException, ValueError:
             raise ModelResponseUncertainError("Model transport uncertain") from None
-        if status in (429, 503):
-            raise ModelResponseRetryableRejectedError(f"Model rejected HTTP {status}")
-        if not 200 <= status < 300:
-            raise ModelResponseRejectedError(f"Model rejected HTTP {status}")
-        try:
-            payload = json.loads(
-                raw, object_pairs_hook=_json_object, parse_constant=_invalid_constant
-            )
-        except ValueError, UnicodeError, RecursionError:
-            # Reject outside the handler so JSONDecodeError.doc (the provider
-            # body) is not retained in the public exception's causal chain.
-            payload = None
-        if not isinstance(payload, dict):
-            _reject()
-        return payload
+        return _payload(status, raw)

@@ -37,6 +37,8 @@ def _violations(module: str, source: str) -> set[str]:
             # ADR-024: the Agent path forwards the host-bound disclosure check.
             "legoai.runtime._composition.disclosure",
             "legoai.runtime._composition.model_governed",
+            # OPENAI-COMPATIBLE-REMOTE-1: forwards the host's REMOTE plane.
+            "legoai.runtime._composition.remote_model",
         },
     }[module] | common
     errors: set[str] = set()

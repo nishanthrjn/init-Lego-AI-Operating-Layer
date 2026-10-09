@@ -10,6 +10,14 @@ Opening performs no provider call. Only the selected binding is admitted,
 published and constructed (its constructor exactly once); unselected bindings
 are validated as configuration only. There is no global state: each call
 returns an independent host.
+
+OPENAI-COMPATIBLE-REMOTE-1: the one supported REMOTE profile is a credentialed
+OpenAI-compatible binding under ADR-023 SRCP-1 and ADR-024: admitted by the
+remote-disclosure configuration, https only, a `bearer_credential` issued by
+this host's own credential source, a configured Secret-use Grant and the
+trusted `RemoteModelRuntime` participants. Every other REMOTE configuration is
+refused at open, before admission or construction. Opening such a host reads
+local trust configuration and opens owner-local SQLite custody only.
 """
 
 from collections.abc import Callable, Mapping
@@ -19,6 +27,7 @@ from uuid import uuid4
 
 from legoai.capabilities.ports import CatalogEntry
 from legoai.capabilities.values import (
+    CapabilityId,
     CapabilityOffer,
     CapabilityRequirement,
     CapabilityVersionRange,
@@ -33,17 +42,19 @@ from legoai.execution.values import (
 )
 from legoai.governance.disclosure import endpoint_parts
 from legoai.governance.ports import AuthorizationPort, SecurityContext
+from legoai.governance.secret import SecretRef
 from legoai.governance.values import Grant, Principal
-from legoai.intelligence.model.ports import ModelPort
+from legoai.intelligence.model.ports import ModelPort, ModelPreflightError
 from legoai.intelligence.model.routing import ModelBinding, ModelRouteDecision
 from legoai.intelligence.model.values import ChatRequest, EmbeddingRequest, ModelId
 from legoai.kernel.context import TenantContext
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorDetail, Recoverability
 from legoai.kernel.identity import CorrelationId, OperationId
-from legoai.kernel.references import ConfigurationRef, OperationRef
+from legoai.kernel.references import ConfigurationRef, OperationRef, ReferenceScope
 from legoai.plugins.ports import PluginAdmissionId
 from legoai.plugins.values import PluginDeclaration
+from legoai.reference._secret_domain import _OrderingDomain
 from legoai.reference.agent import OneStepAgentRuntime
 from legoai.reference.catalog import InMemoryCatalog
 from legoai.reference.evidence import InMemoryEvidenceCustody
@@ -73,14 +84,18 @@ from legoai.reference.model_openai_compatible import (
     OpenAICompatibleModelAdapter,
     OpenAICompatibleModelConfig,
     openai_compatible_declaration,
+    openai_compatible_plugin_id,
+    openai_compatible_release,
 )
 from legoai.reference.model_routing import DeterministicModelRouter
 from legoai.reference.plugins import activate, admit, initialize, inspect, validate
 from legoai.reference.resolution import resolve
+from legoai.reference.secret import _provisioned_class, _ProvisionedSecretSource
 from legoai.runtime._composition.agent import GovernedAgentChat
 from legoai.runtime._composition.disclosure import (
     DisclosureCheck,
     RemoteDisclosureGate,
+    RemoteEndpointFacts,
 )
 from legoai.runtime._composition.model_governed import invoke_routed_embedding
 from legoai.runtime._composition.model_selection import (
@@ -90,7 +105,17 @@ from legoai.runtime._composition.model_selection import (
     capture_model_selection,
     compose_model,
 )
+from legoai.runtime._composition.remote_model import (
+    CredentialAssociation,
+    RemoteModelPlane,
+    compose_remote_plane,
+    credential_consumer,
+    credential_consumer_version,
+    credential_purpose,
+)
+from legoai.runtime._composition.secret import _provision_interactively
 from legoai.runtime.api import (
+    CredentialSource,
     ExecutionDisclosure,
     GovernedChatResult,
     GovernedEmbeddingResult,
@@ -103,6 +128,8 @@ from legoai.runtime.api import (
     ModelPurpose,
     OllamaSettings,
     OpenAICompatibleSettings,
+    OperatorGrant,
+    RemoteModelRuntime,
 )
 
 
@@ -177,6 +204,102 @@ def _validate_disclosure(config: LocalHostConfig) -> None:
                 raise HostError(HostFailure.INVALID_CONFIGURATION)
 
 
+class _CredentialSource:
+    """`CredentialSource` realization: SECRET-SOURCE-S1 bound to the REMOTE
+    Model credential purpose and consumer. Owns the ordering domain that the
+    hosts using its revisions join (ADR-023 §15 gate 4)."""
+
+    def __init__(self, scope: ReferenceScope) -> None:
+        self._source = _ProvisionedSecretSource(_OrderingDomain(), scope)
+
+    def __repr__(self) -> str:
+        return "CredentialSource(<redacted>)"
+
+    __str__ = __repr__
+
+    def provision(self, identity: str) -> SecretRef:
+        return _provision_interactively(
+            self._source, identity, credential_purpose(), credential_consumer()
+        )
+
+    def retire(self, credential: SecretRef) -> None:
+        if type(credential) is not SecretRef:
+            raise TypeError("retire requires SecretRef")
+        self._source.retire(credential.exact)
+
+    def close(self) -> None:
+        self._source.close()
+
+
+def open_credential_source(scope: ReferenceScope) -> CredentialSource:
+    """Open one process-local operator credential source (ADR-023 §8).
+
+    Inert: nothing is read until the operator provisions a credential through
+    hidden interactive input. No environment, file or argument source exists.
+    """
+    if type(scope) is not ReferenceScope:
+        raise TypeError("credential source requires ReferenceScope")
+    return _CredentialSource(scope)
+
+
+def _remote_profile(
+    config: LocalHostConfig,
+    selected: ModelBindingConfig,
+    remote: RemoteModelRuntime | None,
+) -> OperatorGrant | None:
+    """Admit the selected binding as the SRCP-1 REMOTE profile, or refuse.
+
+    Returns the Secret-use grant for an admitted credentialed REMOTE binding,
+    None for every non-REMOTE binding. Admission here authorizes no request:
+    each invocation independently passes disclosure and Secret checks.
+    """
+    provider = selected.provider
+    if not isinstance(provider, OpenAICompatibleSettings):
+        return None
+    credential = provider.bearer_credential
+    if provider.deployment is ModelDeployment.LOCAL:
+        if credential is not None:
+            # ADR-014 §14.18 item 1: credentialed LOCAL stays unsupported.
+            raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
+        return None
+    disclosure = config.disclosure
+    admitted = disclosure is not None and any(
+        selected.binding_id in admission.bindings for admission in disclosure.admissions
+    )
+    if (
+        not admitted
+        or credential is None
+        or remote is None
+        or type(remote.credentials) is not _CredentialSource
+        or credential.secret_class != _provisioned_class()
+    ):
+        raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
+    tenant = config.configuration.configuration.application.scope.tenant_id
+    if (
+        endpoint_parts(provider.base_url) is None
+        or credential.exact.scope.tenant_id != tenant
+        or credential.use_requirement != credential_purpose()
+        or not remote.custody.is_dir()
+        or (remote.trust_anchor is not None and not remote.trust_anchor.is_file())
+    ):
+        raise HostError(HostFailure.INVALID_CONFIGURATION)
+    grant = next(
+        (
+            g
+            for g in config.grants
+            if g.action == "secret-use"
+            and g.resource_scope == credential.exact.identity
+        ),
+        None,
+    )
+    if grant is None:
+        raise HostError(HostFailure.INVALID_CONFIGURATION)
+    # Safe eligibility metadata only; no material is realized at open.
+    if not remote.credentials._source.status(credential.exact):
+        raise HostError(HostFailure.STALE_CONFIGURATION)
+    return grant
+
+
 def _offer(purpose: ModelPurpose) -> CapabilityOffer:
     return (
         model_chat_offer() if purpose is ModelPurpose.CHAT else model_embedding_offer()
@@ -189,8 +312,23 @@ def _requirement(offer: CapabilityOffer) -> CapabilityRequirement:
     )
 
 
+def _ungoverned(path: str, body: bytes) -> tuple[int, bytes]:
+    """A REMOTE binding's adapter outside the governed plane sends nothing."""
+    raise ModelPreflightError("REMOTE requires the governed invocation plane")
+
+
+def _openai_config(provider: OpenAICompatibleSettings) -> OpenAICompatibleModelConfig:
+    return OpenAICompatibleModelConfig(
+        provider.base_url,
+        provider.chat_model,
+        provider.embedding_model,
+        provider.timeout_seconds,
+        provider.max_output_tokens,
+    )
+
+
 def _realization(
-    selected: ModelBindingConfig,
+    selected: ModelBindingConfig, *, remote_admitted: bool = False
 ) -> tuple[
     ModelBinding, PluginDeclaration, frozenset[ModelPurpose], Callable[[], ModelPort]
 ]:
@@ -218,15 +356,10 @@ def _realization(
 
             return binding, ollama_declaration(), frozenset(ModelPurpose), construct
         if isinstance(provider, OpenAICompatibleSettings):
-            if provider.deployment is ModelDeployment.REMOTE:
+            remote = provider.deployment is ModelDeployment.REMOTE
+            if remote and not remote_admitted:
                 raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
-            openai_settings = OpenAICompatibleModelConfig(
-                provider.base_url,
-                provider.chat_model,
-                provider.embedding_model,
-                provider.timeout_seconds,
-                provider.max_output_tokens,
-            )
+            openai_settings = _openai_config(provider)
             openai_provider_id = provider.provider_id
             binding = ModelBinding(
                 selected.binding_id,
@@ -239,6 +372,12 @@ def _realization(
                 purposes = frozenset(ModelPurpose)
 
             def construct_openai() -> ModelPort:
+                if remote:
+                    # Never local HTTP: only the governed plane supplies the
+                    # one exchange of an admitted invocation.
+                    return OpenAICompatibleModelAdapter(
+                        openai_settings, openai_provider_id, exchange=_ungoverned
+                    )
                 return OpenAICompatibleModelAdapter(openai_settings, openai_provider_id)
 
             return (
@@ -328,6 +467,8 @@ class _LocalGovernedHost:
         route: ModelRouteDecision,
         embedding_entry: CatalogEntry | None,
         adapter: ModelPort,
+        gate: RemoteDisclosureGate | None = None,
+        remote: RemoteModelPlane | None = None,
     ) -> None:
         self._config = config
         self._subject = config.configuration.configuration
@@ -349,9 +490,13 @@ class _LocalGovernedHost:
             ExecutionId,
             tuple[ModelPurpose, ExecutionContext, ExecutionDisclosure | None],
         ] = {}
-        # The REMOTE disclosure gate. None while REMOTE bindings are refused
-        # at open: LOCAL invocations never consult disclosure policy.
-        self._gate: RemoteDisclosureGate | None = None
+        # The REMOTE disclosure gate and invocation plane: both present only
+        # for an admitted credentialed REMOTE binding. LOCAL invocations never
+        # consult disclosure policy, Secret custody or the credential transport.
+        if (gate is None) != (remote is None):
+            raise ValueError("REMOTE requires both its gate and its plane")
+        self._gate = gate
+        self._remote = remote
         self._thread = current_thread_ident()
         self._loop: object | None = None
         assert route.selected is not None
@@ -523,6 +668,7 @@ class _LocalGovernedHost:
             self._adapter,
             self._config.configuration,
             check,
+            self._remote,
         )
         return GovernedEmbeddingResult(result, response)
 
@@ -532,11 +678,14 @@ def open_local_host(
     model_selection: Mapping[str, object],
     *,
     clock: Callable[[], datetime] = _utc_now,
+    remote: RemoteModelRuntime | None = None,
 ) -> GovernedHost:
     """Open one independent local governed host (ADR-014 §3.4).
 
     Raises `HostError` with a closed category on any open-time failure; no
     partially usable host is ever returned. Wrong Python types raise TypeError.
+    `remote` supplies the trusted participants of a credentialed REMOTE
+    binding (OPENAI-COMPATIBLE-REMOTE-1); it is ignored for other bindings.
     """
     if type(config) is not LocalHostConfig:
         raise TypeError("open_local_host requires LocalHostConfig")
@@ -544,6 +693,8 @@ def open_local_host(
         raise TypeError("model selection must be a mapping")
     if not callable(clock):
         raise TypeError("clock must be callable")
+    if remote is not None and type(remote) is not RemoteModelRuntime:
+        raise TypeError("remote must be RemoteModelRuntime or None")
     now = clock()
     if type(now) is not datetime or now.utcoffset() is None:
         raise TypeError("clock must return a timezone-aware datetime")
@@ -559,7 +710,10 @@ def open_local_host(
     )
     if selected is None:
         raise HostError(HostFailure.UNKNOWN_BINDING)
-    binding, declaration, purposes, construct = _realization(selected)
+    secret_grant = _remote_profile(config, selected, remote)
+    binding, declaration, purposes, construct = _realization(
+        selected, remote_admitted=secret_grant is not None
+    )
     if ModelPurpose.CHAT not in purposes:
         # ADR-019 composition is anchored on the v1 Chat offer.
         raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
@@ -630,15 +784,58 @@ def open_local_host(
         if embedding_entry not in resolution.candidates:
             raise HostError(HostFailure.INCOMPATIBLE_PROVIDER)
 
-    approvals = InMemoryApprovalRegistry()
+    # A credentialed REMOTE host joins its credential source's ordering domain:
+    # every local invalidator of a Secret use is ordered against the handoff.
+    domain = None
+    if secret_grant is not None:
+        assert remote is not None and type(remote.credentials) is _CredentialSource
+        domain = remote.credentials._source._domain
+    grant_registry = InMemoryGrantRegistry(_domain=domain)
+    policies = InMemoryPolicyRegistry(_domain=domain)
+    approvals = InMemoryApprovalRegistry(_domain=domain)
     authorization = DeterministicAuthorizationEvaluator(
-        InMemoryGrantRegistry(), approvals, InMemoryPolicyRegistry()
+        grant_registry, approvals, policies
     )
-    arbiter = DeterministicDispatchArbiter(
-        authorization, catalog, InMemoryEvidenceCustody(), approvals
-    )
+    evidence = InMemoryEvidenceCustody()
+    arbiter = DeterministicDispatchArbiter(authorization, catalog, evidence, approvals)
     contexts = _HostSecurityContexts(clock)
     coordinator = ExecutionCoordinator(contexts, arbiter, clock=clock)
+    gate = plane = None
+    if secret_grant is not None:
+        assert remote is not None
+        provider = selected.provider
+        assert isinstance(provider, OpenAICompatibleSettings)
+        credential = provider.bearer_credential
+        disclosure = config.disclosure
+        parts = endpoint_parts(provider.base_url)
+        assert credential is not None and disclosure is not None and parts is not None
+        gate = RemoteDisclosureGate(
+            RemoteEndpointFacts(
+                selected.binding_id,
+                provider.provider_id.value,
+                parts[0],
+                parts[1],
+                provider.chat_model,
+                provider.embedding_model,
+            ),
+            disclosure.declarations,
+            disclosure.admissions,
+            evidence,
+            principal,
+            clock,
+        )
+        plane = _remote_plane(
+            config,
+            selected.binding_id,
+            provider,
+            credential,
+            remote,
+            grants[(secret_grant.action, secret_grant.resource_scope)],
+            (grant_registry, policies, approvals),
+            tenant,
+            clock,
+            now,
+        )
     return _LocalGovernedHost(
         config=config,
         tenant=tenant,
@@ -649,8 +846,79 @@ def open_local_host(
         contexts=contexts,
         coordinator=coordinator,
         authorization=authorization,
-        chat=GovernedAgentChat(coordinator, composed.configured),
+        chat=GovernedAgentChat(coordinator, composed.configured, plane),
         route=composed.route,
         embedding_entry=embedding_entry,
         adapter=composed.configured.adapter,
+        gate=gate,
+        remote=plane,
     )
+
+
+def _remote_plane(
+    config: LocalHostConfig,
+    binding_id: str,
+    provider: OpenAICompatibleSettings,
+    credential: SecretRef,
+    remote: RemoteModelRuntime,
+    grant: Grant,
+    registries: tuple[
+        InMemoryGrantRegistry, InMemoryPolicyRegistry, InMemoryApprovalRegistry
+    ],
+    tenant: TenantContext,
+    clock: Callable[[], datetime],
+    now: datetime,
+) -> RemoteModelPlane:
+    """Compose the REMOTE invocation plane. Local resources only, no provider
+    I/O: the protected consumer's Catalog entry, owner-local custody and the
+    credential association this binding is configured with."""
+    parts = endpoint_parts(provider.base_url)
+    assert parts is not None
+    source = remote.credentials
+    assert type(source) is _CredentialSource
+    offer = CapabilityOffer(
+        CapabilityId(credential_consumer()), credential_consumer_version()
+    )
+    declaration = PluginDeclaration(
+        openai_compatible_plugin_id(), openai_compatible_release(), (offer,)
+    )
+    catalog = InMemoryCatalog(_domain=source._source._domain)
+    settings = _openai_config(provider)
+    provider_id = provider.provider_id
+
+    def adapter(exchange: Callable[[str, bytes], tuple[int, bytes]]) -> ModelPort:
+        return OpenAICompatibleModelAdapter(settings, provider_id, exchange=exchange)
+
+    try:
+        record = admit(
+            validate(inspect(declaration), declaration, evaluated_at=now),
+            tenant,
+            PluginAdmissionId(f"secret-consumer-{uuid4().hex}"),
+            established_at=now,
+        )
+        entry = catalog.publish(
+            activate(initialize(record, established_at=now), established_at=now),
+            declaration,
+            offer,
+            established_at=now,
+        )
+        return compose_remote_plane(
+            association=CredentialAssociation(
+                credential, binding_id, provider_id.value, parts[0], parts[1]
+            ),
+            source=source._source,
+            custody=remote.custody,
+            trust_anchor=remote.trust_anchor,
+            margin=remote.validity_margin,
+            timeout=float(provider.timeout_seconds),
+            clock=clock,
+            configuration=config.configuration,
+            principal=Principal(config.principal),
+            grant=grant,
+            policy=config.policy,
+            registries=registries,
+            consumer=(catalog, entry),
+            adapter=adapter,
+        )
+    except (OSError, RuntimeError, TypeError, ValueError) as error:
+        raise HostError(HostFailure.INITIALIZATION_FAILURE) from error

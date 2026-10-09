@@ -415,3 +415,15 @@ current Grant, Policy, Catalog, revision, mapping, cancellation, expiry and
 S1 eligibility before one more send. The Approval consumed at the handoff is
 not required again for continuation writes of the same use. See
 `docs/model-composition.md` for the transport and its validator.
+
+**OPENAI-COMPATIBLE-REMOTE-1 (per-invocation uses).** A REMOTE Model binding
+serves many invocations with one S1 revision. `_SecretUses` takes the source
+ledger incarnation's single Stage-A binding once, so it can never be rebuilt
+to reset it. Each `admit` composes a new exact use with its own plan, use id
+(the remote attempt id), state, currentness checks, Approval consumption if
+any, durable attribution and at most one handoff, and a use id is admitted
+only once. S1 only: retirement and source close are owned by the shared
+source under the ordering domain. `_SecretClock(domain, host=clock)` samples
+the governed host's own trusted clock, so Grant, admission and Secret validity
+use one time source. The one-use-per-incarnation facade
+(`_SyntheticSecretAccess` without a factory) is unchanged.
