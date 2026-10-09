@@ -76,6 +76,8 @@ def test_only_the_invocation_plane_reaches_the_store() -> None:
         "src/legoai/runtime/_composition/credential_https.py",
         # OPENAI-COMPATIBLE-REMOTE-1: the REMOTE plane intends and settles.
         "src/legoai/runtime/_composition/remote_model.py",
+        # PROVIDER-MODEL-DISCOVERY-1: the provider-control attempt's owner.
+        "src/legoai/runtime/_composition/provider_discovery.py",
     }
     for adapter in (
         "model.py",

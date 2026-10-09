@@ -170,6 +170,11 @@ def _payload(status: int, raw: bytes) -> dict[str, object]:
         raise ModelResponseRetryableRejectedError(f"Model rejected HTTP {status}")
     if not 200 <= status < 300:
         raise ModelResponseRejectedError(f"Model rejected HTTP {status}")
+    return _json_body(raw)
+
+
+def _json_body(raw: bytes) -> dict[str, object]:
+    """The one strict JSON decoding of a complete success body."""
     try:
         payload = json.loads(
             raw, object_pairs_hook=_json_object, parse_constant=_invalid_constant
@@ -181,6 +186,40 @@ def _payload(status: int, raw: bytes) -> dict[str, object]:
     if not isinstance(payload, dict):
         _reject()
     return payload
+
+
+def _max_listed_models() -> int:
+    """Bound on advertised models accepted from one model-list response."""
+    return 1024
+
+
+def parse_model_list(raw: bytes) -> tuple[ModelId, ...]:
+    """Bounded OpenAI-compatible model-list parser (PROVIDER-MODEL-DISCOVERY-1).
+
+    Accepts only `{"data": [{"id": "<model>"}, ...]}` and extracts the ids;
+    every other field is ignored and nothing is retained. Malformed structure,
+    invalid or duplicate ids, or more than the bound fail closed. The result
+    is an observation of what was advertised, never configuration.
+    """
+    data = _json_body(raw).get("data")
+    if not isinstance(data, list) or len(data) > _max_listed_models():
+        _reject()
+    models: list[ModelId] = []
+    for item in data:
+        if not isinstance(item, dict):
+            _reject()
+        name = item.get("id")
+        if (
+            type(name) is not str
+            or not 1 <= len(name) <= 256
+            or not name.strip()
+            or any(ord(c) < 32 or ord(c) == 127 for c in name)
+        ):
+            _reject()
+        models.append(ModelId(name))
+    if len(set(models)) != len(models):
+        _reject()
+    return tuple(models)
 
 
 class OpenAICompatibleModelAdapter:

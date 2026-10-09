@@ -9,6 +9,11 @@ Recovery is inspection; an unsettled INTENDED attempt is effectively UNKNOWN.
 Reuses the qualified custody SQLite mechanics (explicit provisioning, one
 admitted writer incarnation, integrity/schema checks, single commit seam).
 No durability is claimed beyond that intact-local-storage profile.
+
+PROVIDER-MODEL-DISCOVERY-1 (ADR-024 §22): the same store also records one
+exact provider-control attempt (`ProviderControlAttempt`), an explicitly
+tagged record with its own authority. It never carries, and is never
+mistaken for, disclosure admission or declaration identities.
 """
 
 import json
@@ -21,6 +26,7 @@ from pathlib import Path
 
 from legoai.capabilities.values import CapabilityId
 from legoai.execution.values import ExecutionId
+from legoai.governance.provider_control import ProviderOperation
 from legoai.governance.secret import SecretRevisionRef, _time
 from legoai.intelligence.model.values import ModelId, ProviderId
 from legoai.kernel.identity import _validate
@@ -184,10 +190,61 @@ class RemoteAttempt:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderControlAttempt:
+    """Exact identity of one intended provider-control operation (§22).
+
+    Its authority is a provider-control admission, never a disclosure
+    admission; it names no binding, model or capability and carries no
+    content. `execution_id` identifies the one local provider-control
+    operation that owns the attempt.
+    """
+
+    attempt_id: RemoteAttemptId
+    execution_id: ExecutionId
+    operation: OperationRef
+    configuration: ConfigurationRevisionRef
+    control: ProviderOperation
+    admission_id: str = field(repr=False)
+    admission_revision: str = field(repr=False)
+    provider_id: ProviderId
+    endpoint_origin: str = field(repr=False)
+    api_root: str = field(repr=False)
+    secret: SecretRevisionRef
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        for value, kind in (
+            (self.attempt_id, RemoteAttemptId),
+            (self.execution_id, ExecutionId),
+            (self.operation, OperationRef),
+            (self.configuration, ConfigurationRevisionRef),
+            (self.control, ProviderOperation),
+            (self.provider_id, ProviderId),
+            (self.secret, SecretRevisionRef),
+        ):
+            if type(value) is not kind:
+                raise TypeError(f"attempt requires {kind.__name__}")
+        for text in (
+            self.admission_id,
+            self.admission_revision,
+            self.endpoint_origin,
+            self.api_root,
+        ):
+            _validate(text)
+        _time(self.created_at)
+        tenant = self.configuration.configuration.application.scope.tenant_id
+        if (
+            self.operation.scope.tenant_id != tenant
+            or self.secret.scope.tenant_id != tenant
+        ):
+            raise ValueError("attempt tenant mismatch")
+
+
+@dataclass(frozen=True, slots=True)
 class AttemptStatus:
     """Safe inspection projection. `effective` is UNKNOWN for anything unsettled."""
 
-    attempt: RemoteAttempt
+    attempt: RemoteAttempt | ProviderControlAttempt
     state: AttemptState
     observations: frozenset[AttemptObservation]
     settled_at: datetime | None
@@ -208,14 +265,21 @@ class IntendedReceipt:
 
     __slots__ = ("_store", "attempt")
 
-    def __init__(self, store: _RemoteAttemptStore, attempt: RemoteAttempt) -> None:
+    def __init__(
+        self,
+        store: _RemoteAttemptStore,
+        attempt: RemoteAttempt | ProviderControlAttempt,
+    ) -> None:
         self._store, self.attempt = store, attempt
 
     def __repr__(self) -> str:
         return "IntendedReceipt(<attempt>)"
 
 
-def _encode(attempt: RemoteAttempt) -> str:
+def _encode(attempt: RemoteAttempt | ProviderControlAttempt) -> str:
+    if type(attempt) is ProviderControlAttempt:
+        return _encode_control(attempt)
+    assert type(attempt) is RemoteAttempt
     record = {
         "attempt_id": attempt.attempt_id.value,
         "execution_id": attempt.execution_id.value,
@@ -237,8 +301,57 @@ def _encode(attempt: RemoteAttempt) -> str:
     return json.dumps(record, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
 
 
-def _decode(text: str) -> RemoteAttempt:
+def _encode_control(attempt: ProviderControlAttempt) -> str:
+    record = {
+        "kind": "provider-control",
+        "attempt_id": attempt.attempt_id.value,
+        "execution_id": attempt.execution_id.value,
+        "operation": codec.encode(attempt.operation),
+        "configuration": codec.encode(attempt.configuration),
+        "control": attempt.control.value,
+        "admission_id": attempt.admission_id,
+        "admission_revision": attempt.admission_revision,
+        "provider_id": attempt.provider_id.value,
+        "endpoint_origin": attempt.endpoint_origin,
+        "api_root": attempt.api_root,
+        "secret": codec.encode(attempt.secret),
+        "created_at": attempt.created_at.isoformat(),
+    }
+    return json.dumps(record, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _decode_control(value: dict[str, object]) -> ProviderControlAttempt:
+    if len(value) != 13 or value["kind"] != "provider-control":
+        raise ValueError("attempt representation")
+    operation = codec.decode(str(value["operation"]))
+    configuration = codec.decode(str(value["configuration"]))
+    secret = codec.decode(str(value["secret"]))
+    if (
+        type(operation) is not OperationRef
+        or type(configuration) is not ConfigurationRevisionRef
+        or type(secret) is not SecretRevisionRef
+    ):
+        raise ValueError("attempt representation")
+    return ProviderControlAttempt(
+        RemoteAttemptId(str(value["attempt_id"])),
+        ExecutionId(str(value["execution_id"])),
+        operation,
+        configuration,
+        ProviderOperation(value["control"]),
+        str(value["admission_id"]),
+        str(value["admission_revision"]),
+        ProviderId(str(value["provider_id"])),
+        str(value["endpoint_origin"]),
+        str(value["api_root"]),
+        secret,
+        datetime.fromisoformat(str(value["created_at"])),
+    )
+
+
+def _decode(text: str) -> RemoteAttempt | ProviderControlAttempt:
     value = json.loads(text)
+    if isinstance(value, dict) and "kind" in value:
+        return _decode_control(value)
     if not isinstance(value, dict) or len(value) != 16:
         raise ValueError("attempt representation")
     operation = codec.decode(value["operation"])
@@ -303,7 +416,7 @@ class _RemoteAttemptStore:
         self._domain, self._clock, self._readonly = domain, clock, readonly
         self._thread = domain.thread_identity()
         # Attempts committed by THIS incarnation and not yet claimed/settled.
-        self._live: dict[str, RemoteAttempt] = {}
+        self._live: dict[str, RemoteAttempt | ProviderControlAttempt] = {}
         self._claimed: set[str] = set()
         self._admission = None if readonly else _admit(path, _owner())
         try:
@@ -368,7 +481,9 @@ class _RemoteAttemptStore:
             raise ValueError("attempt state")
         return status
 
-    def intend(self, attempt: RemoteAttempt) -> IntendedReceipt:
+    def intend(
+        self, attempt: RemoteAttempt | ProviderControlAttempt
+    ) -> IntendedReceipt:
         """Durably commit INTENDED. Only a returned receipt permits a handoff.
 
         Any duplicate attempt or execution identity is refused; nothing is
@@ -377,8 +492,8 @@ class _RemoteAttemptStore:
         self._owner_thread()
         if self._readonly:
             raise _ScopeDenied("inspection cannot intend")
-        if type(attempt) is not RemoteAttempt:
-            raise TypeError("exact RemoteAttempt required")
+        if type(attempt) not in (RemoteAttempt, ProviderControlAttempt):
+            raise TypeError("exact RemoteAttempt or ProviderControlAttempt required")
         try:
             self._conn.execute("BEGIN IMMEDIATE")
             count = self._conn.execute("SELECT count(*) FROM attempts").fetchone()[0]
@@ -403,7 +518,9 @@ class _RemoteAttemptStore:
         self._live[attempt.attempt_id.value] = attempt
         return IntendedReceipt(self, attempt)
 
-    def claim_for_handoff(self, receipt: IntendedReceipt) -> RemoteAttempt:
+    def claim_for_handoff(
+        self, receipt: IntendedReceipt
+    ) -> RemoteAttempt | ProviderControlAttempt:
         """The seam a future credential-bearing transport must pass, once.
 
         Requires a receipt issued by this incarnation for a durable, still
@@ -455,7 +572,9 @@ class _RemoteAttemptStore:
             raise _ScopeDenied("live attempts are settled by their receipt")
         return self._settle(attempt_id, AttemptState.UNKNOWN, frozenset())
 
-    def _receipt(self, receipt: IntendedReceipt) -> RemoteAttempt:
+    def _receipt(
+        self, receipt: IntendedReceipt
+    ) -> RemoteAttempt | ProviderControlAttempt:
         if (
             type(receipt) is not IntendedReceipt
             or receipt._store is not self

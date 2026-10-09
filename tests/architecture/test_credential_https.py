@@ -90,6 +90,8 @@ def test_private_and_unreachable_from_public_paths() -> None:
         # OPENAI-COMPATIBLE-REMOTE-1: the REMOTE plane builds the exact target
         # and the verified TLS context; it never touches the flight.
         "src/legoai/runtime/_composition/remote_model.py",
+        # PROVIDER-MODEL-DISCOVERY-1: builds the fixed `/models` target.
+        "src/legoai/runtime/_composition/provider_discovery.py",
     }
     for public in (
         "src/legoai/runtime/api.py",

@@ -83,9 +83,12 @@ class HttpsTarget:
     @staticmethod
     def for_endpoint(origin: str, api_root: str, path: str) -> HttpsTarget:
         parts = endpoint_parts(origin + ("" if api_root == "/" else api_root))
+        # The two Model operations and the one provider-control operation
+        # (PROVIDER-MODEL-DISCOVERY-1, ADR-024 §22). Never an arbitrary path.
         if parts != (origin, api_root) or path not in (
             "/chat/completions",
             "/embeddings",
+            "/models",
         ):
             raise TransportError(TransportFailure.ORIGIN)
         host_port = origin.removeprefix("https://")

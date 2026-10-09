@@ -45,7 +45,7 @@ from legoai.intelligence.model.values import (
     EmbeddingResult,
 )
 from legoai.kernel.context import TenantContext
-from legoai.kernel.identity import RequestId
+from legoai.kernel.identity import OperationId, RequestId
 from legoai.kernel.references import (
     ConfigurationRevisionRef,
     OperationRef,
@@ -278,75 +278,110 @@ class _Invocation:
     def _secret_request(self, attempt_id: RemoteAttemptId) -> SecretAccessRequest:
         """A new exact use for this invocation, bound to its attempt id."""
         plane = self._plane
-        credential = plane._association.credential
-        context = self._check.context
-        now = plane._clock()
-        # The use is valid only while its Grant and the execution deadline are.
-        expires = now + _use_window()
-        for bound in (plane._grant.expires_at, context.deadline):
-            if bound is not None:
-                expires = min(expires, bound)
-        key = attempt_id.value
-        plan = SecretUsePlan(
-            SecretUseId(key),
-            context.operation.operation_id,
-            credential.exact,
-            plane._principal,
-            plane._principal,
-            plane._configuration,
-            credential_purpose(),
-            credential_consumer(),
-            credential_consumer_version(),
-            plane._association.binding_id,
-            plane._grant.grant_id,
-            plane._policy,
-            None,
-            f"duty-{key}",
-            RequestId(f"pre-{key}"),
-            RequestId(f"post-{key}"),
-            now,
-            expires,
-            expires + _use_window(),
+        operation = self._check.context.operation
+        return exact_use_request(
+            credential=plane._association.credential,
+            attempt_id=attempt_id,
+            operation=operation.operation_id,
+            purpose=credential_purpose(),
+            consumer=credential_consumer(),
+            target_mapping=plane._association.binding_id,
+            configuration=plane._configuration,
+            principal=plane._principal,
+            grant=plane._grant,
+            policy=plane._policy,
+            now=plane._clock(),
+            deadline=self._check.context.deadline,
         )
-        security = SecurityContext(
-            plane._principal,
-            TenantContext(credential.exact.scope.tenant_id),
-            OperationRef(
-                plane._configuration.configuration,
-                context.operation.operation_id,
-                credential_purpose(),
-            ),
-            "secret-use",
-            credential.exact.identity,
-            plane._grant,
-            None,
-            plane._policy,
-            now,
-        )
-        return SecretAccessRequest(credential, plan, security)
 
     def _unsettled(self, receipt: IntendedReceipt) -> Exception:
-        """An exchange fault: record only what is known, never NOT_SENT after
-        the handoff claim. If recording fails, INTENDED stays (effectively
-        UNKNOWN) for inspection."""
-        store = self._plane._attempts
-        key = receipt.attempt.attempt_id.value
-        claimed = key in store._claimed
-        if key in store._live:
-            try:
-                if claimed:
-                    store.settle(receipt, AttemptState.UNKNOWN, frozenset())
-                else:
-                    store.settle(
-                        receipt,
-                        AttemptState.NOT_SENT,
-                        frozenset({AttemptObservation.REFUSED_AT_GATE}),
-                    )
-            except Exception:
-                return ModelResponseUncertainError("remote attempt requires inspection")
+        claimed, recorded = record_fault(self._plane._attempts, receipt)
+        if not recorded:
+            return ModelResponseUncertainError("remote attempt requires inspection")
         if claimed:
             return ModelResponseUncertainError("Model transport uncertain")
         return ModelPreflightError("Model request not sent")
+
+
+def exact_use_request(
+    *,
+    credential: SecretRef,
+    attempt_id: RemoteAttemptId,
+    operation: OperationId,
+    purpose: str,
+    consumer: str,
+    target_mapping: str,
+    configuration: ConfigurationRevisionRef,
+    principal: Principal,
+    grant: Grant,
+    policy: PolicyRef,
+    now: datetime,
+    deadline: datetime | None,
+) -> SecretAccessRequest:
+    """One new exact Secret use, bound to one external attempt (use id =
+    attempt id). Valid only while its Grant and any deadline are, and at most
+    one use window. Shared by every credentialed remote operation."""
+    expires = now + _use_window()
+    for bound in (grant.expires_at, deadline):
+        if bound is not None:
+            expires = min(expires, bound)
+    key = attempt_id.value
+    plan = SecretUsePlan(
+        SecretUseId(key),
+        operation,
+        credential.exact,
+        principal,
+        principal,
+        configuration,
+        purpose,
+        consumer,
+        credential_consumer_version(),
+        target_mapping,
+        grant.grant_id,
+        policy,
+        None,
+        f"duty-{key}",
+        RequestId(f"pre-{key}"),
+        RequestId(f"post-{key}"),
+        now,
+        expires,
+        expires + _use_window(),
+    )
+    security = SecurityContext(
+        principal,
+        TenantContext(credential.exact.scope.tenant_id),
+        OperationRef(configuration.configuration, operation, purpose),
+        "secret-use",
+        credential.exact.identity,
+        grant,
+        None,
+        policy,
+        now,
+    )
+    return SecretAccessRequest(credential, plan, security)
+
+
+def record_fault(
+    store: _RemoteAttemptStore, receipt: IntendedReceipt
+) -> tuple[bool, bool]:
+    """After an exchange fault, record only what is known: NOT_SENT before
+    the handoff claim, UNKNOWN after it. Returns (claimed, recorded); if
+    recording fails, INTENDED stays (effectively UNKNOWN) for inspection."""
+    key = receipt.attempt.attempt_id.value
+    claimed = key in store._claimed
+    if key in store._live:
+        try:
+            if claimed:
+                store.settle(receipt, AttemptState.UNKNOWN, frozenset())
+            else:
+                store.settle(
+                    receipt,
+                    AttemptState.NOT_SENT,
+                    frozenset({AttemptObservation.REFUSED_AT_GATE}),
+                )
+        except Exception:
+            return claimed, False
+    return claimed, True
 
 
 def compose_remote_plane(
