@@ -694,6 +694,19 @@ this script.
 
   Those cases report as RESULT INCONCLUSIVE or CHAT-CONTRACT INCOMPATIBLE,
   with the observed attempt state and effect.
+- **Diagnostics (KISSKI-PROBE-DIAGNOSTICS-1):** the harness preserves the exact
+  HTTP status of a complete provider-control (`/models`) response, taken from
+  the typed discovery result. It is diagnostic metadata only: the attempt
+  stays PROVIDER_REJECTED and nothing is retried. It maps:
+  - 401 to AUTHENTICATION FAILURE;
+  - 403 to AUTHORIZATION FAILURE;
+  - 404 and 405 to MODEL-DISCOVERY CONTRACT INCOMPATIBLE;
+  - 429 and 5xx to PROVIDER AVAILABILITY FAILURE.
+
+  A status proves the provider's answer, not its cause. `--plan` prints PLAN
+  (no prompt, DNS or network). A live run prints LIVE RUN and its at most two
+  governed calls before any credential prompt. Exact chat statuses are not in
+  the Model path's typed result and are not shown.
 
 ```powershell
 uv run python .\validate_kisski_compatibility_preflight.py
