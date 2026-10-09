@@ -4,9 +4,10 @@ Provenance classes, provider-condition facts with an explicit evidence basis,
 operator disclosure admissions and one pure admission evaluator. These are
 immutable records and a deterministic decision function only: nothing here
 performs I/O, fetches a policy document, inspects content, resolves a Secret,
-or gates an invocation. Runtime owns host configuration and (in a later slice)
-the invocation-time gate. Construction grants no authority; only an operator
-configuring a host supplies admissions.
+or gates an invocation. Runtime owns host configuration and the
+invocation-time gate; Evidence owns custody of `DisclosureObservation`.
+Construction grants no authority; only an operator configuring a host
+supplies admissions.
 """
 
 import urllib.parse
@@ -14,7 +15,9 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
 
+from legoai.kernel.effects import EffectExtent
 from legoai.kernel.identity import _validate
+from legoai.kernel.references import OperationRef
 
 
 def vocabulary() -> str:
@@ -608,6 +611,72 @@ class DisclosureDecision:
     @property
     def admitted(self) -> bool:
         return self.refusal is None
+
+
+@dataclass(frozen=True, slots=True)
+class DisclosureObservation:
+    """Safe ADR-024 §9 disclosure fact for one remote Model invocation.
+
+    Identities, classes, the disposition and the disclosure effect only:
+    never prompt or repository text, responses, credentials or headers. A
+    refusal always has effect NONE. Historical observations are evidence,
+    never admission: they authorize no later invocation.
+    """
+
+    operation: OperationRef
+    binding_id: str = field(repr=False)
+    provider_id: str = field(repr=False)
+    endpoint_origin: str = field(repr=False)
+    model: str = field(repr=False)
+    purpose: str
+    consumer: str | None = field(repr=False)
+    classes: frozenset[DisclosureClass]
+    repository: RepositoryIdentity | None = field(repr=False)
+    admission_id: str | None = field(repr=False)
+    admission_revision: str | None = field(repr=False)
+    declaration_id: str | None = field(repr=False)
+    declaration_revision: str | None = field(repr=False)
+    refusal: DisclosureRefusal | None
+    effect: EffectExtent
+    observed_at: datetime
+
+    def __post_init__(self) -> None:
+        if type(self.operation) is not OperationRef:
+            raise TypeError("observation requires OperationRef")
+        for value in (
+            self.binding_id,
+            self.provider_id,
+            self.endpoint_origin,
+            self.model,
+            self.purpose,
+        ):
+            _text(value)
+        if self.consumer is not None:
+            _text(self.consumer)
+        _items(self.classes, DisclosureClass, empty=True)
+        if self.repository is not None and type(self.repository) is not (
+            RepositoryIdentity
+        ):
+            raise TypeError("repository must be RepositoryIdentity or None")
+        for identity in (
+            self.admission_id,
+            self.admission_revision,
+            self.declaration_id,
+            self.declaration_revision,
+        ):
+            if identity is not None:
+                _validate(identity)
+        if self.refusal is not None and type(self.refusal) is not DisclosureRefusal:
+            raise TypeError("refusal must be DisclosureRefusal or None")
+        if type(self.effect) is not EffectExtent:
+            raise TypeError("observation requires EffectExtent")
+        if self.refusal is not None and self.effect is not EffectExtent.NONE:
+            raise ValueError("a refused disclosure sent nothing")
+        if self.refusal is None and (
+            self.admission_id is None or self.declaration_revision is None
+        ):
+            raise ValueError("an admitted disclosure names its admission")
+        _aware(self.observed_at)
 
 
 def _facts(

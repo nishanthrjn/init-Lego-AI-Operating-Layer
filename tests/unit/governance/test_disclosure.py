@@ -574,7 +574,9 @@ def test_evaluator_is_pure_and_deterministic() -> None:
         "dataclasses",
         "datetime",
         "enum",
+        "legoai.kernel.effects",
         "legoai.kernel.identity",
+        "legoai.kernel.references",
     }, imported
 
 
@@ -608,3 +610,92 @@ def test_admitted_decision_must_name_its_admission() -> None:
         "admission_revision",
         "declaration_revision",
     }
+
+
+# DisclosureObservation (REMOTE-DISCLOSURE-GATE-1)
+
+
+def observation(**changes: Any) -> disclosure.DisclosureObservation:
+    from legoai.kernel.effects import EffectExtent
+    from legoai.kernel.identity import ApplicationId, OperationId, TenantId
+    from legoai.kernel.references import (
+        ApplicationRef,
+        ConfigurationRef,
+        OperationRef,
+        ReferenceScope,
+    )
+
+    operation = OperationRef(
+        ConfigurationRef(
+            ApplicationRef(
+                ReferenceScope("operator", TenantId("t")), ApplicationId("a")
+            ),
+            "c",
+        ),
+        OperationId("model-x"),
+        "model-chat",
+    )
+    value = disclosure.DisclosureObservation(
+        operation,
+        "remote",
+        "remote-endpoint",
+        ORIGIN,
+        "model-a",
+        "chat",
+        "forgeai",
+        frozenset({DisclosureClass.TASK_TEXT}),
+        None,
+        "admission",
+        "a1",
+        "processor",
+        "r1",
+        None,
+        EffectExtent.COMPLETED,
+        NOW,
+    )
+    return replace(value, **changes)
+
+
+def test_observation_invariants() -> None:
+    from legoai.kernel.effects import EffectExtent
+
+    assert observation().effect is EffectExtent.COMPLETED
+    refused = observation(refusal=DisclosureRefusal.EXPIRED, effect=EffectExtent.NONE)
+    assert refused.refusal is DisclosureRefusal.EXPIRED
+    # A refusal never sent anything; an admission always names itself.
+    for effect in (EffectExtent.PARTIAL, EffectExtent.COMPLETED, EffectExtent.UNKNOWN):
+        with pytest.raises(ValueError):
+            observation(refusal=DisclosureRefusal.EXPIRED, effect=effect)
+    with pytest.raises(ValueError):
+        observation(admission_id=None)
+    with pytest.raises(FrozenInstanceError):
+        observation().effect = EffectExtent.NONE  # type: ignore[misc]
+    assert "remote-endpoint" not in repr(observation())
+
+
+def test_observation_is_typed_evidence_with_tenant_cross_check() -> None:
+    from legoai.evidence.ports import EvidenceId, EvidenceRecord
+    from legoai.governance.values import Principal
+    from legoai.kernel.context import TenantContext
+    from legoai.kernel.identity import PrincipalId, TenantId
+    from legoai.kernel.references import PrincipalRef
+
+    issuer = Principal(PrincipalRef("operator", PrincipalId("p")))
+    record = EvidenceRecord(
+        EvidenceId("disclosure-x"),
+        observation(),
+        issuer,
+        TenantContext(TenantId("t")),
+        "model-disclosure/1 observation",
+        NOW,
+    )
+    assert record.subject == observation()
+    with pytest.raises(ValueError):
+        EvidenceRecord(
+            EvidenceId("disclosure-y"),
+            observation(),
+            issuer,
+            TenantContext(TenantId("other")),
+            "model-disclosure/1 observation",
+            NOW,
+        )

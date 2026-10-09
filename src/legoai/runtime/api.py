@@ -19,7 +19,11 @@ from typing import Protocol
 from legoai.capabilities.values import CapabilityId
 from legoai.execution.agent.ports import AgentRuntimePort
 from legoai.execution.values import ExecutionContext, ExecutionResult, ExecutionState
-from legoai.governance.disclosure import DisclosureAdmission, ProcessorDeclaration
+from legoai.governance.disclosure import (
+    DisclosureAdmission,
+    DisclosureDeclaration,
+    ProcessorDeclaration,
+)
 from legoai.governance.ports import AuthorizationPort, SecurityContext
 from legoai.governance.values import GrantId, PolicyRef
 from legoai.intelligence.model.ports import ModelPort
@@ -258,8 +262,8 @@ class RemoteDisclosureConfig:
     """Operator remote-disclosure configuration (ADR-024 §5–6).
 
     Processor declarations and disclosure admissions, validated for
-    consistency when the host opens. Configuring them enables nothing: the
-    host still refuses REMOTE bindings, and no invocation gate exists yet.
+    consistency when the host opens and evaluated at every REMOTE invocation.
+    Configuring them enables nothing: the host still refuses REMOTE bindings.
     """
 
     declarations: tuple[ProcessorDeclaration, ...]
@@ -349,6 +353,26 @@ class LocalHostConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class ExecutionDisclosure:
+    """Trusted ADR-024 declaration for one minted model execution.
+
+    Supplied only by the composition that assembles the request, from
+    provenance it knows; never from model output, content or responses. Bound
+    to exactly one execution at minting and immutable thereafter: different
+    classes need a different execution. Ignored for LOCAL bindings; a REMOTE
+    invocation without one is UNCLASSIFIED and refused.
+    """
+
+    consumer: str = field(repr=False)
+    declaration: DisclosureDeclaration
+
+    def __post_init__(self) -> None:
+        _text(self.consumer, HostFailure.INVALID_CONFIGURATION)
+        if type(self.declaration) is not DisclosureDeclaration:
+            raise TypeError("execution disclosure requires DisclosureDeclaration")
+
+
+@dataclass(frozen=True, slots=True)
 class GovernedChatResult:
     """Existing governed Chat outcome; response present iff SUCCEEDED."""
 
@@ -399,6 +423,7 @@ class GovernedHost(Protocol):
         deadline: datetime | None = None,
         correlation: CorrelationId | None = None,
         causation: OperationRef | None = None,
+        disclosure: ExecutionDisclosure | None = None,
     ) -> ExecutionContext: ...
 
     def security_context(

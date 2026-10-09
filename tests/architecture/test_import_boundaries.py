@@ -161,6 +161,9 @@ def violations(sources: dict[str, str]) -> set[str]:
                         # Durable source-use custody attributes safe Secret facts;
                         # ADR-002 O -> G, no reference/runtime dependency.
                         or target == "legoai.governance.secret"
+                        # ADR-024: safe remote-disclosure observations (O -> G).
+                        or target == "legoai.governance.disclosure"
+                        or target.startswith("legoai.governance.disclosure.")
                     ):
                         errors.add("evidence-owner")
                     if name.startswith("legoai.evidence.") and any(
@@ -530,6 +533,27 @@ def violations(sources: dict[str, str]) -> set[str]:
                                     "legoai.reference.governance",
                                     "legoai.reference.secret",
                                 )
+                            )
+                        )
+                        # ADR-024: the private disclosure gate composes the
+                        # governance evaluator with Evidence custody; the
+                        # governed Model path only types its decision.
+                        or (
+                            name == "legoai.runtime._composition.disclosure"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.evidence.ports",
+                                    "legoai.governance.disclosure",
+                                    "legoai.governance.values",
+                                )
+                            )
+                        )
+                        or (
+                            name == "legoai.runtime._composition.model_governed"
+                            and (
+                                target == "legoai.governance.disclosure"
+                                or target.startswith("legoai.governance.disclosure.")
                             )
                         )
                         or target == "legoai.kernel"
