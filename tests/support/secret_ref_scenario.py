@@ -26,19 +26,37 @@ from legoai.reference.governance import (
     InMemoryGrantRegistry,
     InMemoryPolicyRegistry,
 )
-from legoai.reference.secret import _SecretClock
+from legoai.reference.secret import _ProvisionedSecretSource, _SecretClock
 from legoai.runtime._composition.secret import _SyntheticSecretAccess
 from tests.support.custody_scenario import NOW, access, plan
 
 
 @contextmanager
 def scenario(
-    directory: Path, *, reopen: bool = False, with_approval: bool = True
+    directory: Path,
+    *,
+    reopen: bool = False,
+    with_approval: bool = True,
+    material: str | None = None,
 ) -> Iterator[_SyntheticSecretAccess]:
+    """Synthetic Stage-A by default; with `material`, SECRET-SOURCE-S1.
+
+    `material` is synthetic test data injected by trusted test code into the
+    protected source, never an ambient or production input path.
+    """
     p = plan()
     if not with_approval:
         p = replace(p, approval_id=None)
     domain = _OrderingDomain()
+    provisioned = None
+    secret_class = "synthetic"
+    if material is not None:
+        provisioned = _ProvisionedSecretSource(domain, p.secret.scope)
+        reference = provisioned.provision(
+            p.secret.identity, p.purpose, p.consumer, material
+        )
+        p = replace(p, secret=reference.exact)
+        secret_class = reference.secret_class
     tenant = TenantContext(p.secret.scope.tenant_id)
     operation = OperationRef(p.configuration.configuration, p.operation_id, p.purpose)
     grant = Grant(
@@ -71,7 +89,7 @@ def scenario(
         NOW,
     )
     request = SecretAccessRequest(
-        SecretRef(p.secret, "synthetic", p.purpose), p, context
+        SecretRef(p.secret, secret_class, p.purpose), p, context
     )
     grants, policies, approvals = (
         InMemoryGrantRegistry(_domain=domain),
@@ -110,6 +128,7 @@ def scenario(
             source,
             custody,
             _SecretClock(domain, NOW),
+            provisioned,
         )
     finally:
         custody.close()

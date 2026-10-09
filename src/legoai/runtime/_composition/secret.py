@@ -1,11 +1,17 @@
 """Trusted Stage-A wiring, not a runtime/provider enablement.
 
+SECRET-SOURCE-S1 reuses this exact-use composition with an operator-provisioned
+material source; it adds no transport, provider or public material API.
+
 Owners retain state. Only this composition imports their concrete realizations.
 SQLite operations stay on the constructing owner thread. Foreign-thread use
 fails closed; invalidating mutations use the shared domain from any thread.
 No Coordinator/dispatch lock is acquired here. No worker is created or queued.
 """
 
+import getpass
+import sys
+from collections.abc import Callable
 from dataclasses import replace
 
 from legoai.capabilities.ports import CatalogEntry
@@ -32,7 +38,46 @@ from legoai.reference.governance import (
     InMemoryGrantRegistry,
     InMemoryPolicyRegistry,
 )
-from legoai.reference.secret import _SecretClock, _SecretState
+from legoai.reference.secret import (
+    _provisioned_class,
+    _ProvisionedSecretSource,
+    _SecretClock,
+    _SecretState,
+)
+
+
+def _provision_interactively(
+    source: _ProvisionedSecretSource,
+    identity: str,
+    purpose: str,
+    consumer: str,
+    *,
+    read: Callable[[str], str] = getpass.getpass,
+    interactive: Callable[[], bool] | None = None,
+) -> SecretRef:
+    """Bootstrap S1 from hidden interactive input (ADR-023 §8, option 1).
+
+    The operator types the credential without echo; it never enters argv,
+    environment, configuration or files, and goes straight into the protected
+    source. Refused without an interactive terminal, so piped or redirected
+    input (which `getpass` may echo) is never accepted. `read`/`interactive`
+    exist so trusted tests can supply synthetic material; there is no other
+    source and no fallback.
+    """
+    if type(source) is not _ProvisionedSecretSource:
+        raise TypeError("trusted source composition required")
+    if interactive is None:
+        stdin = sys.stdin
+        terminal = stdin is not None and stdin.isatty()
+    else:
+        terminal = interactive()
+    if not terminal:
+        raise PermissionError("hidden interactive input required")
+    material = read("Credential (input hidden): ")
+    try:
+        return source.provision(identity, purpose, consumer, material)
+    finally:
+        del material
 
 
 class _SyntheticSecretAccess:
@@ -55,7 +100,16 @@ class _SyntheticSecretAccess:
         source: _SecretLedger,
         custody: _EvidenceStore,
         clock: _SecretClock,
+        material_source: _ProvisionedSecretSource | None = None,
     ) -> None:
+        """`material_source` selects SECRET-SOURCE-S1: the exact-use flow is
+        unchanged, but the material is the operator-provisioned revision the
+        reference names instead of fresh synthetic bytes."""
+        if material_source is not None and (
+            type(material_source) is not _ProvisionedSecretSource
+            or material_source._domain is not domain
+        ):
+            raise ValueError("shared ordering domain required")
         for value, kind in (
             (domain, _OrderingDomain),
             (grants, InMemoryGrantRegistry),
@@ -77,8 +131,11 @@ class _SyntheticSecretAccess:
             raise ValueError("shared ordering domain required")
         p, c = request.plan, request.context
         access = CustodyAccess(p.secret.scope, p.requester)
+        expected_class = (
+            "synthetic" if material_source is None else _provisioned_class()
+        )
         if (
-            request.reference.secret_class != "synthetic"
+            request.reference.secret_class != expected_class
             or request.reference.use_requirement != p.purpose
             or p.actor != p.requester
             or c.principal != p.requester
@@ -107,7 +164,7 @@ class _SyntheticSecretAccess:
             grants, approvals, policies
         )
         source._claim_stage_a()
-        self._state = _SecretState(request, domain)
+        self._state = _SecretState(request, domain, material_source)
         self._thread = domain.thread_identity()
 
     def _outside(self, request: SecretAccessRequest) -> None:
