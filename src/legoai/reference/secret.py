@@ -208,14 +208,20 @@ class _SecretState:
             self._cancelled = True
             self._material = None
 
-    def current(self, request: SecretAccessRequest, now: datetime) -> None:
+    def current(
+        self, request: SecretAccessRequest, now: datetime, *, continuing: bool = False
+    ) -> None:
+        """`continuing` rechecks a credential handoff already accepted in this
+        exact use (CREDENTIAL-HTTPS-T2 continuation writes): every condition
+        except the single-acquisition marker, which is then already set."""
         self._domain.held()
         if (
             request != self._request
             or not self._mapping_valid
             or not self._revision_valid
             or self._cancelled
-            or self._attempted
+            or (self._attempted and not continuing)
+            or (continuing and not self._attempted)
             or not request.plan.prepared_at <= now < request.plan.expires_at
             or (self._source is not None and not self._source._eligible(request))
         ):
