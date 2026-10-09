@@ -12,8 +12,9 @@ code, never data: nothing in this module parses, imports or loads code.
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
 from typing import Protocol
 
 from legoai.capabilities.values import CapabilityId
@@ -25,6 +26,7 @@ from legoai.governance.disclosure import (
     ProcessorDeclaration,
 )
 from legoai.governance.ports import AuthorizationPort, SecurityContext
+from legoai.governance.secret import SecretRef
 from legoai.governance.values import GrantId, PolicyRef
 from legoai.intelligence.model.ports import ModelPort
 from legoai.intelligence.model.routing import ModelRequirement
@@ -167,10 +169,14 @@ class OllamaSettings:
 
 @dataclass(frozen=True, slots=True)
 class OpenAICompatibleSettings:
-    """Credential-free endpoint; base_url includes the API version prefix.
+    """OpenAI-compatible endpoint; base_url includes the API version prefix.
 
-    Full URL/model/bound validation happens at host open. REMOTE is a valid
-    declaration but is unsupported by this slice (ADR-014 §14).
+    Full URL/model/bound validation happens at host open. `bearer_credential`
+    (ADR-014 §14.18) is a governed reference only, never material. Absent, the
+    binding is credential-free. Present, it is admissible only for
+    `deployment=REMOTE` over https under ADR-023 SRCP-1, with the remote
+    disclosure configuration and `RemoteModelRuntime` participants; every
+    other REMOTE or credentialed configuration is refused at open.
     """
 
     base_url: str = field(repr=False)
@@ -180,8 +186,14 @@ class OpenAICompatibleSettings:
     max_output_tokens: int | None
     provider_id: ProviderId
     deployment: ModelDeployment
+    bearer_credential: SecretRef | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
+        if (
+            self.bearer_credential is not None
+            and type(self.bearer_credential) is not SecretRef
+        ):
+            raise TypeError("bearer_credential must be SecretRef or None")
         for value in (self.base_url, self.chat_model):
             if type(value) is not str:
                 raise TypeError("OpenAI-compatible settings require text")
@@ -263,7 +275,9 @@ class RemoteDisclosureConfig:
 
     Processor declarations and disclosure admissions, validated for
     consistency when the host opens and evaluated at every REMOTE invocation.
-    Configuring them enables nothing: the host still refuses REMOTE bindings.
+    Configuring them authorizes no request. A REMOTE binding opens only as
+    the credentialed OpenAI-compatible SRCP-1 profile with this configuration
+    admitting it and `RemoteModelRuntime` participants supplied.
     """
 
     declarations: tuple[ProcessorDeclaration, ...]
@@ -292,6 +306,52 @@ class RemoteDisclosureConfig:
             or len(set(bound)) != len(bound)
         ):
             raise HostError(HostFailure.CONTRIBUTION_CONFLICT)
+
+
+class CredentialSource(Protocol):
+    """Operator credential source (ADR-023 §8, SECRET-SOURCE-S1).
+
+    Material enters only as hidden interactive input read by the source
+    itself, bound to the REMOTE Model credential purpose; callers receive a
+    `SecretRef` and never the material. Each provisioning is a new immutable
+    revision that retires the previous one for that identity. Nothing is
+    persisted: a new process provisions again.
+    """
+
+    def provision(self, identity: str) -> SecretRef: ...
+
+    def retire(self, credential: SecretRef) -> None: ...
+
+    def close(self) -> None: ...
+
+
+@dataclass(frozen=True, slots=True)
+class RemoteModelRuntime:
+    """Trusted runtime participants of one credentialed REMOTE binding (SRCP-1).
+
+    Not operator data and not serializable configuration: the host's own
+    credential source, the local directory for owner-local durable custody
+    (remote attempts and Secret-use attribution), the SRCP-1 validity margin,
+    and an optional explicit trust anchor that replaces (never extends or
+    disables) the system trust store. Supplying them authorizes no request.
+    """
+
+    credentials: CredentialSource = field(repr=False, compare=False)
+    custody: Path = field(repr=False)
+    validity_margin: timedelta
+    trust_anchor: Path | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.custody, Path):
+            raise TypeError("remote custody requires a directory Path")
+        if self.trust_anchor is not None and not isinstance(self.trust_anchor, Path):
+            raise TypeError("trust anchor must be a Path or None")
+        if type(self.validity_margin) is not timedelta:
+            raise TypeError("validity margin must be timedelta")
+        # Bounds: a positive margin of at most one hour (the per-use window
+        # is at most one day; ADR-023 §7.4 leaves the value to the operator).
+        if not timedelta(0) < self.validity_margin <= timedelta(hours=1):
+            raise HostError(HostFailure.INVALID_CONFIGURATION)
 
 
 @dataclass(frozen=True, slots=True)

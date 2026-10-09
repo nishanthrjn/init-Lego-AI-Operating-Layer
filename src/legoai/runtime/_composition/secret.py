@@ -104,10 +104,22 @@ class _SyntheticSecretAccess:
         custody: _EvidenceStore,
         clock: _SecretClock,
         material_source: _ProvisionedSecretSource | None = None,
+        *,
+        uses: _SecretUses | None = None,
     ) -> None:
         """`material_source` selects SECRET-SOURCE-S1: the exact-use flow is
         unchanged, but the material is the operator-provisioned revision the
-        reference names instead of fresh synthetic bytes."""
+        reference names instead of fresh synthetic bytes.
+
+        `uses` is the factory that already holds this ledger incarnation's
+        single Stage-A binding; only `_SecretUses.admit` passes it."""
+        if uses is not None and (
+            type(uses) is not _SecretUses
+            or uses._source is not source
+            or uses._domain is not domain
+            or uses._material_source is not material_source
+        ):
+            raise ValueError("exact per-invocation Secret-use factory required")
         if material_source is not None and (
             type(material_source) is not _ProvisionedSecretSource
             or material_source._domain is not domain
@@ -166,7 +178,8 @@ class _SyntheticSecretAccess:
         self._authorization = DeterministicAuthorizationEvaluator(
             grants, approvals, policies
         )
-        source._claim_stage_a()
+        if uses is None:
+            source._claim_stage_a()
         self._state = _SecretState(request, domain, material_source)
         self._thread = domain.thread_identity()
 
@@ -375,3 +388,74 @@ class _SyntheticSecretAccess:
             self._access,
             expected_revision=status.revision,
         )
+
+
+class _SecretUses:
+    """Per-invocation exact uses of S1 revisions (OPENAI-COMPATIBLE-REMOTE-1).
+
+    One provisioned immutable revision may serve many independently
+    authorized invocations; each invocation is its own exact use. The factory
+    takes the ledger incarnation's single Stage-A binding once, so a facade
+    can never be rebuilt to reset it. Each `admit` composes a new
+    `_SyntheticSecretAccess` with its own `SecretUsePlan`, use id, state,
+    currentness checks, durable attribution and at most one material handoff.
+    A use id is admitted at most once; the ledger refuses any accepted or
+    foreign use. The revision is reused; the protected use never is.
+
+    S1 only: revision eligibility, retirement and source close are owned by
+    the shared source under the ordering domain, so a new use cannot outlive
+    an invalidation. No token, lease, cache or realized material is kept here.
+    """
+
+    def __init__(
+        self,
+        entry: CatalogEntry,
+        domain: _OrderingDomain,
+        grants: InMemoryGrantRegistry,
+        policies: InMemoryPolicyRegistry,
+        approvals: InMemoryApprovalRegistry,
+        catalog: InMemoryCatalog,
+        source: _SecretLedger,
+        custody: _EvidenceStore,
+        clock: _SecretClock,
+        material_source: _ProvisionedSecretSource,
+    ) -> None:
+        if type(material_source) is not _ProvisionedSecretSource:
+            raise TypeError("operator-provisioned Secret source required")
+        if type(domain) is not _OrderingDomain or type(source) is not _SecretLedger:
+            raise TypeError("qualified Stage-A participants required")
+        if material_source._domain is not domain or source._domain is not domain:
+            raise ValueError("shared ordering domain required")
+        source._claim_stage_a()
+        self._participants = (
+            entry,
+            domain,
+            grants,
+            policies,
+            approvals,
+            catalog,
+            source,
+            custody,
+            clock,
+        )
+        self._domain, self._source = domain, source
+        self._material_source = material_source
+        self._admitted: set[str] = set()
+
+    def __repr__(self) -> str:
+        return f"_SecretUses(admitted={len(self._admitted)})"
+
+    def admit(self, request: SecretAccessRequest) -> _SyntheticSecretAccess:
+        """Compose one new exact use; never a second use of the same id."""
+        self._domain.outside()
+        if type(request) is not SecretAccessRequest:
+            raise TypeError("typed Secret request required")
+        key = request.plan.use_id.value
+        # Bounded like the source ledger's retained uses; exhaustion refuses.
+        if key in self._admitted or len(self._admitted) >= 4096:
+            raise PermissionError("Secret use unavailable")
+        access = _SyntheticSecretAccess(
+            request, *self._participants, self._material_source, uses=self
+        )
+        self._admitted.add(key)
+        return access

@@ -74,6 +74,8 @@ def test_only_the_invocation_plane_reaches_the_store() -> None:
         "src/legoai/runtime/_composition/remote_attempt.py",
         # CREDENTIAL-HTTPS-T2: the invocation plane claims and settles.
         "src/legoai/runtime/_composition/credential_https.py",
+        # OPENAI-COMPATIBLE-REMOTE-1: the REMOTE plane intends and settles.
+        "src/legoai/runtime/_composition/remote_model.py",
     }
     for adapter in (
         "model.py",

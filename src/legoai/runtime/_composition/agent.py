@@ -15,12 +15,15 @@ from legoai.runtime._composition.model_governed import (
     ConfiguredModelBinding,
     invoke_routed_chat,
 )
+from legoai.runtime._composition.remote_model import RemoteModelPlane
 
 
 @dataclass(frozen=True, slots=True)
 class GovernedAgentChat:
     coordinator: ExecutionCoordinator = field(repr=False)
     configured: ConfiguredModelBinding = field(repr=False)
+    # OPENAI-COMPATIBLE-REMOTE-1: present only for a credentialed REMOTE binding.
+    remote: RemoteModelPlane | None = field(default=None, repr=False)
 
     async def invoke(
         self,
@@ -59,6 +62,12 @@ class GovernedAgentChat:
         if check is not None and check.context != context:
             raise ValueError("disclosure check belongs to another execution")
         execution, response = await invoke_routed_chat(
-            self.coordinator, coordination, request, route, self.configured, check
+            self.coordinator,
+            coordination,
+            request,
+            route,
+            self.configured,
+            check,
+            self.remote,
         )
         return AgentChatResult(execution, response)

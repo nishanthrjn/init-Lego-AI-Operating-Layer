@@ -1,15 +1,21 @@
-"""Process-local synthetic TLS server for CREDENTIAL-HTTPS-T2 qualification.
+"""Process-local synthetic TLS server for credential-bearing HTTPS qualification.
 
 Test-only certificates (tests/support/tls): a test CA, a `localhost` leaf, a
 `wrong.invalid` leaf and an untrusted self-signed `localhost`. The server
 compares the received Bearer value with the expected synthetic token and
 keeps only the boolean result; it never prints or stores the token.
+
+`responses` maps a request path to the complete response body, so the server can
+emulate the OpenAI-compatible contract (OPENAI-COMPATIBLE-REMOTE-1); any other
+path answers the fixed `{"ok":true}`. A numeric `mode` answers that status.
+`on_request` runs after a request was fully read, before any response.
 """
 
 import hmac
 import socket
 import ssl
 import threading
+from collections.abc import Callable
 from pathlib import Path
 
 TLS = Path(__file__).resolve().parent / "tls"
@@ -20,9 +26,17 @@ class TlsServer:
     """One-connection-at-a-time TLS server; `mode` selects the response."""
 
     def __init__(
-        self, mode: str = "ok", *, cert: str = "localhost.pem", expected: str = ""
+        self,
+        mode: str = "ok",
+        *,
+        cert: str = "localhost.pem",
+        expected: str = "",
+        responses: dict[str, bytes] | None = None,
+        on_request: Callable[[], None] | None = None,
     ) -> None:
         self.mode, self.expected = mode, expected.encode()
+        self.responses = dict(responses or {})
+        self.on_request = on_request
         self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         self.context.load_cert_chain(TLS / cert)
         # Listen on the first loopback address `localhost` resolves to (often
@@ -75,12 +89,12 @@ class TlsServer:
                 except OSError:
                     pass
 
-    def _read_request(self, conn: ssl.SSLSocket) -> bool:
+    def _read_request(self, conn: ssl.SSLSocket) -> str | None:
         data = b""
         while b"\r\n\r\n" not in data:
             chunk = conn.recv(65_536)
             if not chunk:
-                return False
+                return None
             data += chunk
         head, _, body = data.partition(b"\r\n\r\n")
         lines = head.split(b"\r\n")
@@ -110,29 +124,34 @@ class TlsServer:
             and hmac.compare_digest(bearer[0], b"Bearer " + self.expected)
         )
         del bearer
-        return True
+        return path.decode()
 
     def _handle(self, conn: ssl.SSLSocket) -> None:
         if self.mode == "close-before-request":
             return
-        if not self._read_request(conn):
+        path = self._read_request(conn)
+        if path is None:
             return
+        if self.on_request is not None:
+            self.on_request()
         if self.mode == "timeout":
             self._stop.wait(10)
             return
-        body = b'{"ok":true}'
-        responses = {
-            "ok": b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n%s",
-            "401": b"HTTP/1.1 401 Unauthorized\r\nContent-Length: %d\r\n\r\n%s",
-            "403": b"HTTP/1.1 403 Forbidden\r\nContent-Length: %d\r\n\r\n%s",
-            "429": b"HTTP/1.1 429 Too Many Requests\r\nContent-Length: %d\r\n\r\n%s",
-            "500": b"HTTP/1.1 500 Internal Server Error\r\nContent-Length: %d\r\n\r\n%s",
-            "302": b"HTTP/1.1 302 Found\r\nLocation: https://elsewhere.invalid/\r\nContent-Length: %d\r\n\r\n%s",
-        }
-        if self.mode in responses:
-            conn.sendall(responses[self.mode] % (len(body), body))
+        body = self.responses.get(path, b'{"ok":true}')
+        if self.mode == "ok" or self.mode.isdigit():
+            status = 200 if self.mode == "ok" else int(self.mode)
+            location = (
+                b"Location: https://elsewhere.invalid/\r\n" if status == 302 else b""
+            )
+            conn.sendall(
+                b"HTTP/1.1 %d Status\r\nContent-Type: application/json\r\n%s"
+                b"Content-Length: %d\r\n\r\n%s" % (status, location, len(body), body)
+            )
         elif self.mode == "truncated":
-            conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n" + body)
+            conn.sendall(
+                b"HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s"
+                % (len(body) + 100, body)
+            )
         elif self.mode == "malformed":
             conn.sendall(b"NOT-HTTP garbage\r\n\r\n")
         elif self.mode == "chunked":

@@ -8,6 +8,7 @@ privacy is a trusted-host boundary, not isolation from hostile host code, and
 no memory erasure is claimed.
 """
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from secrets import token_bytes, token_hex
 
@@ -158,17 +159,33 @@ class _ProvisionedSecretSource:
 
 
 class _SecretClock:
-    """Qualified local clock or explicit deterministic clock, never a callback.
+    """Qualified local clock or explicit deterministic clock.
 
     Time is sampled at the final gate; no hard realtime commit deadline claim.
+    `host` (OPENAI-COMPATIBLE-REMOTE-1) is the governed host's own trusted
+    clock, the one its authorization and disclosure already use, so a REMOTE
+    invocation evaluates every time-bounded fact against one time source. It
+    is trusted composition-root code, never task, model or provider input.
     """
 
-    def __init__(self, domain: _OrderingDomain, instant: datetime | None = None):
+    def __init__(
+        self,
+        domain: _OrderingDomain,
+        instant: datetime | None = None,
+        *,
+        host: Callable[[], datetime] | None = None,
+    ):
         if instant is not None:
             _time(instant)
-        self._domain, self._instant = domain, instant
+        if host is not None and (instant is not None or not callable(host)):
+            raise TypeError("one trusted time source required")
+        self._domain, self._instant, self._host = domain, instant, host
 
     def now(self) -> datetime:
+        if self._host is not None:
+            instant = self._host()
+            _time(instant)
+            return instant
         return datetime.now(UTC) if self._instant is None else self._instant
 
     def advance(self, instant: datetime) -> None:

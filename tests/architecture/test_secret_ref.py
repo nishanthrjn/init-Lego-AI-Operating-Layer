@@ -53,6 +53,8 @@ def test_secret_owner_separation():
         n.module for n in ast.walk(ast.parse(source)) if isinstance(n, ast.ImportFrom)
     ]
     assert set(imports) <= {
+        # OPENAI-COMPATIBLE-REMOTE-1: the type of the host's trusted clock.
+        "collections.abc",
         "datetime",
         "secrets",
         "legoai.governance.ports",
