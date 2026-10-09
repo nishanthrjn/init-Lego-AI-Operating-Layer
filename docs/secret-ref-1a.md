@@ -396,3 +396,13 @@ no provider call. Environment-variable credentials remain unsupported.
 ```powershell
 uv run python .\validate_secret_source_s1.py
 ```
+
+**SECRET-SOURCE-S1 LOCALLY QUALIFIED** (2026-10-09). The operator's run of that
+command passed **20/20 phases** offline on commit `f6537aa`. That includes 40
+focused S1 tests with canary leak scans and 6 boundary tests; SECRET-REF-1A (75)
+and durable-custody (59) regressions; governance and import boundaries (464); and
+Core (1841), DocuMind (16) and ForgeAI (89) regressions. Qualification covers the
+operator-provisioned, immutable, process-local material source behind the
+existing exact-use mechanism only. There is no credential transport, no
+Authorization header, no REMOTE enablement, no KISSKI support, no provider call
+and no environment source, and no memory-erasure claim is made.
