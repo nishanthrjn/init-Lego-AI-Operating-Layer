@@ -287,3 +287,12 @@ ForgeAI is not remote-enabled.
 ```powershell
 uv run python .\validate_remote_disclosure_gate_1.py
 ```
+
+Operator qualification (2026-10-09): **LOCALLY QUALIFIED**. That command passed
+**20/20 phases** offline on commit `8e607f2`. That includes 39 gate tests (the
+refusal matrix with zero-transport proof, no-widening checks, Evidence,
+cancellation, and LOCAL/REMOTE checks), and Core (1801), DocuMind (16) and ForgeAI
+(89) regressions. Qualification covers the carrier, the invocation-time gate
+and the disclosure Evidence through an internal test seam only. REMOTE is still
+refused at open; no credential, provider, network or KISSKI was involved; and
+ForgeAI is not remote-enabled.
