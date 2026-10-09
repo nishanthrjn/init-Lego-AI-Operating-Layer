@@ -5,7 +5,7 @@ probe (scripts/kisski_compatibility_probe.py) composes only the qualified
 governed paths, can make at most one governed POST /models and one governed
 SYNTHETIC chat, takes the credential only through S1 hidden input (twice,
 one revision per purpose), and that --plan touches nothing. Synthetic local
-TLS and S1 material only; the real provider is never contacted.
+TLS and S1 material only; this validation never contacts the real provider.
 """
 
 import os
@@ -211,7 +211,8 @@ def main() -> int:
         print("PASS " + name)
     print(
         "KISSKI-COMPATIBILITY-1 HARNESS LOCAL VALIDATION PASSED - offline; synthetic "
-        "local TLS and S1 material only; KISSKI never contacted; live run still "
+        "local TLS and S1 material only; this validation contacted no provider; a "
+        "live run still "
         "requires explicit authorization"
     )
     return 0

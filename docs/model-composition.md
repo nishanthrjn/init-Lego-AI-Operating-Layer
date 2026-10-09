@@ -664,8 +664,9 @@ observed call, ForgeAI remote support and production provider management.
 
 ## KISSKI compatibility harness (KISSKI-COMPATIBILITY-1; not yet run live)
 
-**Status: HARNESS LOCALLY READY (offline validation only). The real provider
-has never been contacted, and KISSKI is not claimed compatible.** The harness
+**Status: HARNESS LOCALLY READY (offline validation). KISSKI is not claimed
+compatible.** One operator-run live probe has taken place (2026-10-09; see
+the end of this section). The harness
 is `scripts/kisski_compatibility_probe.py`, an operator-run script outside
 Core. It composes the qualified paths unchanged. GWDG facts appear only in
 this script.
@@ -707,6 +708,19 @@ this script.
   (no prompt, DNS or network). A live run prints LIVE RUN and its at most two
   governed calls before any credential prompt. Exact chat statuses are not in
   the Model path's typed result and are not shown.
+
+**Operator live probe 1 (2026-10-09).** This was a single governed
+`POST /v1/models` call. TLS was verified through the system trust store, and
+KISSKI returned a complete 4xx response (401 or 403; the harness showed only
+the status class then). The attempt settled PROVIDER_REJECTED and the Secret
+use was attributed. There was no retry and no chat call; no SYNTHETIC or other
+model-visible content was sent. Classified as AUTHENTICATION FAILURE under the
+earlier 401/403 mapping. Compatibility is not established.
+
+**KISSKI-PROBE-DIAGNOSTICS-1 LOCALLY VALIDATED** (2026-10-09). The operator's
+offline run of `uv run python .\validate_kisski_compatibility_preflight.py` passed **14/14 phases** on commit `064d388` (harness 36, discovery
+and REMOTE 168, T2, custody, S1 and disclosure 348, architecture 363). The
+harness now reports the exact `/models` status and labels PLAN and LIVE runs.
 
 ```powershell
 uv run python .\validate_kisski_compatibility_preflight.py
