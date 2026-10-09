@@ -661,3 +661,40 @@ content, changing application bindings, retrying or falling back. Synthetic
 local TLS and S1 material only. Not qualified: KISSKI compatibility, dynamic
 model routing, provider discovery in general, model availability beyond the
 observed call, ForgeAI remote support and production provider management.
+
+## KISSKI compatibility harness (KISSKI-COMPATIBILITY-1; not yet run live)
+
+**Status: HARNESS LOCALLY READY (offline validation only). The real provider
+has never been contacted, and KISSKI is not claimed compatible.** The harness
+is `scripts/kisski_compatibility_probe.py`, an operator-run script outside
+Core. It composes the qualified paths unchanged. GWDG facts appear only in
+this script.
+
+- **Plan:** `uv run python .\scripts\kisski_compatibility_probe.py --plan` prints the plan. It makes no network call, no
+  prompt and no credential read.
+- **Live run** (only after explicit maintainer authorization): `uv run python .\scripts\kisski_compatibility_probe.py`
+  needs an interactive terminal. It asks for the same API key twice through
+  S1 hidden input, because each revision carries exactly one purpose:
+  `provider-model-discovery`, then `remote-model-bearer`. There is no
+  argument, environment, file or pipe input.
+- **Calls:** one governed `POST /v1/models`, which must list models. Then the
+  operator selects one listed id by number, and one governed SYNTHETIC
+  `POST /v1/chat/completions` follows through the public host. The message is
+  `Return exactly the word READY.`. There is no retry, fallback or automatic
+  model choice.
+- **Processor declaration:** provider identity and training NO are
+  provider-declared. Retention is UNKNOWN: the no-storage statements concern
+  Chat AI conversations, not SAIA API logging. Location, human access and
+  subprocessors are UNKNOWN.
+- **Classification:** limited to what typed results prove. They do not
+  distinguish:
+  - a TLS failure from a connection failure;
+  - chunked framing from truncation or timeout;
+  - a model-identity mismatch from another chat-contract rejection.
+
+  Those cases report as RESULT INCONCLUSIVE or CHAT-CONTRACT INCOMPATIBLE,
+  with the observed attempt state and effect.
+
+```powershell
+uv run python .\validate_kisski_compatibility_preflight.py
+```
