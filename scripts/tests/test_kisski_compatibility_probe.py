@@ -84,6 +84,7 @@ class Run:
 
     def read(self, prompt: str) -> str:
         self.reads += 1
+        self.lines.append("<hidden credential prompt>")
         return CANARY
 
     def ask(self, prompt: str) -> str:
@@ -234,9 +235,11 @@ def test_invalid_selection_makes_no_chat_call(tmp_path: Path, answer: str) -> No
     ("mode", "responses", "verdict"),
     [
         ("401", {}, Classification.AUTHENTICATION_FAILURE),
-        ("403", {}, Classification.AUTHENTICATION_FAILURE),
+        ("403", {}, Classification.AUTHORIZATION_FAILURE),
         ("404", {}, Classification.MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE),
+        ("405", {}, Classification.MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE),
         ("503", {}, Classification.PROVIDER_AVAILABILITY_FAILURE),
+        ("500", {}, Classification.PROVIDER_AVAILABILITY_FAILURE),
         ("429", {}, Classification.PROVIDER_AVAILABILITY_FAILURE),
         (
             "ok",
@@ -251,7 +254,9 @@ def test_invalid_selection_makes_no_chat_call(tmp_path: Path, answer: str) -> No
         "401",
         "403",
         "404",
+        "405",
         "503",
+        "500",
         "429",
         "malformed",
         "empty",
@@ -267,6 +272,12 @@ def test_discovery_failure_prevents_chat(
         assert run() is verdict
     assert tls.paths == [f"POST {MODELS}"] and tls.connections == 1
     assert "no chat call is made" in run.output
+    if mode.isdecimal():
+        # The exact status of the complete response, never a status class;
+        # the rejection body (which carries the RAW marker) is never shown.
+        assert f"discovery HTTP status: {mode}" in run.output
+        assert "xx" not in run.output.replace("xxx", "")
+        assert "discovery disposition: provider_rejected" in run.output
     assert run.asked == []  # no selection prompt without a listing
     leak_free(run, tmp_path)
 
@@ -371,8 +382,34 @@ def test_plan_mode_has_no_network_prompt_or_credential(
         for mock in (connect, resolve, hidden, typed):
             mock.assert_not_called()
     out = capsys.readouterr().out
+    lines = out.splitlines()
+    assert lines[:4] == [
+        "KISSKI-COMPATIBILITY-1 PLAN",
+        "no credential prompt",
+        "no DNS",
+        "no network",
+    ]
+    assert "LIVE RUN" not in out
     assert "POST /v1/models" in out and "POST /v1/chat/completions" in out
     assert "maximum 2" in out and "SYNTHETIC only" in out
+
+
+def test_live_header_precedes_credential_prompts_and_never_claims_no_network(
+    tmp_path: Path,
+) -> None:
+    with server() as tls:
+        run = Run(tmp_path, tls.port)
+        assert run() is Classification.PASS
+    assert run.lines[:4] == [
+        "KISSKI-COMPATIBILITY-1 LIVE RUN",
+        "up to 2 governed external calls may occur:",
+        "  1. POST /v1/models",
+        "  2. POST /v1/chat/completions only after discovery + valid operator "
+        "selection",
+    ]
+    first_prompt = run.lines.index("<hidden credential prompt>")
+    assert first_prompt > 3
+    assert "no network" not in run.output and "PLAN" not in run.output
 
 
 def test_live_entry_requires_an_interactive_terminal(
@@ -413,5 +450,8 @@ def test_script_reads_no_ambient_or_file_credential_and_no_forgeai() -> None:
         for t in imports
     )
     assert not any("forgeai" in t or "engineering" in t for t in imports)
-    text = SCRIPT.read_text(encoding="utf-8").lower()
-    assert "api_key" not in text and "authorization" not in text
+    # No credential variable and no hand-built header: T2 alone writes it.
+    # (The word "authorization" may appear in a classification label.)
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert "api_key" not in text.lower()
+    assert "Authorization:" not in text and "Bearer " not in text

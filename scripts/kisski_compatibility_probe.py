@@ -176,6 +176,7 @@ class Classification(Enum):
 
     PASS = "KISSKI COMPATIBILITY PASS"
     AUTHENTICATION_FAILURE = "KISSKI AUTHENTICATION FAILURE"
+    AUTHORIZATION_FAILURE = "KISSKI AUTHORIZATION FAILURE"
     MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE = (
         "KISSKI MODEL-DISCOVERY CONTRACT INCOMPATIBLE"
     )
@@ -185,16 +186,31 @@ class Classification(Enum):
     RESULT_INCONCLUSIVE = "KISSKI RESULT INCONCLUSIVE"
 
 
-def plan_lines(config: ProbeConfig) -> list[str]:
-    return [
-        "KISSKI-COMPATIBILITY-1 plan (no network, no credential prompt)",
+def plan_lines(config: ProbeConfig, *, live: bool) -> list[str]:
+    """The run header: PLAN (nothing happens) or LIVE RUN (calls may occur)."""
+    if live:
+        header = [
+            "KISSKI-COMPATIBILITY-1 LIVE RUN",
+            "up to 2 governed external calls may occur:",
+            f"  1. POST {config.api_root}/models",
+            f"  2. POST {config.api_root}/chat/completions only after discovery "
+            "+ valid operator selection",
+        ]
+    else:
+        header = [
+            "KISSKI-COMPATIBILITY-1 PLAN",
+            "no credential prompt",
+            "no DNS",
+            "no network",
+        ]
+    return header + [
         f"provider: {config.provider_id}",
         f"API root: {config.base_url}",
         "TLS: system trust store; certificate and hostname verified",
         "credential prompts: 2 hidden inputs of the same API key",
         f"  1. purpose {discovery_purpose()} (model discovery)",
         f"  2. purpose {credential_purpose()} (REMOTE chat)",
-        "external operations (maximum 2, each at most once, no retry):",
+        "governed external operations (maximum 2, each at most once, no retry):",
         f"  1. POST {config.api_root}/models (empty body)",
         "  then: the operator selects one listed model id by number",
         f"  2. POST {config.api_root}/chat/completions (only if 1 listed models)",
@@ -390,9 +406,15 @@ def classify_discovery(result: ModelDiscovery) -> Classification | None:
     if outcome is DiscoveryOutcome.MALFORMED:
         return Classification.MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE
     if outcome is DiscoveryOutcome.PROVIDER_REJECTED:
+        # The exact status proves only the provider's answer, not its cause:
+        # 401 rejects authentication (a mistyped, expired or inactive key is
+        # not distinguished); 403 refuses access (not proof the endpoint or
+        # method is invalid).
         status = result.status
-        if status in (401, 403):
+        if status == 401:
             return Classification.AUTHENTICATION_FAILURE
+        if status == 403:
+            return Classification.AUTHORIZATION_FAILURE
         if status in (404, 405):
             return Classification.MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE
         if status == 429 or (status is not None and status >= 500):
@@ -475,7 +497,7 @@ def run_probe(
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> Classification:
     """One probe run: at most one `/models` call, then at most one chat call."""
-    for line in plan_lines(config):
+    for line in plan_lines(config, live=True):
         write(line)
     write(
         "You will be asked for the same API key twice (hidden input). LegoAI "
@@ -518,7 +540,8 @@ def run_probe(
         write(f"discovery attempt: {_id(discovered.attempt_id)}")
         write(f"discovery disposition: {discovered.outcome.value}")
         if discovered.status is not None:
-            write(f"discovery HTTP status category: {discovered.status // 100}xx")
+            # Exact status of a complete response: safe typed metadata only.
+            write(f"discovery HTTP status: {discovered.status}")
         verdict = classify_discovery(discovered)
         if verdict is not None:
             write("no chat call is made")
@@ -640,11 +663,11 @@ def _final(write: Callable[[str], None], verdict: Classification) -> Classificat
 def main(options: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="KISSKI-COMPATIBILITY-1 probe")
     parser.add_argument(
-        "--plan", action="store_true", help="print the plan; no network or prompt"
+        "--plan", action="store_true", help="print the plan; no prompt, DNS or network"
     )
     arguments = parser.parse_args(options)
     if arguments.plan:
-        for line in plan_lines(ProbeConfig.live(Path("<not created>"))):
+        for line in plan_lines(ProbeConfig.live(Path("<not created>")), live=False):
             print(line)
         return 0
     if not (sys.stdin.isatty() and sys.stdout.isatty()):

@@ -17,11 +17,13 @@ from pathlib import Path
 from validate_secret_use_durable_custody_1 import IMPLEMENTATION_TEST_DIRECTORIES
 
 ROOT = Path(__file__).resolve().parent
-BASE = "d6ee6ae"  # PROVIDER-MODEL-DISCOVERY-1 qualified; last commit before this
+BASE = "ad5c987"  # KISSKI-COMPATIBILITY-1 harness committed (last before
+# KISSKI-PROBE-DIAGNOSTICS-1)
 HARNESS = "scripts/kisski_compatibility_probe.py"
 TESTS = "scripts/tests/test_kisski_compatibility_probe.py"
 SELF = "validate_kisski_compatibility_preflight.py"
-PYTHON_FILES = (HARNESS, TESTS, SELF)
+DISCOVERY = "tests/integration/composition/test_provider_discovery.py"
+PYTHON_FILES = (HARNESS, TESTS, DISCOVERY, SELF)
 ALLOWED = set(PYTHON_FILES) | {
     "docs/model-composition.md",
     "planning/LEGOAI-FORGEAI-MASTER-ROADMAP-2026.md",
@@ -147,6 +149,7 @@ def main() -> int:
                 "plan mode and live-entry guards; no ambient or file credential",
                 TESTS,
                 "test_plan_mode_has_no_network_prompt_or_credential",
+                "test_live_header_precedes_credential_prompts_and_never_claims_no_network",
                 "test_live_entry_requires_an_interactive_terminal",
                 "test_only_option_is_plan",
                 "test_script_reads_no_ambient_or_file_credential_and_no_forgeai",

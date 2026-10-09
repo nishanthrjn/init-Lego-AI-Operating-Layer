@@ -189,7 +189,7 @@ def test_malformed_listing_keeps_completed_transport_truth(
         assert tls.connections == 1
 
 
-@pytest.mark.parametrize("mode", ["401", "403", "404", "429", "500", "503"])
+@pytest.mark.parametrize("mode", ["401", "403", "404", "405", "429", "500", "503"])
 def test_complete_rejections_are_never_retried(tmp_path: Path, mode: str) -> None:
     echo = json.dumps({"error": f"bad key {CANARY}"}).encode()
     with server(mode, echo) as tls, discovery(tmp_path, tls.port, CANARY) as x:
