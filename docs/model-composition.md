@@ -425,3 +425,18 @@ no external provider call.
 ```powershell
 uv run python .\validate_credential_https_t2.py
 ```
+
+**CREDENTIAL-HTTPS-T2 LOCALLY QUALIFIED** (2026-10-09). The operator's run of
+that command passed **20/20 phases** offline on commit `862767b`. That includes 59
+T2 tests (transport, end-to-end exchange, adversarial and architecture),
+ownership and import boundaries (270), attempt custody, S1, disclosure and
+Secret (317), durable custody, OpenAI-compatible LOCAL and Ollama (227), and Core
+(1944), DocuMind (16) and ForgeAI (89) regressions. Qualification covers the
+SRCP-1 private credential-bearing HTTPS transport: TLS is established before
+Secret realization, each credential-bearing nonblocking handoff is
+currentness-gated under the shared ordering domain, durable INTENDED custody
+precedes handoff, and bounded observations preserve NONE/UNKNOWN/completed
+effect truth without retry or fallback. Synthetic local TLS only. There is no
+REMOTE provider support, no OpenAI-compatible REMOTE, no KISSKI or ForgeAI
+remote support, no production credential management, no strict wall-clock
+atomic expiry and no provider-side revocation ordering.
