@@ -1432,3 +1432,12 @@ __pycache__/
 
 # Pytest cache
 .pytest_cache/
+
+
+# Test-generated temporary custody workspaces
+.custody-documind-temp/
+.custody-forgeai-temp/
+.custody-regression-temp/
+
+# ForgeAI LQ13 test-generated temporary workspace
+examples/forgeai/.lq13-test-temp/
