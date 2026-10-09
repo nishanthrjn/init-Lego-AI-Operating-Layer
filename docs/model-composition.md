@@ -354,3 +354,14 @@ there is no transport, Authorization header, KISSKI support or provider call.
 ```powershell
 uv run python .\validate_remote_attempt_custody_1.py
 ```
+
+**REMOTE-ATTEMPT-CUSTODY-1 LOCALLY QUALIFIED** (2026-10-09). The operator's run of
+that command passed **20/20 phases** offline on commit `c0cb4e3`. That includes 41
+attempt-custody tests (with real process-death windows A-D), 7 invocation-plane
+tests, ownership and import boundaries (254), disclosure, S1 and Secret (281) and
+durable-custody (59) regressions, and Core (1889), DocuMind (16) and ForgeAI (89)
+regressions. Qualification covers durable, content-minimized INTENDED custody for
+one exact intended remote attempt before any future credential-bearing handoff,
+with no resend on recovery and UNKNOWN for unresolved attempts. There is no
+transport, no REMOTE support, no Bearer authentication, no KISSKI support and no
+live remote-effect qualification.
