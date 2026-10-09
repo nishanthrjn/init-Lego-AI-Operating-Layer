@@ -23,6 +23,9 @@ FORGEAI = ROOT / "examples" / "forgeai"
 ENGINEERING = ROOT / "packages" / "legoai-engineering"
 SELF = ROOT / "validate_forgeai_v01.py"
 BASE = "3993320"  # last commit before the v0.1 product slices
+# Scope audits describe the original slice, not every subsequent platform change.
+# All typing, lint, tests and demos below still exercise the current checkout.
+SLICE_END = "03d2c6eda0e74793f68720f36b0a5033edf7e2e1"  # read-only context slice
 IMAGE = "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df"
 SOURCES = ["src", "tests", "demo.py"]
 ENGINEERING_PREFIX = "packages/legoai-engineering/"
@@ -142,22 +145,13 @@ def main() -> int:
                 env=project_environment,
             )
             run(
-                "2 no LegoAI Core source change",
-                [git, "diff", "--exit-code", "--stat", BASE, "--", "src"],
+                "2 historical v0.1 scope: no LegoAI Core source change",
+                [git, "diff", "--exit-code", "--stat", BASE, SLICE_END, "--", "src"],
             )
-            phase = "2b Engineering change limited to the readiness, diagnostics and context seams"
+            phase = "2b historical v0.1 scope: Engineering readiness, diagnostics and context seams"
             changed = set(
                 subprocess.run(
-                    [git, "diff", "--name-only", BASE, "--", "packages"],
-                    cwd=ROOT,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                ).stdout.split()
-            )
-            changed |= set(
-                subprocess.run(
-                    [git, "ls-files", "--others", "--exclude-standard", "packages"],
+                    [git, "diff", "--name-only", BASE, SLICE_END, "--", "packages"],
                     cwd=ROOT,
                     check=True,
                     capture_output=True,

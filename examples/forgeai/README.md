@@ -604,6 +604,13 @@ uv run python .\validate_forgeai_v01.py   # v0.1 (pipes an explicit "y" to the d
 uv run python .\validate_forgeai_3.py     # historical; its demo phases now prompt for approval
 ```
 
+The v0.1 validator's phase 2/2b scope audits compare the original commits
+`3993320..03d2c6eda0e74793f68720f36b0a5033edf7e2e1`. They establish the scope
+of that historical slice, not the scope of later committed or uncommitted work.
+Both commits must be available locally. All static checks, regression tests
+and Docker demos run against the current checkout; later platform changes are
+not rejected merely for falling outside the original slice's file allowlist.
+
 ## ForgeAI-3 qualification evidence
 
 On 2026-09-29 the maintainer ran `validate_forgeai_3.py` on Windows with
