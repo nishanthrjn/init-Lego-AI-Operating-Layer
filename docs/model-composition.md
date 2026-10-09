@@ -569,3 +569,77 @@ request; no retry or fallback occurs. Synthetic local TLS and S1 material only.
 Not qualified: KISSKI, cloud providers generally, hosted or multi-tenant
 support, remote model quality, ForgeAI remote support and ComfyUI remote
 support.
+
+## Governed model discovery (PROVIDER-MODEL-DISCOVERY-1)
+
+**Status: IMPLEMENTED (2026-10-09); local qualification pending the operator's
+validator run.** This adds one credentialed provider-control operation: it
+retrieves a remote OpenAI-compatible provider's advertised model ids. It is an
+operator/provider-setup step, not a Model invocation, and lives outside
+ModelPort, every request type, the public host and ForgeAI. It discloses no
+model-visible content.
+
+**Authority (ADR-024 §22).** `legoai.governance.provider_control` holds
+`ProviderDiscoveryAdmission`. It binds the admission id and revision, the
+provider, the normalized https origin and API root, `ProviderOperation.MODEL_DISCOVERY`,
+the operator-control consumer, the credential `SecretRevisionRef`, and a
+validity window, with no wildcards. `evaluate_discovery` is a pure function
+with a closed refusal set. This admission and `DisclosureAdmission` are
+unrelated types: neither is accepted in place of the other, and
+`model-disclosure/1` gains no class.
+
+**Sequence** (`runtime/_composition/provider_discovery.discover_remote_models`):
+
+1. The admission is evaluated now, and the credential must carry the
+   `provider-model-discovery` Secret purpose.
+2. The fixed `/models` target is built.
+3. A durable INTENDED `ProviderControlAttempt` is committed.
+4. A new exact Secret use is composed (use id = attempt id, consumer
+   `legoai.provider.model-discovery`) and its current authority is checked.
+5. T2 runs: verified TLS, one claim, the final check with the margin, and
+   `POST {api_root}/models` with an empty body.
+6. The attempt is settled.
+7. The bounded parser reads the response.
+
+A refusal before custody records nothing and sends nothing. A Secret refusal
+settles NOT_SENT. One call makes one request, with no retry or fallback.
+
+**Custody.** The existing attempt store gains a separately tagged record kind
+(`"kind": "provider-control"`): operation, admission id and revision,
+provider, origin, API root, credential revision and time. It carries no
+disclosure, declaration, binding or model identity. `RemoteAttempt` and the
+Model path are unchanged, and older records still decode. No
+`DisclosureObservation` and no other Evidence record is written, because
+nothing model-visible is disclosed. The attempt and the Secret-use
+attribution are the durable record.
+
+**Secret purpose.** S1 binds each revision to exactly one purpose and
+consumer. A discovery credential is therefore its own revision, provisioned
+for `provider-model-discovery`; a revision provisioned for REMOTE Model use
+is refused for discovery, and the reverse also holds.
+
+**Outcomes** (`ModelDiscovery`):
+
+| Outcome | Meaning |
+| --- | --- |
+| REFUSED | Refused before custody, with a `DiscoveryRefusal`. |
+| NOT_SENT | No credential-bearing byte was sent. |
+| UNKNOWN | Partial or full send without a complete response (chunked framing included). |
+| PROVIDER_REJECTED | Complete non-2xx; the status is reported. |
+| MALFORMED | Complete 2xx outside the model-list contract; the attempt stays COMPLETED. |
+| LISTED | The advertised ids. |
+
+The parser (`parse_model_list`) accepts only `{"data": [{"id": ...}]}`, with
+at most 1,024 ids. Ids must be valid and unique, other fields are ignored, and
+anything malformed fails closed. Raw responses are never retained or logged.
+Returned ids are an observation at that moment, never configuration,
+admission, Catalog entries or routing. They change no binding.
+
+**Not claimed:** KISSKI compatibility, dynamic model routing, provider
+discovery in general, model availability beyond the observed call, ForgeAI
+remote support or production provider management. Qualification uses
+process-local synthetic TLS servers only.
+
+```powershell
+uv run python .\validate_provider_model_discovery_1.py
+```

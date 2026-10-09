@@ -127,6 +127,9 @@ def test_only_the_host_composes_the_plane() -> None:
         # Typed pass-through of the host's plane on the governed paths.
         "src/legoai/runtime/_composition/agent.py",
         "src/legoai/runtime/_composition/model_governed.py",
+        # PROVIDER-MODEL-DISCOVERY-1 reuses the shared exact-use request and
+        # fault recording; it never composes or calls the Model plane.
+        "src/legoai/runtime/_composition/provider_discovery.py",
     }
 
 

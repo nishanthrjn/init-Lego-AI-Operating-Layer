@@ -574,6 +574,24 @@ def violations(sources: dict[str, str]) -> set[str]:
                                 )
                             )
                         )
+                        # PROVIDER-MODEL-DISCOVERY-1 (ADR-024 §22): the
+                        # provider-control seam uses its own admission, the
+                        # attempt store, T2 and the adapter's bounded
+                        # model-list parser; no disclosure policy.
+                        or (
+                            name == "legoai.runtime._composition.provider_discovery"
+                            and any(
+                                target == module or target.startswith(module + ".")
+                                for module in (
+                                    "legoai.governance.provider_control",
+                                    "legoai.governance.secret",
+                                    "legoai.governance.values",
+                                    "legoai.reference._credential_https",
+                                    "legoai.reference._remote_attempts",
+                                    "legoai.reference.model_openai_compatible",
+                                )
+                            )
+                        )
                         # ADR-024: the private disclosure gate composes the
                         # governance evaluator with Evidence custody; the
                         # governed Model path only types its decision.

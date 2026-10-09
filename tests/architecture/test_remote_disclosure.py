@@ -64,6 +64,8 @@ def test_only_trusted_runtime_and_evidence_paths_import_disclosure() -> None:
     # adapter or any reference realization.
     assert _importers(ROOT / "src") == {
         "src/legoai/evidence/ports.py",
+        # ADR-024 §22: reuses `endpoint_parts` only; no disclosure policy.
+        "src/legoai/governance/provider_control.py",
         # T2 reuses `endpoint_parts` normalization only; no policy evaluation.
         "src/legoai/reference/_credential_https.py",
         "src/legoai/runtime/_composition/disclosure.py",

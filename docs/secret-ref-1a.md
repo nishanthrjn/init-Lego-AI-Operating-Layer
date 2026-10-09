@@ -427,3 +427,10 @@ source under the ordering domain. `_SecretClock(domain, host=clock)` samples
 the governed host's own trusted clock, so Grant, admission and Secret validity
 use one time source. The one-use-per-incarnation facade
 (`_SyntheticSecretAccess` without a factory) is unchanged.
+
+**PROVIDER-MODEL-DISCOVERY-1 (Secret purpose).** A credentialed model-catalog
+query uses its own Secret-use purpose (`provider-model-discovery`) and
+consumer (`legoai.provider.model-discovery`), never the REMOTE Model purpose.
+Each call is one new exact use through `_SecretUses`, with use id = the
+provider-control attempt id. S1's purpose binding is unchanged: one revision
+serves exactly one purpose and consumer.
