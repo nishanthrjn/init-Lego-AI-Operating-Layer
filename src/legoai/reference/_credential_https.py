@@ -23,6 +23,7 @@ from enum import Enum
 from pathlib import Path
 
 from legoai.governance.disclosure import endpoint_parts
+from legoai.governance.provider_control import ProviderDiscoveryMethod
 
 
 def _max_request_body() -> int:
@@ -79,9 +80,27 @@ class HttpsTarget:
     port: int
     api_root: str = field(repr=False)
     path: str = field(repr=False)
+    discovery_method: ProviderDiscoveryMethod | None = None
+
+    def __post_init__(self) -> None:
+        if self.path == "/models":
+            if self.discovery_method is None:
+                object.__setattr__(
+                    self, "discovery_method", ProviderDiscoveryMethod.POST_EMPTY
+                )
+            elif type(self.discovery_method) is not ProviderDiscoveryMethod:
+                raise TransportError(TransportFailure.PROTOCOL)
+        elif self.discovery_method is not None:
+            raise TransportError(TransportFailure.PROTOCOL)
 
     @staticmethod
-    def for_endpoint(origin: str, api_root: str, path: str) -> HttpsTarget:
+    def for_endpoint(
+        origin: str,
+        api_root: str,
+        path: str,
+        *,
+        discovery_method: ProviderDiscoveryMethod | None = None,
+    ) -> HttpsTarget:
         parts = endpoint_parts(origin + ("" if api_root == "/" else api_root))
         # The two Model operations and the one provider-control operation
         # (PROVIDER-MODEL-DISCOVERY-1, ADR-024 §22). Never an arbitrary path.
@@ -93,7 +112,9 @@ class HttpsTarget:
             raise TransportError(TransportFailure.ORIGIN)
         host_port = origin.removeprefix("https://")
         host, _, port = host_port.partition(":")
-        return HttpsTarget(host, int(port) if port else 443, api_root, path)
+        return HttpsTarget(
+            host, int(port) if port else 443, api_root, path, discovery_method
+        )
 
     @property
     def origin(self) -> str:
@@ -161,6 +182,8 @@ class _CredentialFlight:
         if not context.check_hostname or context.verify_mode is not ssl.CERT_REQUIRED:
             raise TransportError(TransportFailure.TLS)
         if type(body) is not bytes or len(body) > _max_request_body():
+            raise TransportError(TransportFailure.PROTOCOL)
+        if target.path == "/models" and body:
             raise TransportError(TransportFailure.PROTOCOL)
         if type(timeout) not in (int, float) or not 0 < timeout <= 3600:
             raise ValueError("bounded timeout required")
@@ -269,16 +292,18 @@ class _CredentialFlight:
         self._begun = True
         request = bytearray()
         try:
+            is_get = self.target.discovery_method is ProviderDiscoveryMethod.GET
             request += (
-                f"POST {self.target.request_path} HTTP/1.1\r\n"
+                f"{'GET' if is_get else 'POST'} {self.target.request_path} HTTP/1.1\r\n"
                 f"Host: {self.target.origin.removeprefix('https://')}\r\n"
-                "Content-Type: application/json\r\n"
-                "Accept: application/json\r\n"
             ).encode("ascii")
+            if not is_get:
+                request += b"Content-Type: application/json\r\n"
+            request += b"Accept: application/json\r\n"
             request += b"Authorization: Bearer " + material + b"\r\n"
-            request += (
-                f"Content-Length: {len(self._body)}\r\nConnection: close\r\n\r\n"
-            ).encode("ascii")
+            if not is_get:
+                request += f"Content-Length: {len(self._body)}\r\n".encode("ascii")
+            request += b"Connection: close\r\n\r\n"
             request += self._body
             view = memoryview(request)
             written = 0

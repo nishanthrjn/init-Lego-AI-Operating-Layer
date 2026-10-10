@@ -33,10 +33,12 @@ class TlsServer:
         expected: str = "",
         responses: dict[str, bytes] | None = None,
         on_request: Callable[[], None] | None = None,
+        methods: dict[str, str] | None = None,
     ) -> None:
         self.mode, self.expected = mode, expected.encode()
         self.responses = dict(responses or {})
         self.on_request = on_request
+        self.methods = dict(methods or {})
         self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         self.context.load_cert_chain(TLS / cert)
         # Listen on the first loopback address `localhost` resolves to (often
@@ -50,6 +52,7 @@ class TlsServer:
         self.requests = 0
         self.authorized: list[bool] = []
         self.header_lines: list[int] = []
+        self.header_names: list[tuple[str, ...]] = []
         self.paths: list[str] = []
         self.hosts: list[str] = []
         self.bodies: list[bytes] = []
@@ -117,6 +120,9 @@ class TlsServer:
         self.requests += 1
         self.paths.append(f"{method.decode()} {path.decode()}")
         self.header_lines.append(len(lines) - 1)
+        self.header_names.append(
+            tuple(line.partition(b":")[0].decode().lower() for line in lines[1:])
+        )
         self.bodies.append(body)
         # Compare and discard: only the boolean outcome is retained.
         self.authorized.append(
@@ -131,6 +137,11 @@ class TlsServer:
             return
         path = self._read_request(conn)
         if path is None:
+            return
+        if path in self.methods and self.paths[-1] != f"{self.methods[path]} {path}":
+            conn.sendall(
+                b"HTTP/1.1 405 Method Not Allowed\r\nContent-Length: 0\r\n\r\n"
+            )
             return
         if self.on_request is not None:
             self.on_request()

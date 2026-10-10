@@ -26,7 +26,10 @@ from pathlib import Path
 
 from legoai.capabilities.values import CapabilityId
 from legoai.execution.values import ExecutionId
-from legoai.governance.provider_control import ProviderOperation
+from legoai.governance.provider_control import (
+    ProviderDiscoveryMethod,
+    ProviderOperation,
+)
 from legoai.governance.secret import SecretRevisionRef, _time
 from legoai.intelligence.model.values import ModelId, ProviderId
 from legoai.kernel.identity import _validate
@@ -211,6 +214,7 @@ class ProviderControlAttempt:
     api_root: str = field(repr=False)
     secret: SecretRevisionRef
     created_at: datetime
+    method: ProviderDiscoveryMethod = ProviderDiscoveryMethod.POST_EMPTY
 
     def __post_init__(self) -> None:
         for value, kind in (
@@ -219,6 +223,7 @@ class ProviderControlAttempt:
             (self.operation, OperationRef),
             (self.configuration, ConfigurationRevisionRef),
             (self.control, ProviderOperation),
+            (self.method, ProviderDiscoveryMethod),
             (self.provider_id, ProviderId),
             (self.secret, SecretRevisionRef),
         ):
@@ -303,7 +308,8 @@ def _encode(attempt: RemoteAttempt | ProviderControlAttempt) -> str:
 
 def _encode_control(attempt: ProviderControlAttempt) -> str:
     record = {
-        "kind": "provider-control",
+        "kind": "provider-control-v2",
+        "method": attempt.method.value,
         "attempt_id": attempt.attempt_id.value,
         "execution_id": attempt.execution_id.value,
         "operation": codec.encode(attempt.operation),
@@ -321,7 +327,28 @@ def _encode_control(attempt: ProviderControlAttempt) -> str:
 
 
 def _decode_control(value: dict[str, object]) -> ProviderControlAttempt:
-    if len(value) != 13 or value["kind"] != "provider-control":
+    legacy = value.get("kind") == "provider-control"
+    expected = {
+        "kind",
+        "attempt_id",
+        "execution_id",
+        "operation",
+        "configuration",
+        "control",
+        "admission_id",
+        "admission_revision",
+        "provider_id",
+        "endpoint_origin",
+        "api_root",
+        "secret",
+        "created_at",
+    }
+    if not legacy:
+        expected.add("method")
+    if set(value) != expected or value["kind"] not in (
+        "provider-control",
+        "provider-control-v2",
+    ):
         raise ValueError("attempt representation")
     operation = codec.decode(str(value["operation"]))
     configuration = codec.decode(str(value["configuration"]))
@@ -345,6 +372,9 @@ def _decode_control(value: dict[str, object]) -> ProviderControlAttempt:
         str(value["api_root"]),
         secret,
         datetime.fromisoformat(str(value["created_at"])),
+        ProviderDiscoveryMethod.POST_EMPTY
+        if legacy
+        else ProviderDiscoveryMethod(value["method"]),
     )
 
 

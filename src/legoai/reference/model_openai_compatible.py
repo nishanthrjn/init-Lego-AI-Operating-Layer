@@ -173,11 +173,21 @@ def _payload(status: int, raw: bytes) -> dict[str, object]:
     return _json_body(raw)
 
 
-def _json_body(raw: bytes) -> dict[str, object]:
+def _finite_float(text: str) -> float:
+    value = float(text)
+    if not math.isfinite(value):
+        raise ValueError("non-finite catalog number")
+    return value
+
+
+def _json_body(raw: bytes, *, finite_numbers: bool = False) -> dict[str, object]:
     """The one strict JSON decoding of a complete success body."""
     try:
         payload = json.loads(
-            raw, object_pairs_hook=_json_object, parse_constant=_invalid_constant
+            raw,
+            object_pairs_hook=_json_object,
+            parse_constant=_invalid_constant,
+            parse_float=_finite_float if finite_numbers else float,
         )
     except ValueError, UnicodeError, RecursionError:
         # Reject outside the handler so JSONDecodeError.doc (the provider
@@ -219,6 +229,106 @@ def parse_model_list(raw: bytes) -> tuple[ModelId, ...]:
         models.append(ModelId(name))
     if len(set(models)) != len(models):
         _reject()
+    return tuple(models)
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoveredProvider:
+    """Advertised backend facts only; prices are USD per million tokens."""
+
+    provider: str = field(repr=False)
+    status: str | None = field(default=None, repr=False)
+    input_price: float | None = field(default=None, repr=False)
+    output_price: float | None = field(default=None, repr=False)
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoveredModel:
+    """Optional catalog selection evidence; never authority or a route."""
+
+    model: ModelId = field(repr=False)
+    providers: tuple[DiscoveredProvider, ...] = field(default=(), repr=False)
+    input_modalities: tuple[str, ...] = field(default=(), repr=False)
+    output_modalities: tuple[str, ...] = field(default=(), repr=False)
+
+
+def _catalog_text(value: object, bound: int) -> str:
+    if (
+        type(value) is not str
+        or not 1 <= len(value) <= bound
+        or value != value.strip()
+        or any(
+            not c.isascii() or not c.isprintable() or c.isspace() or c in "*?"
+            for c in value
+        )
+    ):
+        _reject()
+    return value
+
+
+def _modalities(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list) or len(value) > 8:
+        _reject()
+    result = tuple(_catalog_text(item, 32) for item in value)
+    if len(set(result)) != len(result):
+        _reject()
+    return result
+
+
+def _price(value: object) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        _reject()
+    if not 0 <= value <= 1_000_000 or not math.isfinite(value):
+        _reject()
+    return float(value)
+
+
+def parse_model_catalog(raw: bytes) -> tuple[DiscoveredModel, ...]:
+    """Opt-in selection profile: bounded architecture/providers/pricing fields.
+
+    Unknown fields are discarded. Absent optional facts remain absent. This
+    profile does not change the historical ID-only parser's acceptance scope.
+    """
+    if len(raw) > 4_194_304:
+        _reject()
+    ids = parse_model_list(raw)
+    data = _json_body(raw, finite_numbers=True)["data"]
+    assert isinstance(data, list)
+    models: list[DiscoveredModel] = []
+    for model, item in zip(ids, data, strict=True):
+        _catalog_text(model.value, 256)
+        architecture = item.get("architecture", {})
+        if not isinstance(architecture, dict):
+            _reject()
+        inputs = _modalities(architecture.get("input_modalities", []))
+        outputs = _modalities(architecture.get("output_modalities", []))
+        raw_providers = item.get("providers", [])
+        if not isinstance(raw_providers, list) or len(raw_providers) > 32:
+            _reject()
+        providers: list[DiscoveredProvider] = []
+        for backend in raw_providers:
+            if not isinstance(backend, dict):
+                _reject()
+            name = _catalog_text(backend.get("provider"), 128)
+            status = backend.get("status")
+            if status is not None:
+                status = _catalog_text(status, 32)
+            prices = backend.get("pricing", {})
+            if not isinstance(prices, dict):
+                _reject()
+            providers.append(
+                DiscoveredProvider(
+                    name,
+                    status,
+                    _price(prices.get("input")),
+                    _price(prices.get("output")),
+                )
+            )
+        if len({p.provider for p in providers}) != len(providers):
+            _reject()
+        models.append(DiscoveredModel(model, tuple(providers), inputs, outputs))
     return tuple(models)
 
 

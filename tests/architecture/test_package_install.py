@@ -360,6 +360,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/integration/composition/test_openai_compatible_remote.py",
             "tests/integration/composition/test_openai_compatible.py",
             "tests/integration/composition/test_provider_discovery.py",
+            "tests/integration/composition/test_provider_discovery_v2.py",
             "tests/integration/composition/test_remote_attempt_custody.py",
             "tests/integration/composition/test_remote_disclosure_gate.py",
             "tests/integration/composition/test_remote_disclosure.py",

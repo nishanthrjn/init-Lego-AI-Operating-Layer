@@ -129,7 +129,8 @@ def test_listed_models_through_the_governed_path(
         assert attempt["id"] == result.attempt_id.value
         assert attempt["state"] == "completed"
         record = attempt["record"]
-        assert record["kind"] == "provider-control"
+        assert record["kind"] == "provider-control-v2"
+        assert record["method"] == "post_empty"
         assert record["control"] == "model-discovery"
         assert (record["admission_id"], record["admission_revision"]) == (
             "discovery",

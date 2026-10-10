@@ -18,6 +18,7 @@ from legoai.capabilities.values import CapabilityId, CapabilityOffer
 from legoai.evidence.custody import CustodyAccess
 from legoai.governance.provider_control import (
     ProviderDiscoveryAdmission,
+    ProviderDiscoveryMethod,
     ProviderOperation,
 )
 from legoai.governance.secret import SecretRef
@@ -115,6 +116,8 @@ def discovery(
     *,
     purpose: str | None = None,
     consumer: str | None = None,
+    method: ProviderDiscoveryMethod = ProviderDiscoveryMethod.POST_EMPTY,
+    selection_metadata: bool = False,
 ) -> Iterator[Discovery]:
     domain = _OrderingDomain()
     source = _ProvisionedSecretSource(domain, SCOPE)
@@ -136,6 +139,7 @@ def discovery(
         credential.exact,
         AT - HOUR,
         AT + HOUR,
+        method,
     )
     tenant = TenantContext(SCOPE.tenant_id)
     grant = Grant(
@@ -193,7 +197,9 @@ def discovery(
         credential,
         origin,
         admission,
-        DiscoveryEndpoint(PROVIDER, origin, "/v1", credential),
+        DiscoveryEndpoint(
+            PROVIDER, origin, "/v1", credential, method, selection_metadata
+        ),
         attempts,
         uses,
         grants,

@@ -34,6 +34,15 @@ the current public host and regression tests establish the implemented behavior.
 
 ## HF named-provider preflight (2026-10-10)
 
+Current: [PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) implements
+closed GET/POST_EMPTY discovery with method-bound custody and optional bounded
+backend observations. HF's synthetic harness now supports numbered pair selection
+and separate S1 purposes; the live gate remains disabled pending operator local
+qualification. Coarse Model/T2 diagnostics are accepted and unchanged. No provider
+API call occurred, and no repository-disclosure readiness is claimed.
+
+Historical pre-v2 status:
+
 [HF-INFERENCE-PROVIDERS-COMPATIBILITY-1](hf-inference-compatibility.md) is blocked
 before live execution: documented GET discovery differs from the qualified POST
 transport, model IDs alone do not establish a live backend pairing, and some

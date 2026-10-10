@@ -1,5 +1,74 @@
 # HF-INFERENCE-PROVIDERS-COMPATIBILITY-1
 
+## Current status: discovery v2 implemented, local validation pending
+
+[PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) implements the GET
+and bounded backend-observation prerequisites. No provider API call has occurred.
+The HF live gate remains **disabled** until the maintainer's offline run passes
+and the readiness record is updated. This is not yet LIVE-PROBE READY.
+The earlier 1,044-test result below qualifies the original blocked preflight,
+not this new implementation. No v2 tests or static checks were run by the agent.
+
+The current script supports the future sequence through the existing owners:
+hidden S1 discovery provisioning; one governed GET; up to three observed
+model/backend pairs; numbered operator selection; separate SYNTHETIC approval;
+hidden S1 chat provisioning under a different purpose; one governed REMOTE chat.
+Selection freezes the exact `model:provider` identity in a new chat configuration.
+There is no retry, fallback, arbitrary model/method argument or repository input.
+Default invocation and `--live` refuse before credentials while `LIVE_READY`
+is false. Only explicit localhost TLS fixtures can exercise orchestration now.
+
+The visible shortlist policy is deliberately closed:
+
+- Coding models: Qwen2.5-Coder-32B-Instruct, then Qwen3-Coder-480B-A35B-Instruct,
+  from the official [chat recommendations](https://huggingface.co/docs/inference-providers/tasks/chat-completion).
+- Backend identities: [Fireworks AI](https://huggingface.co/docs/inference-providers/providers/fireworks-ai),
+  [Novita](https://huggingface.co/docs/inference-providers/providers/novita),
+  [Together AI](https://huggingface.co/docs/inference-providers/providers/together).
+  These dated provider-declared identities do not establish live availability.
+- Each pair must actually appear in this governed discovery response, with
+  status `live`, exactly text input/output and both prices present and at most
+  USD 5 per million tokens each. This is price screening, not a billing guarantee.
+  Missing facts exclude a candidate. No inference from model size or names.
+- Order follows the displayed allowlist and backend ID, not a quality, speed or
+  price ranking. Keep at most three. Only a displayed number can select a pair;
+  no eligible candidate means no chat or second Secret prompt.
+
+The declaration names both HF's router and the selected inference service using
+official identity sources retrieved 2026-10-10. Other processor facts remain
+UNKNOWN for this SYNTHETIC scope. Discovery grants no disclosure authority.
+The only message is `Return exactly the word READY.` with 16 maximum output
+tokens, a 60-second timeout and unchanged exact-model/stop/framing requirements.
+
+Diagnostic restraint is now an accepted constraint, **not a blocker requiring
+new Model errors**. Typed discovery statuses can distinguish 401/403 and 5xx.
+429 remains inconclusive about quota. A complete rejected chat contract stays
+CHAT_CONTRACT_INCOMPATIBLE; model mismatch and non-stop reasons are not split.
+Unknown framing/transport outcomes stay RESULT_INCONCLUSIVE. A valid response
+must equal READY for a pass. No provider response text is printed except that
+fixed successful word, so an echoed token or arbitrary reply cannot enter output.
+
+Run locally from the root:
+
+```powershell
+uv run --locked --offline --no-sync python .\scripts\hf_inference_compatibility_probe.py --plan
+uv run --locked --offline --no-sync python .\validate_provider_model_discovery_2.py
+```
+
+Return the full validator log. After successful qualification and a readiness
+update, the future interactive command is
+`uv run --locked --offline --no-sync python .\scripts\hf_inference_compatibility_probe.py --live`.
+Do not execute it now. Separate future authorization remains
+`AUTHORIZE HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 LIVE PROBE`.
+Unknown mandatory processor facts can still block any later repository pilot;
+synthetic success never authorizes repository disclosure. Kaggle remains a
+separate deployment experiment, not a Core adapter.
+
+## Historical record: original blocked preflight
+
+Everything below records the pre-v2 investigation and its qualification scope;
+its implementation-gap and command descriptions are superseded by the section above.
+
 Status, 2026-10-10: **PREFLIGHT BLOCKED — LIVE PROBE NOT READY**.
 Research and a fail-closed operator preflight are prepared. No tests, static
 checks, provider discovery or inference requests were executed by the agent.

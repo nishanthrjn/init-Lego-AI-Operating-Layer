@@ -27,6 +27,7 @@ from legoai.reference._remote_attempts import (
     AttemptState,
     AttemptStatus,
     IntendedReceipt,
+    ProviderControlAttempt,
     _RemoteAttemptStore,
 )
 from legoai.runtime._composition.secret import _SyntheticSecretAccess
@@ -112,6 +113,15 @@ def exchange(
         or request.plan.use_id.value != attempt.attempt_id.value
     ):
         raise PermissionError("credential recipient mismatch")
+    if type(attempt) is ProviderControlAttempt:
+        if (
+            target.path != "/models"
+            or target.discovery_method is not attempt.method
+            or body
+        ):
+            raise PermissionError("provider-control request shape mismatch")
+    elif target.discovery_method is not None:
+        raise PermissionError("model attempt cannot perform provider control")
     flight = _CredentialFlight(target, context, body, timeout=timeout)
     try:
         try:

@@ -17,6 +17,18 @@ or semantics still require code behind the appropriate public boundary.
 
 ## 1. Executive status
 
+2026-10-10: [PROVIDER-MODEL-DISCOVERY-2](../docs/provider-model-discovery-2.md)
+is **IMPLEMENTED — LOCAL VALIDATION PENDING**. Closed GET/POST_EMPTY methods are
+bound through admission, attempt custody and T2; optional bounded observations
+support exact backend selection. The HF harness implements one governed GET,
+up to three eligible coding pairs, numbered selection and one separately approved
+SYNTHETIC chat with distinct S1 provisioning. Its live gate remains disabled.
+Coarse diagnostics are deliberately retained. No provider request or agent-run
+test occurred. Operator command: `uv run --locked --offline --no-sync python
+.\validate_provider_model_discovery_2.py`. Repository pilot policy gates remain.
+
+Historical pre-v2 record:
+
 2026-10-10: [HF-INFERENCE-PROVIDERS-COMPATIBILITY-1](../docs/hf-inference-compatibility.md)
 is **PREFLIGHT BLOCKED — OFFLINE CHECKS PASSED**. The complete operator validator
 run passed 1,044 tests and all static/whitespace checks on 2026-10-10; this

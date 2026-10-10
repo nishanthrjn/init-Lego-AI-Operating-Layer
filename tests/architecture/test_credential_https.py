@@ -38,7 +38,10 @@ def _names(path: Path) -> set[str]:
 def test_transport_is_stdlib_tls_only() -> None:
     imports = _imports(TRANSPORT)
     legoai = {t for t in imports if t.startswith("legoai")}
-    assert legoai == {"legoai.governance.disclosure"}  # endpoint_parts only
+    assert legoai == {
+        "legoai.governance.disclosure",  # endpoint_parts only
+        "legoai.governance.provider_control",  # closed request-shape enum only
+    }
     assert not {t.split(".")[0] for t in imports} & {
         "urllib",
         "http",

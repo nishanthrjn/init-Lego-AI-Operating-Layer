@@ -1,4 +1,4 @@
-"""PROVIDER-MODEL-DISCOVERY-1: one governed credentialed model-catalog query.
+"""PROVIDER-MODEL-DISCOVERY-2: one governed credentialed model-catalog query.
 
 An operator/provider-setup operation (ADR-024 §22), not a Model invocation:
 it is outside ModelPort, every request type, disclosure policy and every
@@ -8,8 +8,8 @@ application. It discloses no model-visible content. In order:
     exact `/models` target -> durable INTENDED ProviderControlAttempt ->
     a new exact Secret use (purpose provider-model-discovery, use id =
     attempt id) and current Secret authority -> T2: verified TLS, one
-    claim, final currentness with the SRCP-1 margin, `POST {root}/models`
-    with an empty body -> settlement -> bounded model-list parsing.
+    claim, final currentness with the SRCP-1 margin, admitted GET or POST_EMPTY
+    at `{root}/models` -> settlement -> bounded optional selection metadata.
 
 Exactly one request at most; no retry or fallback. The returned ids are an
 observation of what was advertised at that moment. They change no binding,
@@ -27,6 +27,7 @@ from legoai.execution.values import ExecutionId
 from legoai.governance.provider_control import (
     DiscoveryRefusal,
     ProviderDiscoveryAdmission,
+    ProviderDiscoveryMethod,
     ProviderOperation,
     evaluate_discovery,
 )
@@ -44,7 +45,11 @@ from legoai.reference._remote_attempts import (
     RemoteAttemptId,
     _RemoteAttemptStore,
 )
-from legoai.reference.model_openai_compatible import parse_model_list
+from legoai.reference.model_openai_compatible import (
+    DiscoveredModel,
+    parse_model_catalog,
+    parse_model_list,
+)
 from legoai.runtime._composition.credential_https import exchange
 from legoai.runtime._composition.remote_model import (
     exact_use_request,
@@ -81,7 +86,7 @@ class DiscoveryOutcome(Enum):
 
 @dataclass(frozen=True, slots=True)
 class ModelDiscovery:
-    """Safe result: categories, identities and advertised model ids only."""
+    """Safe result: categories, IDs and optional bounded selection observations."""
 
     outcome: DiscoveryOutcome
     refusal: DiscoveryRefusal | None = None
@@ -89,6 +94,7 @@ class ModelDiscovery:
     state: AttemptState | None = None
     status: int | None = None
     models: tuple[ModelId, ...] = field(default=(), repr=False)
+    catalog: tuple[DiscoveredModel, ...] = field(default=(), repr=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,8 +105,14 @@ class DiscoveryEndpoint:
     endpoint_origin: str = field(repr=False)
     api_root: str = field(repr=False)
     credential: SecretRef = field(repr=False)
+    method: ProviderDiscoveryMethod = ProviderDiscoveryMethod.POST_EMPTY
+    selection_metadata: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.method) is not ProviderDiscoveryMethod:
+            raise TypeError("closed discovery method required")
+        if type(self.selection_metadata) is not bool:
+            raise TypeError("explicit metadata profile required")
         if type(self.credential) is not SecretRef:
             raise TypeError("discovery endpoint requires SecretRef")
 
@@ -137,6 +149,7 @@ def discover_remote_models(
         consumer=consumer,
         credential=credential.exact,
         at=now,
+        method=endpoint.method,
     )
     if refusal is None and credential.use_requirement != discovery_purpose():
         refusal = DiscoveryRefusal.CREDENTIAL_MISMATCH
@@ -145,7 +158,10 @@ def discover_remote_models(
     assert admission is not None
     try:
         target = HttpsTarget.for_endpoint(
-            endpoint.endpoint_origin, endpoint.api_root, _path()
+            endpoint.endpoint_origin,
+            endpoint.api_root,
+            _path(),
+            discovery_method=endpoint.method,
         )
     except TransportError:
         return ModelDiscovery(
@@ -166,6 +182,7 @@ def discover_remote_models(
         endpoint.api_root,
         credential.exact,
         now,
+        endpoint.method,
     )
     # No INTENDED receipt: no Secret use, no connection. Failures propagate.
     receipt = attempts.intend(attempt)
@@ -232,7 +249,14 @@ def discover_remote_models(
             response.status,
         )
     try:
-        models = parse_model_list(response.body)
+        catalog = (
+            parse_model_catalog(response.body) if endpoint.selection_metadata else ()
+        )
+        models = (
+            tuple(m.model for m in catalog)
+            if endpoint.selection_metadata
+            else parse_model_list(response.body)
+        )
     except ModelResponseRejectedError:
         # Transport truth stays COMPLETED; only the model-list contract failed.
         return ModelDiscovery(
@@ -249,4 +273,5 @@ def discover_remote_models(
         state,
         response.status,
         models,
+        catalog,
     )

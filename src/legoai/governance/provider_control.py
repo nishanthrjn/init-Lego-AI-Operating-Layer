@@ -26,6 +26,13 @@ class ProviderOperation(Enum):
     MODEL_DISCOVERY = "model-discovery"
 
 
+class ProviderDiscoveryMethod(Enum):
+    """Closed, body-free model-catalog request shapes, selected by the operator."""
+
+    GET = "get"
+    POST_EMPTY = "post_empty"
+
+
 class DiscoveryRefusal(Enum):
     """Closed refusal taxonomy for provider-control admission."""
 
@@ -38,6 +45,7 @@ class DiscoveryRefusal(Enum):
     OPERATION_MISMATCH = "operation_mismatch"
     CONSUMER_MISMATCH = "consumer_mismatch"
     CREDENTIAL_MISMATCH = "credential_mismatch"
+    METHOD_MISMATCH = "method_mismatch"
 
 
 def _exact(value: object) -> None:
@@ -80,8 +88,11 @@ class ProviderDiscoveryAdmission:
     credential: SecretRevisionRef = field(repr=False)
     not_before: datetime
     not_after: datetime
+    method: ProviderDiscoveryMethod = ProviderDiscoveryMethod.POST_EMPTY
 
     def __post_init__(self) -> None:
+        if type(self.method) is not ProviderDiscoveryMethod:
+            raise TypeError("closed discovery method required")
         _validate(self.admission_id)
         _validate(self.revision)
         _exact(self.provider_id)
@@ -112,6 +123,7 @@ def evaluate_discovery(
     consumer: str,
     credential: SecretRevisionRef,
     at: datetime,
+    method: ProviderDiscoveryMethod = ProviderDiscoveryMethod.POST_EMPTY,
 ) -> DiscoveryRefusal | None:
     """Pure decision: may this exact provider-control operation run now?
 
@@ -121,6 +133,8 @@ def evaluate_discovery(
     """
     if type(admission) is not ProviderDiscoveryAdmission:
         return DiscoveryRefusal.NO_ADMISSION
+    if type(method) is not ProviderDiscoveryMethod or method is not admission.method:
+        return DiscoveryRefusal.METHOD_MISMATCH
     now = _aware(at)
     if now < admission.not_before:
         return DiscoveryRefusal.NOT_YET_VALID

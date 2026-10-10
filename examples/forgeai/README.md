@@ -152,12 +152,11 @@ notebook deployment, ComfyUI,
 production credential management, arbitrary OpenAI compatibility or live
 remote model quality is qualified.
 
-The [HF named-provider preflight](../../docs/hf-inference-compatibility.md) is
-blocked: HF documents GET discovery, the qualified transport supports POST only,
-and discovery discards backend selection metadata. Its operator-run plan and
-offline validator passed the complete operator run on 2026-10-10 (1,044 tests
-and all static/whitespace checks). This validates the blocked preflight only
-and grants no HF or repository-disclosure qualification.
+The [HF named-provider preflight](../../docs/hf-inference-compatibility.md) now
+has GET discovery and bounded backend observations implemented by
+PROVIDER-MODEL-DISCOVERY-2. Operator local validation is pending and the live gate
+remains disabled. The earlier 1,044-test pass qualifies only the original blocked
+preflight, not v2 or HF compatibility. No repository disclosure is authorized.
 
 ## Local setup and task execution
 
