@@ -1,4 +1,4 @@
-"""Synthetic HF discovery/chat and disabled live gate; no external provider."""
+"""Synthetic HF discovery/chat and live readiness gates; no external provider."""
 
 import ast
 import json
@@ -38,14 +38,17 @@ ROOT = Path(__file__).resolve().parents[2]
 CANARY = "hf-SYNTHETIC-CANARY-DO-NOT-LEAK-71426"
 
 
-@pytest.mark.parametrize("args,code", [(["--plan"], 0), ([], 2), (["--live"], 2)])
-def test_every_mode_has_zero_io(
+@pytest.mark.parametrize("ready", [False, True])
+@pytest.mark.parametrize("args,code", [(["--plan"], 0), ([], 2)])
+def test_plan_and_default_have_zero_io(
     args: list[str],
     code: int,
+    ready: bool,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setenv("HF_TOKEN", CANARY)
+    monkeypatch.setattr(probe, "LIVE_READY", ready)
     with (
         patch("socket.getaddrinfo", side_effect=AssertionError("DNS forbidden")),
         patch("socket.socket", side_effect=AssertionError("network forbidden")),
@@ -57,10 +60,55 @@ def test_every_mode_has_zero_io(
     captured = capsys.readouterr()
     assert CANARY not in captured.out + captured.err
     if args == ["--plan"]:
-        assert "LOCAL VALIDATION PENDING" in captured.out
-        assert "executable live calls now: 0" in captured.out
+        assert ("SYNTHETIC LIVE-PROBE READY" in captured.out) is ready
+        assert "plan/default provider calls: 0" in captured.out
     else:
         assert "Live execution refused" in captured.out
+
+
+@pytest.mark.parametrize(
+    "ready,stdin_tty,stdout_tty",
+    [(False, True, True), (True, False, True), (True, True, False)],
+)
+def test_live_cli_refuses_before_io(
+    ready: bool,
+    stdin_tty: bool,
+    stdout_tty: bool,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(probe, "LIVE_READY", ready)
+    with (
+        patch.object(probe.sys.stdin, "isatty", return_value=stdin_tty),
+        patch.object(probe.sys.stdout, "isatty", return_value=stdout_tty),
+        patch.object(probe, "run_probe") as run,
+        patch.object(probe.tempfile, "mkdtemp") as directory,
+        patch("socket.getaddrinfo", side_effect=AssertionError("DNS forbidden")),
+        patch("socket.socket", side_effect=AssertionError("network forbidden")),
+        patch("getpass.getpass", side_effect=AssertionError("Secret read forbidden")),
+        patch("builtins.input", side_effect=AssertionError("input forbidden")),
+    ):
+        assert probe.main(["--live"]) == 2
+        run.assert_not_called()
+        directory.assert_not_called()
+
+
+def test_ready_live_cli_dispatches_once_without_provider_io(tmp_path: Path) -> None:
+    assert probe.LIVE_READY is True
+    with (
+        patch.object(probe.sys.stdin, "isatty", return_value=True),
+        patch.object(probe.sys.stdout, "isatty", return_value=True),
+        patch.object(probe.tempfile, "mkdtemp", return_value=str(tmp_path)),
+        patch.object(
+            probe, "run_probe", return_value=probe.Classification.HF_COMPATIBILITY_PASS
+        ) as run,
+        patch("socket.getaddrinfo", side_effect=AssertionError("DNS forbidden")),
+        patch("socket.socket", side_effect=AssertionError("network forbidden")),
+        patch("getpass.getpass", side_effect=AssertionError("Secret read forbidden")),
+        patch("builtins.input", side_effect=AssertionError("input forbidden")),
+    ):
+        assert probe.main(["--live"]) == 0
+        run.assert_called_once()
+        assert run.call_args.args == (probe.ProbeConfig.live(tmp_path),)
 
 
 @pytest.mark.parametrize(
@@ -73,6 +121,8 @@ def test_every_mode_has_zero_io(
         "--prompt",
         "--config",
         "--method",
+        "--endpoint",
+        "--provider",
     ],
 )
 def test_untrusted_arguments_never_echo(
@@ -282,6 +332,47 @@ def test_selected_pair_freezes_synthetic_admission(tmp_path: Path) -> None:
     assert processor.location.basis is FactBasis.UNKNOWN
 
 
+@pytest.mark.parametrize("backend,service,page", probe.BACKENDS)
+def test_selected_backend_has_dated_identity_and_unknown_policy(
+    tmp_path: Path, backend: str, service: str, page: str
+) -> None:
+    result = observed(
+        catalog_item(
+            providers=[
+                {
+                    "provider": backend,
+                    "status": "live",
+                    "pricing": {"input": 1, "output": 1},
+                }
+            ]
+        )
+    )
+    selected = probe.shortlist(result)[0]
+    config = probe.ProbeConfig.live(tmp_path)
+    processor = probe.declaration(config, selected)
+    expected_identity = f"Hugging Face router; inference processor {service}"
+    assert processor.processor.name == expected_identity
+    assert processor.processor.basis is FactBasis.PROVIDER_DECLARED
+    source = processor.processor.source
+    assert source is not None
+    assert source.retrieved_on == datetime(2026, 10, 10, tzinfo=UTC).date()
+    assert probe.DOCS + "index" in source.reference
+    assert probe.DOCS + "providers/" + page in source.reference
+    assert probe.chat_admission(config, selected, datetime.now(UTC)).models == frozenset(
+        {probe.CODING_MODELS[0] + ":" + backend}
+    )
+    assert all(
+        fact.basis is FactBasis.UNKNOWN
+        for fact in (
+            processor.location,
+            processor.retention,
+            processor.training,
+            processor.human_access,
+            processor.subprocessors,
+        )
+    )
+
+
 @pytest.mark.parametrize(
     "answer,expected_calls", [("1", 2), ("arbitrary/model:novita", 1), ("", 1)]
 )
@@ -343,7 +434,10 @@ def test_synthetic_get_then_selected_chat(
             assert CANARY.encode() not in file.read_bytes()
 
 
-def test_direct_live_orchestration_gate(tmp_path: Path) -> None:
+def test_direct_live_orchestration_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(probe, "LIVE_READY", False)
     with (
         patch("getpass.getpass", side_effect=AssertionError("must not provision")),
         patch("socket.getaddrinfo", side_effect=AssertionError("must not resolve")),

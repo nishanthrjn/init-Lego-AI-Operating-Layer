@@ -1,4 +1,4 @@
-"""HF synthetic compatibility orchestration; live gate awaits local qualification.
+"""HF synthetic compatibility orchestration; separately authorized live probe ready.
 
 Uses only governed discovery and REMOTE chat. No repository content, ambient
 credentials, retry or fallback. --plan performs no credential/DNS/network I/O.
@@ -122,7 +122,7 @@ BINDING = "hf-synthetic-probe"
 DISCOVERY_PURPOSE = "provider-model-discovery"
 CHAT_PURPOSE = "remote-model-bearer"
 PROMPT = "Return exactly the word READY."
-LIVE_READY = False  # Change only after maintainer offline qualification.
+LIVE_READY = True  # Maintainer qualification/readiness closeout: 2026-10-10.
 DOCS = "https://huggingface.co/docs/inference-providers/"
 RETRIEVED = date(2026, 10, 10)
 CODING_MODELS = (
@@ -661,7 +661,9 @@ def run_probe(
 
 def plan_lines() -> tuple[str, ...]:
     return (
-        "HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 LOCAL VALIDATION PENDING",
+        "HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 SYNTHETIC LIVE-PROBE READY"
+        if LIVE_READY
+        else "HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 LIVE GATE DISABLED",
         f"API root: {ORIGIN}{API_ROOT}",
         f"discovery method: GET {ORIGIN}{API_ROOT}/models",
         f"possible chat: POST {ORIGIN}{API_ROOT}/chat/completions",
@@ -670,13 +672,14 @@ def plan_lines() -> tuple[str, ...]:
         "backend allowlist: " + ", ".join(item[0] for item in BACKENDS),
         "policy: advertised live; text-only; known identity; input/output <= USD 5/M each",
         "one operator-selected exact model:provider; no arbitrary model or method input",
-        "future maximum: 1 discovery + 1 chat; executable live calls now: 0",
+        "future maximum: 1 discovery + 1 chat; plan/default provider calls: 0",
         "credential prompts now: 0; future: 2 separate hidden interactive S1 provisions",
         "discovery purpose: provider-model-discovery; chat purpose: remote-model-bearer",
         "SYNTHETIC only: " + PROMPT,
         "no retry; no fallback; no repository disclosure",
         "coarse typed results preserved; insufficient evidence is RESULT_INCONCLUSIVE",
-        "live execution disabled pending maintainer qualification and authorization",
+        "separate authorization required: "
+        "AUTHORIZE HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 LIVE PROBE",
     )
 
 

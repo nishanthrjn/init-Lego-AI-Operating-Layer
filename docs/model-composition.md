@@ -34,12 +34,19 @@ the current public host and regression tests establish the implemented behavior.
 
 ## HF named-provider preflight (2026-10-10)
 
-Current: [PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) implements
+Current: [PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) is **LOCALLY
+QUALIFIED** on 2026-10-10 at `c7353ccf180a54effbf2e80a048e8ae4b8197dc8`:
+the maintainer passed 723 discovery/security, 364 architecture and 69 ForgeAI tests
+(1,156 total; 2 deselected), mypy on 16 files, Ruff lint/format and whitespace checks.
+It implements
 closed GET/POST_EMPTY discovery with method-bound custody and optional bounded
 backend observations. HF's synthetic harness now supports numbered pair selection
-and separate S1 purposes; the live gate remains disabled pending operator local
-qualification. Coarse Model/T2 diagnostics are accepted and unchanged. No provider
-API call occurred, and no repository-disclosure readiness is claimed.
+and separate S1 purposes. Its **SYNTHETIC LIVE-PROBE READY** gate is enabled after
+the ADR-024 identity review; focused closeout checks remain operator-run and pending.
+Separate live authorization is still required. Coarse Model/T2 diagnostics are
+accepted and unchanged. No provider API call occurred. Qualification is synthetic
+local TLS only, without routing, retry or fallback; neither named-provider
+compatibility nor repository-disclosure readiness is claimed.
 
 Historical pre-v2 status:
 

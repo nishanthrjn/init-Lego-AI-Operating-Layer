@@ -154,9 +154,14 @@ remote model quality is qualified.
 
 The [HF named-provider preflight](../../docs/hf-inference-compatibility.md) now
 has GET discovery and bounded backend observations implemented by
-PROVIDER-MODEL-DISCOVERY-2. Operator local validation is pending and the live gate
-remains disabled. The earlier 1,044-test pass qualifies only the original blocked
-preflight, not v2 or HF compatibility. No repository disclosure is authorized.
+PROVIDER-MODEL-DISCOVERY-2, locally qualified on 2026-10-10 at
+`c7353ccf180a54effbf2e80a048e8ae4b8197dc8` (maintainer: 1,156 tests passed,
+2 deselected, typing/lint/format/whitespace passed). The harness is **SYNTHETIC
+LIVE-PROBE READY** after processor-identity review, with the readiness gate enabled;
+focused closeout checks remain operator-run and pending. Separate live authorization
+is required. No provider call has occurred, HF compatibility remains unqualified,
+and no repository disclosure is authorized. The earlier 1,044-test record remains
+the historical blocked preflight only.
 
 ## Local setup and task execution
 

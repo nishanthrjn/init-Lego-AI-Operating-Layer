@@ -18,14 +18,30 @@ or semantics still require code behind the appropriate public boundary.
 ## 1. Executive status
 
 2026-10-10: [PROVIDER-MODEL-DISCOVERY-2](../docs/provider-model-discovery-2.md)
-is **IMPLEMENTED — LOCAL VALIDATION PENDING**. Closed GET/POST_EMPTY methods are
+is **LOCALLY QUALIFIED** at `c7353ccf180a54effbf2e80a048e8ae4b8197dc8` on
+`br-LegoAIPyLLMComfyCR-ForgeAI-KISSKIColabKagHF` (clean pre-closeout working tree).
+Maintainer validation passed 723 discovery/security tests, 364 architecture/package
+tests and 69 ForgeAI tests (1,156 total; 2 deselected), mypy on 16 files, Ruff
+lint/format and whitespace checks. Closed GET/POST_EMPTY methods are
 bound through admission, attempt custody and T2; optional bounded observations
 support exact backend selection. The HF harness implements one governed GET,
 up to three eligible coding pairs, numbered selection and one separately approved
-SYNTHETIC chat with distinct S1 provisioning. Its live gate remains disabled.
+SYNTHETIC chat with distinct S1 provisioning. Its gate is now **SYNTHETIC LIVE-PROBE
+READY** after ADR-024 identity review; focused post-edit checks remain pending
+operator execution. Readiness does not authorize a live probe.
 Coarse diagnostics are deliberately retained. No provider request or agent-run
 test occurred. Operator command: `uv run --locked --offline --no-sync python
-.\validate_provider_model_discovery_2.py`. Repository pilot policy gates remain.
+.\validate_provider_model_discovery_2.py`. Qualification remains synthetic local
+TLS only: no routing, retry or fallback, named-provider compatibility, model-quality
+claim, production inference or free-GPU qualification. Repository pilot policy
+gates remain; no HF repository-disclosure safety is established.
+
+Current G03 maturity correction (2026-10-10): reusable Core Secret references,
+purpose-bound use, durable custody, S1 provisioning and credentialed REMOTE support
+are locally qualified within their recorded profiles. The 2026-10-04 inventory
+and G03 gap text below are historical snapshots, not a current claim that Core
+Secret support is missing. General production credential management and new
+provider/lifecycle profiles still require their own qualification.
 
 Historical pre-v2 record:
 
@@ -358,7 +374,7 @@ interruption; automatic resume is not required. A recovered record must not issu
 effects or resurrect authority. Multi-task unattended execution does require
 durable progress and recovery semantics before enabling resume.
 
-### G03 — Secrets: FOUNDATIONAL
+### G03 — Secrets: FOUNDATIONAL (historical 2026-10-04 assessment)
 
 [ADR-010](../adrs/ADR-010.md) is already Accepted: purpose-bound reference resolution,
 current use authorization, revision validity and safe use attribution. This is not

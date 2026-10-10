@@ -1,7 +1,39 @@
 # PROVIDER-MODEL-DISCOVERY-2
 
-Status: **IMPLEMENTED — LOCAL VALIDATION PENDING** (2026-10-10).
+Status: **LOCALLY QUALIFIED** (2026-10-10), from maintainer-run offline evidence.
+Qualifying commit: `c7353ccf180a54effbf2e80a048e8ae4b8197dc8` on branch
+`br-LegoAIPyLLMComfyCR-ForgeAI-KISSKIColabKagHF`. `git status --short` was empty
+before closeout edits; the implementation was committed and the tracked tree clean.
 No tests or static checks were run by the agent. No provider API call occurred.
+
+The maintainer ran:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_provider_model_discovery_2.py
+```
+
+The final supplied transcript passed every phase:
+
+- Discovery v2, HF synthetic flow, KISSKI POST and REMOTE/security: **723 passed**
+  in 99.11s, including GET/POST_EMPTY wire shape, method/custody binding, parser
+  bounds, Secret/S1/T2/custody and OpenAI-compatible REMOTE regressions.
+- Architecture/package tests: **364 passed** in 28.54s.
+- ForgeAI REMOTE profile: **69 passed, 2 deselected** in 19.43s. The deselected
+  cases acquire real Docker dependencies; synthetic TLS coverage ran.
+- Total: **1,156 passed**, 2 deselected; mypy passed on **16 source files**,
+  Ruff lint passed, **16 files already formatted**, and `git diff --check` passed.
+
+The transcript ended with `PROVIDER-MODEL-DISCOVERY-2 OFFLINE CHECKS PASSED;
+LIVE GATE STILL DISABLED; no HF API calls, no named-provider qualification`.
+That gate state records the qualifying commit, before this readiness closeout.
+Post-edit checks are provided in the [HF closeout instructions](hf-inference-compatibility.md)
+and remain operator-run; these new edits are not included in the historical counts.
+
+Qualification is limited to synthetic local TLS, closed GET/POST_EMPTY discovery,
+bounded optional backend observations, no routing, no retry and no fallback.
+It establishes neither HF nor KISSKI compatibility, arbitrary provider discovery,
+provider availability, model quality, ForgeAI live quality, HF repository disclosure
+safety, free-GPU qualification nor production remote inference.
 
 ## Contract and ADR review
 
@@ -75,7 +107,7 @@ bodies, rejected method strings, parser bounds and malformed metadata. The HF
 suite covers local TLS discovery/chat, selection membership, missing/unsupported
 facts, separate Secret purposes, approval decline, live gate and safe coarse
 diagnostics. Existing KISSKI, Secret/T2, REMOTE and ForgeAI regressions remain
-part of the operator validator. No coverage result is claimed until execution.
+part of the operator validator. The maintainer results above qualify that scope.
 
 From the repository root, using existing locked local environments:
 
@@ -89,5 +121,7 @@ does not acquire dependencies or invoke a live provider, and excludes the real
 Docker dependency-acquisition cases. Missing environments can be prepared with
 `uv sync --locked --offline` at the root and with
 `uv sync --project .\examples\forgeai --locked --offline`.
-Share the complete log. The final success marker still says the live gate is
-disabled; operator qualification does not itself execute or authorize a probe.
+The validator remains offline even after the readiness closeout enables the
+harness gate. It invokes only `--plan` and synthetic tests; qualification does not
+itself execute or authorize a probe. The success marker now states that live
+execution requires separate authorization.

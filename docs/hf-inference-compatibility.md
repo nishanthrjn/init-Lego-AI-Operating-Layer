@@ -1,13 +1,20 @@
 # HF-INFERENCE-PROVIDERS-COMPATIBILITY-1
 
-## Current status: discovery v2 implemented, local validation pending
+## Current status: discovery v2 locally qualified; SYNTHETIC LIVE-PROBE READY
 
-[PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) implements the GET
-and bounded backend-observation prerequisites. No provider API call has occurred.
-The HF live gate remains **disabled** until the maintainer's offline run passes
-and the readiness record is updated. This is not yet LIVE-PROBE READY.
-The earlier 1,044-test result below qualifies the original blocked preflight,
-not this new implementation. No v2 tests or static checks were run by the agent.
+[PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) is **LOCALLY QUALIFIED**
+on 2026-10-10 at commit `c7353ccf180a54effbf2e80a048e8ae4b8197dc8`, branch
+`br-LegoAIPyLLMComfyCR-ForgeAI-KISSKIColabKagHF`; the pre-edit working tree was clean.
+The maintainer's complete validator passed 723 discovery/security tests, 364
+architecture/package tests and 69 ForgeAI tests (1,156 total; 2 deselected),
+mypy on 16 files, Ruff lint/format and whitespace checks. Exact evidence and limits
+are recorded in the linked qualification record. The earlier 1,044-test record
+below remains historical. No provider API call has occurred.
+
+The closeout sets **LIVE_READY = True** after reviewing ADR-024 and the tested
+orchestration. This means **SYNTHETIC LIVE-PROBE READY**, not provider compatibility
+or authorization to run. Focused post-edit checks below remain pending operator
+execution; no new test results are claimed by the agent.
 
 The current script supports the future sequence through the existing owners:
 hidden S1 discovery provisioning; one governed GET; up to three observed
@@ -15,8 +22,10 @@ model/backend pairs; numbered operator selection; separate SYNTHETIC approval;
 hidden S1 chat provisioning under a different purpose; one governed REMOTE chat.
 Selection freezes the exact `model:provider` identity in a new chat configuration.
 There is no retry, fallback, arbitrary model/method argument or repository input.
-Default invocation and `--live` refuse before credentials while `LIVE_READY`
-is false. Only explicit localhost TLS fixtures can exercise orchestration now.
+Default invocation refuses before credentials, and `--plan` performs no I/O.
+`--live` requires readiness and an interactive terminal. Disabled-gate tests set
+the gate false explicitly; ready-path CLI tests replace orchestration with a mock.
+All real test transport remains explicit localhost synthetic TLS.
 
 The visible shortlist policy is deliberately closed:
 
@@ -37,6 +46,16 @@ The visible shortlist policy is deliberately closed:
 The declaration names both HF's router and the selected inference service using
 official identity sources retrieved 2026-10-10. Other processor facts remain
 UNKNOWN for this SYNTHETIC scope. Discovery grants no disclosure authority.
+ADR-024 §5.2 permits the legal **or service** name: the exact observed backend ID
+must match the closed Fireworks AI/Novita/Together AI mapping above. Its dated
+official source and the HF router source populate a PROVIDER_DECLARED identity,
+not an operator-attested policy fact. An unknown backend cannot be shortlisted.
+The operator selects one numbered observed pair; that immutable candidate supplies
+both the processor declaration and the exact model:provider chat admission.
+Actual live availability is not established until discovery succeeds; an empty
+eligible shortlist stops before chat provisioning. Location, retention, training,
+human access and subprocessors remain explicitly UNKNOWN as permitted only for
+this SYNTHETIC scope. Router privacy statements are not backend policy evidence.
 The only message is `Return exactly the word READY.` with 16 maximum output
 tokens, a 60-second timeout and unchanged exact-model/stop/framing requirements.
 
@@ -55,14 +74,42 @@ uv run --locked --offline --no-sync python .\scripts\hf_inference_compatibility_
 uv run --locked --offline --no-sync python .\validate_provider_model_discovery_2.py
 ```
 
-Return the full validator log. After successful qualification and a readiness
-update, the future interactive command is
+After focused post-edit validation and separate operator authorization, the future
+interactive command is
 `uv run --locked --offline --no-sync python .\scripts\hf_inference_compatibility_probe.py --live`.
 Do not execute it now. Separate future authorization remains
 `AUTHORIZE HF-INFERENCE-PROVIDERS-COMPATIBILITY-1 LIVE PROBE`.
 Unknown mandatory processor facts can still block any later repository pilot;
 synthetic success never authorizes repository disclosure. Kaggle remains a
 separate deployment experiment, not a Core adapter.
+
+### Focused closeout validation (operator-run, offline only)
+
+Run these commands from the repository root and stop on any failure. They cover
+plan/default zero-I/O behavior, disabled and ready live gates, fixed CLI arguments,
+synthetic orchestration, discovery v2, architecture, typing, lint and formatting.
+No credential entry or provider endpoint is used. Per the standing operator testing
+workflow, the agent has not executed these checks.
+
+```powershell
+uv run --locked --offline --no-sync python -m pytest -q -p no:cacheprovider scripts/tests/test_hf_inference_compatibility_probe.py tests/integration/composition/test_provider_discovery_v2.py tests/architecture
+if ($LASTEXITCODE -ne 0) { throw 'Closeout tests failed' }
+uv run --locked --offline --no-sync python -m mypy scripts/hf_inference_compatibility_probe.py scripts/tests/test_hf_inference_compatibility_probe.py validate_provider_model_discovery_2.py
+if ($LASTEXITCODE -ne 0) { throw 'Closeout typing failed' }
+uv run --locked --offline --no-sync python -m ruff check scripts/hf_inference_compatibility_probe.py scripts/tests/test_hf_inference_compatibility_probe.py validate_provider_model_discovery_2.py
+if ($LASTEXITCODE -ne 0) { throw 'Closeout lint failed' }
+uv run --locked --offline --no-sync python -m ruff format --check scripts/hf_inference_compatibility_probe.py scripts/tests/test_hf_inference_compatibility_probe.py validate_provider_model_discovery_2.py
+if ($LASTEXITCODE -ne 0) { throw 'Closeout formatting failed' }
+git diff --check
+if ($LASTEXITCODE -ne 0) { throw 'Closeout whitespace failed' }
+```
+
+No HF/KISSKI compatibility, model quality, production inference, free-GPU runtime,
+or HF repository-disclosure safety is qualified. A future SYNTHETIC pass requires
+a separate assessment of mandatory non-SYNTHETIC facts for FORGEAI-HF-LIVE-PILOT-1.
+If those facts are insufficient, preserve disclosure policy and consider the
+separately authorized FREE-GPU-MODEL-RUNTIME-KAGGLE-1 experiment instead. Neither
+future slice is implemented here.
 
 ## Historical record: original blocked preflight
 

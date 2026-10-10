@@ -60,7 +60,7 @@ def main() -> int:
 
     try:
         run(
-            "offline plan; live readiness gate disabled",
+            "offline plan; no live execution",
             [sys.executable, CHANGED_FILES[0], "--plan"],
         )
         run(
@@ -125,7 +125,8 @@ def main() -> int:
         print(f"FAIL: {phase}; later phases NOT RUN")
         return 1
     print(
-        "PROVIDER-MODEL-DISCOVERY-2 OFFLINE CHECKS PASSED; LIVE GATE STILL DISABLED; "
+        "PROVIDER-MODEL-DISCOVERY-2 OFFLINE CHECKS PASSED; "
+        "LIVE PROBE REQUIRES SEPARATE AUTHORIZATION; "
         "no HF API calls, no named-provider qualification"
     )
     return 0
