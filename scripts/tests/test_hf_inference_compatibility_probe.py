@@ -4,6 +4,7 @@ import ast
 import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
@@ -257,11 +258,13 @@ def test_shortlist_bound_and_membership() -> None:
             for m in result.catalog
         )
     assert probe.select_pair(result, lambda _: "2", lambda _: None) == choices[1]
+
+    def respond(answer: str, _: str) -> str:
+        return answer
+
     for answer in ("", "0", "4", probe.CODING_MODELS[0], choices[0].request_model):
-        assert (
-            probe.select_pair(result, lambda _, answer=answer: answer, lambda _: None)
-            is None
-        )
+        ask = partial(respond, answer)
+        assert probe.select_pair(result, ask, lambda _: None) is None
     assert probe.shortlist(replace(result, models=())) == ()
 
 
