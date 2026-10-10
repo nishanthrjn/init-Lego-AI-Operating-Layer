@@ -47,7 +47,8 @@ def test_every_mode_has_zero_io(
 
 
 @pytest.mark.parametrize(
-    "option", ["--token", "--api-key", "--model", "--repository", "--prompt", "--config"]
+    "option",
+    ["--token", "--api-key", "--model", "--repository", "--prompt", "--config"],
 )
 def test_untrusted_arguments_never_echo(
     option: str, capsys: pytest.CaptureFixture[str]
@@ -77,7 +78,9 @@ def test_exact_discovery_admission_and_short_window() -> None:
     assert probe.DISCOVERY_PURPOSE == discovery_purpose()
     assert probe.CHAT_PURPOSE == credential_purpose()
     with pytest.raises(ValueError, match="separate Secret purpose"):
-        probe.discovery_admission(SecretRef(exact, "api-key", credential_purpose()), now)
+        probe.discovery_admission(
+            SecretRef(exact, "api-key", credential_purpose()), now
+        )
 
 
 def test_hf_documented_shape_is_accepted_but_backend_metadata_is_lost() -> None:

@@ -102,7 +102,7 @@ def main() -> int:
         run("lint", [sys.executable, "-m", "ruff", "check", *NEW_FILES])
         run("format", [sys.executable, "-m", "ruff", "format", "--check", *NEW_FILES])
         run("diff whitespace", ["git", "diff", "--check"])
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         print(f"FAIL: {phase}; later phases NOT RUN")
         return 1
     print(
