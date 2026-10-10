@@ -5,6 +5,15 @@ Research and a fail-closed operator preflight are prepared. No tests, static
 checks, provider discovery or inference requests were executed by the agent.
 Operator validation is pending. No credential was read. No commit was created.
 
+The first supplied operator run passed all 611 preflight/discovery/REMOTE/security
+tests. Architecture then reported 362 passed and two failures: its consumer
+allowlist omitted the existing ForgeAI synthetic S1 fixture, and its explicit
+package inventories predated the qualified REMOTE/security modules and tests.
+Those inventories have been updated without relaxing exact package equality or
+allowing production consumers to import internals. The source-distribution list
+also now includes the existing TLS test certificates. Later validator phases did
+not run; a complete operator rerun is required. The agent has not run checks.
+
 This is a named-provider compatibility investigation, not a GPU deployment or
 ForgeAI repository pilot. The requested ready banner and live authorization
 request are deferred because the existing contracts cannot satisfy the proposed

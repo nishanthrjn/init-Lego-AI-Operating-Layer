@@ -18,6 +18,8 @@ NEW_FILES = (
     "scripts/hf_inference_compatibility_probe.py",
     "scripts/tests/test_hf_inference_compatibility_probe.py",
     "validate_hf_inference_compatibility_preflight.py",
+    "tests/architecture/test_local_host.py",
+    "tests/architecture/test_package_install.py",
 )
 
 

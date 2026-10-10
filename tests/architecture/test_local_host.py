@@ -30,10 +30,12 @@ CR1C_EXCEPTIONS = {
     "packages/legoai-generative-media/src/legoai_generative_media/local_host.py",
     "packages/legoai-generative-media/src/legoai_generative_media/composition.py",
 }
-# Existing authorization-adversarial fixture, not application/domain code.
+# Existing authorization-adversarial fixtures, not application/domain code.
 # Keep this exception exact; no production consumer may join it.
 INTERNAL_TEST_FIXTURES = {
     "examples/forgeai/evaluation/tests/test_content_discovery_1.py",
+    # Synthetic S1 bootstrap for local TLS tests; production uses public APIs.
+    "examples/forgeai/tests/test_remote_profile.py",
 }
 # Never opened: excluded by path before any file is read.
 EXCLUDED_PARTS = {".venv", "node_modules", "__pycache__", "assessment_starter"}
