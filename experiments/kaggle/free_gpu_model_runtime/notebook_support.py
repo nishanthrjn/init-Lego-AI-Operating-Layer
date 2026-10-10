@@ -32,7 +32,7 @@ def discover_source(root: Path, manifest_digest: str) -> Path:
             if hashlib.sha256(raw).hexdigest() != manifest_digest:
                 continue
             manifest = json.loads(raw)
-            if manifest["experiment"] != "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F":
+            if manifest["experiment"] != "FREE-GPU-MODEL-RUNTIME-KAGGLE-1G":
                 continue
             valid = True
             for name, digest in manifest["files"].items():

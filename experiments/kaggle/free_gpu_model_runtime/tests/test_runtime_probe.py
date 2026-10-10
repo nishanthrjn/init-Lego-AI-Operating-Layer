@@ -229,7 +229,9 @@ def test_watchdog_always_cleans_owned_group(monkeypatch: pytest.MonkeyPatch) -> 
     assert events == ["start", "stop"]
 
 
-@pytest.mark.parametrize("failure", ["none", "startup", "http", "contract"])
+@pytest.mark.parametrize(
+    "failure", ["none", "startup", "http", "contract", "json_fenced"]
+)
 def test_generation_ceiling_and_failure_cleanup(
     monkeypatch: pytest.MonkeyPatch, failure: str
 ) -> None:
@@ -278,6 +280,14 @@ def test_generation_ceiling_and_failure_cleanup(
         result["choices"][0]["message"]["content"] = (
             "CANARY" if failure == "contract" else content
         )
+        if failure == "json_fenced" and len(calls) == 3:
+            result["choices"][0]["message"]["content"] = (
+                '```json\n{"status":"ready"}\n```'
+            )
+        if len(calls) == 3:
+            assert payload["response_format"] == {"type": "json_object"}
+        else:
+            assert "response_format" not in payload
         return result
 
     def stop(process: Any, *, group: bool) -> None:
@@ -306,17 +316,33 @@ def test_generation_ceiling_and_failure_cleanup(
     monkeypatch.setattr(probe, "local_request", request)
     result = probe.fresh_result()
     if failure == "none":
-        probe.serve_and_probe(result)
+        monkeypatch.setattr(probe, "inspect_interpreter", lambda *a, **k: "3.12.3")
+        monkeypatch.setattr(
+            probe,
+            "versions",
+            lambda: {"torch": "2.7.0+cu128", "vllm": "0.9.2", "transformers": "4.51.3"},
+        )
+        monkeypatch.setattr(probe, "hardware", hardware)
+        probe.worker(result)
         assert len(result["assertions"]) == 3
-        assert result["outcome"] == "SYNTHETIC_READY"
+        assert result["outcome"] == "KAGGLE_RUNTIME_PASS"
+        assert [a["id"] for a in result["assertions"]] == ["ready", "json", "add"]
+        assert all(a["passed"] for a in result["assertions"])
         assert len(calls) == 4
     else:
         with pytest.raises(probe.Stop) as error:
             probe.serve_and_probe(result)
-        if failure == "contract":
+        if failure in ("contract", "json_fenced"):
             assert error.value.reason == "SYNTHETIC_OUTPUT_MISMATCH"
             assert error.value.outcome == "SYNTHETIC_INFERENCE_FAILED"
-        assert len(calls) == (0 if failure == "startup" else 2)
+        assert len(calls) == (
+            0 if failure == "startup" else 3 if failure == "json_fenced" else 2
+        )
+        if failure == "json_fenced":
+            facts = result["assertions"][-1]["diagnostics"]
+            assert facts["has_markdown_fence"] is True
+            assert facts["parses_as_json"] is False
+            assert facts["semantic_match"] is False
     assert stopped == [False]
     assert "CANARY" not in json.dumps(result)
 

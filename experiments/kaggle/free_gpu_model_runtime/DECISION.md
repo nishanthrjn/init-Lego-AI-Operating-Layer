@@ -1,5 +1,14 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1G amendment: constrain presentation before generation
+
+Observed fenced JSON calls for explicit prompt wording and the pinned server's
+supported json_object response format. Select the smallest public request field,
+only for JSON; leave strict semantic/AST validation and all runtime policies
+unchanged. A bounded builder admits only known frozen fixture cases. Reject
+cross-experiment evidence before Bootstrap/Run. Source-level support and mocked
+regressions do not establish a new live qualification; fresh 1G execution is required.
+
 ## 1F amendment: contract alignment and observable behavior
 
 Interpret the unchanged JSON fixture as exact JSON object semantics, not an

@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1G"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
@@ -72,7 +72,7 @@ RESULT = WORK / "kaggle_runtime_result.json"
 HOST = "127.0.0.1"
 PORT = 8765
 MAX_GENERATIONS = 3
-PROMPT_DIGEST = "8cc5101e5668bb803fb682bd276f47fdb4087ed99335a0f36506791b9b535015"
+PROMPT_DIGEST = "fe16be133f8595492d9be1c726b672a2150c47a7de3f3dfd732a4ea4f40bd030"
 MAX_INPUT_CHARS = 512
 MAX_INPUT_TOKENS = 256
 MAX_OUTPUT_TOKENS = 96
@@ -475,6 +475,25 @@ def prompts() -> list[dict[str, str]]:
     return values
 
 
+def build_synthetic_request(case: dict[str, str]) -> dict[str, Any]:
+    # Fixture identity and exact contents are authority, not operator customization.
+    if case not in prompts():
+        raise Stop("LOCAL_PROTOCOL_FAILED")
+    payload: dict[str, Any] = {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": case["prompt"]}],
+        "temperature": 0,
+        "seed": 0,
+        "max_tokens": MAX_OUTPUT_TOKENS,
+        "n": 1,
+        "stream": False,
+    }
+    if case["id"] == "json":
+        # vLLM v0.9.2 ChatCompletionRequest.to_sampling_params supports this.
+        payload["response_format"] = {"type": "json_object"}
+    return payload
+
+
 def unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
@@ -775,15 +794,7 @@ def serve_and_probe(result: dict[str, Any]) -> None:
             start = time.monotonic()
             response = local_request(
                 "/v1/chat/completions",
-                {
-                    "model": MODEL,
-                    "messages": [{"role": "user", "content": case["prompt"]}],
-                    "temperature": 0,
-                    "seed": 0,
-                    "max_tokens": MAX_OUTPUT_TOKENS,
-                    "n": 1,
-                    "stream": False,
-                },
+                build_synthetic_request(case),
             )
             request_seconds = time.monotonic() - start
             assertion = validate_chat(response, case["id"])
@@ -1034,9 +1045,13 @@ def main() -> int:
         required = (
             "KAGGLE_GPU_READY" if args.mode == "bootstrap" else "MODEL_DOWNLOADED"
         )
-        if previous["outcome"] != required or (
-            args.mode == "bootstrap"
-            and ((SCRATCH / "venv").exists() or (SCRATCH / "venv").is_symlink())
+        if (
+            previous.get("experiment") != EXPERIMENT
+            or previous["outcome"] != required
+            or (
+                args.mode == "bootstrap"
+                and ((SCRATCH / "venv").exists() or (SCRATCH / "venv").is_symlink())
+            )
         ):
             print("RESULT_INCONCLUSIVE / EXISTING_EVIDENCE")
             return 1

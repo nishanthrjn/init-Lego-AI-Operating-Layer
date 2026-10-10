@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1G"
     },
     "schema_version": {
       "const": 3

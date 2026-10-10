@@ -1,5 +1,14 @@
 [
-  {"id": "ready", "prompt": "Return exactly the word READY."},
-  {"id": "json", "prompt": "Return valid JSON exactly matching: {\"status\":\"ready\"}"},
-  {"id": "add", "prompt": "Return only Python source defining: def add(a: int, b: int) -> int: which returns a + b. No Markdown or explanation."}
+  {
+    "id": "ready",
+    "prompt": "Return exactly the word READY."
+  },
+  {
+    "id": "json",
+    "prompt": "Return only this exact JSON object: {\"status\":\"ready\"}. Do not use Markdown or code fences. Do not add explanation, prose, whitespace lines, or any other text."
+  },
+  {
+    "id": "add",
+    "prompt": "Return only valid Python source code. Define exactly one function:\ndef add(a: int, b: int) -> int:\n    return a + b\nDo not use Markdown code fences. Do not include imports, comments, explanation, examples, or additional code."
+  }
 ]

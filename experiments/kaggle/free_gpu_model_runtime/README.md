@@ -1,6 +1,83 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1F
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1G
 
-## 1F stabilization and qualification boundary
+## 1G behavioral stabilization
+
+Local validation passed: **173 experiment tests, 365 architecture tests**, mypy
+(10 files), Ruff, format and whitespace checks. The source-manifest and notebook
+integrity regressions are included. This is not a live Kaggle qualification.
+
+The latest 1F live run passed Inspect, dependencies, download and local protocol.
+READY passed (five characters, exact match). JSON failed with length 30,
+parses_as_json=false, has_markdown_fence=true, semantic_match=false, and closed
+SYNTHETIC_INFERENCE_FAILED / SYNTHETIC_OUTPUT_MISMATCH. The presentation did not
+satisfy raw JSON; this is model behavior against an insufficiently explicit
+presentation prompt, not infrastructure failure. Raw completion was not saved.
+
+READY remains `Return exactly the word READY.`
+
+JSON is now:
+```text
+Return only this exact JSON object: {"status":"ready"}. Do not use Markdown or code fences. Do not add explanation, prose, whitespace lines, or any other text.
+```
+
+ADD is now:
+```text
+Return only valid Python source code. Define exactly one function:
+def add(a: int, b: int) -> int:
+    return a + b
+Do not use Markdown code fences. Do not include imports, comments, explanation, examples, or additional code.
+```
+
+### Pinned structured-output decision
+
+The maintainer's local workspace has no installed vLLM package. The exact
+[v0.9.2 protocol source](https://github.com/vllm-project/vllm/blob/v0.9.2/vllm/entrypoints/openai/protocol.py)
+was inspected instead: ResponseFormat accepts json_object; ChatCompletionRequest
+accepts response_format; to_sampling_params maps json_object to guided decoding.
+The [versioned structured-output documentation](https://docs.vllm.ai/en/v0.9.2/features/structured_outputs.html)
+confirms structured generation is supported by the server by default.
+Use only the standard `response_format={"type":"json_object"}` on JSON.
+No private API, backend override, new dependency or version upgrade is used.
+This verifies API support, not a live structured-generation pass with this model.
+
+The bounded builder admits only exact digest-verified fixture cases. READY/ADD
+receive no JSON constraints. Model, seed 0, temperature 0, max_tokens 96, n=1
+and stream=false remain frozen. local_request is unchanged. JSON mode constrains
+presentation, not the status value: the unchanged semantic validator still
+requires the sole key status with string ready, rejects duplicate keys, fences,
+prose, arrays and malformed JSON. ADD retains AST equality. There is no output
+repair, extraction, second generation, retry or fallback.
+
+### End-to-end review and custody
+
+Inspect -> verified interpreter/tool acquisition -> isolated install -> inventory
+version gate -> frozen download -> Run custody mark -> worker isolation/package/
+hardware gates -> server -> model listing -> READY -> JSON -> ADD -> SYNTHETIC_READY
+-> KAGGLE_RUNTIME_PASS. A mocked full worker success test requires exactly three
+passed assertions. The fenced-JSON regression stops on the second generation,
+preserves structural diagnostics and cleans up without attempting ADD.
+Bootstrap/Run now also reject prior evidence from any other experiment identity,
+without modifying it. Source discovery still rejects an old 1F package.
+
+All 1A-1F runtime, environment, GPU, local-network, cleanup and diagnostic
+contracts remain in the full offline validator. Historical sections below retain
+the old wording and results; they are not current operator instructions.
+
+### One fresh 1G qualification
+
+After local validation and maintainer commit, use `free_gpu_model_runtime_1g.zip`.
+Extract and upload its source folder as a new private Kaggle dataset; import the
+included notebook and attach only the new dataset. Use a fresh free T4 x2 session,
+with Internet enabled for public acquisition. Use the notebook's confirmation
+control; do not manually patch source or reuse the failed 1F session.
+Run Inspect once; only if successful run Bootstrap once; only if successful run
+Run once. Stop on any non-zero result and preserve JSON/report/notebook output.
+Expected: KAGGLE_GPU_READY -> DEPENDENCIES_READY -> MODEL_DOWNLOADED ->
+LOCAL_PROTOCOL_READY -> SYNTHETIC_READY -> KAGGLE_RUNTIME_PASS, exit 0.
+Local validation cannot establish this live result; no 1G Kaggle run occurred.
+
+
+## Historical 1F stabilization and qualification boundary
 
 Local validation completed: **149 experiment tests + 365 architecture tests**,
 plus mypy (9 files), Ruff, formatting and whitespace checks all passed.
@@ -431,7 +508,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1f.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1g.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 
