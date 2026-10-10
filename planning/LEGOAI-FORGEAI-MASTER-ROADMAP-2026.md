@@ -18,8 +18,9 @@ or semantics still require code behind the appropriate public boundary.
 ## 1. Executive status
 
 2026-10-10: [HF-INFERENCE-PROVIDERS-COMPATIBILITY-1](../docs/hf-inference-compatibility.md)
-is **PREFLIGHT BLOCKED**, with an offline harness and operator-run validator
-prepared but not executed. HF documents GET discovery; qualified discovery/T2
+is **PREFLIGHT BLOCKED — OFFLINE CHECKS PASSED**. The complete operator validator
+run passed 1,044 tests and all static/whitespace checks on 2026-10-10; this
+validates only the blocked preflight. HF documents GET discovery; qualified discovery/T2
 supports POST only. The ID-only result also loses backend selection metadata;
 some requested diagnoses lack typed observations. Live authorization is deferred
 until these gaps are resolved and locally validated. No provider API calls ran.

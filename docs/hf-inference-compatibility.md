@@ -3,7 +3,8 @@
 Status, 2026-10-10: **PREFLIGHT BLOCKED — LIVE PROBE NOT READY**.
 Research and a fail-closed operator preflight are prepared. No tests, static
 checks, provider discovery or inference requests were executed by the agent.
-Operator validation is pending. No credential was read. No commit was created.
+Operator offline validation passed on 2026-10-10. No credential was read by
+the preflight. Live provider compatibility remains unqualified.
 
 The first supplied operator run passed all 611 preflight/discovery/REMOTE/security
 tests. Architecture then reported 362 passed and two failures: its consumer
@@ -12,7 +13,15 @@ package inventories predated the qualified REMOTE/security modules and tests.
 Those inventories have been updated without relaxing exact package equality or
 allowing production consumers to import internals. The source-distribution list
 also now includes the existing TLS test certificates. Later validator phases did
-not run; a complete operator rerun is required. The agent has not run checks.
+not run in that first attempt. The agent has not run checks.
+
+The complete subsequent operator rerun passed: 611 preflight/discovery/REMOTE/
+security tests, 364 architecture tests and 69 ForgeAI tests (1,044 total; two
+Docker cases deselected), mypy on five files, Ruff lint and format, and
+`git diff --check`. It ended with `HF PREFLIGHT OFFLINE CHECKS PASSED; LIVE
+PREFLIGHT STILL BLOCKED; no HF API calls, no named-provider qualification`.
+This closes the offline validation gate for the blocked preflight only. The
+GET transport, backend selection evidence and typed-observation gaps remain.
 
 This is a named-provider compatibility investigation, not a GPU deployment or
 ForgeAI repository pilot. The requested ready banner and live authorization
@@ -208,8 +217,8 @@ Coverage boundaries against the requested 25 cases:
   **not implemented or tested**, because live orchestration is blocked. Zero
   calls in this harness is not advertised as two-call qualification.
 
-No validation was executed by the agent, per operator instruction. A successful
-validator run would qualify the blocked preflight only, not HF compatibility.
+No validation was executed by the agent, per operator instruction. The supplied
+successful operator run validates the blocked preflight only, not HF compatibility.
 
 ## Live authorization and follow-on work
 

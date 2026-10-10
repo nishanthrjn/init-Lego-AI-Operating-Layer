@@ -155,7 +155,9 @@ remote model quality is qualified.
 The [HF named-provider preflight](../../docs/hf-inference-compatibility.md) is
 blocked: HF documents GET discovery, the qualified transport supports POST only,
 and discovery discards backend selection metadata. Its operator-run plan and
-offline validator grant no HF or repository-disclosure qualification.
+offline validator passed the complete operator run on 2026-10-10 (1,044 tests
+and all static/whitespace checks). This validates the blocked preflight only
+and grants no HF or repository-disclosure qualification.
 
 ## Local setup and task execution
 

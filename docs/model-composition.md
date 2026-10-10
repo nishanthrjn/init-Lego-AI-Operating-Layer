@@ -38,7 +38,9 @@ the current public host and regression tests establish the implemented behavior.
 before live execution: documented GET discovery differs from the qualified POST
 transport, model IDs alone do not establish a live backend pairing, and some
 requested classifications lack distinct typed observations. An offline plan,
-admission factory and operator validator are prepared; validation is pending.
+admission factory and operator validator passed the complete operator offline
+run on 2026-10-10: 1,044 tests and all static/whitespace checks. This validates
+the blocked preflight only; live provider compatibility remains unqualified.
 No Core or ForgeAI runtime contract changed. No provider API call occurred.
 
 ## Development direction
