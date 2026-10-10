@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1D"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1E"
     },
     "schema_version": {
       "const": 2
@@ -296,6 +296,7 @@
               "GPU_MEMORY_UNSUPPORTED",
               "GPU_CAPABILITY_UNSUPPORTED",
               "DRIVER_CUDA_UNSUPPORTED",
+              "DRIVER_OBSERVATION_UNAVAILABLE",
               "RUNTIME_PYTHON_VERSION_MISMATCH",
               "RUNTIME_PACKAGE_VERSION_MISMATCH",
               "EXISTING_EVIDENCE",

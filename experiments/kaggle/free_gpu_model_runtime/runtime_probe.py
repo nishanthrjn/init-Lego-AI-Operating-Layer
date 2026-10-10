@@ -26,11 +26,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1D"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1E"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
 UV_VERSION = "0.9.5"
+NVIDIA_SMI = Path("/opt/bin/nvidia-smi")
 SYSTEM_UV = Path("/usr/local/bin/uv")
 SYSTEM_PYTHONS = (Path("/usr/bin/python3.12"), Path("/usr/local/bin/python3.12"))
 REASONS = frozenset(
@@ -44,6 +45,7 @@ REASONS = frozenset(
         "GPU_MEMORY_UNSUPPORTED",
         "GPU_CAPABILITY_UNSUPPORTED",
         "DRIVER_CUDA_UNSUPPORTED",
+        "DRIVER_OBSERVATION_UNAVAILABLE",
         "RUNTIME_PYTHON_NOT_FOUND",
         "RUNTIME_PYTHON_INVALID",
         "RUNTIME_ENV_CREATION_FAILED",
@@ -246,6 +248,22 @@ def phase(
     print(f"{name}: {outcome}" + (f" / {reason}" if reason else ""), flush=True)
 
 
+def trusted_nvidia_smi() -> str:
+    try:
+        if (
+            not NVIDIA_SMI.is_absolute()
+            or NVIDIA_SMI.as_posix() != "/opt/bin/nvidia-smi"
+            or not NVIDIA_SMI.is_file()
+            or NVIDIA_SMI.is_symlink()
+            or NVIDIA_SMI.resolve(strict=True) != NVIDIA_SMI
+            or not os.access(NVIDIA_SMI, os.X_OK)
+        ):
+            raise Stop("RESULT_INCONCLUSIVE", "DRIVER_OBSERVATION_UNAVAILABLE")
+    except (OSError, RuntimeError):
+        raise Stop("RESULT_INCONCLUSIVE", "DRIVER_OBSERVATION_UNAVAILABLE") from None
+    return str(NVIDIA_SMI)
+
+
 def hardware() -> dict[str, Any]:
     torch = importlib.import_module("torch")
     available = bool(torch.cuda.is_available())
@@ -267,27 +285,47 @@ def hardware() -> dict[str, Any]:
             }
         )
     driver: list[str] = []
-    banner = ""
+    visible: str | None = None
     try:
-        driver = (
-            subprocess.run(
-                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=10,
-            )
-            .stdout.strip()
-            .splitlines()
-        )
-        banner = subprocess.run(
-            ["nvidia-smi"], capture_output=True, text=True, check=True, timeout=10
+        executable = trusted_nvidia_smi()
+        output = subprocess.run(
+            [executable, "--query-gpu=driver_version", "--format=csv,noheader"],
+            env=clean_environment(),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
         ).stdout
+        banner = subprocess.run(
+            [executable],
+            env=clean_environment(),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        ).stdout
+        lines = output.strip().splitlines()
+        match = re.search(r"CUDA Version: ([0-9]{1,3}\.[0-9]{1,3})(?![0-9.])", banner)
+        if (
+            len(output) > 1024
+            or len(banner) > 16384
+            or not 1 <= len(lines) <= 8
+            or len(lines) != count
+            or any(
+                re.fullmatch(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", line.strip())
+                is None
+                for line in lines
+            )
+            or match is None
+        ):
+            raise Stop("RESULT_INCONCLUSIVE", "DRIVER_OBSERVATION_UNAVAILABLE")
+        driver = [line.strip() for line in lines]
+        visible = match.group(1)
+    except Stop as error:
+        if error.reason != "DRIVER_OBSERVATION_UNAVAILABLE":
+            raise
     except (OSError, subprocess.SubprocessError):
-        # Preserve actual CUDA availability/count even when no driver utility
-        # is available. Missing driver evidence fails the candidate gate.
-        driver = []
-    match = re.search(r"CUDA Version: (\d+\.\d+)", banner)
+        pass  # Missing driver evidence is rejected by require_hardware below.
     return {
         "cuda_available": available,
         "device_count": count,
@@ -295,8 +333,8 @@ def hardware() -> dict[str, Any]:
         "torch_cuda_runtime": (
             safe_version(torch.version.cuda) if torch.version.cuda is not None else None
         ),
-        "driver_versions": [safe_version(v.strip()) for v in driver[:8]],
-        "driver_visible_cuda": match.group(1) if match else None,
+        "driver_versions": driver,
+        "driver_visible_cuda": visible,
     }
 
 
@@ -317,7 +355,9 @@ def require_hardware(observed: dict[str, Any]) -> None:
             if not valid:
                 raise Stop("RESULT_INCONCLUSIVE", reason)
     visible = observed["driver_visible_cuda"]
-    if visible is None or tuple(map(int, visible.split("."))) < (12, 8):
+    if visible is None:
+        raise Stop("RESULT_INCONCLUSIVE", "DRIVER_OBSERVATION_UNAVAILABLE")
+    if tuple(map(int, visible.split("."))) < (12, 8):
         raise Stop("RESULT_INCONCLUSIVE", "DRIVER_CUDA_UNSUPPORTED")
 
 
@@ -534,7 +574,7 @@ def sample_memory(result: dict[str, Any]) -> None:
         lines = (
             subprocess.run(
                 [
-                    "nvidia-smi",
+                    trusted_nvidia_smi(),
                     "--query-gpu=memory.used",
                     "--format=csv,noheader,nounits",
                 ],
@@ -553,7 +593,7 @@ def sample_memory(result: dict[str, Any]) -> None:
         result["gpu_memory"]["sampled_peak_used_mib"] = [
             max(a, b) for a, b in zip(previous, current, strict=True)
         ]
-    except (OSError, ValueError, subprocess.SubprocessError):
+    except (Stop, OSError, ValueError, subprocess.SubprocessError):
         result["gpu_memory"]["sampling_complete"] = False
 
 
@@ -865,10 +905,9 @@ def worker(result: dict[str, Any]) -> None:
     save(result)
     # Executed by the frozen Python worker under the same sanitized environment
     # used for server startup; do not defer visibility failures to vLLM.
-    try:
-        require_hardware(result["hardware"])
-    except Stop:
-        raise Stop("RESULT_INCONCLUSIVE", "CUDA_CHILD_ENV_UNAVAILABLE") from None
+    if result["hardware"]["cuda_available"] is not True:
+        raise Stop("RESULT_INCONCLUSIVE", "CUDA_CHILD_ENV_UNAVAILABLE")
+    require_hardware(result["hardware"])
     serve_and_probe(result)
     phase(result, "qualification", "KAGGLE_RUNTIME_PASS")
 

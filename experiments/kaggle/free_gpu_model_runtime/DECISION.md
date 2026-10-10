@@ -1,5 +1,15 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1E amendment: exact platform executable authority
+
+Live CUDA visibility succeeds; driver observation fails because PATH excludes
+/opt/bin. Validate and invoke only /opt/bin/nvidia-smi, without widening PATH.
+Reject missing/untrusted/failed/malformed observations separately from observed
+unsupported CUDA. Preserve specific hardware reasons and map only actual CUDA
+invisibility to the child-environment reason. Reuse the same trusted executable
+for memory sampling. No pins, GPU acceptance gates or environment expansion.
+Local validation and fresh live qualification remain pending.
+
 ## 1D amendment: narrowly validated CUDA platform context
 
 Live diagnostics isolate CUDA invisibility to sanitized child environment

@@ -1,6 +1,49 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1D
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1E
 
-## Correction 1D: validated CUDA library propagation
+## Correction 1E: trusted driver tool and preserved hardware reasons
+
+Fifth live result: Inspect **KAGGLE_GPU_READY**; Bootstrap
+**DEPENDENCIES_READY**, then **MODEL_DOWNLOADED**. Worker CUDA was available,
+with two Tesla T4 devices, capability 7.5, 15636037632 bytes each and torch CUDA
+12.8. Worker driver_versions was empty and driver_visible_cuda was null; the
+reported reason was CUDA_CHILD_ENV_UNAVAILABLE.
+
+Diagnostics identified `/opt/bin/nvidia-smi` as a regular, non-symlink file
+resolving to that exact location. Absolute invocation under the sanitized
+environment succeeded (exit 0), returning driver 580.178.04 for both GPUs.
+The normal banner reports Driver Version 580.178.04 and CUDA Version 13.0.
+The usual /usr/local/nvidia/bin, /usr/local/cuda/bin and /usr/bin locations
+were absent. The harness used a bare command while its PATH excluded /opt/bin.
+It lost driver evidence, then rewrote DRIVER_CUDA_UNSUPPORTED generically.
+These are **TRUSTED NVIDIA-SMI EXECUTABLE RESOLUTION DEFECT** and
+**HARDWARE REASON-MAPPING DEFECT**, not GPU, CUDA, driver, torch or vLLM failure.
+
+1E authorizes only `/opt/bin/nvidia-smi`. Before execution it must be absolute,
+a regular file, not a symlink, resolve exactly to that path and be executable.
+There is no PATH search or general /opt/bin authority. Both driver observations
+and optional memory sampling use the validated absolute tool. PATH and the
+validated LD_LIBRARY_PATH policy remain unchanged; no NVIDIA_* variables are
+added. Fifth-run evidence confirms the current CUDA library policy lets the
+isolated torch runtime see both devices.
+
+Driver query lines must be bounded numeric versions matching the observed
+GPU count. A bounded banner must supply a numeric CUDA version. Missing,
+untrusted, failed or malformed tool observations yield missing driver evidence,
+which the hardware gate rejects as DRIVER_OBSERVATION_UNAVAILABLE. Valid visible
+CUDA below 12.8 remains DRIVER_CUDA_UNSUPPORTED. No new driver-version minimum
+is invented. Raw output and exceptions are not persisted.
+
+Only actual cuda_available=False maps to CUDA_CHILD_ENV_UNAVAILABLE. Count,
+model, memory, capability and driver reasons remain distinct. All failures stop
+before server startup. Pins and the T4 x2 acceptance policy are unchanged.
+
+**1E local validation pending; Kaggle runtime not qualified.** Preserve the
+fifth-run evidence. After local validation and commit, rebuild the bundle and
+use a fresh session, stopping on failure. Model download is established in the
+prior run; vLLM startup, successful model loading and inference remain unproven.
+
+
+## Historical correction 1D: validated CUDA library propagation
 
 Fourth live result: Inspect **KAGGLE_GPU_READY**; Bootstrap
 **DEPENDENCIES_READY**, then **MODEL_DOWNLOADED**; Run **RESULT_INCONCLUSIVE**
@@ -294,7 +337,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1d.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1e.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 
