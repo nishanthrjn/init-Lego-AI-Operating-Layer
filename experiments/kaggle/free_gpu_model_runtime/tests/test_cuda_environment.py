@@ -37,7 +37,11 @@ LIBRARIES = "/usr/local/nvidia/lib64:/usr/local/cuda/lib64"
 def test_invalid_library_path_is_closed(
     value: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("LD_LIBRARY_PATH", value)
+    # The OS rejects NUL before validation; model the environment-read boundary
+    # without inserting invalid bytes into the actual process environment.
+    monkeypatch.setattr(
+        probe, "os", SimpleNamespace(environ={"LD_LIBRARY_PATH": value})
+    )
     with pytest.raises(probe.Stop) as error:
         probe.clean_environment()
     assert error.value.reason == "CUDA_PLATFORM_ENV_INVALID"

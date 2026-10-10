@@ -418,9 +418,33 @@ def test_experiment_has_no_product_imports_or_exposure() -> None:
         "router.huggingface.co",
         "api.openai.com",
         "getenv",
-        "os.environ",
     ):
         assert forbidden not in source
+    parents = {
+        child: parent
+        for parent in ast.walk(tree)
+        for child in ast.iter_child_nodes(parent)
+    }
+    environment_reads = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "os"
+        and node.attr == "environ"
+    ]
+    assert len(environment_reads) == 1
+    environment = environment_reads[0]
+    access = parents[environment]
+    call = parents[access]
+    assert isinstance(call, ast.Call)
+    assert ast.unparse(call) == "os.environ.get('LD_LIBRARY_PATH')"
+    clean = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "clean_environment"
+    )
+    assert environment in set(ast.walk(clean))
     assert len(probe.REVISION) == 40
     assert all(".." not in name and "/" not in name for name in probe.FILES)
     assert (probe.SOURCE / "requirements-kaggle.txt").is_file()
