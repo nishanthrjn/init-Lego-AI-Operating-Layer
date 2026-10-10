@@ -2,6 +2,8 @@
 
 import ast
 import json
+import sys
+import tempfile
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from functools import partial
@@ -78,10 +80,10 @@ def test_live_cli_refuses_before_io(
 ) -> None:
     monkeypatch.setattr(probe, "LIVE_READY", ready)
     with (
-        patch.object(probe.sys.stdin, "isatty", return_value=stdin_tty),
-        patch.object(probe.sys.stdout, "isatty", return_value=stdout_tty),
+        patch.object(sys.stdin, "isatty", return_value=stdin_tty),
+        patch.object(sys.stdout, "isatty", return_value=stdout_tty),
         patch.object(probe, "run_probe") as run,
-        patch.object(probe.tempfile, "mkdtemp") as directory,
+        patch.object(tempfile, "mkdtemp") as directory,
         patch("socket.getaddrinfo", side_effect=AssertionError("DNS forbidden")),
         patch("socket.socket", side_effect=AssertionError("network forbidden")),
         patch("getpass.getpass", side_effect=AssertionError("Secret read forbidden")),
@@ -95,9 +97,9 @@ def test_live_cli_refuses_before_io(
 def test_ready_live_cli_dispatches_once_without_provider_io(tmp_path: Path) -> None:
     assert probe.LIVE_READY is True
     with (
-        patch.object(probe.sys.stdin, "isatty", return_value=True),
-        patch.object(probe.sys.stdout, "isatty", return_value=True),
-        patch.object(probe.tempfile, "mkdtemp", return_value=str(tmp_path)),
+        patch.object(sys.stdin, "isatty", return_value=True),
+        patch.object(sys.stdout, "isatty", return_value=True),
+        patch.object(tempfile, "mkdtemp", return_value=str(tmp_path)),
         patch.object(
             probe, "run_probe", return_value=probe.Classification.HF_COMPATIBILITY_PASS
         ) as run,
@@ -358,9 +360,9 @@ def test_selected_backend_has_dated_identity_and_unknown_policy(
     assert source.retrieved_on == datetime(2026, 10, 10, tzinfo=UTC).date()
     assert probe.DOCS + "index" in source.reference
     assert probe.DOCS + "providers/" + page in source.reference
-    assert probe.chat_admission(config, selected, datetime.now(UTC)).models == frozenset(
-        {probe.CODING_MODELS[0] + ":" + backend}
-    )
+    assert probe.chat_admission(
+        config, selected, datetime.now(UTC)
+    ).models == frozenset({probe.CODING_MODELS[0] + ":" + backend})
     assert all(
         fact.basis is FactBasis.UNKNOWN
         for fact in (
