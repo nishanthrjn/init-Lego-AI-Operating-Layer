@@ -65,7 +65,11 @@ def main() -> int:
                 "tests/architecture",
             ],
         )
-        run("typing", [sys.executable, "-m", "mypy", *FILES, __file__])
+        # Resolve namespace-package paths from ROOT, matching the tests' imports.
+        run(
+            "typing",
+            [sys.executable, "-m", "mypy", "--explicit-package-bases", *FILES, __file__],
+        )
         run(
             "lint (Kaggle Python 3.10 syntax)",
             [
