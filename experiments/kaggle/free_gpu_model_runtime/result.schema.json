@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1A"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1B"
     },
     "schema_version": {
       "const": 2
@@ -294,12 +294,16 @@
               "GPU_MEMORY_UNSUPPORTED",
               "GPU_CAPABILITY_UNSUPPORTED",
               "DRIVER_CUDA_UNSUPPORTED",
-              "RUNTIME_PYTHON_UNAVAILABLE",
               "RUNTIME_PYTHON_VERSION_MISMATCH",
               "RUNTIME_PACKAGE_VERSION_MISMATCH",
               "EXISTING_EVIDENCE",
               "INTERNAL_BOUNDED_FAILURE",
-              "RUNTIME_ISOLATION_FAILED"
+              "RUNTIME_ISOLATION_FAILED",
+              "RUNTIME_PYTHON_NOT_FOUND",
+              "RUNTIME_PYTHON_INVALID",
+              "RUNTIME_ENV_CREATION_FAILED",
+              "UV_TOOL_UNAVAILABLE",
+              "UV_VERSION_MISMATCH"
             ]
           }
         },

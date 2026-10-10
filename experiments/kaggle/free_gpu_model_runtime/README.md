@@ -1,4 +1,45 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1A
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1B
+
+## Correction 1B: valid Python, missing ensurepip
+
+The second live run reached Inspect **KAGGLE_GPU_READY**. Bootstrap returned
+**RESULT_INCONCLUSIVE / RUNTIME_PYTHON_UNAVAILABLE**. Operator diagnostics found
+valid CPython **3.12.3** at `/usr/bin/python3.12`: `venv` imports, but `ensurepip`
+does not, and stdlib venv creation fails. `/usr/local/bin/uv` is available; its
+version was not supplied. Base Python is 3.13.15. This is a **HARNESS
+ENVIRONMENT-CREATION DEFECT**, not unavailable Python or a GPU/Kaggle/model/vLLM
+failure.
+
+1B supersedes the historical 1A stdlib model-venv creation below. Existing uv
+is accepted only after verifying **0.9.5**. Otherwise the authorized tooling-only
+mechanism obtains pinned uv 0.9.5 and verifies it. The model environment uses:
+
+```text
+uv --no-config venv --python /usr/bin/python3.12 --no-python-downloads --seed --index-url https://pypi.org/simple <SCRATCH>/venv
+```
+
+The [uv 0.9.5 CLI definition](https://github.com/astral-sh/uv/blob/0.9.5/crates/uv-cli/src/lib.rs)
+confirms interpreter selection and pip seeding. uv does not require the runtime
+interpreter's ensurepip; seeding can download pip from public PyPI. The separate
+fallback tooling venv can still use the base launcher's stdlib venv, with failure
+classified as UV_TOOL_UNAVAILABLE rather than missing runtime Python.
+
+Require the entire target directory to be absent, including symlinks. Never
+delete an incomplete venv. Verify the executable, CPython 3.12, distinct prefix,
+disabled user/system sites and absence of torch/transformers before installing
+the unchanged requirements. Verify exact package versions before downloading
+the model, and again at worker startup.
+
+Closed reasons now distinguish RUNTIME_PYTHON_NOT_FOUND, RUNTIME_PYTHON_INVALID,
+RUNTIME_ENV_CREATION_FAILED, version/isolation failures, UV_TOOL_UNAVAILABLE and
+UV_VERSION_MISMATCH. No raw exceptions enter artifacts. Existing evidence stays
+untouched. No apt, sudo, base-image mutation, runtime/model-pin change, GPU-policy
+change, retry, or Python 3.13 inference fallback is introduced.
+
+After local validation and maintainer commit, upload the corrected source,
+manifest and notebook into a **genuinely fresh session**. Preserve the failed
+session's evidence. Run Inspect, Bootstrap, Probe once, stopping on failure.
+No fresh Kaggle execution has occurred for 1B.
 
 **Implemented; local validation pending; Kaggle runtime not qualified.**
 This is a disposable, synthetic-only runtime experiment. It does not import,
@@ -175,7 +216,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1a.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1b.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 

@@ -1,5 +1,16 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1B amendment: interpreter availability and environment creation
+
+Live evidence confirms valid CPython 3.12.3 without ensurepip. Use verified uv
+0.9.5 to create and seed the model environment. Prefer existing uv only after
+version verification; otherwise use the authorized pinned tooling acquisition.
+Refuse existing runtime directories without deletion. Verify Python, isolation
+and absence of base ML packages before installing unchanged inference pins.
+Classify creation failure separately from missing Python. GPU and product
+boundaries remain unchanged.
+
+
 Status: accepted for implementation; local and Kaggle qualification pending.
 Scope: FREE-GPU-MODEL-RUNTIME-KAGGLE-1 only. No Core architecture change.
 
@@ -33,7 +44,7 @@ persisted. Tight output contracts may fail despite feasible GPU execution;
 such failures remain evidence, not permission to relax pass criteria.
 
 
-## 1A amendment — base launcher is not the inference interpreter
+## 1A amendment â€” base launcher is not the inference interpreter
 
 Real Kaggle evidence shows base Python 3.13.15. Widening the old gate alone
 would incorrectly create a Python 3.13 inference venv. Resolve an existing

@@ -95,14 +95,17 @@ def test_missing_interpreter_has_closed_reason(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(subprocess, "run", missing)
     with pytest.raises(probe.Stop) as error:
         probe.inspect_interpreter(Path("missing"))
-    assert error.value.reason == "RUNTIME_PYTHON_UNAVAILABLE"
+    assert error.value.reason == "RUNTIME_PYTHON_NOT_FOUND"
     assert "CANARY" not in str(error.value)
 
 
 @pytest.mark.parametrize("system", [True, False])
 def test_model_venv_uses_only_frozen_interpreter(
-    monkeypatch: pytest.MonkeyPatch, system: bool
+    monkeypatch: pytest.MonkeyPatch, system: bool, tmp_path: Path
 ) -> None:
+    monkeypatch.setattr(probe, "SCRATCH", tmp_path)
+    monkeypatch.setattr(probe, "PYTHON", tmp_path / "venv/bin/python")
+    monkeypatch.setattr(probe, "resolve_uv", lambda: Path("/usr/local/bin/uv"))
     interpreter = Path("/usr/bin/python3.12")
     monkeypatch.setattr(probe, "system_python", lambda: interpreter if system else None)
     monkeypatch.setattr(sys, "version_info", (3, 13, 15))
@@ -110,9 +113,12 @@ def test_model_venv_uses_only_frozen_interpreter(
 
     def command(args: list[str], timeout: int) -> None:
         events.append(args)
+        if "venv" in args:
+            probe.PYTHON.parent.mkdir(parents=True)
+            probe.PYTHON.touch()
 
-    def inspect(path: Path, *, isolated: bool = False) -> str:
-        events.append((str(path), isolated))
+    def inspect(path: Path, *, isolated: bool = False, pristine: bool = False) -> str:
+        events.append((str(path), isolated, pristine))
         return "3.12.12"
 
     monkeypatch.setattr(probe, "bounded_process", command)
@@ -122,12 +128,13 @@ def test_model_venv_uses_only_frozen_interpreter(
     probe.create_runtime(result)
     commands = [event for event in events if isinstance(event, list)]
     venv = next(args for args in commands if args[-1] == str(probe.SCRATCH / "venv"))
-    assert "python3.12" in venv[0] and venv[0] != sys.executable
+    assert "python3.12" in venv[venv.index("--python") + 1]
+    assert venv[0] == str(Path("/usr/local/bin/uv"))
+    assert "--seed" in venv and "--no-python-downloads" in venv
     assert "--system-site-packages" not in venv
-    assert events[-1] == (str(probe.PYTHON), True)
+    assert events[-1] == (str(probe.PYTHON), True, True)
     assert result["runtime_versions"]["python"] == "3.12.12"
     if not system:
-        assert any("uv==0.9.5" in args for args in commands)
         assert any("cpython-3.12.12-linux-x86_64-gnu" in args for args in commands)
 
 
@@ -180,7 +187,7 @@ def test_notebook_failure_diagnostics_before_raise(
         lambda *a, **k: subprocess.CompletedProcess(
             [],
             1,
-            "inspect: RESULT_INCONCLUSIVE / RUNTIME_PYTHON_UNAVAILABLE\n",
+            "inspect: RESULT_INCONCLUSIVE / RUNTIME_PYTHON_NOT_FOUND\n",
             "PRIVATE/path/trace\n",
         ),
     )
@@ -188,7 +195,7 @@ def test_notebook_failure_diagnostics_before_raise(
         notebook.run_phase(Path("source"), "inspect", 120)
     output = capsys.readouterr().out
     assert "stdout:" in output and "stderr:" in output and "return code: 1" in output
-    assert "RUNTIME_PYTHON_UNAVAILABLE" in output and "PRIVATE" not in output
+    assert "RUNTIME_PYTHON_NOT_FOUND" in output and "PRIVATE" not in output
 
 
 def test_dependency_contract_unchanged() -> None:

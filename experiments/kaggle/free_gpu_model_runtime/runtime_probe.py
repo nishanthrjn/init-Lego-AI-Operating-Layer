@@ -26,11 +26,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1A"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1B"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
 UV_VERSION = "0.9.5"
+SYSTEM_UV = Path("/usr/local/bin/uv")
 SYSTEM_PYTHONS = (Path("/usr/bin/python3.12"), Path("/usr/local/bin/python3.12"))
 REASONS = frozenset(
     {
@@ -41,7 +42,11 @@ REASONS = frozenset(
         "GPU_MEMORY_UNSUPPORTED",
         "GPU_CAPABILITY_UNSUPPORTED",
         "DRIVER_CUDA_UNSUPPORTED",
-        "RUNTIME_PYTHON_UNAVAILABLE",
+        "RUNTIME_PYTHON_NOT_FOUND",
+        "RUNTIME_PYTHON_INVALID",
+        "RUNTIME_ENV_CREATION_FAILED",
+        "UV_TOOL_UNAVAILABLE",
+        "UV_VERSION_MISMATCH",
         "RUNTIME_PYTHON_VERSION_MISMATCH",
         "RUNTIME_PACKAGE_VERSION_MISMATCH",
         "EXISTING_EVIDENCE",
@@ -641,11 +646,14 @@ def serve_and_probe(result: dict[str, Any]) -> None:
         stop_process(process, group=False)
 
 
-def inspect_interpreter(executable: Path, *, isolated: bool = False) -> str:
+def inspect_interpreter(
+    executable: Path, *, isolated: bool = False, pristine: bool = False
+) -> str:
     script = (
-        "import sys,json,site; print(json.dumps({"
+        "import sys,json,site,importlib.util; print(json.dumps({"
         "'version':list(sys.version_info[:3]),'implementation':sys.implementation.name,"
-        "'venv':sys.prefix != sys.base_prefix,'user_site':site.ENABLE_USER_SITE}))"
+        "'venv':sys.prefix != sys.base_prefix,'user_site':site.ENABLE_USER_SITE,"
+        "'inherited':any(importlib.util.find_spec(n) is not None for n in ('torch','transformers'))}))"
     )
     try:
         completed = subprocess.run(
@@ -673,9 +681,14 @@ def inspect_interpreter(executable: Path, *, isolated: bool = False) -> str:
                 or "include-system-site-packages = false" not in config.lower()
             ):
                 raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ISOLATION_FAILED")
+        if pristine and info.get("inherited") is not False:
+            raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ISOLATION_FAILED")
         return safe_version(".".join(str(v) for v in version))
+    except FileNotFoundError:
+        reason = "RUNTIME_ISOLATION_FAILED" if isolated else "RUNTIME_PYTHON_NOT_FOUND"
+        raise Stop("RESULT_INCONCLUSIVE", reason) from None
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
-        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_INVALID") from None
 
 
 def system_python() -> Path | None:
@@ -686,38 +699,74 @@ def system_python() -> Path | None:
     return None
 
 
-def create_runtime(result: dict[str, Any]) -> None:
-    interpreter = system_python()
+def verify_uv(executable: Path) -> None:
     try:
-        if interpreter is None:
-            # This is a tooling-only venv under the launcher Python. It never
-            # contains inference packages or becomes the model-runtime venv.
-            tooling = SCRATCH / "bootstrap-tools"
-            bounded_process([sys.executable, "-m", "venv", str(tooling)], 120)
+        result = subprocess.run(
+            [str(executable), "--version"],
+            env=clean_environment(),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE") from None
+    if len(result.stdout) > 128 or result.stdout.split()[:2] != ["uv", UV_VERSION]:
+        raise Stop("RESULT_INCONCLUSIVE", "UV_VERSION_MISMATCH")
+
+
+def resolve_uv() -> Path:
+    if SYSTEM_UV.is_file():
+        try:
+            verify_uv(SYSTEM_UV)
+            return SYSTEM_UV
+        except Stop as error:
+            if error.reason != "UV_VERSION_MISMATCH":
+                raise
+    # Previously authorized tooling-only environment, never the model runtime.
+    tooling = SCRATCH / "bootstrap-tools"
+    if tooling.exists() or tooling.is_symlink():
+        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE")
+    try:
+        bounded_process([sys.executable, "-m", "venv", str(tooling)], 120)
+        bounded_process(
+            [
+                str(tooling / "bin/python"),
+                "-m",
+                "pip",
+                "--isolated",
+                "install",
+                "--index-url",
+                "https://pypi.org/simple",
+                "--only-binary=:all:",
+                "--retries",
+                "0",
+                "--timeout",
+                "30",
+                "--no-cache-dir",
+                "--disable-pip-version-check",
+                f"uv=={UV_VERSION}",
+            ],
+            180,
+        )
+    except (Stop, OSError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE") from None
+    uv = tooling / "bin/uv"
+    verify_uv(uv)
+    return uv
+
+
+def create_runtime(result: dict[str, Any]) -> None:
+    target = SCRATCH / "venv"
+    if target.exists() or target.is_symlink():
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ENV_CREATION_FAILED")
+    interpreter = system_python()
+    uv = resolve_uv()
+    if interpreter is None:
+        try:
             bounded_process(
                 [
-                    str(tooling / "bin/python"),
-                    "-m",
-                    "pip",
-                    "--isolated",
-                    "install",
-                    "--index-url",
-                    "https://pypi.org/simple",
-                    "--only-binary=:all:",
-                    "--retries",
-                    "0",
-                    "--timeout",
-                    "30",
-                    "--no-cache-dir",
-                    "--disable-pip-version-check",
-                    f"uv=={UV_VERSION}",
-                ],
-                180,
-            )
-            uv = str(tooling / "bin/uv")
-            bounded_process(
-                [
-                    uv,
+                    str(uv),
                     "--no-config",
                     "python",
                     "install",
@@ -725,23 +774,40 @@ def create_runtime(result: dict[str, Any]) -> None:
                 ],
                 300,
             )
-            interpreter = (
-                SCRATCH
-                / "pythons"
-                / f"cpython-{MANAGED_PYTHON}-linux-x86_64-gnu/bin/python3.12"
-            )
-            result["runtime_python_source"] = "uv_managed"
-        else:
-            result["runtime_python_source"] = "system"
-        inspect_interpreter(interpreter)
-        bounded_process([str(interpreter), "-m", "venv", str(SCRATCH / "venv")], 120)
-    except Stop as error:
-        if error.reason != "INTERNAL_BOUNDED_FAILURE":
-            raise
-        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
-    except (OSError, subprocess.SubprocessError):
-        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
-    result["runtime_versions"] = {"python": inspect_interpreter(PYTHON, isolated=True)}
+        except (Stop, OSError, subprocess.SubprocessError):
+            raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_NOT_FOUND") from None
+        interpreter = (
+            SCRATCH
+            / "pythons"
+            / f"cpython-{MANAGED_PYTHON}-linux-x86_64-gnu/bin/python3.12"
+        )
+        result["runtime_python_source"] = "uv_managed"
+    else:
+        result["runtime_python_source"] = "system"
+    inspect_interpreter(interpreter)
+    try:
+        bounded_process(
+            [
+                str(uv),
+                "--no-config",
+                "venv",
+                "--python",
+                str(interpreter),
+                "--no-python-downloads",
+                "--seed",
+                "--index-url",
+                "https://pypi.org/simple",
+                str(target),
+            ],
+            180,
+        )
+    except (Stop, OSError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ENV_CREATION_FAILED") from None
+    if not PYTHON.is_file():
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ENV_CREATION_FAILED")
+    result["runtime_versions"] = {
+        "python": inspect_interpreter(PYTHON, isolated=True, pristine=True)
+    }
     save(result)
 
 
@@ -790,7 +856,8 @@ def main() -> int:
             "KAGGLE_GPU_READY" if args.mode == "bootstrap" else "MODEL_DOWNLOADED"
         )
         if previous["outcome"] != required or (
-            args.mode == "bootstrap" and PYTHON.exists()
+            args.mode == "bootstrap"
+            and ((SCRATCH / "venv").exists() or (SCRATCH / "venv").is_symlink())
         ):
             print("RESULT_INCONCLUSIVE / EXISTING_EVIDENCE")
             return 1
@@ -826,7 +893,10 @@ def main() -> int:
         else:
             result = json.loads(RESULT.read_text(encoding="utf-8"))
             if args.mode == "bootstrap":
-                if result["outcome"] != "KAGGLE_GPU_READY" or PYTHON.exists():
+                if (
+                    result["outcome"] != "KAGGLE_GPU_READY"
+                    or (SCRATCH / "venv").exists()
+                ):
                     raise Stop("RESULT_INCONCLUSIVE")
                 create_runtime(result)
                 bounded_process(
@@ -880,6 +950,7 @@ def main() -> int:
                 phase(result, active, "MODEL_DOWNLOADED")
             elif args.mode == "_inventory":
                 result["runtime_versions"] = versions()
+                require_packages(result["runtime_versions"])
                 save(result)
             elif args.mode == "_download":
                 download()
