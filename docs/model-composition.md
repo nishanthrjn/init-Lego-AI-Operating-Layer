@@ -21,7 +21,10 @@ remote configuration, separately from mutation approval. No retry or fallback.
 Qualification is synthetic local TLS only; live-model quality and named-provider
 compatibility remain unqualified. The complete agent-run validator passed on
 2026-10-10, including real Docker with GENERIC/PROJECT checks and the historical
-ForgeAI validator. Separate maintainer validation is pending.
+ForgeAI validator. The supplied maintainer transcript on 2026-10-10 also passed
+the complete validator, with explicit PyPI preparation and offline checks.
+FORGEAI-REMOTE-MODEL-PROFILE-1 is **LOCALLY QUALIFIED** within that synthetic
+local TLS scope.
 
 Earlier sections below are historical slice records. Statements that REMOTE
 is refused or ForgeAI is not remote-enabled describe those earlier slices;

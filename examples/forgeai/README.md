@@ -142,8 +142,13 @@ The final run acquired one locked dependency wheel through the existing PROJECT
 preparation; model traffic went only to synthetic local TLS. No live model
 provider or real user-repository pilot was used.
 
-A separate maintainer rerun is pending. This evidence is separate from historical M6
-and v0.1 qualification. No named GPU platform, notebook deployment, ComfyUI,
+The supplied maintainer transcript on 2026-10-10 also passed every validator
+phase, including both real Docker REMOTE combinations and the complete historical
+v0.1 validator, ending with `FORGEAI REMOTE MODEL PROFILE LOCAL VALIDATION PASSED`.
+FORGEAI-REMOTE-MODEL-PROFILE-1 is therefore **LOCALLY QUALIFIED** for synthetic
+local TLS, with explicit PyPI preparation and offline checks. This evidence is
+separate from historical M6 and v0.1 qualification. No named GPU platform,
+notebook deployment, ComfyUI,
 production credential management, arbitrary OpenAI compatibility or live
 remote model quality is qualified.
 

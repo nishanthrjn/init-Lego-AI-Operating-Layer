@@ -23,9 +23,11 @@ ForgeAI stays local, and model binding is independent of GENERIC/PROJECT checks.
 Remote disclosure requires its own single-run confirmation before any model
 call. The complete agent-run validator passed on 2026-10-10 using local synthetic
 TLS, real Docker GENERIC/PROJECT checks and the full historical v0.1 regressions;
-separate maintainer validation is pending.
-No live provider or free-GPU deployment is qualified. After qualification and
-commit, the recommended next deployment slice is
+the supplied maintainer transcript on 2026-10-10 also passed every phase, with
+explicit PyPI preparation and offline checks. This slice is **LOCALLY QUALIFIED**
+within that synthetic local TLS scope.
+No live provider or free-GPU deployment is qualified. After commit, the
+recommended next deployment slice is
 FREE-GPU-OPENAI-COMPATIBLE-DEV-HARNESS-1 for one operator-selected environment;
 this update does not implement or authorize that future deployment.
 
