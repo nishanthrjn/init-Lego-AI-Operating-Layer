@@ -227,7 +227,10 @@ def test_invalid_prices(price: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    "raw", [b"no-json", b'{"data":[],"data":[]}', b"[]", b" " * 4_194_305]
+    "raw",
+    [b"no-json", b'{"data":[],"data":[]}', b"[]", b" " * 4_194_305],
+    # Keep PYTEST_CURRENT_TEST within Windows' environment-variable size limit.
+    ids=["invalid-json", "duplicate-keys", "wrong-root-type", "oversized-body"],
 )
 def test_invalid_response(raw: bytes) -> None:
     with pytest.raises(ModelResponseRejectedError):
