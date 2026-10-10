@@ -67,7 +67,7 @@ def test_cpu_assignment_is_recorded_without_driver_utility(
     def unavailable(*args: Any, **kwargs: Any) -> Any:
         raise FileNotFoundError("PRIVATE-CANARY")
 
-    monkeypatch.setattr(probe.subprocess, "run", unavailable)
+    monkeypatch.setattr(subprocess, "run", unavailable)
     observed = probe.hardware()
     assert observed["cuda_available"] is False
     assert observed["device_count"] == 0
@@ -222,7 +222,7 @@ def test_watchdog_always_cleans_owned_group(monkeypatch: pytest.MonkeyPatch) -> 
     def stop(process: Any) -> None:
         events.append("stop")
 
-    monkeypatch.setattr(probe.subprocess, "Popen", Process)
+    monkeypatch.setattr(subprocess, "Popen", Process)
     monkeypatch.setattr(probe, "stop_process", stop)
     with pytest.raises(subprocess.TimeoutExpired):
         probe.bounded_process(["synthetic"], 1)
@@ -298,7 +298,7 @@ def test_generation_ceiling_and_failure_cleanup(
         "socket",
         SimpleNamespace(socket=Socket, create_connection=lambda *a, **k: Socket()),
     )
-    monkeypatch.setattr(probe.subprocess, "Popen", Process)
+    monkeypatch.setattr(subprocess, "Popen", Process)
     monkeypatch.setattr(probe, "stop_process", stop)
     monkeypatch.setattr(probe, "sample_memory", lambda result: None)
     monkeypatch.setattr(probe, "save", lambda result: None)

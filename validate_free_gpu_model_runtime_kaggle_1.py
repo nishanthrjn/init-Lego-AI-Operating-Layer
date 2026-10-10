@@ -66,9 +66,19 @@ def main() -> int:
             ],
         )
         # Resolve namespace-package paths from ROOT, matching the tests' imports.
+        # The deployment target is Kaggle Linux, including on Windows maintainers' PCs.
         run(
             "typing",
-            [sys.executable, "-m", "mypy", "--explicit-package-bases", *FILES, __file__],
+            [
+                sys.executable,
+                "-m",
+                "mypy",
+                "--explicit-package-bases",
+                "--platform",
+                "linux",
+                *FILES,
+                __file__,
+            ],
         )
         run(
             "lint (Kaggle Python 3.10 syntax)",
