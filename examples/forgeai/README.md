@@ -956,7 +956,7 @@ uv run --locked --offline --no-sync python -m forgeai.provider_cli --mode local 
 
 `uv --offline` controls dependency resolution; it does not prohibit this explicitly
 requested endpoint call. The command makes at most three fixed synthetic requests:
-READY, exact JSON `{"status":"READY"}`, and `def add(a,b): return a+b` (AST checked,
+READY, exact JSON `{"status":"ready"}`, and `def add(a: int, b: int) -> int: return a + b` (AST checked,
 never executed). Temperature zero, no streaming and max_tokens=512 are requested.
 The existing adapter verifies the exact response model and finish_reason=stop.
 The local transport caps bodies at 1 MiB; application output is capped at 4096
@@ -1012,3 +1012,62 @@ if ($LASTEXITCODE -ne 0) { throw 'Full provider regression failed' }
 See [ADR-025](../../adrs/ADR-025.md) for the minimal settings/diagnostic additions.
 Mutation remains a later slice requiring synthetic, read-only and disclosure
 qualification evidence. No live execution is authorized by these offline checks.
+
+
+### Provider slice closeout contract
+
+Canonical prompts below match the supplied Kaggle 1G prompt fixtures. Production
+ForgeAI does not import that experiment. Test-only identity assertions prevent drift.
+
+<!-- provider-synthetic:ready -->
+```text
+Return exactly the word READY.
+```
+
+<!-- provider-synthetic:json -->
+```text
+Return only this exact JSON object: {"status":"ready"}. Do not use Markdown or code fences. Do not add explanation, prose, whitespace lines, or any other text.
+```
+
+<!-- provider-synthetic:add -->
+```text
+Return only valid Python source code. Define exactly one function:
+def add(a: int, b: int) -> int:
+    return a + b
+Do not use Markdown code fences. Do not include imports, comments, explanation, examples, or additional code.
+```
+
+READY accepts only exact `READY` (no whitespace normalization). JSON accepts exactly
+the semantic object `{"status":"ready"}` with no duplicate keys or extra fields;
+uppercase `READY` is rejected. ADD requires AST equivalence to:
+
+```python
+def add(a: int, b: int) -> int:
+    return a + b
+```
+
+No fence stripping, prose extraction, output repair, retry or fallback occurs.
+ADD source is parsed, never executed.
+
+**Structured-output decision A:** this slice remains a generic prompted-behavior
+check. Kaggle 1G additionally sent `response_format={"type":"json_object"}` for
+JSON; ForgeAI sends no response_format. Its existing public schema contract is
+not a JSON-object-mode switch, and the generic OpenAI-compatible binding does not
+advertise schema support. No new public contract or Core change is introduced
+for closeout. Kaggle evidence therefore does **not** qualify the exact ForgeAI
+wire request. ADR-025 and its deterministic defaults/effect semantics are unchanged.
+
+User-supplied live evidence records FREE-GPU-MODEL-RUNTIME-KAGGLE-1G as
+`KAGGLE_RUNTIME_PASS`: Qwen/Qwen2.5-Coder-14B-Instruct-AWQ at revision
+`eb3172f06a6d6b3a15f08947b0668d782e4d2d2c`, AWQ 4-bit, Python 3.12.3,
+torch 2.7.0+cu128, transformers 4.51.3, vLLM 0.9.2, two Tesla T4 GPUs,
+tensor_parallel_size=2; READY/JSON/ADD all PASS. This is infrastructure evidence,
+not a reachable Windows endpoint or ForgeAI-to-Kaggle interoperability result.
+
+Full closeout uses the same validator with `--full`. It requires Docker Desktop
+Linux and the existing pinned checks image. Missing Docker is an environment
+blocker; a new Docker functional failure stops validation for classification.
+Full mode includes Engineering, clean-install/package checks, historical ForgeAI
+and explicitly enabled real-Docker remote fixtures. Live model tests remain
+unauthorized. The next slice, only after closeout, is research-only
+`KAGGLE-FORGEAI-INTEGRATION-OPTIONS-1`; mutation is not next.

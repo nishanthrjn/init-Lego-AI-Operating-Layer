@@ -629,3 +629,14 @@ metadata identifies the definition; no new report fields. Fixture/hidden
 revisions stay 1 and schema stays 3. Historical reports remain immutable.
 No live measurement was run for this implementation. Reviewer finding_invalid
 remains a separate follow-up; no other deferred capabilities resume.
+
+
+### Explicit approval in evaluation runs
+
+`RunSettings.approve` is required and forwarded unchanged to the required
+`run_task(..., approve=...)` parameter. The command uses ForgeAI's existing
+interactive approver; a missing terminal, EOF or any non-approval response declines.
+There is no --yes or automatic approval in the evaluation command. Self-test
+fixtures explicitly inject the existing test-only approval function to preserve
+their replay/scenario intent; decline coverage proves no changes/checks occur.
+This corrects the stale caller, not the production approval contract.

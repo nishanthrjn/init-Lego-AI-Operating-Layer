@@ -23,7 +23,12 @@ from test_disclosure import admission, declaration
 from tls_server import TEST_CA, TlsServer
 
 from forgeai.composition import provider_session, summarize_provider_file
-from forgeai.provider import ProviderProfile, ReadOnlyApproval, synthetic_valid
+from forgeai.provider import (
+    ProviderProfile,
+    ReadOnlyApproval,
+    synthetic_cases,
+    synthetic_valid,
+)
 from forgeai.provider_cli import main
 from forgeai.remote import BINDING, classes
 
@@ -90,8 +95,8 @@ def replies() -> tuple[tuple[int, bytes], ...]:
         (200, body(text))
         for text in (
             "READY",
-            '{"status":"READY"}',
-            "def add(a, b):\n    return a + b\n",
+            '{"status":"ready"}',
+            "def add(a: int, b: int) -> int:\n    return a + b\n",
             "A small function.",
         )
     )
@@ -145,7 +150,7 @@ def test_neutral_configuration_and_no_auth() -> None:
 def test_operator_cli_qualifies_before_separate_file_approval(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (tmp_path / "source.py").write_text("def add(a,b):\n return a+b")
+    (tmp_path / "source.py").write_text("def add(a: int, b: int) -> int:\n return a+b")
     with endpoint(replies()) as (url, seen):
         monkeypatch.setattr(
             sys,
@@ -176,6 +181,7 @@ def test_operator_cli_qualifies_before_separate_file_approval(
         monkeypatch.setattr("builtins.input", approve_file)
         assert main() == 0
         assert len(seen) == 4
+        assert all("response_format" not in request for request in seen)
         assert "READ-ONLY RESPONSE" in capsys.readouterr().out
 
 
@@ -183,7 +189,7 @@ def test_three_synthetic_then_one_explicit_read_no_mutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     target = tmp_path / "source.py"
-    target.write_text("def add(a, b):\n    return a + b\n")
+    target.write_text("def add(a: int, b: int) -> int:\n    return a + b\n")
     (tmp_path / "hidden.py").write_text("NEVER-DISCLOSE-CANARY")
     before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
     monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:1")
@@ -217,6 +223,7 @@ def test_three_synthetic_then_one_explicit_read_no_mutation(
 
         asyncio.run(run())
         assert len(seen) == 4
+        assert all("response_format" not in request for request in seen)
         assert all(
             x["model"] == "model-a" and x["temperature"] == 0 and x["max_tokens"] == 512
             for x in seen
@@ -279,9 +286,53 @@ def test_failure_no_retry_fallback_or_leak(
 
 
 def test_fixed_contracts_never_execute_code() -> None:
-    assert not synthetic_valid("add", "import os\ndef add(a,b):\n return a+b")
-    assert not synthetic_valid("json", '{"status":"READY","status":"READY"}')
-    assert not synthetic_valid("json", '```json\n{"status":"READY"}\n```')
+    assert not synthetic_valid(
+        "add", "import os\ndef add(a: int, b: int) -> int:\n return a+b"
+    )
+    assert not synthetic_valid("json", '{"status":"ready","status":"ready"}')
+    assert not synthetic_valid("json", '```json\n{"status":"ready"}\n```')
+
+
+def test_canonical_prompts_match_documentation_and_qualified_fixture() -> None:
+    package = Path(__file__).resolve().parents[1]
+    readme = (package / "README.md").read_text(encoding="utf-8")
+    fixture = (
+        package.parents[1]
+        / "experiments/kaggle/free_gpu_model_runtime/fixtures/synthetic_prompts.json"
+    )
+    cases = synthetic_cases()
+    assert cases[0] == ("ready", "Return exactly the word READY.")
+    assert cases == tuple(
+        (item["id"], item["prompt"]) for item in json.loads(fixture.read_text())
+    )
+    for name, prompt in cases:
+        documented = readme.split(f"<!-- provider-synthetic:{name} -->\n```text\n", 1)[
+            1
+        ].split("\n```", 1)[0]
+        assert documented == prompt
+
+
+@pytest.mark.parametrize(
+    ("name", "output"),
+    [
+        ("ready", " READY"),
+        ("ready", "READY\n"),
+        ("json", '{"status":"READY"}'),
+        ("json", 'Here: {"status":"ready"}'),
+        ("add", "def add(a, b):\n    return a + b"),
+        ("add", "```python\ndef add(a: int, b: int) -> int:\n    return a + b\n```"),
+        ("add", "Explanation\ndef add(a: int, b: int) -> int:\n    return a + b"),
+    ],
+)
+def test_contract_rejects_drift_and_output_repair(name: str, output: str) -> None:
+    assert not synthetic_valid(name, output)
+
+
+def test_generated_source_is_only_parsed(tmp_path: Path) -> None:
+    marker = tmp_path / "must-not-exist"
+    output = f"open({str(marker)!r}, 'w').write('executed')\ndef add(a: int, b: int) -> int:\n    return a + b"
+    assert not synthetic_valid("add", output)
+    assert not marker.exists()
 
 
 @pytest.mark.parametrize("target", [".env", "oversized.py", "missing.py"])
@@ -324,8 +375,8 @@ def test_remote_secret_custody_synthetic_only_blocks_repository(
     contents = iter(
         (
             "READY",
-            '{"status":"READY"}',
-            "def add(a,b):\n return a+b",
+            '{"status":"ready"}',
+            "def add(a: int, b: int) -> int:\n return a+b",
             "A small function.",
         )
     )
@@ -383,7 +434,9 @@ def test_remote_secret_custody_synthetic_only_blocks_repository(
             with provider_session(remote, trust_anchor=TEST_CA) as session:
                 root = tmp_path / "repository"
                 root.mkdir()
-                (root / "source.py").write_text("def add(a,b):\n return a+b")
+                (root / "source.py").write_text(
+                    "def add(a: int, b: int) -> int:\n return a+b"
+                )
 
                 async def run() -> None:
                     result = await session.qualify()

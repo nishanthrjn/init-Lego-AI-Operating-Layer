@@ -24,7 +24,7 @@ from tempfile import TemporaryDirectory
 
 from legoai.runtime.api import ModelBindingConfig
 
-from forgeai.cli import ReplayModel, ollama_binding, replay_binding
+from forgeai.cli import ReplayModel, ollama_binding, replay_binding, terminal_approver
 from forgeai_eval.fixtures import EVALUATION, Fixture, FixtureSet, load_fixture_set
 from forgeai_eval.observer import ChatObserver, ObservationLog, ObservingModel
 from forgeai_eval.preflight import PreflightError, verify_ollama
@@ -181,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
             observer.start()
         settings = RunSettings(
             bindings=factory,
+            approve=terminal_approver(input if sys.stdin.isatty() else None, print),
             git=args.git.resolve(),
             docker=args.docker.resolve(),
             workdir=Path(temporary),

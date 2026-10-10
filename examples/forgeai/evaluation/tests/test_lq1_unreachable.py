@@ -7,7 +7,7 @@ needed; nothing is retried and replay is never used as a fallback.
 from pathlib import Path
 
 from eval_support import fixture, metadata
-from forgeai_support import FakeSandbox, git_executable
+from forgeai_support import FakeSandbox, approve, git_executable
 from legoai.runtime.api import ModelBindingConfig
 
 from forgeai.cli import ollama_binding
@@ -26,6 +26,7 @@ def test_unreachable_provider_is_recorded_model_failure(tmp_path: Path) -> None:
     forge = FakeSandbox()
     hidden = FakeSandbox()
     settings = RunSettings(
+        approve=approve,
         bindings=bindings,
         git=git_executable(),
         docker=git_executable(),

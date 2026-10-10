@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from eval_support import REVIEW_ACCEPT, fixture_set, reference
-from forgeai_support import LoggedReplay, git_executable
+from forgeai_support import LoggedReplay, approve, git_executable
 from legoai.runtime.api import ModelBindingConfig
 from legoai_engineering.checks.values import CheckPolicy
 from legoai_engineering.repository.local import (
@@ -85,7 +85,11 @@ def test_reference_solution_succeeds_and_passes_hidden_tests(
         return (replay_binding(model),), "replay"
 
     settings = RunSettings(
-        bindings=bindings, git=git_executable(), docker=docker(), workdir=tmp_path
+        approve=approve,
+        bindings=bindings,
+        git=git_executable(),
+        docker=docker(),
+        workdir=tmp_path,
     )
     run = evaluate_run(item, 1, settings)
     assert run.task_result.disposition.value == "succeeded", run.task_result

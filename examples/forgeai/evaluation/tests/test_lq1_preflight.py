@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 import run
-from forgeai_support import FakeSandbox, git_executable
+from forgeai_support import FakeSandbox, approve, git_executable
 
 from forgeai_eval.fixtures import FixtureSet
 from forgeai_eval.preflight import (
@@ -126,6 +126,7 @@ class Evaluations:
         hidden = FakeSandbox()
         offline = replace(
             settings,
+            approve=approve,
             bindings=run.replay_bindings,
             forgeai_sandbox=FakeSandbox(),
             hidden_sandbox=lambda: hidden,

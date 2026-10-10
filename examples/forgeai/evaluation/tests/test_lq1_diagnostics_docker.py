@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from diag_support import part
 from eval_support import REVIEW_ACCEPT, fixture, reference
-from forgeai_support import git_executable
+from forgeai_support import approve, git_executable
 from legoai.runtime.api import ModelBindingConfig
 
 from forgeai.cli import ReplayModel, replay_binding
@@ -47,6 +47,7 @@ def test_real_ruff_and_pytest_output_is_classified(tmp_path: Path) -> None:
         return (replay_binding(ObservingModel(model, log)),), "replay"
 
     settings = RunSettings(
+        approve=approve,
         bindings=bindings,
         git=git_executable(),
         docker=Path(executable),

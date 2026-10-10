@@ -28,7 +28,7 @@ from legoai_engineering.sandbox.ports import SandboxExecutionPort
 from legoai_engineering.sandbox.values import SandboxPolicy
 
 from forgeai.composition import local_profile, run_task
-from forgeai.domain import TaskResult
+from forgeai.domain import OperatorDecision, ProposalReview, TaskResult
 from forgeai.guard import WorkspaceGuard
 from forgeai_eval.fixtures import Fixture, FixtureSet, provision
 from forgeai_eval.hidden import HiddenOutcome, HiddenResult, run_hidden
@@ -113,6 +113,7 @@ class RunSettings:
     git: Path
     docker: Path
     workdir: Path
+    approve: Callable[[ProposalReview], OperatorDecision]
     hidden_policy: CheckPolicy = CheckPolicy(timeout_seconds=120)
     forgeai_sandbox: SandboxExecutionPort | None = None
     hidden_sandbox: Callable[[], SandboxExecutionPort] | None = None
@@ -151,7 +152,11 @@ def evaluate_run(
     started = time.perf_counter()
     result = asyncio.run(
         run_task(
-            config, fixture.task, WorkspaceGuard(), sandbox=settings.forgeai_sandbox
+            config,
+            fixture.task,
+            WorkspaceGuard(),
+            approve=settings.approve,
+            sandbox=settings.forgeai_sandbox,
         )
     )
     run_seconds = time.perf_counter() - started

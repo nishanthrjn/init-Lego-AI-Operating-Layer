@@ -15,7 +15,7 @@ from diag_support import (
     review_samples,
 )
 from eval_support import REVIEW_ACCEPT, fixture, metadata, reference
-from forgeai_support import FakeSandbox, git_executable
+from forgeai_support import FakeSandbox, approve, git_executable
 
 from forgeai_eval.diagnostics import fold
 from forgeai_eval.fixtures import FixtureSet
@@ -161,7 +161,10 @@ def test_replay_command_reports_valid_observed_replies(
             fixtures,
             repetitions,
             replace(
-                settings, forgeai_sandbox=FakeSandbox(), hidden_sandbox=lambda: hidden
+                settings,
+                approve=approve,
+                forgeai_sandbox=FakeSandbox(),
+                hidden_sandbox=lambda: hidden,
             ),
         )
 

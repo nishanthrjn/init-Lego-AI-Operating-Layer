@@ -5,6 +5,8 @@ ForgeAI's checks and the oracle use recording fake sandboxes here; the real
 Docker path is covered by test_lq1_fixtures_docker.py.
 """
 
+import inspect
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -18,10 +20,12 @@ from eval_support import (
 from forgeai_support import REVIEW_CHANGES, REWORK
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 
+from forgeai.composition import run_task
+from forgeai.domain import OperatorDecision, ProposalReview, TaskFailure
 from forgeai_eval.fixtures import FixtureSet
 from forgeai_eval.hidden import HiddenOutcome
 from forgeai_eval.report import build_report
-from forgeai_eval.runner import FixtureRun, evaluate_run
+from forgeai_eval.runner import FixtureRun, RunSettings, evaluate_run
 
 STOCK = "stock-validation"
 
@@ -61,6 +65,33 @@ EXPECTED = {
     6: ("failed", "CHECKS_FAILED", HiddenOutcome.PASSED, 1),
     7: ("succeeded", None, HiddenOutcome.ERROR, 1),
 }
+
+
+def test_approval_is_required_at_both_boundaries() -> None:
+    for boundary in (run_task, RunSettings):
+        assert (
+            inspect.signature(boundary).parameters["approve"].default
+            is inspect.Parameter.empty
+        )
+
+
+def test_evaluation_forwards_explicit_decline_without_mutation(tmp_path: Path) -> None:
+    item = fixture(STOCK)
+    settings, model, forge, hidden = replay_settings(
+        tmp_path, (reference(item), REVIEW_ACCEPT)
+    )
+    seen: list[ProposalReview] = []
+
+    def decline(review: ProposalReview) -> OperatorDecision:
+        seen.append(review)
+        return OperatorDecision.decline(review)
+
+    result = evaluate_run(item, 1, replace(settings, approve=decline))
+    assert len(seen) == 1
+    assert result.task_result.failure is TaskFailure.PROPOSAL_DECLINED
+    assert not result.task_result.evidence.changed_paths
+    assert forge.calls == hidden.calls == 0
+    assert model.calls == 1
 
 
 @pytest.mark.parametrize("number", sorted(EXPECTED))

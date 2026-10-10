@@ -139,11 +139,11 @@ def synthetic_cases() -> tuple[tuple[str, str], ...]:
         ("ready", "Return exactly the word READY."),
         (
             "json",
-            'Return exactly this JSON object and no other text: {"status":"READY"}',
+            'Return only this exact JSON object: {"status":"ready"}. Do not use Markdown or code fences. Do not add explanation, prose, whitespace lines, or any other text.',
         ),
         (
             "add",
-            "Return only Python source: def add(a, b): followed by return a + b. No fences.",
+            "Return only valid Python source code. Define exactly one function:\ndef add(a: int, b: int) -> int:\n    return a + b\nDo not use Markdown code fences. Do not include imports, comments, explanation, examples, or additional code.",
         ),
     )
 
@@ -152,18 +152,18 @@ def synthetic_valid(name: str, text: str) -> bool:
     if len(text.encode("utf-8")) > 4096:
         return False
     if name == "ready":
-        return text.strip() == "READY"
+        return text == "READY"
     if name == "json":
         # Exact semantic object; duplicate keys and extra prose cannot pass.
         try:
             return bool(
-                json.loads(text, object_pairs_hook=list) == [("status", "READY")]
+                json.loads(text, object_pairs_hook=list) == [("status", "ready")]
             )
         except ValueError:
             return False
     if name == "add":
         try:
-            expected = ast.parse("def add(a, b):\n    return a + b\n")
+            expected = ast.parse("def add(a: int, b: int) -> int:\n    return a + b\n")
             return ast.dump(ast.parse(text)) == ast.dump(expected)
         except SyntaxError, ValueError:
             return False

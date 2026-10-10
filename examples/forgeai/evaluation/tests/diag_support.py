@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from eval_support import REVIEW_ACCEPT, fixture, reference
-from forgeai_support import FakeSandbox, git_executable
+from forgeai_support import FakeSandbox, approve, git_executable
 from legoai.runtime.api import ModelBindingConfig
 from legoai_engineering.repository.mutation import (
     ContentDigest,
@@ -299,6 +299,7 @@ def observed_settings(
 
     hidden = FakeSandbox()
     settings = RunSettings(
+        approve=approve,
         bindings=bindings,
         git=git_executable(),
         docker=git_executable(),

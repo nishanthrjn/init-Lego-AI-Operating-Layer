@@ -1,12 +1,14 @@
 """Offline interoperability checks; --full additionally runs legacy Docker suites."""
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 FORGEAI = ROOT / "examples/forgeai"
+ENGINEERING = ROOT / "packages/legoai-engineering"
 CORE = (
     "src/legoai/intelligence/model/ports.py",
     "src/legoai/intelligence/model/values.py",
@@ -37,10 +39,44 @@ def main() -> int:
         nonlocal phase
         phase = name
         print("\n[PHASE] " + name, flush=True)
-        subprocess.run(command, cwd=directory, check=True, timeout=1800)
+        environment = os.environ.copy()
+        environment.pop("VIRTUAL_ENV", None)
+        environment["FORGEAI_LIVE1_OFFLINE"] = "1"
+        if args.full:
+            environment["LEGOAI_QUALIFY_FORGEAI_REMOTE"] = "1"
+        subprocess.run(
+            command, cwd=directory, env=environment, check=True, timeout=3600
+        )
 
     forge = ["uv", "run", "--locked", "--offline", "--no-sync", "python"]
     try:
+        if args.full:
+            run(
+                "Docker Linux prerequisite",
+                ROOT,
+                [
+                    "docker",
+                    "--context",
+                    "desktop-linux",
+                    "info",
+                    "--format",
+                    "{{.OSType}} {{.ServerVersion}}",
+                ],
+            )
+            run(
+                "qualified checks image prerequisite",
+                ROOT,
+                [
+                    "docker",
+                    "--context",
+                    "desktop-linux",
+                    "image",
+                    "inspect",
+                    "sha256:4c64580306983d70e059f5f133f6bb3f82657c9c61fa96f562f42594f20269df",
+                    "--format",
+                    "{{.Id}}",
+                ],
+            )
         run(
             "provider contracts + ForgeAI architecture",
             FORGEAI,
@@ -71,16 +107,54 @@ def main() -> int:
                 "-p",
                 "no:cacheprovider",
                 "tests/test_remote_profile.py",
-                "-k",
-                "not real_docker",
+                *([] if args.full else ["-k", "not real_docker"]),
+                "-x",
+                "-rs",
+            ],
+        )
+        run(
+            "Engineering regressions",
+            ENGINEERING,
+            [
+                *forge,
+                "-m",
+                "pytest",
+                "-q",
+                "-x",
+                "-rs",
+                "-p",
+                "no:cacheprovider",
+                *(
+                    []
+                    if args.full
+                    else [
+                        "tests/test_workspace.py",
+                        "tests/test_repository.py",
+                        "tests/test_architecture.py",
+                    ]
+                ),
             ],
         )
         if args.full:
             run(
                 "full ForgeAI regression (requires existing Docker runtime)",
                 FORGEAI,
-                [*forge, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+                [*forge, "-m", "pytest", "-q", "-x", "-rs", "-p", "no:cacheprovider"],
             )
+        run(
+            "evaluation approval regressions",
+            FORGEAI,
+            [
+                *forge,
+                "-m",
+                "pytest",
+                "-q",
+                "-p",
+                "no:cacheprovider",
+                "evaluation/tests/test_lq1_runner.py",
+                "evaluation/tests/test_lq1_architecture.py",
+            ],
+        )
         for tool, options in (
             ("mypy", []),
             ("ruff", ["check"]),
@@ -106,7 +180,18 @@ def main() -> int:
             run(
                 "ForgeAI " + tool + " ".join(options),
                 FORGEAI,
-                [*forge, "-m", tool, *options, "src", "tests", "demo.py"],
+                [
+                    *forge,
+                    "-m",
+                    tool,
+                    *options,
+                    "src",
+                    "tests",
+                    "demo.py",
+                    "evaluation/forgeai_eval/runner.py",
+                    "evaluation/run.py",
+                    "evaluation/tests/test_lq1_runner.py",
+                ],
             )
         run("diff whitespace", ROOT, ["git", "diff", "--check"])
     except OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired:

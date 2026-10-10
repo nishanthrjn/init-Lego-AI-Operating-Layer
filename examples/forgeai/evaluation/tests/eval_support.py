@@ -3,7 +3,7 @@
 from dataclasses import replace
 from pathlib import Path
 
-from forgeai_support import FakeSandbox, LoggedReplay, git_executable
+from forgeai_support import FakeSandbox, LoggedReplay, approve, git_executable
 from legoai.runtime.api import ModelBindingConfig
 from legoai_engineering.sandbox.errors import SandboxError
 from legoai_engineering.sandbox.ports import CancellationSignal
@@ -72,6 +72,7 @@ def replay_settings(
         return (replay_binding(model),), "replay"
 
     settings = RunSettings(
+        approve=approve,
         bindings=bindings,
         git=git_executable(),
         docker=git_executable(),

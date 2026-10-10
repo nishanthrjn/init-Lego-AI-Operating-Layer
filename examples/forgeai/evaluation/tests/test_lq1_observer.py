@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 from diag_support import part
 from eval_support import REVIEW_ACCEPT, fixture, reference
-from forgeai_support import FakeSandbox, git_executable
+from forgeai_support import FakeSandbox, approve, git_executable
 from legoai.intelligence.model.values import (
     ChatMessage,
     ChatRequest,
@@ -117,6 +117,7 @@ def run(
 
     hidden = FakeSandbox()
     settings = RunSettings(
+        approve=approve,
         bindings=bindings,
         git=git_executable(),
         docker=git_executable(),

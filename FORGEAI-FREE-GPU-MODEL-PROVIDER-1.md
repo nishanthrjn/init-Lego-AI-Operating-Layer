@@ -1,5 +1,10 @@
 # FORGEAI-FREE-GPU-MODEL-PROVIDER-1
 
+Current closeout status: **FULL VALIDATION PENDING**. See
+[the closeout report](FORGEAI-FREE-GPU-MODEL-PROVIDER-1-CLOSEOUT.md) for the
+corrected approval caller, canonical synthetic contracts, and current failures.
+The implementation record below describes the earlier validation attempt.
+
 Implemented; scoped offline validation passed. Full regression validation is
 not complete: the attempted full ForgeAI suite has legacy/environment blockers.
 No commit, live provider call, tunnel, paid service or runtime deployment occurred.
