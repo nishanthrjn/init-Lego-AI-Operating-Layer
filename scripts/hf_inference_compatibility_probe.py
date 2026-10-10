@@ -14,7 +14,7 @@ import sqlite3
 import sys
 import tempfile
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -80,6 +80,7 @@ from legoai.reference.governance import (
     InMemoryPolicyRegistry,
 )
 from legoai.reference.model_openai_compatible import (
+    DiscoveredModel,
     DiscoveredProvider,
     openai_compatible_plugin_id,
     openai_compatible_release,
@@ -188,6 +189,107 @@ class Candidate:
         return f"{self.model.value}:{self.backend.provider}"
 
 
+class RejectionReason(Enum):
+    MODEL_NOT_ALLOWED = "MODEL_NOT_ALLOWED"
+    BACKEND_NOT_ALLOWED = "BACKEND_NOT_ALLOWED"
+    BACKEND_STATUS_NOT_LIVE = "BACKEND_STATUS_NOT_LIVE"
+    INPUT_MODALITY_MISSING = "INPUT_MODALITY_MISSING"
+    OUTPUT_MODALITY_MISSING = "OUTPUT_MODALITY_MISSING"
+    MODALITY_SHAPE_UNSUPPORTED = "MODALITY_SHAPE_UNSUPPORTED"
+    INPUT_PRICE_MISSING = "INPUT_PRICE_MISSING"
+    OUTPUT_PRICE_MISSING = "OUTPUT_PRICE_MISSING"
+    INPUT_PRICE_ABOVE_LIMIT = "INPUT_PRICE_ABOVE_LIMIT"
+    OUTPUT_PRICE_ABOVE_LIMIT = "OUTPUT_PRICE_ABOVE_LIMIT"
+
+
+@dataclass(frozen=True, slots=True)
+class CandidateEvaluation:
+    model: ModelId = field(repr=False)
+    provider: str = field(repr=False)
+    eligible: bool
+    reasons: tuple[RejectionReason, ...]
+
+
+def evaluate_candidate(
+    model: DiscoveredModel, provider: DiscoveredProvider
+) -> CandidateEvaluation:
+    """Pure policy evaluation of parser-normalized observations; no authority."""
+    reasons: list[RejectionReason] = []
+    if model.model.value not in CODING_MODELS:
+        reasons.append(RejectionReason.MODEL_NOT_ALLOWED)
+    if provider.provider not in {key for key, _, _ in BACKENDS}:
+        reasons.append(RejectionReason.BACKEND_NOT_ALLOWED)
+    if provider.status != "live":
+        reasons.append(RejectionReason.BACKEND_STATUS_NOT_LIVE)
+    if not model.input_modalities:
+        reasons.append(RejectionReason.INPUT_MODALITY_MISSING)
+    if not model.output_modalities:
+        reasons.append(RejectionReason.OUTPUT_MODALITY_MISSING)
+    if (model.input_modalities and model.input_modalities != ("text",)) or (
+        model.output_modalities and model.output_modalities != ("text",)
+    ):
+        reasons.append(RejectionReason.MODALITY_SHAPE_UNSUPPORTED)
+    if provider.input_price is None:
+        reasons.append(RejectionReason.INPUT_PRICE_MISSING)
+    if provider.output_price is None:
+        reasons.append(RejectionReason.OUTPUT_PRICE_MISSING)
+    if provider.input_price is not None and not 0 <= provider.input_price <= 5:
+        reasons.append(RejectionReason.INPUT_PRICE_ABOVE_LIMIT)
+    if provider.output_price is not None and not 0 <= provider.output_price <= 5:
+        reasons.append(RejectionReason.OUTPUT_PRICE_ABOVE_LIMIT)
+    return CandidateEvaluation(
+        model.model, provider.provider, not reasons, tuple(reasons)
+    )
+
+
+def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
+    """Bounded aggregates; samples expose only two allowlisted identifiers.
+
+    Unknown identifiers could contain echoed material or URLs, even after parser
+    bounds. They contribute counts but never sample text. No raw catalog persists.
+    """
+    if result.outcome is not DiscoveryOutcome.LISTED or result.models != tuple(
+        item.model for item in result.catalog
+    ):
+        return (
+            "eligibility diagnostics unavailable: no consistent listed observation",
+        )
+    counts = dict.fromkeys(RejectionReason, 0)
+    pairs = eligible = allowed_models = empty_models = 0
+    samples: list[CandidateEvaluation] = []
+    for model in result.catalog:
+        allowed_models += model.model.value in CODING_MODELS
+        empty_models += not model.providers
+        for provider in model.providers:
+            evaluation = evaluate_candidate(model, provider)
+            pairs += 1
+            eligible += evaluation.eligible
+            for reason in evaluation.reasons:
+                counts[reason] += 1
+            if (
+                not evaluation.eligible
+                and RejectionReason.MODEL_NOT_ALLOWED not in evaluation.reasons
+                and RejectionReason.BACKEND_NOT_ALLOWED not in evaluation.reasons
+            ):
+                samples.append(evaluation)
+    samples.sort(key=lambda item: (item.model.value, item.provider))
+    lines = [
+        f"discovered models: {len(result.catalog)}",
+        f"allowlisted models observed: {allowed_models}",
+        f"models without backend observations: {empty_models}",
+        f"observed model/backend pairs: {pairs}",
+        f"eligible pairs: {eligible}",
+        "rejection summary (counts overlap; each reason counts pairs):",
+        *(f"  {reason.value}: {counts[reason]}" for reason in RejectionReason),
+    ]
+    for sample in samples[:5]:
+        lines.append(
+            f"rejected pair: {sample.model.value}:{sample.provider}; "
+            + ", ".join(reason.value for reason in sample.reasons)
+        )
+    return tuple(lines)
+
+
 def shortlist(result: ModelDiscovery) -> tuple[Candidate, ...]:
     """Closed coding allowlist, text-only, live, known identity and <=$5/M each.
 
@@ -203,20 +305,11 @@ def shortlist(result: ModelDiscovery) -> tuple[Candidate, ...]:
         for item in result.catalog:
             if item.model.value != allowed:
                 continue
-            if item.input_modalities != ("text",) or item.output_modalities != (
-                "text",
-            ):
-                continue
             for backend_id, service, page in BACKENDS:
                 for backend in item.providers:
-                    if backend.provider != backend_id or backend.status != "live":
+                    if backend.provider != backend_id:
                         continue
-                    if (
-                        backend.input_price is None
-                        or backend.output_price is None
-                        or not 0 <= backend.input_price <= 5
-                        or not 0 <= backend.output_price <= 5
-                    ):
+                    if not evaluate_candidate(item, backend).eligible:
                         continue
                     choices.append(
                         Candidate(
@@ -633,6 +726,8 @@ def run_probe(
         verdict = classify_discovery(discovered)
         if verdict is not None:
             return _final(write, verdict)
+        for line in eligibility_lines(discovered):
+            write(line)
         selected = select_pair(discovered, ask, write)
         if selected is None:
             return _final(write, Classification.PROVIDER_IDENTITY_INDETERMINATE)

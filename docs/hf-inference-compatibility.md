@@ -9,12 +9,100 @@ The maintainer's complete validator passed 723 discovery/security tests, 364
 architecture/package tests and 69 ForgeAI tests (1,156 total; 2 deselected),
 mypy on 16 files, Ruff lint/format and whitespace checks. Exact evidence and limits
 are recorded in the linked qualification record. The earlier 1,044-test record
-below remains historical. No provider API call has occurred.
+below remains historical. The first live discovery is recorded separately below.
 
 The closeout sets **LIVE_READY = True** after reviewing ADR-024 and the tested
 orchestration. This means **SYNTHETIC LIVE-PROBE READY**, not provider compatibility
-or authorization to run. Focused post-edit checks below remain pending operator
-execution; no new test results are claimed by the agent.
+or authorization to run. The maintainer's focused closeout run passed **467 tests
+in 29.54s**, mypy on **3 source files**, Ruff lint, format (**3 files already
+formatted**) and `git diff --check`. This passed the prerequisite gate for the
+diagnostics slice; its new edits remain **LOCAL VALIDATION PENDING**.
+
+## LIVE PROBE 1 — DISCOVERY SUCCEEDED / CHAT NOT ATTEMPTED
+
+Observed on **2026-10-10**, from the maintainer's supplied live transcript:
+one governed **GET /v1/models** at `https://router.huggingface.co/v1`, router
+`huggingface-inference-router`; HTTP **200**, ModelDiscovery **LISTED**, attempt
+**COMPLETED**. Attempt metadata: `attempt-3ebe90cc6e7fbf9965ac9d56b5c9a478`.
+No eligible exact pair survived the shortlist. There was no second Secret prompt,
+**zero chat calls**, no repository disclosure, no retry and no fallback.
+Final classification: **PROVIDER_IDENTITY_INDETERMINATE**.
+
+This is live discovery evidence only. It does not establish HF chat or selected
+backend compatibility, model quality, long-term availability or repository-disclosure
+readiness. The raw catalog was deliberately not persisted; the exact failed policy
+assumptions cannot be reconstructed from this transcript. The local custody database
+has not been copied into the repository, and no credential is recorded here.
+
+## HF-DISCOVERY-ELIGIBILITY-DIAGNOSTICS-1
+
+Status: **IMPLEMENTED — LOCAL VALIDATION PENDING**. No provider call occurred
+during this slice. Do not rerun discovery or `--live` as part of validation.
+
+The harness now evaluates each parser-normalized model/backend pair with a pure
+`evaluate_candidate` function. Its immutable result holds only the exact observed
+model and provider IDs, eligibility and an ordered tuple of closed reasons:
+
+`MODEL_NOT_ALLOWED`, `BACKEND_NOT_ALLOWED`, `BACKEND_STATUS_NOT_LIVE`,
+`INPUT_MODALITY_MISSING`, `OUTPUT_MODALITY_MISSING`, `MODALITY_SHAPE_UNSUPPORTED`,
+`INPUT_PRICE_MISSING`, `OUTPUT_PRICE_MISSING`, `INPUT_PRICE_ABOVE_LIMIT`,
+`OUTPUT_PRICE_ABOVE_LIMIT`.
+
+All applicable reasons are retained in that order. Missing status is not live;
+empty modality observations receive missing reasons, while nonempty shapes other
+than exactly text receive the unsupported-shape reason. Prices use only the finite,
+nonnegative bounded numeric observations accepted by the existing parser.
+
+Output contains model, pair and eligible-pair counts, the count of observed
+allowlisted models, models without backend observations, and all ten rejection
+counts. Counts overlap because a pair can fail several rules. Models with no
+provider observations contribute to model counts but do not create invented pairs.
+Eligible counts cover all pairs, before the existing three-choice shortlist cap.
+
+At most **five rejected pairs** are sampled in lexical model/provider order.
+Both identifiers must be allowlisted, a deliberately stricter subset of the
+permitted model-OR-backend sampling boundary. This avoids echoing arbitrary IDs,
+URLs or credential-like provider strings. Samples show only those fixed IDs and
+closed reasons; other pairs contribute aggregate counts only. At most **21 output
+lines** are emitted: six summary lines, ten reason counts and five samples.
+No raw JSON, descriptions, arbitrary status text, metadata, prices or modalities
+are printed by diagnostics. No catalog or diagnostic object is persisted.
+
+The same evaluator controls the existing shortlist. Coding models, backend
+identities, `live` status, exact text/text shape, both prices present and <= USD 5/M
+remain unchanged. Ordering, numbered selection, exact binding, SYNTHETIC admission,
+separate S1 purposes, output containment and call ceilings remain unchanged.
+Diagnostics have no Secret input, I/O, authority, routing or binding mutation.
+Core discovery, ModelPort, T2, provider control and Model errors are unchanged.
+An empty shortlist retains **PROVIDER_IDENTITY_INDETERMINATE**.
+
+Run from the root with the existing locked environment:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_hf_discovery_eligibility_diagnostics_1.py
+```
+
+The focused validator runs evaluator and HF harness tests, discovery-v2 and
+Secret/canary regressions, architecture, mypy, Ruff lint/format and whitespace.
+Tests use synthetic data and localhost TLS only; no Internet, real provider or
+Docker acquisition. No tests or checks were executed internally by the agent.
+
+After local qualification, stop. Another live probe is **not authorized** by this
+slice. A separately authorized future observation could support maintainer review
+of these decision categories; the first response cannot establish any of them:
+
+- A: policy identifiers are stale; prepare a separately reviewed policy update
+  using authoritative documentation and bounded observations.
+- B: required models/backends are absent from the observed catalog.
+- C: an observed backend fails current status, price or modality constraints.
+- D: discovery metadata is insufficient.
+
+If no suitable HF pair exists, stop adapting HF and consider separately authorized
+FREE-GPU-MODEL-RUNTIME-KAGGLE-1. If an eligible pair later passes SYNTHETIC chat,
+review mandatory non-SYNTHETIC facts before FORGEAI-HF-LIVE-PILOT-1. Neither next
+slice is authorized or implemented here.
+
+## Existing fixed SYNTHETIC probe contract
 
 The current script supports the future sequence through the existing owners:
 hidden S1 discovery provisioning; one governed GET; up to three observed
