@@ -1,4 +1,4 @@
-"""1B environment creation contracts; all process execution is mocked."""
+"""1C environment creation contracts; all process execution is mocked."""
 
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ def test_uv_exact_version_policy(output: str, monkeypatch: pytest.MonkeyPatch) -
     else:
         with pytest.raises(probe.Stop) as error:
             probe.verify_uv(Path("uv"))
-        assert error.value.reason == "UV_VERSION_MISMATCH"
+        assert error.value.reason == "UV_TOOL_VERSION_UNACCEPTED"
 
 
 @pytest.mark.parametrize("approved", [True, False])
-def test_existing_uv_preferred_or_pinned_tooling(
+def test_existing_uv_preferred_or_pinned_target(
     approved: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     system = tmp_path / "system-uv"
@@ -38,22 +38,66 @@ def test_existing_uv_preferred_or_pinned_tooling(
     commands: list[list[str]] = []
     verified: list[Path] = []
 
-    def verify(path: Path) -> None:
+    def version(path: Path) -> str:
         verified.append(path)
-        if path == system and not approved:
-            raise probe.Stop("RESULT_INCONCLUSIVE", "UV_VERSION_MISMATCH")
+        return "0.12.9" if path == system and not approved else "0.9.5"
 
-    monkeypatch.setattr(probe, "verify_uv", verify)
-    monkeypatch.setattr(
-        probe, "bounded_process", lambda args, timeout: commands.append(args)
-    )
-    selected = probe.resolve_uv()
+    def install(args: list[str], timeout: int) -> None:
+        commands.append(args)
+        assert args[1:6] == ["-I", "-m", "pip", "--isolated", "install"]
+        assert args[args.index("--target") + 1] == str(tmp_path / "tools")
+        assert "--no-input" in args and "--no-deps" in args
+        assert "--user" not in args and "venv" not in args
+        assert "uv==0.9.5" in args
+        assert args[args.index("--retries") + 1] == "0"
+        binary = tmp_path / "tools/bin/uv"
+        binary.parent.mkdir(parents=True)
+        binary.touch()
+
+    monkeypatch.setattr(probe, "uv_version", version)
+    monkeypatch.setattr(probe, "bounded_process", install)
+    result = probe.fresh_result()
+    selected = probe.resolve_uv(result)
     if approved:
         assert selected == system and commands == []
+        assert result["system_uv_version"] == "0.9.5"
     else:
-        assert selected == tmp_path / "bootstrap-tools/bin/uv"
+        assert selected == tmp_path / "tools/bin/uv"
         assert verified == [system, selected]
-        assert any("uv==0.9.5" in args for args in commands)
+        assert len(commands) == 1
+        assert result["system_uv_version"] == "0.12.9"
+    assert str(system) not in json.dumps(result)
+
+
+@pytest.mark.parametrize("failure", ["install", "missing", "wrong_version", "partial"])
+def test_pinned_bootstrap_closed_failure(
+    failure: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(probe, "SCRATCH", tmp_path)
+    monkeypatch.setattr(probe, "SYSTEM_UV", tmp_path / "absent")
+    if failure == "partial":
+        (tmp_path / "tools").mkdir()
+
+    def install(args: list[str], timeout: int) -> None:
+        assert failure != "partial"
+        if failure == "install":
+            raise OSError("PRIVATE-CANARY")
+        if failure == "wrong_version":
+            binary = tmp_path / "tools/bin/uv"
+            binary.parent.mkdir(parents=True)
+            binary.touch()
+
+    monkeypatch.setattr(probe, "bounded_process", install)
+    monkeypatch.setattr(probe, "uv_version", lambda path: "0.12.9")
+    with pytest.raises(probe.Stop) as error:
+        probe.resolve_uv(probe.fresh_result())
+    expected = (
+        "UV_TOOL_VERSION_UNACCEPTED"
+        if failure == "wrong_version"
+        else "UV_PINNED_BOOTSTRAP_FAILED"
+    )
+    assert error.value.reason == expected
+    assert "PRIVATE" not in str(error.value)
 
 
 def test_partial_venv_is_not_success(
@@ -77,7 +121,7 @@ def test_valid_python_without_ensurepip_uses_uv(
     monkeypatch.setattr(probe, "SCRATCH", tmp_path)
     monkeypatch.setattr(probe, "PYTHON", tmp_path / "venv/bin/python")
     monkeypatch.setattr(probe, "system_python", lambda: Path("/usr/bin/python3.12"))
-    monkeypatch.setattr(probe, "resolve_uv", lambda: Path("/usr/local/bin/uv"))
+    monkeypatch.setattr(probe, "resolve_uv", lambda result: Path("/usr/local/bin/uv"))
     commands: list[list[str]] = []
 
     def command(args: list[str], timeout: int) -> None:
@@ -139,5 +183,12 @@ def test_inherited_packages_rejected_before_install(
 
 def test_no_base_mutation_commands() -> None:
     source = (probe.SOURCE / "runtime_probe.py").read_text()
-    for forbidden in ("sudo", "apt-get", "apt install", "--system-site-packages"):
+    for forbidden in (
+        "sudo",
+        "apt-get",
+        "apt install",
+        "--system-site-packages",
+        '"-m", "venv"',
+        '"--user"',
+    ):
         assert forbidden not in source

@@ -1,6 +1,43 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1B
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1C
 
-## Correction 1B: valid Python, missing ensurepip
+
+## Correction 1C: pinned tool bootstrap without ensurepip
+
+The third live run reached Inspect **KAGGLE_GPU_READY**, then Bootstrap
+**RESULT_INCONCLUSIVE / UV_TOOL_UNAVAILABLE**. Base CPython 3.13.15 at
+`/usr/bin/python3` has pip 24.1.2 but no ensurepip. System CPython 3.12.3
+also lacks ensurepip. System uv is **0.12.9**, not the frozen **0.9.5**.
+The tooling stdlib venv failed because base ensurepip is absent. This is a
+**HARNESS PINNED-TOOL BOOTSTRAP DEFECT**. It establishes neither missing uv/Python
+nor a GPU, Kaggle, model or vLLM failure. Preserve the failed live artifacts.
+
+1C supersedes the historical tooling-venv mechanism below. Base Python pip
+installs only `uv==0.9.5` into an absent `SCRATCH/tools`, using `--target`,
+`--isolated`, `--no-input`, `--only-binary=:all:`, `--no-deps`, no cache,
+zero retries and bounded timeouts. No stdlib venv or ensurepip is required.
+No global or user installation is performed. The executable is resolved only
+as `SCRATCH/tools/bin/uv`, checked for containment and verified at 0.9.5 before
+use. No module-search or PATH fallback to system uv is allowed.
+
+The [pip target option](https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-t)
+and [uv 0.9.5 target layout](https://github.com/astral-sh/uv/blob/0.9.5/python/uv/_find_uv.py)
+support this installation layout. Exact system uv 0.9.5 remains acceptable;
+other observed versions are evidence only. The optional observation is a bounded
+`system_uv_version` string (or null), without executable paths. Current artifacts
+require this field; historical artifacts remain unmodified.
+
+Closed failures distinguish `UV_TOOL_VERSION_UNACCEPTED` from
+`UV_PINNED_BOOTSTRAP_FAILED`. Runtime creation/isolation reasons remain intact.
+Existing tools or runtime directories are refused without deletion. Runtime
+CPython 3.12, separate prefix, disabled system/user sites and no inherited
+base torch/transformers are verified before installing unchanged inference pins.
+
+**1C local validation pending; Kaggle runtime not qualified.** After validation
+and maintainer commit, rebuild the upload bundle and use a fresh Kaggle session.
+Run Inspect, Bootstrap, Run once; stop on any failed phase. No model download,
+vLLM startup or successful inference is claimed. No 1C live run has occurred.
+
+## Historical correction 1B: valid Python, missing ensurepip
 
 The second live run reached Inspect **KAGGLE_GPU_READY**. Bootstrap returned
 **RESULT_INCONCLUSIVE / RUNTIME_PYTHON_UNAVAILABLE**. Operator diagnostics found
@@ -216,7 +253,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1b.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1c.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 

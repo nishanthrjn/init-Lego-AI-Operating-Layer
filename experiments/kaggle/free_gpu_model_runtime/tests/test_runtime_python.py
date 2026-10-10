@@ -105,7 +105,7 @@ def test_model_venv_uses_only_frozen_interpreter(
 ) -> None:
     monkeypatch.setattr(probe, "SCRATCH", tmp_path)
     monkeypatch.setattr(probe, "PYTHON", tmp_path / "venv/bin/python")
-    monkeypatch.setattr(probe, "resolve_uv", lambda: Path("/usr/local/bin/uv"))
+    monkeypatch.setattr(probe, "resolve_uv", lambda result: Path("/usr/local/bin/uv"))
     interpreter = Path("/usr/bin/python3.12")
     monkeypatch.setattr(probe, "system_python", lambda: interpreter if system else None)
     monkeypatch.setattr(sys, "version_info", (3, 13, 15))

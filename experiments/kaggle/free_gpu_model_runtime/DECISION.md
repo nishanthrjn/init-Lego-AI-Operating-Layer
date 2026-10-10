@@ -1,5 +1,16 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1C amendment: pinned tool target installation
+
+The third live result proves both base and runtime Python lack ensurepip;
+system uv 0.12.9 does not satisfy the frozen 0.9.5 policy. Replace the tooling
+venv with base pip installing the pinned wheel into SCRATCH/tools. Invoke only
+the contained target binary after exact version verification. Refuse partial
+targets, preserve bounded version observations, and stop with closed failures.
+This supersedes the historical tooling-venv decisions below. It changes no
+inference pins, GPU gates or product architecture. Local and live qualification
+of 1C remain pending.
+
 ## 1B amendment: interpreter availability and environment creation
 
 Live evidence confirms valid CPython 3.12.3 without ensurepip. Use verified uv

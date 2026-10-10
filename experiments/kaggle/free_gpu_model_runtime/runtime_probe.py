@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1B"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1C"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
@@ -45,8 +45,8 @@ REASONS = frozenset(
         "RUNTIME_PYTHON_NOT_FOUND",
         "RUNTIME_PYTHON_INVALID",
         "RUNTIME_ENV_CREATION_FAILED",
-        "UV_TOOL_UNAVAILABLE",
-        "UV_VERSION_MISMATCH",
+        "UV_PINNED_BOOTSTRAP_FAILED",
+        "UV_TOOL_VERSION_UNACCEPTED",
         "RUNTIME_PYTHON_VERSION_MISMATCH",
         "RUNTIME_PACKAGE_VERSION_MISMATCH",
         "EXISTING_EVIDENCE",
@@ -177,6 +177,7 @@ def fresh_result() -> dict[str, Any]:
         "experiment": EXPERIMENT,
         "schema_version": 2,
         "runtime_python_source": "to_be_bootstrapped",
+        "system_uv_version": None,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "model": {"id": MODEL, "revision": REVISION, "quantization": "awq-4bit"},
         "settings": {
@@ -699,7 +700,7 @@ def system_python() -> Path | None:
     return None
 
 
-def verify_uv(executable: Path) -> None:
+def uv_version(executable: Path) -> str:
     try:
         result = subprocess.run(
             [str(executable), "--version"],
@@ -710,35 +711,48 @@ def verify_uv(executable: Path) -> None:
             timeout=15,
         )
     except (OSError, subprocess.SubprocessError):
-        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE") from None
-    if len(result.stdout) > 128 or result.stdout.split()[:2] != ["uv", UV_VERSION]:
-        raise Stop("RESULT_INCONCLUSIVE", "UV_VERSION_MISMATCH")
+        raise Stop("RESULT_INCONCLUSIVE", "UV_PINNED_BOOTSTRAP_FAILED") from None
+    parts = result.stdout.split()
+    if (
+        len(result.stdout) > 128
+        or len(parts) < 2
+        or parts[0] != "uv"
+        or re.fullmatch(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", parts[1]) is None
+    ):
+        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_VERSION_UNACCEPTED")
+    return parts[1]
 
 
-def resolve_uv() -> Path:
+def verify_uv(executable: Path) -> None:
+    if uv_version(executable) != UV_VERSION:
+        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_VERSION_UNACCEPTED")
+
+
+def resolve_uv(result: dict[str, Any]) -> Path:
     if SYSTEM_UV.is_file():
-        try:
-            verify_uv(SYSTEM_UV)
+        # Bounded observation only; a different version grants no execution authority.
+        result["system_uv_version"] = uv_version(SYSTEM_UV)
+        if result["system_uv_version"] == UV_VERSION:
             return SYSTEM_UV
-        except Stop as error:
-            if error.reason != "UV_VERSION_MISMATCH":
-                raise
-    # Previously authorized tooling-only environment, never the model runtime.
-    tooling = SCRATCH / "bootstrap-tools"
+    tooling = SCRATCH / "tools"
     if tooling.exists() or tooling.is_symlink():
-        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE")
+        raise Stop("RESULT_INCONCLUSIVE", "UV_PINNED_BOOTSTRAP_FAILED")
     try:
-        bounded_process([sys.executable, "-m", "venv", str(tooling)], 120)
         bounded_process(
             [
-                str(tooling / "bin/python"),
+                sys.executable,
+                "-I",
                 "-m",
                 "pip",
                 "--isolated",
                 "install",
+                "--no-input",
+                "--target",
+                str(tooling),
                 "--index-url",
                 "https://pypi.org/simple",
                 "--only-binary=:all:",
+                "--no-deps",
                 "--retries",
                 "0",
                 "--timeout",
@@ -749,10 +763,20 @@ def resolve_uv() -> Path:
             ],
             180,
         )
-    except (Stop, OSError, subprocess.SubprocessError):
-        raise Stop("RESULT_INCONCLUSIVE", "UV_TOOL_UNAVAILABLE") from None
-    uv = tooling / "bin/uv"
-    verify_uv(uv)
+        uv = tooling / "bin/uv"
+        if (
+            not uv.is_file()
+            or uv.is_symlink()
+            or not uv.resolve().is_relative_to(tooling.resolve())
+        ):
+            raise Stop("RESULT_INCONCLUSIVE", "UV_PINNED_BOOTSTRAP_FAILED")
+        verify_uv(uv)
+    except Stop as error:
+        if error.reason == "UV_TOOL_VERSION_UNACCEPTED":
+            raise
+        raise Stop("RESULT_INCONCLUSIVE", "UV_PINNED_BOOTSTRAP_FAILED") from None
+    except (OSError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "UV_PINNED_BOOTSTRAP_FAILED") from None
     return uv
 
 
@@ -761,7 +785,7 @@ def create_runtime(result: dict[str, Any]) -> None:
     if target.exists() or target.is_symlink():
         raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ENV_CREATION_FAILED")
     interpreter = system_python()
-    uv = resolve_uv()
+    uv = resolve_uv(result)
     if interpreter is None:
         try:
             bounded_process(

@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1B"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1C"
     },
     "schema_version": {
       "const": 2
@@ -302,8 +302,8 @@
               "RUNTIME_PYTHON_NOT_FOUND",
               "RUNTIME_PYTHON_INVALID",
               "RUNTIME_ENV_CREATION_FAILED",
-              "UV_TOOL_UNAVAILABLE",
-              "UV_VERSION_MISMATCH"
+              "UV_PINNED_BOOTSTRAP_FAILED",
+              "UV_TOOL_VERSION_UNACCEPTED"
             ]
           }
         },
@@ -439,6 +439,14 @@
         "to_be_bootstrapped",
         "uv_managed"
       ]
+    },
+    "system_uv_version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",
+      "maxLength": 11
     }
   },
   "required": [
@@ -455,7 +463,8 @@
     "timings",
     "gpu_memory",
     "outcome",
-    "runtime_python_source"
+    "runtime_python_source",
+    "system_uv_version"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
