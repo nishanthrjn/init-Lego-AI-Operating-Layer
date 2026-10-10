@@ -31,3 +31,15 @@ replay remain unproven until a successful resolved environment is returned.
 Standard server startup errors remain coarse because unrestricted logs are not
 persisted. Tight output contracts may fail despite feasible GPU execution;
 such failures remain evidence, not permission to relax pass criteria.
+
+
+## 1A amendment — base launcher is not the inference interpreter
+
+Real Kaggle evidence shows base Python 3.13.15. Widening the old gate alone
+would incorrectly create a Python 3.13 inference venv. Resolve an existing
+verified CPython 3.12 at two fixed system paths first; otherwise install pinned
+uv in a separate tooling venv and acquire its fixed public CPython 3.12.12
+Linux x86_64 GNU distribution. Create and verify the model venv before installing
+its unchanged packages. Closed phase reasons and manifest-bound source discovery
+address the live diagnostic and mount-layout gaps. Neither correction changes
+GPU policy, inference behavior, product architecture or qualification claims.

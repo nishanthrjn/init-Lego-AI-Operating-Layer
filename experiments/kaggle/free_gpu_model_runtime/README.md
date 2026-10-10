@@ -1,4 +1,4 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1A
 
 **Implemented; local validation pending; Kaggle runtime not qualified.**
 This is a disposable, synthetic-only runtime experiment. It does not import,
@@ -50,7 +50,7 @@ is evidence to return, not permission to change the experiment.
 
 The Kaggle **base image** supplies Linux, Python, NVIDIA driver, and the torch
 installation used only for initial hardware inspection. Their versions are
-observed, never assumed. The candidate gate requires Python 3.10–3.12, exactly
+observed, never assumed. The gate requires an isolated Python 3.12 runtime and exactly
 two T4 devices with capability 7.5, actual per-device memory between 14 and
 17 GiB, working CUDA, and driver-visible CUDA capability at least 12.8. A gate
 failure is RESULT_INCONCLUSIVE, not a claim that all other environments fail.
@@ -96,9 +96,9 @@ claim exists until demonstrated on Kaggle.
 6. In the notebook use **Add Input** to attach that dataset. Import
    `kaggle_runtime.ipynb` using the notebook's import/upload command. The notebook
    has four code cells and no embedded implementation or execution outputs.
-7. In its first cell set `SOURCE` to the exact directory containing
-   `runtime_probe.py`, as shown in the Input panel. Kaggle may add dataset/version
-   path components. Set `CONFIRM_FREE_SESSION = True` only after confirming the
+7. The first cell discovers exactly one manifest-verified experiment under
+   `/kaggle/input`, including `datasets/<owner>/<dataset>/free_gpu_model_runtime`.
+   It checks companion-file hashes before executing any attached source. Set `CONFIRM_FREE_SESSION = True` only after confirming the
    selected GPU allocation requires no payment. Run that cell.
 8. Run **Inspect**. Read `inspect: KAGGLE_GPU_READY`; otherwise stop. Actual
    GPU names/count/bytes, torch CUDA runtime and driver observations are saved.
@@ -119,8 +119,8 @@ claim exists until demonstrated on Kaggle.
     Quick Save snapshots the notebook without replay. Download evidence before
     ending the session; do not assume temporary or unsaved files survive.
 
-No Kaggle account token is used by the harness. A command failure stops the
-notebook cell (`check=True`). Do not proceed to later cells after a failure.
+No Kaggle account token is used by the harness. A command failure prints bounded stdout/stderr and the return code before
+raising a notebook RuntimeError. Do not proceed to later cells after a failure.
 If Kaggle kills the entire session, artifact completion is not guaranteed;
 missing evidence is inconclusive, never PASS.
 
@@ -175,7 +175,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1a.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 
@@ -194,3 +194,58 @@ If local OpenAI protocol and runtime qualification succeed, the next research
 slice is KAGGLE-FORGEAI-INTEGRATION-OPTIONS-1: supported zero-cost notebook/job
 artifact exchange without public tunnels. No such integration is implemented.
 If no supported path exists, Kaggle remains a runtime/evaluation sandbox.
+
+
+## Correction 1A: launcher and runtime Python
+
+The original harness passed 39 experiment and 365 architecture tests plus
+mypy/lint/format/whitespace checks. Those were local checks, not GPU qualification.
+On **2026-10-10**, the first real Inspect observed Python **3.13.15**, torch
+**2.11.0+cu128**, CUDA available, **two Tesla T4** GPUs, **15,636,037,632 bytes**
+each, capability **7.5**, torch CUDA **12.8**, driver **580.178.04**, and
+driver-visible CUDA **13.0**. It returned RESULT_INCONCLUSIVE because the harness
+rejected base Python above 3.12 before KAGGLE_GPU_READY. This was a harness
+launcher constraint, not a GPU, Kaggle, model or vLLM failure. No model was
+acquired or executed.
+
+1A keeps that GPU policy and all inference pins. Kaggle's Python 3.13 is only
+the launcher. Inspect records `base_versions.python` separately from
+`runtime_versions.python`. It checks `/usr/bin/python3.12`, then
+`/usr/local/bin/python3.12`, verifying CPython 3.12 without downloading anything.
+Otherwise `runtime_python_source` is `to_be_bootstrapped`. Inspect writes only
+its bounded qualification evidence, not an environment or interpreter.
+
+Bootstrap uses a verified system CPython 3.12 if present (actual patch version
+recorded). Otherwise a tooling-only base-Python venv installs **uv 0.9.5** from
+PyPI; uv acquires the exact **cpython-3.12.12-linux-x86_64-gnu** distribution.
+The tooling environment never hosts inference packages. No source compilation,
+Conda, credential, payment or alternate mirror is used. Astral documents
+[managed Python acquisition](https://docs.astral.sh/uv/guides/install-python/);
+its [0.9.5 download metadata](https://github.com/astral-sh/uv/blob/0.9.5/crates/uv-python/download-metadata.json)
+fixes this CPython artifact to python-build-standalone build **20251014**.
+The managed binary is an Astral distribution, not a python.org Linux installer.
+
+Only that resolved Python creates `SCRATCH/venv`. Before inference pip runs,
+its version must be CPython 3.12, `sys.prefix != sys.base_prefix`, user sites
+must be disabled and `pyvenv.cfg` must explicitly disable system site packages.
+The worker rechecks these invariants. System patches may differ but are recorded;
+the managed path fixes patch/build. No arbitrary minor-version selection occurs.
+
+Schema version 2 adds `runtime_python_source` and nullable closed phase `reason`.
+Reasons distinguish platform, CUDA availability, GPU count/model/memory/capability,
+driver evidence, missing/wrong runtime Python, package mismatch, isolation failure,
+existing evidence and internal bounded failures. No exception text or paths are
+stored. Notebook diagnostics redact unexpected text rather than persist tracebacks.
+
+Bootstrap allows at most ten minutes for interpreter/tool acquisition in addition
+to its existing installation/download budgets; the notebook wrapper allows 5000
+seconds. Source discovery visits at most 4096 entries, depth six, refuses symlinks
+and requires exactly one matching identity manifest with intact companions.
+`notebook_support.py` is copied verbatim into the notebook's bootstrap cell;
+tests enforce consistency. This is source identity checking, not code signing.
+
+After local validation **and the maintainer's commit**, start a genuinely fresh
+Kaggle session and run Inspect, Bootstrap, Probe once in order. Preserve the
+old failed Inspect evidence; do not delete it to continue in that session.
+The previous upload/archive is stale: upload the corrected source, notebook and
+manifest together. No fresh Kaggle execution has occurred for this correction.

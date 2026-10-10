@@ -1,0 +1,10 @@
+{
+  "experiment": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1A",
+  "files": {
+    "runtime_probe.py": "3cddb5363a3aef1115b5c924486b5ddbf06c03255a03d922478772627e962fe8",
+    "notebook_support.py": "8e898a8ef00204df59f99c425de1968ead7915247351bfb8e297bd84b858196c",
+    "requirements-kaggle.txt": "7bbd025354c54fb9946fc27ca4337cc9f87d82416bf9aff0e9795b05b10ca710",
+    "fixtures/synthetic_prompts.json": "8cc5101e5668bb803fb682bd276f47fdb4087ed99335a0f36506791b9b535015",
+    "result.schema.json": "856721a9626a3f199e5685125a0b6ab6885c21d4e55b090d9de11098c84a5b85"
+  }
+}

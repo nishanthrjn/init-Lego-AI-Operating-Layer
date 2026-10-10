@@ -26,7 +26,29 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1A"
+RUNTIME_PYTHON_MAJOR = 3
+RUNTIME_PYTHON_MINOR = 12
+MANAGED_PYTHON = "3.12.12"
+UV_VERSION = "0.9.5"
+SYSTEM_PYTHONS = (Path("/usr/bin/python3.12"), Path("/usr/local/bin/python3.12"))
+REASONS = frozenset(
+    {
+        "BASE_PLATFORM_UNSUPPORTED",
+        "CUDA_UNAVAILABLE",
+        "GPU_COUNT_UNSUPPORTED",
+        "GPU_MODEL_UNSUPPORTED",
+        "GPU_MEMORY_UNSUPPORTED",
+        "GPU_CAPABILITY_UNSUPPORTED",
+        "DRIVER_CUDA_UNSUPPORTED",
+        "RUNTIME_PYTHON_UNAVAILABLE",
+        "RUNTIME_PYTHON_VERSION_MISMATCH",
+        "RUNTIME_PACKAGE_VERSION_MISMATCH",
+        "EXISTING_EVIDENCE",
+        "INTERNAL_BOUNDED_FAILURE",
+        "RUNTIME_ISOLATION_FAILED",
+    }
+)
 MODEL = "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"
 REVISION = "eb3172f06a6d6b3a15f08947b0668d782e4d2d2c"
 SOURCE = Path(__file__).resolve().parent
@@ -83,10 +105,13 @@ OUTCOMES = frozenset(
 class Stop(Exception):
     """Closed diagnostic; arbitrary exception text is never serialized."""
 
-    def __init__(self, outcome: str) -> None:
+    def __init__(self, outcome: str, reason: str = "INTERNAL_BOUNDED_FAILURE") -> None:
         if outcome not in OUTCOMES:
             raise ValueError("unknown outcome")
+        if reason not in REASONS:
+            raise ValueError("unknown reason")
         self.outcome = outcome
+        self.reason = reason
 
 
 def clean_environment() -> dict[str, str]:
@@ -96,6 +121,10 @@ def clean_environment() -> dict[str, str]:
         "HOME": str(SCRATCH / "home"),
         "TMPDIR": str(SCRATCH),
         "LANG": "C.UTF-8",
+        "UV_PYTHON_INSTALL_DIR": str(SCRATCH / "pythons"),
+        "UV_PYTHON_BIN_DIR": str(SCRATCH / "bin"),
+        "UV_HTTP_RETRIES": "0",
+        "UV_HTTP_TIMEOUT": "30",
         "PYTHONUNBUFFERED": "1",
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
@@ -141,7 +170,8 @@ def versions() -> dict[str, Any]:
 def fresh_result() -> dict[str, Any]:
     return {
         "experiment": EXPERIMENT,
-        "schema_version": 1,
+        "schema_version": 2,
+        "runtime_python_source": "to_be_bootstrapped",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "model": {"id": MODEL, "revision": REVISION, "quantization": "awq-4bit"},
         "settings": {
@@ -184,13 +214,17 @@ def save(result: dict[str, Any]) -> None:
     )
 
 
-def phase(result: dict[str, Any], name: str, outcome: str) -> None:
+def phase(
+    result: dict[str, Any], name: str, outcome: str, reason: str | None = None
+) -> None:
     if outcome not in OUTCOMES:
         raise ValueError("unknown outcome")
-    result["phases"].append({"phase": name, "outcome": outcome})
+    if reason is not None and reason not in REASONS:
+        raise ValueError("unknown reason")
+    result["phases"].append({"phase": name, "outcome": outcome, "reason": reason})
     result["outcome"] = outcome
     save(result)
-    print(f"{name}: {outcome}", flush=True)
+    print(f"{name}: {outcome}" + (f" / {reason}" if reason else ""), flush=True)
 
 
 def hardware() -> dict[str, Any]:
@@ -248,19 +282,24 @@ def hardware() -> dict[str, Any]:
 
 
 def require_hardware(observed: dict[str, Any]) -> None:
-    if not observed["cuda_available"] or observed["device_count"] != 2:
-        raise Stop("RESULT_INCONCLUSIVE")
+    if not observed["cuda_available"]:
+        raise Stop("RESULT_INCONCLUSIVE", "CUDA_UNAVAILABLE")
+    if observed["device_count"] != 2:
+        raise Stop("RESULT_INCONCLUSIVE", "GPU_COUNT_UNSUPPORTED")
     for device in observed["devices"]:
-        if (
-            "T4" not in device["name"]
-            or device["capability"] != [7, 5]
-            or not 14 * 2**30 <= device["total_memory_bytes"] <= 17 * 2**30
+        for valid, reason in (
+            ("T4" in device["name"], "GPU_MODEL_UNSUPPORTED"),
+            (device["capability"] == [7, 5], "GPU_CAPABILITY_UNSUPPORTED"),
+            (
+                14 * 2**30 <= device["total_memory_bytes"] <= 17 * 2**30,
+                "GPU_MEMORY_UNSUPPORTED",
+            ),
         ):
-            raise Stop("RESULT_INCONCLUSIVE")
-    # Conservative candidate-wheel gate, not a claim that older drivers never work.
+            if not valid:
+                raise Stop("RESULT_INCONCLUSIVE", reason)
     visible = observed["driver_visible_cuda"]
     if visible is None or tuple(map(int, visible.split("."))) < (12, 8):
-        raise Stop("RESULT_INCONCLUSIVE")
+        raise Stop("RESULT_INCONCLUSIVE", "DRIVER_CUDA_UNSUPPORTED")
 
 
 def stop_process(process: subprocess.Popen[bytes], *, group: bool = True) -> None:
@@ -602,13 +641,123 @@ def serve_and_probe(result: dict[str, Any]) -> None:
         stop_process(process, group=False)
 
 
-def worker(result: dict[str, Any]) -> None:
-    result["runtime_versions"] = versions()
+def inspect_interpreter(executable: Path, *, isolated: bool = False) -> str:
+    script = (
+        "import sys,json,site; print(json.dumps({"
+        "'version':list(sys.version_info[:3]),'implementation':sys.implementation.name,"
+        "'venv':sys.prefix != sys.base_prefix,'user_site':site.ENABLE_USER_SITE}))"
+    )
+    try:
+        completed = subprocess.run(
+            [str(executable), "-I", "-c", script],
+            env=clean_environment(),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+        if len(completed.stdout) > 1024:
+            raise ValueError("bounded observation")
+        info = json.loads(completed.stdout)
+        version = info["version"]
+        if info["implementation"] != "cpython" or version[:2] != [
+            RUNTIME_PYTHON_MAJOR,
+            RUNTIME_PYTHON_MINOR,
+        ]:
+            raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_VERSION_MISMATCH")
+        if isolated:
+            config = (executable.parent.parent / "pyvenv.cfg").read_text()
+            if (
+                not info["venv"]
+                or info["user_site"] is not False
+                or "include-system-site-packages = false" not in config.lower()
+            ):
+                raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_ISOLATION_FAILED")
+        return safe_version(".".join(str(v) for v in version))
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
+
+
+def system_python() -> Path | None:
+    for candidate in SYSTEM_PYTHONS:
+        if candidate.is_file():
+            inspect_interpreter(candidate)
+            return candidate
+    return None
+
+
+def create_runtime(result: dict[str, Any]) -> None:
+    interpreter = system_python()
+    try:
+        if interpreter is None:
+            # This is a tooling-only venv under the launcher Python. It never
+            # contains inference packages or becomes the model-runtime venv.
+            tooling = SCRATCH / "bootstrap-tools"
+            bounded_process([sys.executable, "-m", "venv", str(tooling)], 120)
+            bounded_process(
+                [
+                    str(tooling / "bin/python"),
+                    "-m",
+                    "pip",
+                    "--isolated",
+                    "install",
+                    "--index-url",
+                    "https://pypi.org/simple",
+                    "--only-binary=:all:",
+                    "--retries",
+                    "0",
+                    "--timeout",
+                    "30",
+                    "--no-cache-dir",
+                    "--disable-pip-version-check",
+                    f"uv=={UV_VERSION}",
+                ],
+                180,
+            )
+            uv = str(tooling / "bin/uv")
+            bounded_process(
+                [
+                    uv,
+                    "--no-config",
+                    "python",
+                    "install",
+                    f"cpython-{MANAGED_PYTHON}-linux-x86_64-gnu",
+                ],
+                300,
+            )
+            interpreter = (
+                SCRATCH
+                / "pythons"
+                / f"cpython-{MANAGED_PYTHON}-linux-x86_64-gnu/bin/python3.12"
+            )
+            result["runtime_python_source"] = "uv_managed"
+        else:
+            result["runtime_python_source"] = "system"
+        inspect_interpreter(interpreter)
+        bounded_process([str(interpreter), "-m", "venv", str(SCRATCH / "venv")], 120)
+    except Stop as error:
+        if error.reason != "INTERNAL_BOUNDED_FAILURE":
+            raise
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
+    except (OSError, subprocess.SubprocessError):
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PYTHON_UNAVAILABLE") from None
+    result["runtime_versions"] = {"python": inspect_interpreter(PYTHON, isolated=True)}
+    save(result)
+
+
+def require_packages(observed: dict[str, Any]) -> None:
     expected = {"vllm": "0.9.2", "torch": "2.7.0", "transformers": "4.51.3"}
     if any(
-        result["runtime_versions"][k].split("+")[0] != v for k, v in expected.items()
+        not isinstance(observed.get(k), str) or observed[k].split("+")[0] != v
+        for k, v in expected.items()
     ):
-        raise Stop("RESULT_INCONCLUSIVE")
+        raise Stop("RESULT_INCONCLUSIVE", "RUNTIME_PACKAGE_VERSION_MISMATCH")
+
+
+def worker(result: dict[str, Any]) -> None:
+    inspect_interpreter(PYTHON, isolated=True)
+    result["runtime_versions"] = versions()
+    require_packages(result["runtime_versions"])
     result["hardware"] = hardware()
     save(result)
     require_hardware(result["hardware"])
@@ -626,21 +775,36 @@ def main() -> int:
     args = parser.parse_args()
     if (
         platform.system() != "Linux"
+        or platform.machine() != "x86_64"
         or not WORK.is_dir()
         or not Path("/kaggle/input").is_dir()
     ):
-        print("RESULT_INCONCLUSIVE: this entry point requires a Kaggle Linux session")
+        print("RESULT_INCONCLUSIVE / BASE_PLATFORM_UNSUPPORTED")
         return 1
     if args.mode == "inspect" and RESULT.exists():
-        print("RESULT_INCONCLUSIVE: existing evidence preserved; use a fresh session")
+        print("RESULT_INCONCLUSIVE / EXISTING_EVIDENCE")
         return 1
+    if args.mode in ("bootstrap", "run") and RESULT.exists():
+        previous = json.loads(RESULT.read_text(encoding="utf-8"))
+        required = (
+            "KAGGLE_GPU_READY" if args.mode == "bootstrap" else "MODEL_DOWNLOADED"
+        )
+        if previous["outcome"] != required or (
+            args.mode == "bootstrap" and PYTHON.exists()
+        ):
+            print("RESULT_INCONCLUSIVE / EXISTING_EVIDENCE")
+            return 1
     result = fresh_result()
     active = args.mode
+    if not args.confirm_free_session and RESULT.exists():
+        print("ZERO_COST_REQUIREMENT_VIOLATED / EXISTING_EVIDENCE")
+        return 1
     try:
         if not args.confirm_free_session:
             raise Stop("ZERO_COST_REQUIREMENT_VIOLATED")
-        SCRATCH.mkdir(exist_ok=True)
-        (SCRATCH / "home").mkdir(exist_ok=True)
+        if args.mode != "inspect":
+            SCRATCH.mkdir(exist_ok=True)
+            (SCRATCH / "home").mkdir(exist_ok=True)
         if args.mode == "inspect":
             # Base inventory is deliberately limited; large Kaggle package sets
             # are not needed. Full resolved inventory is captured for the venv.
@@ -655,17 +819,16 @@ def main() -> int:
             result["hardware"] = hardware()
             save(result)
             require_hardware(result["hardware"])
-            if not (3, 10) <= sys.version_info[:2] <= (3, 12):
-                raise Stop("RESULT_INCONCLUSIVE")
+            result["runtime_python_source"] = (
+                "system" if system_python() is not None else "to_be_bootstrapped"
+            )
             phase(result, active, "KAGGLE_GPU_READY")
         else:
             result = json.loads(RESULT.read_text(encoding="utf-8"))
             if args.mode == "bootstrap":
                 if result["outcome"] != "KAGGLE_GPU_READY" or PYTHON.exists():
                     raise Stop("RESULT_INCONCLUSIVE")
-                bounded_process(
-                    [sys.executable, "-m", "venv", str(SCRATCH / "venv")], 120
-                )
+                create_runtime(result)
                 bounded_process(
                     [
                         str(PYTHON),
@@ -740,6 +903,15 @@ def main() -> int:
     except (Exception, KeyboardInterrupt) as error:
         if args.mode in ("run", "bootstrap") and RESULT.exists():
             result = json.loads(RESULT.read_text(encoding="utf-8"))
+            last = result["phases"][-1] if result["phases"] else {}
+            if (
+                last.get("phase") in ("_worker", "_inventory", "_download")
+                and last.get("reason") in REASONS
+            ):
+                print(
+                    f"{last['phase']}: {last['outcome']} / {last['reason']}", flush=True
+                )
+                return 1
             if result["outcome"] in OUTCOMES - {
                 "RESULT_INCONCLUSIVE",
                 "KAGGLE_GPU_READY",
@@ -754,7 +926,8 @@ def main() -> int:
         outcome = error.outcome if isinstance(error, Stop) else "RESULT_INCONCLUSIVE"
         if active in ("download", "_download") and outcome == "RESULT_INCONCLUSIVE":
             outcome = "MODEL_DOWNLOAD_FAILED"
-        phase(result, active, outcome)
+        reason = error.reason if isinstance(error, Stop) else "INTERNAL_BOUNDED_FAILURE"
+        phase(result, active, outcome, reason)
         return 1
 
 

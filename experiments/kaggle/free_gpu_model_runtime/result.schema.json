@@ -3,10 +3,10 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1A"
     },
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "timestamp": {
       "type": "string",
@@ -283,6 +283,24 @@
               "RESULT_INCONCLUSIVE",
               "ZERO_COST_REQUIREMENT_VIOLATED"
             ]
+          },
+          "reason": {
+            "enum": [
+              null,
+              "BASE_PLATFORM_UNSUPPORTED",
+              "CUDA_UNAVAILABLE",
+              "GPU_COUNT_UNSUPPORTED",
+              "GPU_MODEL_UNSUPPORTED",
+              "GPU_MEMORY_UNSUPPORTED",
+              "GPU_CAPABILITY_UNSUPPORTED",
+              "DRIVER_CUDA_UNSUPPORTED",
+              "RUNTIME_PYTHON_UNAVAILABLE",
+              "RUNTIME_PYTHON_VERSION_MISMATCH",
+              "RUNTIME_PACKAGE_VERSION_MISMATCH",
+              "EXISTING_EVIDENCE",
+              "INTERNAL_BOUNDED_FAILURE",
+              "RUNTIME_ISOLATION_FAILED"
+            ]
           }
         },
         "required": [
@@ -410,6 +428,13 @@
         "RESULT_INCONCLUSIVE",
         "ZERO_COST_REQUIREMENT_VIOLATED"
       ]
+    },
+    "runtime_python_source": {
+      "enum": [
+        "system",
+        "to_be_bootstrapped",
+        "uv_managed"
+      ]
     }
   },
   "required": [
@@ -425,7 +450,8 @@
     "assertions",
     "timings",
     "gpu_memory",
-    "outcome"
+    "outcome",
+    "runtime_python_source"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
