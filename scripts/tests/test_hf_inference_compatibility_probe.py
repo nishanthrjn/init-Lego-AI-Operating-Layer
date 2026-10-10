@@ -258,7 +258,10 @@ def test_shortlist_bound_and_membership() -> None:
         )
     assert probe.select_pair(result, lambda _: "2", lambda _: None) == choices[1]
     for answer in ("", "0", "4", probe.CODING_MODELS[0], choices[0].request_model):
-        assert probe.select_pair(result, lambda _: answer, lambda _: None) is None
+        assert (
+            probe.select_pair(result, lambda _, answer=answer: answer, lambda _: None)
+            is None
+        )
     assert probe.shortlist(replace(result, models=())) == ()
 
 
