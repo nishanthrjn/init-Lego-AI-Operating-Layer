@@ -82,11 +82,24 @@ def test_package_layout_is_the_expected_small_set() -> None:
         "composition",
         "cli",
         "remote",
+        "provider",
+        "provider_cli",
     }
 
 
 @pytest.mark.parametrize(
-    "name", ["domain", "guard", "review", "worker", "composition", "cli", "remote"]
+    "name",
+    [
+        "domain",
+        "guard",
+        "review",
+        "worker",
+        "composition",
+        "cli",
+        "remote",
+        "provider",
+        "provider_cli",
+    ],
 )
 def test_public_legoai_only_and_no_private_names(name: str) -> None:
     for module, names in imports(modules()[name]):
@@ -102,7 +115,18 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "name", ["domain", "guard", "review", "worker", "composition", "cli", "remote"]
+    "name",
+    [
+        "domain",
+        "guard",
+        "review",
+        "worker",
+        "composition",
+        "cli",
+        "remote",
+        "provider",
+        "provider_cli",
+    ],
 )
 def test_no_effects_grants_or_global_state(name: str) -> None:
     tree = modules()[name]
@@ -322,3 +346,34 @@ def test_no_configurable_attempt_or_retry_count() -> None:
         if isinstance(target, ast.AnnAssign) and isinstance(target.target, ast.Name)
     ]
     assert not [n for n in names if "retr" in n or "attempt" in n or "cycle" in n]
+
+
+def test_provider_entry_points_cannot_construct_mutation_or_agents() -> None:
+    tree = modules()["composition"]
+    for name in ("provider_session", "summarize_provider_file"):
+        node = _method(tree, name)
+        called = {
+            part.func.id
+            for part in ast.walk(node)
+            if isinstance(part, ast.Call) and isinstance(part.func, ast.Name)
+        }
+        assert not called & {
+            "CodingAgent",
+            "LocalRepositoryMutation",
+            "AuthorizedRepositoryMutation",
+            "DockerSandbox",
+            "LocalGitRepository",
+            "prepare_run",
+            "run_task",
+        }
+        strings = {
+            part.value
+            for part in ast.walk(node)
+            if isinstance(part, ast.Constant) and isinstance(part.value, str)
+        }
+        assert "repository-mutation" not in strings
+    for name in ("provider", "provider_cli"):
+        assert not any(
+            module.startswith(("subprocess", "socket", "http", "os"))
+            for module, _ in imports(modules()[name])
+        )

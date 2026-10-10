@@ -384,6 +384,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/unit/reference/test_model_structured_output.py",
             "tests/unit/reference/test_openai_compatible_exchange.py",
             "tests/unit/reference/test_openai_compatible.py",
+            "tests/unit/reference/test_model_provider_diagnostics.py",
             "tests/unit/reference/test_remote_attempts.py",
             "tests/unit/reference/test_secret_durable_custody.py",
             "tests/unit/reference/test_secret_ref.py",

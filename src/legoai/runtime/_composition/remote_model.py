@@ -44,6 +44,7 @@ from legoai.intelligence.model.values import (
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
+    ModelFailure,
 )
 from legoai.kernel.context import TenantContext
 from legoai.kernel.identity import OperationId, RequestId
@@ -52,7 +53,12 @@ from legoai.kernel.references import (
     OperationRef,
 )
 from legoai.kernel.versions import Version
-from legoai.reference._credential_https import HttpsTarget, TransportError, tls_context
+from legoai.reference._credential_https import (
+    HttpsTarget,
+    TransportError,
+    TransportFailure,
+    tls_context,
+)
 from legoai.reference._durable_evidence import _EvidenceStore
 from legoai.reference._remote_attempts import (
     AttemptObservation,
@@ -275,10 +281,22 @@ class _Invocation:
             )
         except Exception as error:
             raise self._unsettled(receipt) from error
+        diagnostic = (
+            {
+                TransportFailure.CONNECT: ModelFailure.ENDPOINT_UNAVAILABLE,
+                TransportFailure.TLS: ModelFailure.PROTOCOL_INCOMPATIBLE,
+                TransportFailure.PROTOCOL: ModelFailure.PROTOCOL_INCOMPATIBLE,
+                TransportFailure.TIMEOUT: ModelFailure.TIMEOUT,
+            }.get(observation.failure, ModelFailure.PROVIDER_EXECUTION_FAILURE)
+            if observation.failure is not None
+            else ModelFailure.PROVIDER_EXECUTION_FAILURE
+        )
         if status.state is AttemptState.NOT_SENT:
-            raise ModelPreflightError("Model request not sent")
+            raise ModelPreflightError("Model request not sent", failure=diagnostic)
         if status.state is AttemptState.UNKNOWN:
-            raise ModelResponseUncertainError("Model transport uncertain")
+            raise ModelResponseUncertainError(
+                "Model transport uncertain", failure=diagnostic
+            )
         response = observation.response
         assert response is not None  # COMPLETED/PROVIDER_REJECTED are complete
         # T2 returns HttpResponse only after bounded framing is complete. Keep

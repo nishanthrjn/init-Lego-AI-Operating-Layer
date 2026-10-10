@@ -36,6 +36,7 @@ INTERNAL_TEST_FIXTURES = {
     "examples/forgeai/evaluation/tests/test_content_discovery_1.py",
     # Synthetic S1 bootstrap for local TLS tests; production uses public APIs.
     "examples/forgeai/tests/test_remote_profile.py",
+    "examples/forgeai/tests/test_provider.py",  # synthetic Secret/TLS fixture only
 }
 # Never opened: excluded by path before any file is read.
 EXCLUDED_PARTS = {".venv", "node_modules", "__pycache__", "assessment_starter"}

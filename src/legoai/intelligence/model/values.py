@@ -414,3 +414,16 @@ class EmbeddingResult:
                     raise ValueError(
                         "embedding result vector components must be finite floats"
                     )
+
+
+class ModelFailure(Enum):
+    """Safe observed failure, independent of effect extent; no provider body."""
+
+    ENDPOINT_UNAVAILABLE = "endpoint_unavailable"
+    MODEL_UNAVAILABLE = "model_unavailable"
+    PROTOCOL_INCOMPATIBLE = "protocol_incompatible"
+    REQUEST_REJECTED = "request_rejected"
+    DISCLOSURE_NOT_APPROVED = "disclosure_not_approved"
+    RESPONSE_INVALID = "response_invalid"
+    TIMEOUT = "timeout"
+    PROVIDER_EXECUTION_FAILURE = "provider_execution_failure"

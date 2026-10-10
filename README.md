@@ -120,3 +120,10 @@ It is [locally validated](planning/COMFYUI-TEXT-TO-IMAGE-VERTICAL-SLICE.md)
 (deterministic suite and live generation, maintainer-run 2026-09-28);
 ComfyUI remains an external operator-managed runtime. The package still
 composes Core through private reference wiring (CR-1c debt).
+
+
+ForgeAI also offers a bounded, synthetic-first OpenAI-compatible provider check
+and one separately approved read-only file summary. See the
+[provider interoperability instructions](examples/forgeai/README.md#provider-interoperability-before-repository-work).
+It requires a separately available endpoint and adds no infrastructure-specific
+Core integration, tunnel or mutation capability.

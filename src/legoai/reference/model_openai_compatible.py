@@ -2,8 +2,8 @@
 
 Construction is inert. Blocking stdlib HTTP runs in to_thread; cancellation
 does not stop an in-flight provider request. No redirects, ambient proxies,
-credentials, streaming, retries or fallback. Complete bodies are buffered,
-as in the existing Ollama adapter; this is not a resource-budget system.
+credentials, streaming, retries or fallback. Local response buffering is capped
+at 1 MiB; this is not a general resource-budget or hard-cancellation system.
 
 OPENAI-COMPATIBLE-REMOTE-1: a REMOTE binding reuses exactly this request
 encoding, status mapping and response parsing. Its one exchange is supplied
@@ -35,6 +35,7 @@ from legoai.intelligence.model.values import (
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
+    ModelFailure,
     ModelId,
     ModelUsage,
     ProviderId,
@@ -75,7 +76,11 @@ class OpenAICompatibleModelConfig:
     timeout_seconds: float
     max_output_tokens: int | None
 
+    deterministic: bool = False
+
     def __post_init__(self) -> None:
+        if type(self.deterministic) is not bool:
+            raise TypeError("deterministic must be bool")
         if type(self.base_url) is not str:
             raise TypeError("base_url must be text")
         try:
@@ -141,7 +146,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def _reject() -> NoReturn:
-    raise ModelResponseRejectedError("Model response outside qualified protocol")
+    raise ModelResponseRejectedError(
+        "Model response outside qualified protocol",
+        failure=ModelFailure.PROTOCOL_INCOMPATIBLE,
+    )
 
 
 def _optional_tokens(value: object) -> int | None:
@@ -164,12 +172,30 @@ def _invalid_constant(value: str) -> NoReturn:
 def _payload(status: int, raw: bytes) -> dict[str, object]:
     """Shared status mapping and JSON decoding of one complete response.
 
-    Error bodies are never decoded or retained in diagnostics.
+    Only a closed model-not-found code is projected; no provider text is retained.
     """
     if status in (429, 503):
-        raise ModelResponseRetryableRejectedError(f"Model rejected HTTP {status}")
+        raise ModelResponseRetryableRejectedError(
+            f"Model rejected HTTP {status}", failure=ModelFailure.REQUEST_REJECTED
+        )
     if not 200 <= status < 300:
-        raise ModelResponseRejectedError(f"Model rejected HTTP {status}")
+        failure = ModelFailure.REQUEST_REJECTED
+        # Status 404 alone does not distinguish endpoint from missing model.
+        # A bounded explicit code does; never expose message/details/body.
+        if len(raw) <= 4096:
+            try:
+                rejected = _json_body(raw)
+                detail = rejected.get("error") if type(rejected) is dict else None
+                if type(detail) is dict and detail.get("code") in (
+                    "model_not_found",
+                    "model_not_available",
+                ):
+                    failure = ModelFailure.MODEL_UNAVAILABLE
+            except ModelResponseRejectedError, ValueError, UnicodeError, RecursionError:
+                pass
+        raise ModelResponseRejectedError(
+            f"Model rejected HTTP {status}", failure=failure
+        )
     return _json_body(raw)
 
 
@@ -377,6 +403,8 @@ class OpenAICompatibleModelAdapter:
         }
         if self._config.max_output_tokens is not None:
             body["max_tokens"] = self._config.max_output_tokens
+        if self._config.deterministic:
+            body["temperature"] = 0
         payload = await self._request("/chat/completions", body)
         model = payload.get("model")
         if type(model) is not str or model != self._config.chat_model:
@@ -474,16 +502,32 @@ class OpenAICompatibleModelAdapter:
                 response = error
             with response:
                 status = response.code
-                # Read even error replies to establish completion, but never decode
-                # or retain their bodies in diagnostics. Truncation stays UNKNOWN.
-                raw = response.read()
+                # Read error replies to establish completion; only _payload's
+                # closed diagnostic projection is exposed. Truncation is UNKNOWN.
+                raw = response.read(1_048_577)
+                if len(raw) > 1_048_576:
+                    raise ModelResponseUncertainError(
+                        "Model response exceeds bound",
+                        failure=ModelFailure.PROTOCOL_INCOMPATIBLE,
+                    )
                 length = response.headers.get("Content-Length")
                 if length is not None and len(raw) != int(length):
                     raise ModelResponseUncertainError("Incomplete Model response")
         except urllib.error.URLError as error:
             if isinstance(error.reason, (ConnectionRefusedError, socket.gaierror)):
-                raise ModelPreflightError("Model connection not established") from None
+                raise ModelPreflightError(
+                    "Model connection not established",
+                    failure=ModelFailure.ENDPOINT_UNAVAILABLE,
+                ) from None
+            if isinstance(error.reason, TimeoutError):
+                raise ModelResponseUncertainError(
+                    "Model timeout", failure=ModelFailure.TIMEOUT
+                ) from None
             raise ModelResponseUncertainError("Model transport uncertain") from None
+        except TimeoutError:
+            raise ModelResponseUncertainError(
+                "Model timeout", failure=ModelFailure.TIMEOUT
+            ) from None
         except OSError, http.client.HTTPException, ValueError:
             raise ModelResponseUncertainError("Model transport uncertain") from None
         return _payload(status, raw)

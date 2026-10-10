@@ -50,6 +50,7 @@ from legoai.intelligence.model.values import (
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
+    ModelFailure,
 )
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorCategory, ErrorCause, ErrorDetail, Recoverability
@@ -221,6 +222,7 @@ async def _invoke_chat(
     expected_binding: ModelBinding | None,
     check: DisclosureCheck | None = None,
     remote: RemoteModelPlane | None = None,
+    diagnostics: list[ModelFailure] | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
     """One shared invocation claim and phase mapping for both composition paths.
 
@@ -236,6 +238,8 @@ async def _invoke_chat(
     if check is not None:
         decision = check.decide()
         if not decision.admitted:
+            if diagnostics is not None:
+                diagnostics.append(ModelFailure.DISCLOSURE_NOT_APPROVED)
             return await _refuse_disclosure(coordinator, result, check, decision), None
     try:
         if remote is not None:
@@ -249,19 +253,27 @@ async def _invoke_chat(
             or chat_result.provider_identity != expected_binding.provider_id
         ):
             raise ModelResponseRejectedError("response does not match model binding")
-    except ModelPreflightError:
+    except ModelPreflightError as error:
+        if diagnostics is not None:
+            diagnostics.append(error.failure)
         execution = await _settle_preflight_error(coordinator, result)
         _disclosed(check, decision, EffectExtent.NONE)
         return execution, None
-    except ModelResponseUncertainError:
+    except ModelResponseUncertainError as error:
+        if diagnostics is not None:
+            diagnostics.append(error.failure)
         execution = await _settle_uncertain_error(coordinator, result)
         _disclosed(check, decision, EffectExtent.UNKNOWN)
         return execution, None
-    except ModelResponseRetryableRejectedError:
+    except ModelResponseRetryableRejectedError as error:
+        if diagnostics is not None:
+            diagnostics.append(error.failure)
         execution = await _settle_preflight_error(coordinator, result)
         _disclosed(check, decision, EffectExtent.COMPLETED)
         return execution, None
-    except ModelResponseRejectedError:
+    except ModelResponseRejectedError as error:
+        if diagnostics is not None:
+            diagnostics.append(error.failure)
         execution = await _settle_rejected_error(coordinator, result)
         _disclosed(check, decision, EffectExtent.COMPLETED)
         return execution, None
@@ -319,6 +331,7 @@ async def invoke_routed_chat(
     configured: ConfiguredModelBinding,
     check: DisclosureCheck | None = None,
     remote: RemoteModelPlane | None = None,
+    diagnostics: list[ModelFailure] | None = None,
 ) -> tuple[ExecutionResult, ChatResult | None]:
     """Match the pinned selection to explicit wiring, then use governed Chat.
 
@@ -365,6 +378,7 @@ async def invoke_routed_chat(
         configured.binding,
         check,
         remote,
+        diagnostics,
     )
 
 

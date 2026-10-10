@@ -141,6 +141,7 @@ class HandoffObservation:
     response: HttpResponse | None = field(repr=False)
     time_violation: bool
     stopped: bool  # a later gate refused, timed out or failed: no more bytes
+    failure: TransportFailure | None = None
 
 
 def tls_context(trust_anchor: Path | None = None) -> ssl.SSLContext:
@@ -201,6 +202,7 @@ class _CredentialFlight:
         self._accepted = 0
         self._send_failed = False
         self._stopped = False
+        self._failure: TransportFailure | None = None
         self._time_violation = False
 
     def __repr__(self) -> str:
@@ -244,6 +246,7 @@ class _CredentialFlight:
     def _remaining(self) -> float:
         remaining = self._deadline - time.monotonic()
         if remaining <= 0:
+            self._failure = TransportFailure.TIMEOUT
             raise TransportError(TransportFailure.TIMEOUT)
         return remaining
 
@@ -252,6 +255,7 @@ class _CredentialFlight:
         key = self._selector.register(self._sock, events)
         try:
             if not self._selector.select(self._remaining()):
+                self._failure = TransportFailure.TIMEOUT
                 raise TransportError(TransportFailure.TIMEOUT)
         finally:
             self._selector.unregister(key.fileobj)
@@ -389,13 +393,20 @@ class _CredentialFlight:
                     break
                 except ssl.SSLEOFError:
                     break
-        except TransportError, ssl.SSLError, OSError:
+        except TransportError as error:
+            self._failure = error.failure
+            return None
+        except ssl.SSLError, OSError:
             return None
         return _parse(bytes(plaintext))
 
     def observe(self, response: HttpResponse | None) -> HandoffObservation:
         return HandoffObservation(
-            self.progress(), response, self._time_violation, self._stopped
+            self.progress(),
+            response,
+            self._time_violation,
+            self._stopped,
+            self._failure,
         )
 
     def close(self) -> None:

@@ -46,7 +46,12 @@ from legoai.governance.secret import SecretRef
 from legoai.governance.values import Grant, Principal
 from legoai.intelligence.model.ports import ModelPort, ModelPreflightError
 from legoai.intelligence.model.routing import ModelBinding, ModelRouteDecision
-from legoai.intelligence.model.values import ChatRequest, EmbeddingRequest, ModelId
+from legoai.intelligence.model.values import (
+    ChatRequest,
+    EmbeddingRequest,
+    ModelFailure,
+    ModelId,
+)
 from legoai.kernel.context import TenantContext
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorDetail, Recoverability
@@ -324,6 +329,7 @@ def _openai_config(provider: OpenAICompatibleSettings) -> OpenAICompatibleModelC
         provider.embedding_model,
         provider.timeout_seconds,
         provider.max_output_tokens,
+        provider.deterministic,
     )
 
 
@@ -650,8 +656,13 @@ class _LocalGovernedHost:
             raise TypeError("governed chat requires ChatRequest")
         disclosure = self._require(context, ModelPurpose.CHAT)
         check = self._check(context, ModelPurpose.CHAT, disclosure)
-        outcome = await self._chat.invoke(context, self._route, request, check)
-        return GovernedChatResult(outcome.execution, outcome.response)
+        diagnostics: list[ModelFailure] = []
+        outcome = await self._chat.invoke(
+            context, self._route, request, check, diagnostics
+        )
+        return GovernedChatResult(
+            outcome.execution, outcome.response, diagnostics[0] if diagnostics else None
+        )
 
     async def governed_embed(
         self, context: ExecutionContext, request: EmbeddingRequest

@@ -35,6 +35,7 @@ from legoai.intelligence.model.values import (
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
+    ModelFailure,
     ModelId,
     ProviderId,
 )
@@ -188,7 +189,11 @@ class OpenAICompatibleSettings:
     deployment: ModelDeployment
     bearer_credential: SecretRef | None = field(default=None, repr=False)
 
+    deterministic: bool = False
+
     def __post_init__(self) -> None:
+        if type(self.deterministic) is not bool:
+            raise TypeError("deterministic must be bool")
         if (
             self.bearer_credential is not None
             and type(self.bearer_credential) is not SecretRef
@@ -439,12 +444,18 @@ class GovernedChatResult:
     execution: ExecutionResult
     response: ChatResult | None = field(repr=False)
 
+    failure: ModelFailure | None = None
+
     def __post_init__(self) -> None:
         if type(self.execution) is not ExecutionResult:
             raise TypeError("governed chat result requires ExecutionResult")
         if self.response is not None and type(self.response) is not ChatResult:
             raise TypeError("governed chat response must be ChatResult or None")
+        if self.failure is not None and type(self.failure) is not ModelFailure:
+            raise TypeError("failure must be ModelFailure")
         success = self.execution.final_state is ExecutionState.SUCCEEDED
+        if success and self.failure is not None:
+            raise ValueError("successful chat has no failure")
         if success != (self.response is not None):
             raise ValueError("governed chat response must correspond to success")
 

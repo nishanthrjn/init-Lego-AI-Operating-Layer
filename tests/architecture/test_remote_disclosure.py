@@ -81,7 +81,9 @@ def test_only_trusted_runtime_and_evidence_paths_import_disclosure() -> None:
 def test_disclosure_stays_in_forgeai_operator_profile_not_engineering() -> None:
     assert _importers(ROOT / "packages/legoai-engineering/src") == set()
     assert _importers(ROOT / "examples/forgeai/src") == {
-        "examples/forgeai/src/forgeai/remote.py"
+        "examples/forgeai/src/forgeai/remote.py",
+        "examples/forgeai/src/forgeai/provider.py",
+        "examples/forgeai/src/forgeai/provider_cli.py",
     }
 
 

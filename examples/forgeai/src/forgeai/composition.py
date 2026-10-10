@@ -8,7 +8,8 @@ no host check adapter here.
 """
 
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -16,6 +17,7 @@ from uuid import uuid4
 
 from legoai.execution.values import ExecutionContext
 from legoai.governance.values import GrantId, PolicyRef
+from legoai.intelligence.model.routing import ModelRequirement
 from legoai.kernel.identity import ApplicationId, PrincipalId, TenantId
 from legoai.kernel.references import (
     ApplicationRef,
@@ -29,6 +31,7 @@ from legoai.runtime.api import (
     CredentialSource,
     LocalHostConfig,
     ModelBindingConfig,
+    ModelDeployment,
     ModelPurpose,
     OpenAICompatibleSettings,
     OperatorGrant,
@@ -90,6 +93,12 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.provider import (
+    ProviderEvidence,
+    ProviderProfile,
+    ProviderSession,
+    ReadOnlyApproval,
+)
 from forgeai.remote import BINDING, RemoteProfile, disclosure_preview
 from forgeai.worker import RepositoryTaskWorker
 
@@ -594,3 +603,102 @@ def local_profile(
         check_profile=check_profile,
         uv_executable=uv_executable,
     )
+
+
+@contextmanager
+def provider_session(
+    profile: ProviderProfile,
+    *,
+    clock: Callable[[], datetime] = utc_now,
+    trust_anchor: Path | None = None,
+) -> Iterator[ProviderSession]:
+    """Chat-only authority. No CodingAgent, mutation, Git or sandbox construction."""
+    now = clock()
+    scope = ReferenceScope("operator", TenantId("local"))
+    configuration = ConfigurationRef(
+        ApplicationRef(scope, ApplicationId("forgeai")), "provider"
+    )
+    revision = "provider-" + uuid4().hex
+    grants: tuple[OperatorGrant, ...] = (
+        OperatorGrant(
+            GrantId("provider-chat"),
+            "invoke-capability",
+            ModelPurpose.CHAT.capability_id.value,
+            now,
+            now + timedelta(hours=1),
+        ),
+    )
+    source = None
+    remote = None
+    credential = None
+    try:
+        if profile.mode is ModelDeployment.REMOTE:
+            assert profile.custody_policy is not None
+            source = open_credential_source(scope)
+            credential = source.provision("forgeai-provider")
+            grants += (
+                OperatorGrant(
+                    GrantId("provider-secret"),
+                    "secret-use",
+                    credential.exact.identity,
+                    now,
+                    now + timedelta(hours=1),
+                ),
+            )
+            remote = RemoteModelRuntime(
+                source, profile.custody_policy, timedelta(seconds=1), trust_anchor
+            )
+        binding = ModelBindingConfig(
+            BINDING,
+            ModelRequirement("engineering-reasoning"),
+            OpenAICompatibleSettings(
+                profile.base_url,
+                profile.model,
+                None,
+                profile.timeout,
+                512,
+                profile.provider,
+                profile.mode,
+                credential,
+                deterministic=True,
+            ),
+        )
+        config = LocalHostConfig(
+            ConfigurationRevisionRef(configuration, revision, Version(1, 0, 0)),
+            PrincipalRef("operator", PrincipalId("forgeai")),
+            PolicyRef("operator", "forgeai", Version(1, 0, 0)),
+            grants,
+            (binding,),
+            max_executions=4,
+            disclosure=profile.disclosure_policy,
+        )
+        host = open_local_host(
+            config,
+            {"revision": revision, "binding": BINDING},
+            clock=clock,
+            remote=remote,
+        )
+        yield ProviderSession(profile, host, clock)
+    finally:
+        if source is not None:
+            source.close()
+
+
+async def summarize_provider_file(
+    session: ProviderSession,
+    repository: Path,
+    approval: ReadOnlyApproval,
+    *,
+    approve: Callable[[ReadOnlyApproval], bool],
+) -> ProviderEvidence:
+    """Bind exactly one explicit stable local repository; read only the approved file."""
+    custody = session.profile.custody_policy
+    if custody is not None and custody.resolve().is_relative_to(repository.resolve()):
+        raise ValueError("remote custody must be outside the repository")
+    workspace = LocalRepositoryWorkspace(
+        LocalWorkspaceRoot(repository),
+        WorkspacePolicy(
+            16_384, 16_384, 1, 32, (".git", ".venv", ".env", "__pycache__")
+        ),
+    )
+    return await session.summarize(workspace, approval, approve)

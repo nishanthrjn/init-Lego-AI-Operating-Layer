@@ -6,7 +6,7 @@ from legoai.execution.agent.ports import AgentChatResult
 from legoai.execution.ports import CoordinationOutcome, CoordinationRequest
 from legoai.execution.values import ExecutionContext, ExecutionResult
 from legoai.intelligence.model.routing import ModelRouteDecision
-from legoai.intelligence.model.values import ChatRequest
+from legoai.intelligence.model.values import ChatRequest, ModelFailure
 from legoai.kernel.effects import EffectExtent
 from legoai.kernel.errors import ErrorDetail, Recoverability
 from legoai.reference.execution import ExecutionCoordinator
@@ -31,6 +31,7 @@ class GovernedAgentChat:
         route: ModelRouteDecision,
         request: ChatRequest,
         check: DisclosureCheck | None = None,
+        diagnostics: list[ModelFailure] | None = None,
     ) -> AgentChatResult:
         """`check` (ADR-024) is supplied only by the host, for REMOTE bindings,
         from this exact execution's minted declaration."""
@@ -69,5 +70,6 @@ class GovernedAgentChat:
             self.configured,
             check,
             self.remote,
+            diagnostics,
         )
         return AgentChatResult(execution, response)

@@ -104,6 +104,7 @@ def test_public_settings_types_and_required_deployment() -> None:
         "deployment",
         # ADR-014 §14.18 / OPENAI-COMPATIBLE-REMOTE-1: a SecretRef, never material.
         "bearer_credential",
+        "deterministic",
     }
     assert config.base_url not in repr(config)
     assert set(f.name for f in dataclasses.fields(OllamaSettings)) == {

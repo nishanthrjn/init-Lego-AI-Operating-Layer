@@ -50,23 +50,37 @@ from legoai.intelligence.model.values import (
     ChatResult,
     EmbeddingRequest,
     EmbeddingResult,
+    ModelFailure,
 )
 from legoai.kernel.context import TenantContext
 
 
-class ModelPreflightError(Exception):
+class _ModelError(Exception):
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        failure: ModelFailure = ModelFailure.PROVIDER_EXECUTION_FAILURE,
+    ) -> None:
+        super().__init__(message)
+        if type(failure) is not ModelFailure:
+            raise TypeError("model failure must be typed")
+        self.failure = failure
+
+
+class ModelPreflightError(_ModelError):
     """No request left this process; no possible provider-side effect
     occurred. Maps to `EffectExtent.NONE` at the composition boundary."""
 
 
-class ModelResponseUncertainError(Exception):
+class ModelResponseUncertainError(_ModelError):
     """A request was sent but no reliable response was received (timeout,
     dropped connection, truncated body). Whether the provider processed it
     is genuinely unknown. Maps to `EffectExtent.UNKNOWN` -- never `NONE`,
     never silently retried inside the same claimed invocation."""
 
 
-class ModelResponseRejectedError(Exception):
+class ModelResponseRejectedError(_ModelError):
     """A complete response was received, but it is an explicit
     provider-declared error or fails this capability's own mandatory
     response validation. The provider did not produce a usable result.

@@ -10,6 +10,7 @@ No disclosure policy, retry, fallback, redirect or provider semantics live
 here, and the public host does not use this module while REMOTE is refused.
 """
 
+from dataclasses import replace
 from datetime import timedelta
 from ssl import SSLContext
 
@@ -126,9 +127,9 @@ def exchange(
     try:
         try:
             flight.open()  # DNS/TCP/TLS verified; no credential exists yet
-        except TransportError:
+        except TransportError as error:
             # Not yet claimed: no credential existed, so zero bytes is proven.
-            observation = flight.observe(None)
+            observation = replace(flight.observe(None), failure=error.failure)
             return observation, store.settle(
                 receipt,
                 AttemptState.NOT_SENT,

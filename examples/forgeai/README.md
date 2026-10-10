@@ -917,3 +917,98 @@ That run qualified the ForgeAI-1 composition, governance, mutation, sandboxed
 check and evidence flow with a deterministic replay model. The ForgeAI-1
 tests remain part of the suite; with ForgeAI-2, their success paths also
 require the review `ACCEPT`.
+
+
+## Provider interoperability before repository work
+
+`FORGEAI-FREE-GPU-MODEL-PROVIDER-1` provides a separate read-only entry point:
+`python -m forgeai.provider_cli`. It constructs no CodingAgent, mutation adapter,
+Git adapter or sandbox. No fallback, retry, proxy configuration or tunnel is added.
+
+Kaggle is one infrastructure environment with user-supplied successful runtime
+qualification for Qwen/Qwen2.5-Coder-14B-Instruct-AWQ (Python 3.12, torch
+2.7.0+cu128, transformers 4.51.3, vLLM 0.9.2, two Tesla T4s). ForgeAI depends only
+on the OpenAI-compatible contract. A **separately available endpoint is required**;
+a notebook is not assumed remotely reachable or an always-on service. This slice
+has not contacted that runtime or qualified a live endpoint.
+
+The typed `ProviderProfile` configuration shape is:
+
+```text
+provider_type = openai_compatible
+base_url = exact versioned API root (maximum 512 characters)
+model = exact model identifier (maximum 256 characters)
+mode = local | remote
+provider = operator-assigned ProviderId
+timeout = 1..300 seconds (default 60)
+auth_mode = none (local) | secret_source (remote)
+disclosure_policy = None | existing RemoteDisclosureConfig
+custody_policy = None | existing absolute directory outside repository
+```
+
+Local mode requires a loopback **IP literal**, avoiding DNS rebinding. There is no
+credential input. The server is an explicitly trusted local process. From this
+ForgeAI directory, with a separately running server:
+
+```powershell
+uv run --locked --offline --no-sync python -m forgeai.provider_cli --mode local --base-url http://127.0.0.1:8000/v1 --provider local-vllm --model Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
+```
+
+`uv --offline` controls dependency resolution; it does not prohibit this explicitly
+requested endpoint call. The command makes at most three fixed synthetic requests:
+READY, exact JSON `{"status":"READY"}`, and `def add(a,b): return a+b` (AST checked,
+never executed). Temperature zero, no streaming and max_tokens=512 are requested.
+The existing adapter verifies the exact response model and finish_reason=stop.
+The local transport caps bodies at 1 MiB; application output is capped at 4096
+UTF-8 bytes. No result implies model quality or reproducibility. JSON is a prompted
+behavioral check; native schema-constrained generation remains unsupported.
+
+To request one file summary **after** those three checks pass, add:
+
+```powershell
+--repository D:\absolute\repository --repository-id my-repository --target src/example.py
+```
+
+A separate interactive approval names the actual repository, target, endpoint and
+model. Only that file is read (maximum 16 KiB UTF-8); links/reparse points and
+excluded paths fail closed. No listings, implicit context or recursive reads occur.
+The operator must select source suitable for disclosure; this is not a secret
+scanner. Output is untrusted text, never an instruction to execute or apply changes.
+
+Remote mode additionally requires `--policy path/to/remote-policy.toml` and
+`--custody C:/absolute/existing/custody`, uses HTTPS and the existing hidden
+interactive Secret-source provision. Use the existing documented remote profile
+TOML shape; endpoint/model/provider must exactly match the CLI. The synthetic-only
+invocation loads a SYNTHETIC admission. When a target is explicitly configured,
+the declared repository policy is also loaded, but the separate per-file approval
+is still required after synthetic success. Neither a credential nor endpoint
+approval permits repository disclosure. The existing host re-evaluates disclosure
+at every invocation and retains its existing Secret/attempt/disclosure custody.
+Never put a token in arguments, environment, profile files or chat.
+
+Evidence returned to the operator consists of bounded check names, safe typed
+failure and (for a summary) response SHA-256. Response text is not written to
+custody. No automatic retry occurs, even for 429/503 or uncertain transport effects.
+Failure facts distinguish endpoint unavailable, explicit model unavailable,
+protocol incompatible, request rejected, disclosure not approved, response invalid,
+timeout and provider execution failure. HTTP 404 alone cannot prove a missing
+model: only a bounded explicit model-not-found code does. Missing observations
+remain provider execution failure; effect extent remains the governed execution's.
+
+Local HTTP socket timeouts do not guarantee hard cancellation of an in-flight
+worker thread. Remote transport retains its existing absolute deadline/framing
+constraints. A timeout is never proof that a provider did not execute the request.
+
+From the repository root, run the supplied offline validation script:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_free_gpu_model_provider_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Provider slice validation failed' }
+# Includes legacy full ForgeAI tests; requires the existing qualified Docker setup:
+uv run --locked --offline --no-sync python .\validate_forgeai_free_gpu_model_provider_1.py --full
+if ($LASTEXITCODE -ne 0) { throw 'Full provider regression failed' }
+```
+
+See [ADR-025](../../adrs/ADR-025.md) for the minimal settings/diagnostic additions.
+Mutation remains a later slice requiring synthetic, read-only and disclosure
+qualification evidence. No live execution is authorized by these offline checks.

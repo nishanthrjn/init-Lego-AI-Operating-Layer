@@ -151,7 +151,7 @@ class RemoteProfile:
                 raise ValueError("remote admission lifetime exceeds one hour")
 
 
-def load_profile(path: Path) -> RemoteProfile:
+def load_profile(path: Path, *, synthetic: bool = False) -> RemoteProfile:
     """Strict, at most 16 KiB, non-secret TOML. Unknown fields fail closed."""
     with path.open("rb") as stream:
         raw = stream.read(16_385)
@@ -221,7 +221,9 @@ def load_profile(path: Path) -> RemoteProfile:
         SubprocessorsFact(SubprocessorsKind.DECLARED, subprocessors, basis),
     )
     repository = RepositoryIdentity(text("repository"))
-    admitted = classes(derived=True)
+    admitted = (
+        frozenset({DisclosureClass.SYNTHETIC}) if synthetic else classes(derived=True)
+    )
     conditions = tuple(
         ClassConditions(
             c,
@@ -232,7 +234,7 @@ def load_profile(path: Path) -> RemoteProfile:
             frozenset({human.value}),
             frozenset({SubprocessorsKind.DECLARED}),
         )
-        for c in sorted(admitted, key=lambda c: c.value)
+        for c in sorted(admitted - {DisclosureClass.SYNTHETIC}, key=lambda c: c.value)
     )
     times = tuple(data[key] for key in ("not_before", "not_after"))
     if any(type(t) is not datetime for t in times):
@@ -252,7 +254,7 @@ def load_profile(path: Path) -> RemoteProfile:
             declaration.revision,
             admitted,
             conditions,
-            frozenset({repository}),
+            frozenset() if synthetic else frozenset({repository}),
             times[0],
             times[1],
         )
