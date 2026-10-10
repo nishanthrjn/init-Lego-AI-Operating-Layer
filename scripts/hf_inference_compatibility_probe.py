@@ -615,10 +615,10 @@ def run_probe(
         )
         discovered = _discover(
             config,
-            source._source,
+            source._source,  # type: ignore[attr-defined]
             discovery_ref,
             clock(),
-            clock,  # type: ignore[attr-defined]
+            clock,
         )
         write(f"router: {PROVIDER}; API root: {config.base_url}")
         write(

@@ -29,6 +29,7 @@ from legoai.runtime._composition.provider_discovery import (
     discovery_purpose,
 )
 from legoai.runtime._composition.remote_model import credential_purpose
+from legoai.runtime._composition.secret import _provision_interactively
 from scripts import hf_inference_compatibility_probe as probe
 from tests.support.tls_server import TEST_CA, TlsServer
 
@@ -434,7 +435,6 @@ def test_safe_coarse_failures(
 def test_provisioning_purposes_are_separate_and_chat_is_optional(
     tmp_path: Path, approve: bool
 ) -> None:
-    original = probe._provision_interactively
     with TlsServer(
         expected=CANARY,
         responses={"/v1/models": json.dumps({"data": [catalog_item()]}).encode()},
@@ -446,7 +446,7 @@ def test_provisioning_purposes_are_separate_and_chat_is_optional(
         )
         answers = iter(["1", "y" if approve else "n"])
         with patch.object(
-            probe, "_provision_interactively", wraps=original
+            probe, "_provision_interactively", wraps=_provision_interactively
         ) as provision:
             probe.run_probe(
                 config,
