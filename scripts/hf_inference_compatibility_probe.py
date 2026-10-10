@@ -112,7 +112,11 @@ from legoai.runtime.api import (
     RemoteDisclosureConfig,
     RemoteModelRuntime,
 )
-from legoai.runtime.local import open_credential_source, open_local_host
+from legoai.runtime.local import (
+    _remote_chat_http_status,
+    open_credential_source,
+    open_local_host,
+)
 
 ORIGIN = "https://router.huggingface.co"
 API_ROOT = "/v1"
@@ -430,7 +434,23 @@ def classify_discovery(result: ModelDiscovery) -> Classification | None:
     return Classification.RESULT_INCONCLUSIVE
 
 
-def classify_chat(result: Any, attempt: tuple[str, set[str]] | None) -> Classification:
+def classify_chat(
+    result: Any,
+    attempt: tuple[str, set[str]] | None,
+    provider_status: int | None = None,
+) -> Classification:
+    # The private host supplies only a validated complete-response observation.
+    # Status explains a rejection; it never admits work or changes effect truth.
+    if type(provider_status) is int and 400 <= provider_status <= 599:
+        if provider_status == 401:
+            return Classification.AUTHENTICATION_FAILURE
+        if provider_status == 403:
+            return Classification.AUTHORIZATION_FAILURE
+        if provider_status == 429:
+            return Classification.RESULT_INCONCLUSIVE
+        if provider_status >= 500:
+            return Classification.PROVIDER_AVAILABILITY_FAILURE
+        return Classification.CHAT_CONTRACT_INCOMPATIBLE
     if result.execution.final_state is ExecutionState.SUCCEEDED:
         if result.response is not None and result.response.content == "READY":
             return Classification.HF_COMPATIBILITY_PASS
@@ -670,6 +690,7 @@ def _chat(
 
     result = asyncio.run(chat())
     execution = result.execution
+    provider_status = _remote_chat_http_status(host, execution.execution_id)
     attempt = _attempt_for(config.custody, execution.execution_id.value)
     write(f"chat execution: {execution.execution_id.value}")
     write(f"chat attempt state: {attempt[0] if attempt else 'none'}")
@@ -679,7 +700,9 @@ def _chat(
             f"chat error: {execution.error.category.value} / "
             f"{execution.error.recoverability.value}"
         )
-    verdict = classify_chat(result, attempt)
+    if provider_status is not None:
+        write(f"chat HTTP status: {provider_status}")
+    verdict = classify_chat(result, attempt, provider_status)
     if verdict is Classification.HF_COMPATIBILITY_PASS:
         write("synthetic reply: READY")
     return _final(write, verdict)

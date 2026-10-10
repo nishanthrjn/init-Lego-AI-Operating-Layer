@@ -32,7 +32,7 @@ from legoai.evidence.custody import CustodyAccess
 from legoai.evidence.ports import EvidenceId
 from legoai.execution.agent.ports import AgentRequest
 from legoai.execution.agent.values import AgentExecutionStatus
-from legoai.execution.values import ExecutionState
+from legoai.execution.values import ExecutionId, ExecutionState
 from legoai.governance.disclosure import (
     DisclosureClass,
     DisclosureDeclaration,
@@ -83,7 +83,11 @@ from legoai.runtime.api import (
     RemoteDisclosureConfig,
     RemoteModelRuntime,
 )
-from legoai.runtime.local import open_credential_source, open_local_host
+from legoai.runtime.local import (
+    _remote_chat_http_status,
+    open_credential_source,
+    open_local_host,
+)
 from tests.integration.composition.test_local_host import PROFILE, REVISION, definition
 from tests.support.tls_server import TEST_CA, TlsServer
 from tests.unit.governance.test_disclosure import (
@@ -454,6 +458,77 @@ def test_embedding_unavailable_without_embedding_model(tmp_path: Path) -> None:
             host.model_execution(ModelPurpose.EMBEDDING, disclosure=SYNTHETIC)
     assert error.value.failure is HostFailure.PURPOSE_UNAVAILABLE
     assert tls.connections == 0 and remote.attempts() == []
+
+
+def test_chat_status_is_execution_scoped_ephemeral_and_not_embedding(
+    tmp_path: Path,
+) -> None:
+    with server() as tls:
+        remote = Remote(tmp_path, tls.port)
+        host = remote.open()
+        assert _remote_chat_http_status(host, ExecutionId("not-this-execution")) is None
+
+        async def work() -> Any:
+            first = await remote.chat(text="synthetic")
+            tls.mode = "403"
+            tls.responses[CHAT_PATH] = CANARY.encode()
+            second = await remote.chat(text="synthetic")
+            embedded = await remote.embed()
+            return first, second, embedded
+
+        first, second, embedded = run(work)
+        assert _remote_chat_http_status(host, first.execution.execution_id) == 200
+        assert _remote_chat_http_status(host, second.execution.execution_id) == 403
+        assert _remote_chat_http_status(host, embedded.execution.execution_id) is None
+        assert first.execution.effect is EffectExtent.COMPLETED
+        assert second.execution.effect is EffectExtent.NONE
+        assert tls.requests == 3
+    # Historical custody remains category-only: no status column or payload field.
+    conn = sqlite3.connect(tmp_path / "remote-attempts.db")
+    try:
+        assert "provider_status" not in {
+            row[1] for row in conn.execute("PRAGMA table_info(attempts)")
+        }
+    finally:
+        conn.close()
+    assert all("provider_status" not in row["record"] for row in remote.attempts())
+    leak_free(tmp_path, second, remote.attempts())
+
+
+def test_chat_status_absent_on_connection_failure(tmp_path: Path) -> None:
+    with server() as tls:
+        remote = Remote(tmp_path, tls.port)
+        remote.open()
+        with patch("socket.getaddrinfo", side_effect=OSError("synthetic DNS failure")):
+            result = run(remote.chat)
+        assert tls.requests == 0
+    not_sent(result)
+    assert _remote_chat_http_status(remote.host, result.execution.execution_id) is None
+    assert [row["state"] for row in remote.attempts()] == ["not_sent"]
+
+
+@pytest.mark.parametrize("code", [401, 403, 404, 405, 429, 500, 503, 418])
+def test_agent_rejection_keeps_only_safe_ephemeral_status(
+    tmp_path: Path, code: int, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    with server(str(code), responses={CHAT_PATH: CANARY.encode()}) as tls:
+        remote = Remote(tmp_path, tls.port)
+        host = remote.open()
+        context = host.model_execution(ModelPurpose.CHAT, disclosure=SYNTHETIC)
+
+        async def work() -> Any:
+            return await host.agent_runtime().run(
+                definition(), AgentRequest(context, PROMPT)
+            )
+
+        result = run(work)
+        diagnostic = _remote_chat_http_status(host, context.execution_id)
+        assert diagnostic == code
+        assert result.status is AgentExecutionStatus.MODEL_FAILED
+        assert tls.requests == 1
+    assert [row["state"] for row in remote.attempts()] == ["provider_rejected"]
+    leak_free(tmp_path, result, diagnostic, remote.attempts(), log=caplog.text)
 
 
 def test_agent_runtime_reaches_the_remote_plane(tmp_path: Path) -> None:
@@ -1026,6 +1101,8 @@ def test_partial_send_interrupted_by_retirement_stays_unknown(tmp_path: Path) ->
         ("401", Recoverability.TERMINAL),
         ("403", Recoverability.TERMINAL),
         ("404", Recoverability.TERMINAL),
+        ("405", Recoverability.TERMINAL),
+        ("418", Recoverability.TERMINAL),
         ("500", Recoverability.TERMINAL),
         ("429", Recoverability.POTENTIALLY_RETRYABLE),
         ("503", Recoverability.POTENTIALLY_RETRYABLE),
@@ -1043,6 +1120,9 @@ def test_complete_provider_rejections_are_never_retried(
     failed(result, EffectExtent.NONE, ErrorCategory.DEPENDENCY_FAILURE, recoverability)
     (attempt,) = remote.attempts()
     assert attempt["state"] == "provider_rejected"
+    assert _remote_chat_http_status(remote.host, result.execution.execution_id) == int(
+        mode
+    )
     assert attempt["observations"] == {"sent_all", "response_complete"}
     (use,) = remote.uses()
     assert use.category is UseRecoveryCategory.ACCEPTED_ATTRIBUTED
@@ -1078,6 +1158,7 @@ def test_complete_2xx_rejected_by_the_shared_parser(
     (attempt,) = remote.attempts()
     assert attempt["state"] == "completed"
     assert tls.requests == 1
+    assert _remote_chat_http_status(remote.host, result.execution.execution_id) == 200
 
 
 def test_embedding_shape_failure_rejected(tmp_path: Path) -> None:
@@ -1094,7 +1175,9 @@ def test_embedding_shape_failure_rejected(tmp_path: Path) -> None:
     assert [a["state"] for a in remote.attempts()] == ["completed"]
 
 
-@pytest.mark.parametrize("mode", ["truncated", "malformed", "timeout"])
+@pytest.mark.parametrize(
+    "mode", ["truncated", "malformed", "chunked", "timeout", "199", "600"]
+)
 def test_sent_without_a_complete_response_is_unknown(tmp_path: Path, mode: str) -> None:
     with server(mode) as tls:
         remote = Remote(tmp_path, tls.port, timeout=1.0)
@@ -1113,6 +1196,7 @@ def test_sent_without_a_complete_response_is_unknown(tmp_path: Path, mode: str) 
     assert use.category is UseRecoveryCategory.ACCEPTED_ATTRIBUTED
     assert tls.connections == 1  # no retry
     assert remote.observation(result).effect is EffectExtent.UNKNOWN
+    assert _remote_chat_http_status(remote.host, result.execution.execution_id) is None
 
 
 def test_cancellation_before_send_reaches_nothing(tmp_path: Path) -> None:

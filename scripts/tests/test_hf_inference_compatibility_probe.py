@@ -548,6 +548,61 @@ def test_safe_coarse_failures(
     assert CANARY not in "\n".join(lines)
 
 
+@pytest.mark.parametrize(
+    "code,expected",
+    [
+        (401, probe.Classification.AUTHENTICATION_FAILURE),
+        (403, probe.Classification.AUTHORIZATION_FAILURE),
+        (404, probe.Classification.CHAT_CONTRACT_INCOMPATIBLE),
+        (405, probe.Classification.CHAT_CONTRACT_INCOMPATIBLE),
+        (418, probe.Classification.CHAT_CONTRACT_INCOMPATIBLE),
+        (429, probe.Classification.RESULT_INCONCLUSIVE),
+        (500, probe.Classification.PROVIDER_AVAILABILITY_FAILURE),
+        (503, probe.Classification.PROVIDER_AVAILABILITY_FAILURE),
+    ],
+)
+def test_complete_chat_status_classification_and_containment(
+    tmp_path: Path, code: int, expected: probe.Classification
+) -> None:
+    lines: list[str] = []
+
+    def on_request() -> None:
+        if tls.requests == 2:
+            tls.mode = str(code)
+
+    with TlsServer(
+        expected=CANARY,
+        on_request=on_request,
+        responses={
+            "/v1/models": json.dumps({"data": [catalog_item()]}).encode(),
+            "/v1/chat/completions": CANARY.encode(),
+        },
+    ) as tls:
+        config = replace(
+            probe.ProbeConfig.live(tmp_path),
+            origin=f"https://localhost:{tls.port}",
+            trust_anchor=TEST_CA,
+        )
+        answers = iter(["1", "y"])
+        verdict = probe.run_probe(
+            config,
+            write=lines.append,
+            ask=lambda _: next(answers),
+            read=lambda _: CANARY,
+            interactive=lambda: True,
+        )
+        assert verdict is expected
+        assert f"chat HTTP status: {code}" in lines
+        assert "chat effect: none" in lines
+        assert "chat attempt state: provider_rejected" in lines
+        assert tls.paths == ["GET /v1/models", "POST /v1/chat/completions"]
+        assert tls.requests == 2
+    assert CANARY not in "\n".join(lines)
+    for path in tmp_path.rglob("*"):
+        if path.is_file():
+            assert CANARY.encode() not in path.read_bytes()
+
+
 @pytest.mark.parametrize("approve", [False, True])
 def test_provisioning_purposes_are_separate_and_chat_is_optional(
     tmp_path: Path, approve: bool

@@ -184,6 +184,25 @@ def test_host_failure_vocabulary_is_closed() -> None:
     }
 
 
+def test_remote_http_status_stays_private_and_out_of_public_contracts() -> None:
+    for relative in (
+        "src/legoai/runtime/api.py",
+        "src/legoai/intelligence/model/ports.py",
+        "src/legoai/intelligence/model/values.py",
+        "src/legoai/execution/agent/ports.py",
+        "src/legoai/kernel/errors.py",
+    ):
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        assert "provider_status" not in source
+        assert "_remote_chat_http_status" not in source
+    source = (ROOT / "src/legoai/runtime/_composition/remote_model.py").read_text(
+        encoding="utf-8"
+    )
+    assert not any(
+        name in source.lower() for name in ("huggingface", "nscale", "kisski")
+    )
+
+
 def test_local_host_has_no_generic_lookup_or_dynamic_loading() -> None:
     tree = ast.parse((ROOT / "src/legoai/runtime/local.py").read_text(encoding="utf-8"))
     forbidden = {

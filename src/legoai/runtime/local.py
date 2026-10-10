@@ -432,6 +432,20 @@ class _HostSecurityContexts:
         return replace(context, established_at=self._clock())
 
 
+def _remote_chat_http_status(host: GovernedHost, execution: ExecutionId) -> int | None:
+    """Private trusted inspection, not a GovernedHost/ModelPort contract.
+
+    Ephemeral complete-response status only. No custody recovery or HTTP data
+    is exposed. Foreign/local/incomplete executions have no observation.
+    """
+    if type(host) is not _LocalGovernedHost or type(execution) is not ExecutionId:
+        raise TypeError("local host and exact execution identity required")
+    host._require_thread()
+    if execution not in host._minted or host._remote is None:
+        return None
+    return host._remote._chat_http_status(execution)
+
+
 class _HostAgentChat:
     """`AgentChatPort` guard: confinement and context ownership, then delegate."""
 

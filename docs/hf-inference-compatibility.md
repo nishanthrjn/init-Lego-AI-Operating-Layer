@@ -55,6 +55,89 @@ calls, no second Secret prompt, no repository disclosure, no retry/fallback.
 Final classification: **PROVIDER_IDENTITY_INDETERMINATE**. This remains discovery
 evidence only, not chat compatibility, processor identity or lasting availability.
 
+## LIVE PROBE 4 — ELIGIBLE NSCALE PAIR / CHAT PROVIDER-REJECTED
+
+Maintainer-supplied live record, 2026-10-10: discovery HTTP **200**, **LISTED /
+COMPLETED**, attempt `attempt-23a88a4f04923b4b5db52d4eb8032453`.
+The fresh eligible pair was `Qwen/Qwen2.5-Coder-32B-Instruct:nscale`, advertised
+live, text/text, USD 0.06 input / 0.20 output per million tokens. Operator selected
+pair **1**, approved SYNTHETIC disclosure and completed the second hidden S1
+provisioning. Admission `hf-synthetic-chat@a1`, declaration `hf-probe-processor@r1`.
+
+Exactly one chat attempt: execution `exec-de25271a0d8b4e659927c3421f77e760`, attempt
+state **PROVIDER_REJECTED**, effect **NONE**, error **DependencyFailure / terminal**.
+Final classification: **RESULT_INCONCLUSIVE**. No retry, fallback, second model or
+repository disclosure. The exact chat HTTP status was not exposed or persisted;
+it cannot be inferred retrospectively. This is not evidence of Nscale incompatibility
+or a quota/authentication root cause, and does not qualify HF chat compatibility.
+
+## REMOTE-CHAT-HTTP-STATUS-DIAGNOSTICS-1
+
+Status: **IMPLEMENTED — LOCAL VALIDATION PENDING**. No provider requests during
+implementation. The prerequisite Nscale maintainer run passed 336 regression and
+364 architecture tests (700 total), mypy on six files, lint, formatting and whitespace.
+Those results do not cover this diagnostic extension.
+
+The private REMOTE Model invocation plane captures only an integer HTTP status,
+keyed by execution identity, after T2 observes a complete bounded response and
+custody terminal settlement returns. The existing parser convention is exact
+Python `int`, **200–599**, excluding bool. Capture precedes adapter validation:
+a complete 200 with an invalid model/finish reason therefore still has status 200.
+Invalid diagnostic values are ignored, not converted into invocation failures.
+No headers, reason phrase, error body, exception text, URL, prompt or credential
+are added to diagnostics. No error-body parsing or exception-message matching.
+
+Storage is per-host and ephemeral, bounded by the existing attempt-store capacity
+(one entry per completed chat attempt). A private thread-confined host inspection
+helper returns `int | None` for an execution minted by that host. Unsent, incomplete,
+unknown, foreign, embedding and LOCAL executions have no chat status. The mapping
+does not survive a fresh host or process restart. No custody schema/record changes
+or historical rewrites; prior attempts remain readable and have no recoverable
+exact status. This is trusted internal inspection, not a new public HTTP API.
+
+Pipeline review: T2 constructs HttpResponse only after complete framing; exchange
+settles the attempt; the REMOTE invocation captures the integer; the shared adapter
+retains existing validation and exceptions; governed Model and Agent projection
+retain their existing effect/error values. ForgeAI's projection is unchanged.
+The HF harness reads the separate private observation by execution ID. ErrorCause
+currently carries attributed category/record identity, so extending it would broaden
+a public contract unnecessarily. ModelPort, ChatRequest/ChatResponse, AgentRequest,
+GovernedHost and all public result contracts remain unchanged. KISSKI discovery
+status handling is unchanged. No provider-specific branches were added to Core.
+
+| Complete chat status | HF classification |
+| --- | --- |
+| 401 | AUTHENTICATION_FAILURE |
+| 403 | AUTHORIZATION_FAILURE |
+| 404, 405 and other 4xx except 429 | CHAT_CONTRACT_INCOMPATIBLE |
+| 429 | RESULT_INCONCLUSIVE; no credit/quota diagnosis |
+| 5xx | PROVIDER_AVAILABILITY_FAILURE |
+| 2xx | Existing strict model, finish-reason and exact READY checks still required |
+| Absent/incomplete | Existing coarse outcome; no invented status |
+
+Status grants no retry, fallback, disclosure, selection or binding authority.
+Complete non-2xx attempts still settle PROVIDER_REJECTED with Model effect NONE;
+429/503 retain their existing potentially-retryable category without executing a
+retry. Other existing recoverability and disclosure-effect semantics remain intact.
+Complete invalid 2xx attempts remain transport COMPLETED but Model-rejected; they
+do not become compatibility passes. Timeout, malformed/truncated/chunked framing
+and connection failures retain their qualified effects and absent status.
+
+Operator validator (locked existing environment, synthetic local TLS only):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_remote_chat_http_status_diagnostics_1.py
+```
+
+It covers complete status and incomplete-response cases, T2/attempt/REMOTE/Agent,
+HF/Nscale/KISSKI discovery, disclosure, Secret/canary and architecture regressions,
+mypy, Ruff lint/format and whitespace. No provider, token prompt or Docker acquisition.
+The agent did not run tests or checks; formatter edits only. After maintainer
+validation, stop. One separately authorized diagnostic live probe may re-observe
+discovery, require selection and SYNTHETIC approval, provision the second Secret
+and attempt one chat. No live root cause, provider compatibility, error-body
+support, quota diagnosis or repository-disclosure readiness is claimed here.
+
 ## LIVE PROBE 3 — NSCALE OBSERVED / CHAT NOT ATTEMPTED
 
 Maintainer-supplied bounded discovery observations, recorded 2026-10-10:
@@ -340,10 +423,10 @@ this SYNTHETIC scope. Router privacy statements are not backend policy evidence.
 The only message is `Return exactly the word READY.` with 16 maximum output
 tokens, a 60-second timeout and unchanged exact-model/stop/framing requirements.
 
-Diagnostic restraint is now an accepted constraint, **not a blocker requiring
-new Model errors**. Typed discovery statuses can distinguish 401/403 and 5xx.
-429 remains inconclusive about quota. A complete rejected chat contract stays
-CHAT_CONTRACT_INCOMPATIBLE; model mismatch and non-stop reasons are not split.
+Diagnostic restraint remains: the REMOTE-CHAT-HTTP-STATUS-DIAGNOSTICS-1 section
+above extends exact complete-response status to chat without new Model errors.
+Discovery and chat distinguish 401/403 and 5xx; 429 remains inconclusive about quota.
+Model mismatch and non-stop reasons stay coarse CHAT_CONTRACT_INCOMPATIBLE.
 Unknown framing/transport outcomes stay RESULT_INCONCLUSIVE. A valid response
 must equal READY for a pass. No provider response text is printed except that
 fixed successful word, so an echoed token or arbitrary reply cannot enter output.

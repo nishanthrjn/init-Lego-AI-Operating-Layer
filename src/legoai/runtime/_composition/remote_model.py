@@ -29,6 +29,7 @@ from ssl import SSLContext
 from legoai.capabilities.ports import CatalogEntry
 from legoai.capabilities.values import CapabilityId
 from legoai.evidence.custody import CustodyAccess
+from legoai.execution.values import ExecutionId
 from legoai.governance.disclosure import DisclosureDecision
 from legoai.governance.ports import SecretAccessRequest, SecurityContext
 from legoai.governance.secret import SecretRef, SecretUseId, SecretUsePlan
@@ -145,6 +146,13 @@ class RemoteModelPlane:
         self._grant, self._policy = grant, policy
         self._tls, self._timeout, self._margin = tls, timeout, margin
         self._clock, self._adapter = clock, adapter
+        # Ephemeral, content-free diagnostics for this host only. At most one
+        # entry per durable attempt (the existing store capacity bounds it).
+        # Nothing here participates in settlement, disclosure or retry decisions.
+        self._chat_http_statuses: dict[ExecutionId, int] = {}
+
+    def _chat_http_status(self, execution: ExecutionId) -> int | None:
+        return self._chat_http_statuses.get(execution)
 
     def __repr__(self) -> str:
         return "RemoteModelPlane(<binding>)"
@@ -273,6 +281,17 @@ class _Invocation:
             raise ModelResponseUncertainError("Model transport uncertain")
         response = observation.response
         assert response is not None  # COMPLETED/PROVIDER_REJECTED are complete
+        # T2 returns HttpResponse only after bounded framing is complete. Keep
+        # only its validated integer before adapter parsing can reject the body.
+        # Invalid diagnostics are absent, never a new invocation failure.
+        if (
+            path == "/chat/completions"
+            and type(response.status) is int
+            and 200 <= response.status <= 599
+        ):
+            plane._chat_http_statuses[self._check.context.execution_id] = (
+                response.status
+            )
         return response.status, response.body
 
     def _secret_request(self, attempt_id: RemoteAttemptId) -> SecretAccessRequest:
