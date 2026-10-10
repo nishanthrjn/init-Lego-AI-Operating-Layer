@@ -23,11 +23,12 @@ from analyst_sufficiency_safety_live1 import storage as live1_storage
 from analyst_sufficiency_safety_live1.inputs import prepare
 from analyst_sufficiency_safety_live2 import custody, harness, identity, storage
 from analyst_sufficiency_safety_live2.storage import Store
-from forgeai_eval.preflight import ServingIdentity
 from legoai_engineering.analyst.sufficiency import (
     EvidenceManifest,
     EvidenceSufficiencyResult,
 )
+
+from forgeai_eval.preflight import ServingIdentity
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = "ecbdf24526405fdc8edb00848294a0e9718cf995"  # refusal artifact committed
@@ -168,7 +169,7 @@ def test_agent_prompt_parser_unchanged() -> None:
     for key in ("agent", "agent_version", "agent_fingerprint", "prompt_digest"):
         assert b2()[key] == b1()[key]
     assert b2()["parser_identity"] == b1()["parser_identity"]
-    assert git_("diff", "--name-only", BASE, "--", "packages", "src") == ""
+    assert git_("diff", "--name-only", BASE, "731f69c", "--", "packages", "src") == ""
 
 
 def test_membership_unchanged() -> None:
@@ -289,8 +290,6 @@ def test_zero_baseline_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     assert report["report_identity"] == identity.REPORT
     assert not list((tmp_path / "p").glob("call-*"))
     assert harness.execute is forbidden and live1_harness.execute is not forbidden
-    assert not [
-        d
-        for d in custody.run_directories(git)
-        if d not in custody.ARTIFACTS or "-baseline-" in d
-    ]
+    # RUN-CUSTODY-2 admitted a pinned past baseline; PREFLIGHT still makes zero calls.
+    assert custody.verify(git)["directories"]
+    assert not [d for d in custody.run_directories(git) if d not in custody.ARTIFACTS]

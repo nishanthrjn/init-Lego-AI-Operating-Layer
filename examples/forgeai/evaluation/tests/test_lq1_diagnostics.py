@@ -46,13 +46,15 @@ def runs(tmp_path: Path) -> tuple[FixtureSet, tuple[FixtureRun, ...]]:
     review = review_samples()
     failing = ((1, RUFF_FAILED), (0, ""), (1, PYTEST_FAILED))
     garbage = ((1, f"garbage {SENTINEL}"), (0, ""), (0, ""))
+    # Failed check batches request coding rework; repeat the valid candidate,
+    # not reviewer JSON. Diagnostics include both terminal failing batches.
     cases = [
-        ((good, REVIEW_ACCEPT), failing),
+        ((good, good), failing),
         ((coding["fenced-other-label"][0], REVIEW_ACCEPT), None),
         ((coding["prose"][0], REVIEW_ACCEPT), None),
         ((coding["path-outside-targets"][0], REVIEW_ACCEPT), None),
         ((good, review["fenced-other-label"][0]), None),
-        ((good, REVIEW_ACCEPT), garbage),
+        ((good, good), garbage),
     ]
     found = []
     for number, (outputs, script) in enumerate(cases, 1):
@@ -82,13 +84,13 @@ def test_aggregate_is_the_fold_of_the_run_rows(tmp_path: Path) -> None:
         "counts_by_category": {
             "path_not_requested_target": 1,
             "response_not_json": 2,
-            "valid": 3,
+            "valid": 5,
         },
         "per_fixture_counts": {
-            STOCK: {"path_not_requested_target": 1, "response_not_json": 2, "valid": 3}
+            STOCK: {"path_not_requested_target": 1, "response_not_json": 2, "valid": 5}
         },
         "markdown_fence_replies": 1,
-        "representation_counts": {"none": 1, "raw": 5},
+        "representation_counts": {"none": 1, "raw": 7},
         "fence_label_counts": {"other": 1},
         "missing_required_field_counts": {},
         "per_fixture_missing_required_field_counts": {},
@@ -99,18 +101,18 @@ def test_aggregate_is_the_fold_of_the_run_rows(tmp_path: Path) -> None:
         "response_not_json": 1
     }
     assert diagnostics["ruff"] == {
-        "failed_checks": 2,
-        "unavailable": 1,
-        "rule_counts": {"E501": 1, "F401": 1, "I001": 1, "invalid-syntax": 1},
+        "failed_checks": 4,
+        "unavailable": 2,
+        "rule_counts": {"E501": 2, "F401": 2, "I001": 2, "invalid-syntax": 2},
         "per_fixture_rule_counts": {
-            STOCK: {"E501": 1, "F401": 1, "I001": 1, "invalid-syntax": 1}
+            STOCK: {"E501": 2, "F401": 2, "I001": 2, "invalid-syntax": 2}
         },
     }
     assert diagnostics["pytest"]["kind_counts"] == {
-        "assertion_failure": 1,
-        "did_not_raise": 1,
-        "exception_failure": 1,
-        "setup_error": 1,
+        "assertion_failure": 2,
+        "did_not_raise": 2,
+        "exception_failure": 2,
+        "setup_error": 2,
     }
     observation = diagnostics["observation"]
     assert observation["runs_observed"] == 6

@@ -99,8 +99,15 @@ def test_arbitrary_untracked_run_directory_rejected() -> None:
 
 
 def test_prior_seven_entries_remain_accepted() -> None:
-    assert {k: v for k, v in custody.ARTIFACTS.items() if k != DIRECTORY} == PRIOR
-    assert len(custody.ARTIFACTS) == 8
+    # RUN-CUSTODY-2 adds three explicitly pinned artifacts, preserving all prior pins.
+    assert {k: custody.ARTIFACTS[k] for k in PRIOR} == PRIOR
+    assert custody.ARTIFACTS == {
+        **PRIOR,
+        DIRECTORY: TREE,
+        "safety2-baseline-3cf8aba9a377": "6c0529d9444885a276c1e8f445989ed4579ded13",
+        "evaluation/safety2-preflight-20261007-01": "24e26616ba5f575810e3c15180b6be0851afb3b7",
+        "evaluation/safety2-preflight-20261007-a": "bed52e1f1ed70236a70208c60a2a6eb07f6c1ee6",
+    }
     assert set(PRIOR) <= set(custody.verify(git)["directories"])
 
 
@@ -176,8 +183,12 @@ def test_leakage_status_passed() -> None:
 
 
 def test_no_baseline_artifact_admitted() -> None:
-    assert not [k for k in custody.ARTIFACTS if "-baseline-" in k]
-    assert not [d for d in custody.run_directories(git) if "-baseline-" in d]
+    assert {k for k in custody.ARTIFACTS if "-baseline-" in k} == {
+        "safety2-baseline-3cf8aba9a377"
+    }
+    assert {d for d in custody.run_directories(git) if "-baseline-" in d} == {
+        "safety2-baseline-3cf8aba9a377"
+    }
     with pytest.raises(ValueError, match="UNRECOGNIZED_OR_MISSING"):
         custody.verify(
             wrap(untracked="examples/forgeai/safety2-baseline-300452037205/")

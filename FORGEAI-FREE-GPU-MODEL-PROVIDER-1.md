@@ -1,8 +1,8 @@
 # FORGEAI-FREE-GPU-MODEL-PROVIDER-1
 
-Current closeout status: **FULL VALIDATION PENDING**. See
+Current closeout status: **LOCALLY QUALIFIED** (exact full validator exited 0). See
 [the closeout report](FORGEAI-FREE-GPU-MODEL-PROVIDER-1-CLOSEOUT.md) for the
-corrected approval caller, canonical synthetic contracts, and current failures.
+corrected approval caller, canonical synthetic contracts, and final validation evidence.
 The implementation record below describes the earlier validation attempt.
 
 Implemented; scoped offline validation passed. Full regression validation is

@@ -22,6 +22,7 @@ from analyst_sufficiency_hardening_h2 import representation
 from analyst_sufficiency_safety_eval2 import data as eval2
 from analyst_sufficiency_safety_live1.inputs import Prepared, prepare
 from content_discovery1.wiring import Replay, host_for
+from legoai.runtime.api import ModelPurpose
 from legoai_engineering.analyst.request_policy import RequestViolationReason as Reason
 from legoai_engineering.analyst.sufficiency import EvidenceSufficiencyResult
 from legoai_engineering.analyst.sufficiency_envelope import (
@@ -29,8 +30,6 @@ from legoai_engineering.analyst.sufficiency_envelope import (
     _envelope,
     enveloped_sufficiency_definition,
 )
-
-from legoai.runtime.api import ModelPurpose
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = "f5b969a"  # live-probe record committed; H2 starts here
@@ -47,7 +46,6 @@ UNCHANGED = (
     "examples/forgeai/evaluation/analyst_sufficiency_safety_eval3",
     "examples/forgeai/evaluation/analyst_sufficiency_safety_live1",
     "examples/forgeai/evaluation/analyst_sufficiency_safety_live2",
-    "src",
 )
 
 pytestmark = pytest.mark.skipif(
@@ -182,6 +180,8 @@ def test_replay_representation_record_reproduced() -> None:
 
 
 def test_h1_parser_core_and_evaluations_unchanged() -> None:
+    # H2 itself changed no Core source; later Core milestones are independent.
+    assert git("diff", "--name-only", BASE, "c49825b", "--", "src") == ""
     for path in UNCHANGED:
         assert git("diff", "--name-only", BASE, "--", path) == "", path
         assert git("status", "--porcelain", "--", path) == "", path

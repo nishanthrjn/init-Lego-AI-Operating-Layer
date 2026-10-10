@@ -25,12 +25,13 @@ from analyst_sufficiency_safety_eval2 import data, metrics, runner
 from analyst_sufficiency_safety_eval2.runner import Fault
 from analyst_sufficiency_safety_live1 import harness, identity, inputs, storage
 from analyst_sufficiency_safety_live1.storage import Store
-from forgeai_eval.preflight import ServingIdentity
 from legoai_engineering.analyst.sufficiency import (
     EvidenceManifest,
     EvidenceSufficiencyResult,
     SufficiencyFailure,
 )
+
+from forgeai_eval.preflight import ServingIdentity
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = "eb672778f4c4268f030efbcc093fad78d2732c2f"
@@ -614,7 +615,7 @@ def test_no_agent_prompt_parser_changes() -> None:
     b = identity.binding()
     assert b["parser_identity"] == {k: pins[k] for k in identity.AGENT_SOURCES}
     assert b["agent_version"] == "1.0.0"
-    assert git("diff", "--name-only", BASE, "--", "packages", "src") == ""
+    assert git("diff", "--name-only", BASE, "f19d32b", "--", "packages", "src") == ""
 
 
 def test_no_evaluator_changes() -> None:

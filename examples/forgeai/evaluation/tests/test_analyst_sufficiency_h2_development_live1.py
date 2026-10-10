@@ -432,14 +432,22 @@ def test_39_fresh_directory_required(tmp_path: Path) -> None:
 
 
 def test_40_41_historical_baseline_and_harnesses_unchanged() -> None:
+    # The development slice changed no product source at its qualified commit.
+    # Later product milestones may evolve Core and Engineering independently.
+    for path in ("packages/legoai-engineering/src", "src"):
+        assert git("diff", "--name-only", BASE, "95744d7", "--", path) == "", path
     for path in (
         "examples/forgeai/safety2-baseline-3cf8aba9a377",
         "examples/forgeai/evaluation/analyst_sufficiency_safety_live1",
         "examples/forgeai/evaluation/analyst_sufficiency_safety_live2",
         "examples/forgeai/evaluation/analyst_design_live1",
         "examples/forgeai/evaluation/analyst_evidence_loop",
-        "packages/legoai-engineering/src",
-        "src",
+        # Preserve the current H1/H2 implementation and its original baseline.
+        "packages/legoai-engineering/src/legoai_engineering/analyst/request_policy.py",
+        "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency.py",
+        "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_agent.py",
+        "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_definition.py",
+        "packages/legoai-engineering/src/legoai_engineering/analyst/sufficiency_envelope.py",
     ):
         assert git("diff", "--name-only", BASE, "--", path) == "", path
         assert git("status", "--porcelain", "--", path) == "", path

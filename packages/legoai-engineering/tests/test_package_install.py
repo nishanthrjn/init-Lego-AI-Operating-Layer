@@ -28,6 +28,17 @@ def test_build_inventory_and_fresh_install(tmp_path: Path) -> None:
     assert len(wheels) == len(archives) == 1
     expected = {
         "legoai_engineering/__init__.py",
+        "legoai_engineering/agent_output.py",
+        "legoai_engineering/analyst/request_policy.py",
+        "legoai_engineering/analyst/sufficiency.py",
+        "legoai_engineering/analyst/sufficiency_agent.py",
+        "legoai_engineering/analyst/sufficiency_definition.py",
+        "legoai_engineering/analyst/sufficiency_envelope.py",
+        "legoai_engineering/checks/_prepare_program.py",
+        "legoai_engineering/checks/preparation.py",
+        "legoai_engineering/repository/structure.py",
+        "legoai_engineering/repository/structure_authorized.py",
+        "legoai_engineering/sandbox/prepared.py",
         "legoai_engineering/py.typed",
         "legoai_engineering/repository/__init__.py",
         "legoai_engineering/repository/values.py",

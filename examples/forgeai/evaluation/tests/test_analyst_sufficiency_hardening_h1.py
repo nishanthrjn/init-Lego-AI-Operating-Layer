@@ -25,6 +25,7 @@ from analyst_sufficiency_safety_eval3 import data as eval3
 from analyst_sufficiency_safety_live1.inputs import prepare
 from analyst_sufficiency_safety_live2 import custody
 from analyst_sufficiency_safety_live2 import identity as live2
+from legoai.execution.values import ExecutionId
 from legoai_engineering.analyst import request_policy
 from legoai_engineering.analyst.request_policy import RequestViolationReason as Reason
 from legoai_engineering.analyst.sufficiency import (
@@ -35,8 +36,6 @@ from legoai_engineering.analyst.sufficiency import (
     SufficiencyDisposition,
 )
 from legoai_engineering.repository.workspace import RepositoryPath
-
-from legoai.execution.values import ExecutionId
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = "7fdee8f"  # hardening design recorded
@@ -279,7 +278,7 @@ def test_no_model_or_provider_dependency() -> None:
 
 
 def test_no_core_change() -> None:
-    assert git_("diff", "--name-only", BASE, "--", "src") == ""
+    assert git_("diff", "--name-only", BASE, "8aaf3bf", "--", "src") == ""
     assert git_("status", "--porcelain", "--", "src") == ""
 
 
