@@ -31,8 +31,9 @@ import sys
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Never
 
 from legoai.intelligence.model.ports import ModelPort
 from legoai.intelligence.model.routing import ModelRequirement
@@ -50,6 +51,7 @@ from legoai.runtime.api import (
     ModelBindingConfig,
     ModelPurpose,
     OllamaSettings,
+    RemoteModelRuntime,
     TrustedModelContribution,
 )
 from legoai_engineering.analyst.values import AcquisitionFailure
@@ -62,8 +64,10 @@ from legoai_engineering.sandbox.errors import SandboxFailure
 
 from forgeai.composition import (
     ForgeAIConfig,
+    bind_remote,
     local_profile,
     prepare_run,
+    remote_credentials,
     sandbox_readiness,
 )
 from forgeai.domain import (
@@ -78,6 +82,7 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.remote import BINDING, RemoteProfile, load_profile
 
 _MAX_LISTED = 20
 _PATCH_LINES = 800  # the whole patch is shown or approval is refused
@@ -88,6 +93,16 @@ _BIDI = frozenset(
 _STEPS = 7
 type Ask = Callable[[str], str]
 type Out = Callable[[str], None]
+
+
+class SafeArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> Never:
+        # Unknown options are never a credential input channel, even on refusal.
+        if message.startswith("unrecognized arguments:"):
+            message = (
+                "unrecognized arguments; see --help (no credential flags supported)"
+            )
+        super().error(message)
 
 
 class ReplayModel:
@@ -561,7 +576,17 @@ def _common(parser: argparse.ArgumentParser, binding: str) -> None:
         ),
     )
     parser.add_argument("--constraint", action="append", default=[])
-    parser.add_argument("--binding", choices=("replay", "ollama"), default=binding)
+    parser.add_argument(
+        "--binding", choices=("replay", "ollama", BINDING), default=binding
+    )
+    parser.add_argument(
+        "--remote-profile", type=Path, help="bounded non-secret operator policy TOML"
+    )
+    parser.add_argument(
+        "--remote-custody",
+        type=Path,
+        help="existing owner-local custody directory outside the repository",
+    )
     parser.add_argument(
         "--replay",
         type=Path,
@@ -581,7 +606,7 @@ def _common(parser: argparse.ArgumentParser, binding: str) -> None:
 
 def _parse(argv: Sequence[str]) -> tuple[argparse.ArgumentParser, argparse.Namespace]:
     if argv and argv[0] == "run":
-        parser = argparse.ArgumentParser(
+        parser = SafeArgumentParser(
             prog="forgeai run",
             description="Run one supervised coding task (ForgeAI v0.1).",
         )
@@ -590,7 +615,7 @@ def _parse(argv: Sequence[str]) -> tuple[argparse.ArgumentParser, argparse.Names
         _common(parser, "ollama")
         args = parser.parse_args(argv[1:])
         return parser, args
-    parser = argparse.ArgumentParser(
+    parser = SafeArgumentParser(
         prog="forgeai",
         description="Run one bounded coding task (pre-v0.1 syntax; see `forgeai run`).",
     )
@@ -620,12 +645,30 @@ def main(
         parser.error(f"not a Git repository (no .git): {repository}")
     if args.git is None or args.docker is None:
         parser.error("Git and Docker executables are required")
+    remote: RemoteProfile | None = None
+    if args.binding != BINDING and (args.remote_profile or args.remote_custody):
+        parser.error("remote options require the explicit remote binding")
     if args.binding == "replay":
         if not args.replay:
             parser.error("--replay is required for the replay binding")
         outputs = [path.read_text(encoding="utf-8") for path in args.replay]
         binding = replay_binding(ReplayModel(*outputs))
         model = "replay (recorded outputs; not a live model)"
+    elif args.binding == BINDING:
+        if args.remote_profile is None or args.remote_custody is None:
+            parser.error(
+                "remote binding requires --remote-profile and --remote-custody"
+            )
+        try:
+            remote = load_profile(args.remote_profile)
+            remote.validate(datetime.now(UTC))
+            binding = remote.binding()
+        except OSError, TypeError, ValueError:
+            out(
+                "startup refused: invalid, expired or unsupported non-secret remote profile"
+            )
+            return 2
+        model = f"remote {remote.provider.value}/{remote.model}"
     else:
         problem = ollama_ready(args.ollama_url, args.ollama_model)
         if problem is not None:
@@ -661,6 +704,47 @@ def main(
         )
     except (TypeError, ValueError) as error:
         parser.error(f"invalid configuration: {error}")
+    if remote is not None:
+        source = remote_credentials(config)
+        try:
+            try:
+                config = bind_remote(
+                    config,
+                    remote,
+                    task,
+                    RemoteModelRuntime(
+                        source, args.remote_custody.resolve(), timedelta(minutes=5)
+                    ),
+                    now=datetime.now(UTC),
+                )
+            except (
+                HostError,
+                OSError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                EOFError,
+                KeyboardInterrupt,
+            ):
+                # Never interpolate exceptions from credential provisioning/runtime.
+                out("startup refused: remote credential, policy or custody unavailable")
+                return 2
+            return _execute(config, task, model, ask=ask, out=out, ready=ready)
+        finally:
+            source.close()
+    return _execute(config, task, model, ask=ask, out=out, ready=ready)
+
+
+def _execute(
+    config: ForgeAIConfig,
+    task: TaskRequest,
+    model: str,
+    *,
+    ask: Ask | None,
+    out: Out,
+    ready: Callable[[ForgeAIConfig], SandboxFailure | None],
+) -> int:
+    root = config.repository
     # Before any model call or effect: refuse unless the checks sandbox is ready.
     # PROJECT owns readiness inside its guarded preflight, after repository and
     # metadata validation. GENERIC retains its existing startup probe.
@@ -685,12 +769,17 @@ def main(
             approve=terminal_approver(ask, out),
             progress=reporter(out),
             preflight=preflight,
+            confirm_disclosure=remote_confirmer(ask, out),
         )
     except HostError as error:
         out(f"configuration error: {error.failure.value}")
         return 1
-    except (TypeError, ValueError) as error:
-        out(f"configuration error: {error}")
+    except (OSError, TypeError, ValueError) as error:
+        out(
+            "configuration error: invalid remote configuration"
+            if config.remote_profile
+            else f"configuration error: {error}"
+        )
         return 1
     result = asyncio.run(prepared.worker.run(task, prepared.context))
     out(f"[{_STEPS}/{_STEPS}] Final result")
@@ -698,6 +787,21 @@ def main(
     if result.disposition is TaskDisposition.SUCCEEDED:
         return 0
     return 2 if result.disposition is TaskDisposition.REJECTED else 1
+
+
+def remote_confirmer(ask: Ask | None, out: Out) -> Callable[[str], bool]:
+    def confirm(preview_text: str) -> bool:
+        out("\n".join(safe(line) for line in preview_text.split("\n")))
+        if ask is None or (ask is input and not sys.stdin.isatty()):
+            return False
+        try:
+            return ask(
+                "Send the listed data to this provider/model? [y/N] "
+            ).strip().lower() in {"y", "yes"}
+        except EOFError, KeyboardInterrupt:
+            return False
+
+    return confirm
 
 
 if __name__ == "__main__":

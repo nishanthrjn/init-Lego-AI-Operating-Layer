@@ -78,12 +78,11 @@ def test_only_trusted_runtime_and_evidence_paths_import_disclosure() -> None:
     }
 
 
-def test_engineering_and_forgeai_do_not_depend_on_disclosure() -> None:
-    for consumer in (
-        ROOT / "packages/legoai-engineering/src",
-        ROOT / "examples/forgeai/src",
-    ):
-        assert _importers(consumer) == set(), consumer
+def test_disclosure_stays_in_forgeai_operator_profile_not_engineering() -> None:
+    assert _importers(ROOT / "packages/legoai-engineering/src") == set()
+    assert _importers(ROOT / "examples/forgeai/src") == {
+        "examples/forgeai/src/forgeai/remote.py"
+    }
 
 
 def test_gate_records_but_never_reads_evidence_or_rewrites_content() -> None:

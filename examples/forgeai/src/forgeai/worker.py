@@ -111,6 +111,7 @@ class RepositoryTaskWorker:
     prepare_checks: Callable[[], EngineeringCheckPort] | None = field(
         default=None, repr=False
     )
+    admit_model: Callable[[TaskRequest], bool] | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -148,6 +149,8 @@ class RepositoryTaskWorker:
             raise TypeError("worker requires an operator approver and progress")
         if self.prepare_checks is not None and not callable(self.prepare_checks):
             raise TypeError("preparation must be a trusted composition callback")
+        if self.admit_model is not None and not callable(self.admit_model):
+            raise TypeError("model admission must be a trusted composition callback")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -229,6 +232,8 @@ class RepositoryTaskWorker:
             after = self._observe()
             if not isinstance(after, GitRepositoryState) or after != start:
                 return _rejected(task, TaskFailure.REPOSITORY_UNAVAILABLE, evidence)
+        if self.admit_model is not None and not self.admit_model(task):
+            return _rejected(task, TaskFailure.MODEL_DISCLOSURE_REFUSED, evidence)
         first = await worker._attempt(
             task,
             CodingRequest(

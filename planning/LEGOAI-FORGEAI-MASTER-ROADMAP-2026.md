@@ -17,6 +17,18 @@ or semantics still require code behind the appropriate public boundary.
 
 ## 1. Executive status
 
+2026-10-10: FORGEAI-REMOTE-MODEL-PROFILE-1 implements explicit provider-neutral
+remote model composition using the existing S1/disclosure/custody/HTTPS path.
+ForgeAI stays local, and model binding is independent of GENERIC/PROJECT checks.
+Remote disclosure requires its own single-run confirmation before any model
+call. The complete agent-run validator passed on 2026-10-10 using local synthetic
+TLS, real Docker GENERIC/PROJECT checks and the full historical v0.1 regressions;
+separate maintainer validation is pending.
+No live provider or free-GPU deployment is qualified. After qualification and
+commit, the recommended next deployment slice is
+FREE-GPU-OPENAI-COMPATIBLE-DEV-HARNESS-1 for one operator-selected environment;
+this update does not implement or authorize that future deployment.
+
 2026-10-10 update: ENGINEERING-PREPARED-CHECK-ENV-1 +
 FORGEAI-PROJECT-CHECK-PROFILE-1 implements explicit locked Python dependency
 preparation before ForgeAI model calls. GENERIC retains its historical image;

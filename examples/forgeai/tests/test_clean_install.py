@@ -67,6 +67,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
                 "worker",
                 "composition",
                 "cli",
+                "remote",
             )
         } | {"forgeai/py.typed"}
         metadata = wheel.read(

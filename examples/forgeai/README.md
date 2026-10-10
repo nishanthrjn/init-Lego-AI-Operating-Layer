@@ -39,7 +39,7 @@ memory.
 - the existing reviewed flow with at most one rework.
 
 It does **not** include target discovery, the Repository Analyst or
-sufficiency agents, secrets, Git commit/push/PR, durable resume, or hosted
+sufficiency agents, general secret management, Git commit/push/PR, durable resume, or hosted
 use.
 
 **Supported repositories.** The built-in profile checks a Python repository
@@ -52,7 +52,102 @@ image. Other layouts are not supported yet.
 - Docker Desktop (Linux engine) with the CR-2a `PYTHON_CHECKS` image built
   locally;
 - `uv`;
-- for live use, Ollama with a coding model.
+- for local live use, Ollama with a coding model; alternatively, the explicitly
+  configured REMOTE profile below (live remote model quality is unqualified).
+
+## Explicit remote model profile
+
+FORGEAI-REMOTE-MODEL-PROFILE-1 keeps ForgeAI and its repository/checks local.
+Model execution can use LegoAI's existing OpenAI-compatible REMOTE binding.
+Provider, HTTPS endpoint and exact model are configuration; compute location
+does not change task, Coding Agent, Reviewer or check semantics. Both
+`--check-profile generic` and `--check-profile project` work independently.
+
+```powershell
+forgeai run --repo C:\work\repo --task "Describe one bounded change" --target src/example.py --binding openai-compatible-remote --remote-profile C:\operator\remote.toml --remote-custody C:\operator\forgeai-custody --check-profile generic
+```
+
+The custody directory must already exist outside the target repository and be
+owned/protected by the operator. Do not share it between concurrent processes.
+Credentials enter only through S1 hidden interactive provisioning, anew per
+process, and the source is closed on exit. There is no credential flag,
+environment, file or pipe fallback. The CLI uses the system TLS trust store;
+trusted test composition supplies its synthetic CA. No insecure-TLS option or
+automatic discovery is exposed.
+
+`remote.toml` is limited to 16 KiB and exactly the fields below. This
+**illustrative, non-runnable policy** asserts nothing about any real provider.
+Replace every fact with an explicit operator attestation grounded in the
+intended service's conditions; choose a current window of at most one hour:
+
+```toml
+provider = "operator-selected-provider"
+base_url = "https://models.example.invalid/v1"
+model = "exact-model-id"
+repository = "operator-repository-identity"
+revision = "policy-r1"
+basis = "operator_attested"
+processor = "Operator-attested processor name"
+locations = ["Operator-attested jurisdiction"]
+retention_days = 0
+training = "no"
+human_access = "none"
+subprocessors = ["Operator-attested subprocessor name"]
+not_before = 2026-10-10T12:00:00Z
+not_after = 2026-10-10T12:30:00Z
+```
+
+These values construct existing processor facts and matching class conditions;
+unknown mandatory facts fail closed. The CLI schema supports operator
+attestations, bounded retention and named subprocessors. It never fetches or
+verifies provider policies. No credential, header, source or command belongs in
+this file. Revise the policy when facts change.
+
+After guarded repository validation and any PROJECT preparation, ForgeAI
+previews provider/model/origin/root, exact target/context paths, task digest,
+fixed instructions, possible rework diagnostics and Reviewer material. Only
+`y` or `yes` approves remote disclosure; default is No. Mutation has its own
+later patch preview and approval. Declining disclosure produces no model call,
+mutation approval, checks or rework.
+
+Approval is single-run, bound to the immutable task (including constraints,
+target operations and context), endpoint, model and policy. Every run has a
+fresh configuration revision. The existing vocabulary admits the **ForgeAI
+application consumer**, purpose `chat`, for both Agents: Core permits one
+admission per binding. This is not a Coding-only admission reused for review.
+Every invocation is independently gated and declared: initial Coding sends
+PLATFORM_INSTRUCTION, TASK_TEXT and REPOSITORY_CONTENT; Reviewer and rework
+also declare DERIVED_DIAGNOSTIC. Read-only context goes to Coding only.
+
+Core owns durable attempt custody, current per-invocation Secret use and
+verified HTTPS/T2. One attempt per Agent invocation, no retry/fallback, UNKNOWN
+preservation and strict JSON decoding remain unchanged. The reference host has
+no explicit close operation; custody handles follow its lifetime. S1 material
+is explicitly closed by the CLI.
+
+Qualification uses synthetic local TLS, including real Docker REMOTE + GENERIC
+and REMOTE + PROJECT. The latter performs one labelled PyPI wheel acquisition;
+checks remain offline. No Internet model provider is contacted:
+
+```powershell
+uv run python .\validate_forgeai_remote_model_profile_1.py
+```
+
+Agent-run qualification on 2026-10-10 passed the complete validator: 86 ForgeAI
+profile/architecture tests, 509 REMOTE/security regressions, 274 LOCAL model/Agent
+regressions, 252 Core architecture tests, 278 Engineering tests, both real Docker
+REMOTE combinations, all static checks and every historical v0.1 validator phase
+(including clean installation and both replay demos). Phase counts overlap.
+The final run acquired one locked dependency wheel through the existing PROJECT
+preparation; model traffic went only to synthetic local TLS. No live model
+provider or real user-repository pilot was used.
+
+A separate maintainer rerun is pending. This evidence is separate from historical M6
+and v0.1 qualification. No named GPU platform, notebook deployment, ComfyUI,
+production credential management, arbitrary OpenAI compatibility or live
+remote model quality is qualified.
+
+## Local setup and task execution
 
 **Setup:**
 

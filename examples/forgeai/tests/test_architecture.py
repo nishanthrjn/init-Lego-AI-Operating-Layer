@@ -81,11 +81,12 @@ def test_package_layout_is_the_expected_small_set() -> None:
         "worker",
         "composition",
         "cli",
+        "remote",
     }
 
 
 @pytest.mark.parametrize(
-    "name", ["domain", "guard", "review", "worker", "composition", "cli"]
+    "name", ["domain", "guard", "review", "worker", "composition", "cli", "remote"]
 )
 def test_public_legoai_only_and_no_private_names(name: str) -> None:
     for module, names in imports(modules()[name]):
@@ -101,7 +102,7 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "name", ["domain", "guard", "review", "worker", "composition", "cli"]
+    "name", ["domain", "guard", "review", "worker", "composition", "cli", "remote"]
 )
 def test_no_effects_grants_or_global_state(name: str) -> None:
     tree = modules()[name]
@@ -217,6 +218,40 @@ def test_no_workflow_team_or_locator_constructs() -> None:
                     word in lowered
                     for word in ("workflow", "team", "orchestrat", "locator")
                 ), (name, node.name)
+
+
+def test_remote_is_public_composition_without_platform_branches() -> None:
+    forbidden = {
+        "kaggle",
+        "colab",
+        "huggingface",
+        "kisski",
+        "together",
+        "runpod",
+        "vast",
+        "lambda",
+        "modal",
+    }
+    for name, tree in modules().items():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Compare):
+                strings = {
+                    part.value.lower()
+                    for part in ast.walk(node)
+                    if isinstance(part, ast.Constant) and isinstance(part.value, str)
+                }
+                assert not strings & forbidden, (name, strings)
+            if isinstance(node, ast.ClassDef):
+                assert node.name not in {
+                    "ForgeAIModelPort",
+                    "RemoteCodingModel",
+                    "CloudModelPort",
+                }
+    for name in INNER:
+        assert not any(
+            module.startswith("forgeai.remote")
+            for module, _ in imports(modules()[name])
+        )
 
 
 def _calls(node: ast.AST, name: str) -> list[ast.Call]:

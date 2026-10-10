@@ -33,12 +33,12 @@ packages = ["src/forgeai"]
 include = ["/src", "/tests", "/fixtures", "/demo.py", "/README.md", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
-pythonpath = [".", "tests", "evaluation", "evaluation/tests"]
+pythonpath = ["../../tests/support", "../../tests/unit/governance", ".", "tests", "evaluation", "evaluation/tests"]
 testpaths = ["tests", "evaluation/tests"]
 addopts = "--import-mode=importlib -ra"
 
 [tool.mypy]
-mypy_path = [".", "tests", "evaluation", "evaluation/tests"]
+mypy_path = ["../../tests/support", "../../tests/unit/governance", ".", "tests", "evaluation", "evaluation/tests"]
 python_version = "3.14"
 strict = true
 warn_unused_ignores = true

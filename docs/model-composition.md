@@ -4,6 +4,31 @@ This is the first narrow reference implementation of configuration-driven
 composition, not a complete application manifest/runtime product. See
 [ADR-019](../adrs/ADR-019.md).
 
+## ForgeAI remote application composition (2026-10-10)
+
+FORGEAI-REMOTE-MODEL-PROFILE-1 exposes the existing qualified REMOTE path through
+ForgeAI's trusted composition and CLI; see the [operator instructions](../examples/forgeai/README.md#explicit-remote-model-profile).
+ForgeAI remains local; provider, HTTPS API root and model are data. Compute
+location adds no application-domain abstraction. S1 hidden provisioning,
+remote disclosure admission, attempt custody and HTTPS/T2 are reused unchanged.
+
+The application uses one exact `forgeai` consumer admission for purpose `chat`,
+explicitly covering Coding and Reviewer, consistent with Core's one-admission
+per-binding contract. Separate executions declare their actual provenance;
+Reviewer and rework include derived diagnostics. Every invocation rechecks the
+existing gate. A single-run operator confirmation binds task/scope and immutable
+remote configuration, separately from mutation approval. No retry or fallback.
+Qualification is synthetic local TLS only; live-model quality and named-provider
+compatibility remain unqualified. The complete agent-run validator passed on
+2026-10-10, including real Docker with GENERIC/PROJECT checks and the historical
+ForgeAI validator. Separate maintainer validation is pending.
+
+Earlier sections below are historical slice records. Statements that REMOTE
+is refused or ForgeAI is not remote-enabled describe those earlier slices;
+OPENAI-COMPATIBLE-REMOTE-1 and this application slice supersede them. Stale
+pre-REMOTE explanatory comments also remain in the Core disclosure modules;
+the current public host and regression tests establish the implemented behavior.
+
 ## Development direction
 
 Build minimum stable primitives, prove an end-to-end runtime slice through a real

@@ -151,11 +151,24 @@ def test_engineering_and_forgeai_do_not_reach_remote_internals() -> None:
     ):
         for path in consumer.rglob("*.py"):
             text = path.read_text(encoding="utf-8")
-            for word in (
-                "remote_model",
-                "RemoteModelRuntime",
-                "bearer_credential",
-                "open_credential_source",
-                "_credential_https",
-            ):
+            # ForgeAI's authorized application slice uses public composition;
+            # the invocation plane and transport remain exclusively Core-owned.
+            assert not any(
+                module.startswith(("legoai.reference", "legoai.runtime._composition"))
+                for module in _imports(path)
+            ), path
+            for word in ("remote_model", "_credential_https"):
                 assert word not in text, (path, word)
+            public = {
+                "RemoteModelRuntime": {
+                    "examples/forgeai/src/forgeai/composition.py",
+                    "examples/forgeai/src/forgeai/cli.py",
+                },
+                "bearer_credential": {"examples/forgeai/src/forgeai/composition.py"},
+                "open_credential_source": {
+                    "examples/forgeai/src/forgeai/composition.py"
+                },
+            }
+            for word, allowed in public.items():
+                if word in text:
+                    assert path.relative_to(ROOT).as_posix() in allowed, (path, word)

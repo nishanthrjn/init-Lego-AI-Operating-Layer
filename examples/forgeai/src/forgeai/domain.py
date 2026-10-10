@@ -134,6 +134,7 @@ class TaskFailure(Enum):
     REPOSITORY_UNAVAILABLE = "initial Git state could not be observed"
     UNSUPPORTED_REPOSITORY = "repository has no commit to anchor the run"
     DIRTY_START = "repository has pre-existing changes"
+    MODEL_DISCLOSURE_REFUSED = "remote model disclosure was not approved for this task"
     CHECK_ENVIRONMENT_UNAVAILABLE = (
         "check environment preparation failed before model invocation"
     )
@@ -178,6 +179,7 @@ _REJECTIONS = frozenset(
         TaskFailure.UNSUPPORTED_REPOSITORY,
         TaskFailure.DIRTY_START,
         TaskFailure.CHECK_ENVIRONMENT_UNAVAILABLE,
+        TaskFailure.MODEL_DISCLOSURE_REFUSED,
         TaskFailure.EVIDENCE_DENIED,
         TaskFailure.EVIDENCE_UNAVAILABLE,
     }

@@ -12,6 +12,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 from legoai.execution.values import ExecutionContext
 from legoai.governance.values import GrantId, PolicyRef
@@ -25,12 +26,15 @@ from legoai.kernel.references import (
 )
 from legoai.kernel.versions import Version
 from legoai.runtime.api import (
+    CredentialSource,
     LocalHostConfig,
     ModelBindingConfig,
     ModelPurpose,
+    OpenAICompatibleSettings,
     OperatorGrant,
+    RemoteModelRuntime,
 )
-from legoai.runtime.local import open_local_host
+from legoai.runtime.local import open_credential_source, open_local_host
 from legoai_engineering.analyst.authorized import (
     REPOSITORY_READ_ACTION,
     AuthorizedRepositoryEvidence,
@@ -86,6 +90,7 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.remote import BINDING, RemoteProfile, disclosure_preview
 from forgeai.worker import RepositoryTaskWorker
 
 
@@ -121,8 +126,27 @@ class ForgeAIConfig:
     context_paths: tuple[RepositoryPath, ...] = ()
     check_profile: CheckProfile = CheckProfile.GENERIC
     uv_executable: Path | None = None
+    remote_runtime: RemoteModelRuntime | None = field(default=None, repr=False)
+    remote_profile: RemoteProfile | None = field(default=None, repr=False)
+    remote_task: TaskRequest | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
+        for remote_value, remote_type in (
+            (self.remote_profile, RemoteProfile),
+            (self.remote_runtime, RemoteModelRuntime),
+            (self.remote_task, TaskRequest),
+        ):
+            if remote_value is not None and type(remote_value) is not remote_type:
+                raise TypeError("remote composition requires typed configuration")
+        present = (
+            self.remote_profile is not None,
+            self.remote_runtime is not None,
+            self.remote_task is not None,
+        )
+        if any(present) and not all(present):
+            raise ValueError(
+                "remote composition requires policy, runtime and exact task"
+            )
         if type(self.check_profile) is not CheckProfile:
             raise TypeError("check profile requires CheckProfile")
         if self.uv_executable is not None and (
@@ -190,6 +214,7 @@ def prepare_run(
     clock: Callable[[], datetime] = utc_now,
     sandbox: SandboxExecutionPort | None = None,
     preflight: Callable[[str], None] = lambda message: None,
+    confirm_disclosure: Callable[[str], bool] | None = None,
 ) -> PreparedRun:
     """Open a host and wire one workspace. `sandbox` replaces Docker only with
     another SandboxExecutionPort backend; there is never a host fallback.
@@ -198,7 +223,38 @@ def prepare_run(
     mutation. It is required; there is no automatic approval."""
     if type(config) is not ForgeAIConfig:
         raise TypeError("prepare_run requires ForgeAIConfig")
-    host = open_local_host(config.host, config.model_selection, clock=clock)
+    remote = config.remote_profile
+    if remote is not None:
+        remote.validate(clock())
+        if config.remote_task is None or config.remote_runtime is None:
+            raise ValueError("remote profile requires task binding and runtime")
+        if (
+            config.host.disclosure != remote.policy
+            or config.model_selection.get("binding") != BINDING
+        ):
+            raise ValueError("remote policy and selected binding must match")
+        selected = next(
+            (b for b in config.host.bindings if b.binding_id == BINDING), None
+        )
+        if selected is None:
+            raise ValueError("remote binding is missing")
+        provider = selected.provider
+        if not isinstance(provider, OpenAICompatibleSettings) or (
+            provider.base_url,
+            provider.chat_model,
+            provider.provider_id,
+        ) != (remote.base_url, remote.model, remote.provider):
+            raise ValueError("remote binding changed after configuration")
+        if (
+            tuple(t.path for t in config.remote_task.targets) != config.editable_paths
+            or config.remote_task.context != config.context_paths
+        ):
+            raise ValueError("remote task scope differs from configured scope")
+    elif config.remote_runtime is not None:
+        raise ValueError("remote runtime requires a disclosure profile")
+    host = open_local_host(
+        config.host, config.model_selection, clock=clock, remote=config.remote_runtime
+    )
     reference = replace(
         config.host.configuration.configuration, instance=config.workspace_scope
     )
@@ -291,7 +347,26 @@ def prepare_run(
             ModelPurpose.CHAT,
             correlation=coding.correlation_id,
             causation=coding.operation,
+            disclosure=remote.disclosure(derived=True) if remote else None,
         )
+
+    used = False
+
+    def admit_model(task: TaskRequest) -> bool:
+        nonlocal used
+        if (
+            used
+            or task != config.remote_task
+            or remote is None
+            or confirm_disclosure is None
+        ):
+            return False
+        used = True
+        try:
+            remote.validate(clock())
+            return confirm_disclosure(disclosure_preview(remote, task)) is True
+        except ValueError, EOFError, KeyboardInterrupt:
+            return False
 
     worker = RepositoryTaskWorker(
         os.path.normcase(str(config.repository.resolve())),
@@ -310,8 +385,76 @@ def prepare_run(
         approve,
         progress,
         project_checks if config.check_profile is CheckProfile.PROJECT else None,
+        admit_model if remote else None,
     )
-    return PreparedRun(worker, host.model_execution(ModelPurpose.CHAT))
+    return PreparedRun(
+        worker,
+        host.model_execution(
+            ModelPurpose.CHAT,
+            disclosure=remote.disclosure(derived=False) if remote else None,
+        ),
+    )
+
+
+def bind_remote(
+    config: ForgeAIConfig,
+    profile: RemoteProfile,
+    task: TaskRequest,
+    runtime: RemoteModelRuntime,
+    *,
+    now: datetime,
+) -> ForgeAIConfig:
+    """Provision only through the qualified public S1 hidden-input boundary.
+
+    Runtime participants are trusted composition, never task or profile-file data.
+    The caller owns and closes the credential source, including on failure.
+    """
+    profile.validate(now)
+    custody = runtime.custody.resolve()
+    root = config.repository.resolve()
+    if not custody.is_dir() or custody.is_relative_to(root):
+        raise ValueError(
+            "remote custody must be an existing directory outside the repository"
+        )
+    credential = runtime.credentials.provision("forgeai-remote")
+    binding = profile.binding()
+    assert isinstance(binding.provider, OpenAICompatibleSettings)
+    binding = replace(
+        binding, provider=replace(binding.provider, bearer_credential=credential)
+    )
+    expires = min(a.not_after for a in profile.policy.admissions)
+    revision = "forgeai-remote-" + uuid4().hex
+    host = replace(
+        config.host,
+        configuration=replace(config.host.configuration, revision=revision),
+        bindings=(binding,),
+        disclosure=profile.policy,
+        grants=config.host.grants
+        + (
+            OperatorGrant(
+                GrantId("forgeai-remote-secret"),
+                "secret-use",
+                credential.exact.identity,
+                now,
+                expires,
+            ),
+        ),
+    )
+    return replace(
+        config,
+        host=host,
+        model_selection={"revision": revision, "binding": BINDING},
+        remote_runtime=runtime,
+        remote_profile=profile,
+        remote_task=task,
+    )
+
+
+def remote_credentials(config: ForgeAIConfig) -> CredentialSource:
+    """Open an inert S1 source in this host's exact operator/tenant scope."""
+    return open_credential_source(
+        config.host.configuration.configuration.application.scope
+    )
 
 
 def sandbox_readiness(config: ForgeAIConfig) -> SandboxFailure | None:
@@ -345,6 +488,7 @@ async def run_task(
     progress: Callable[[RunStage, int], None] = lambda stage, attempt: None,
     clock: Callable[[], datetime] = utc_now,
     sandbox: SandboxExecutionPort | None = None,
+    confirm_disclosure: Callable[[str], bool] | None = None,
 ) -> TaskResult:
     prepared = prepare_run(
         config,
@@ -353,6 +497,7 @@ async def run_task(
         progress=progress,
         clock=clock,
         sandbox=sandbox,
+        confirm_disclosure=confirm_disclosure,
     )
     return await prepared.worker.run(task, prepared.context)
 
