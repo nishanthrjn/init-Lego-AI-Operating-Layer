@@ -3,10 +3,10 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1E"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F"
     },
     "schema_version": {
-      "const": 2
+      "const": 3
     },
     "timestamp": {
       "type": "string",
@@ -306,7 +306,10 @@
               "RUNTIME_PYTHON_INVALID",
               "RUNTIME_ENV_CREATION_FAILED",
               "UV_PINNED_BOOTSTRAP_FAILED",
-              "UV_TOOL_VERSION_UNACCEPTED"
+              "UV_TOOL_VERSION_UNACCEPTED",
+              "SYNTHETIC_OUTPUT_MISMATCH",
+              "RUNTIME_INTERRUPTED",
+              "RUNTIME_TIMEOUT"
             ]
           }
         },
@@ -346,6 +349,146 @@
           "total_seconds": {
             "type": "number",
             "minimum": 0
+          },
+          "diagnostics": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "ready"
+                  },
+                  "content_length": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4096
+                  },
+                  "exact_text_match": {
+                    "type": "boolean"
+                  },
+                  "surrounding_whitespace_only": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "content_length",
+                  "exact_text_match",
+                  "surrounding_whitespace_only"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "json"
+                  },
+                  "content_length": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4096
+                  },
+                  "parses_as_json": {
+                    "type": "boolean"
+                  },
+                  "exact_key_set_matches": {
+                    "type": "boolean"
+                  },
+                  "status_is_string": {
+                    "type": "boolean"
+                  },
+                  "status_exact_match": {
+                    "type": "boolean"
+                  },
+                  "has_markdown_fence": {
+                    "type": "boolean"
+                  },
+                  "exact_text_match": {
+                    "type": "boolean"
+                  },
+                  "semantic_match": {
+                    "type": "boolean"
+                  },
+                  "stripped_content_length": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4096
+                  },
+                  "parsed_type": {
+                    "enum": [
+                      "invalid",
+                      "object",
+                      "array",
+                      "string",
+                      "null",
+                      "boolean",
+                      "number"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "content_length",
+                  "parses_as_json",
+                  "exact_key_set_matches",
+                  "status_is_string",
+                  "status_exact_match",
+                  "has_markdown_fence",
+                  "exact_text_match",
+                  "semantic_match",
+                  "stripped_content_length",
+                  "parsed_type"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "add"
+                  },
+                  "content_length": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4096
+                  },
+                  "parses_as_python": {
+                    "type": "boolean"
+                  },
+                  "one_top_level_function": {
+                    "type": "boolean"
+                  },
+                  "expected_name": {
+                    "type": "boolean"
+                  },
+                  "expected_argument_count": {
+                    "type": "boolean"
+                  },
+                  "expected_annotations": {
+                    "type": "boolean"
+                  },
+                  "expected_return_expression": {
+                    "type": "boolean"
+                  },
+                  "exact_ast_match": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "content_length",
+                  "parses_as_python",
+                  "one_top_level_function",
+                  "expected_name",
+                  "expected_argument_count",
+                  "expected_annotations",
+                  "expected_return_expression",
+                  "exact_ast_match"
+                ]
+              }
+            ]
           }
         },
         "required": [
@@ -353,7 +496,8 @@
           "passed",
           "prompt_tokens",
           "completion_tokens",
-          "total_seconds"
+          "total_seconds",
+          "diagnostics"
         ]
       },
       "maxItems": 3
@@ -369,21 +513,7 @@
           ],
           "minimum": 0
         },
-        "startup_including_load_seconds": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "model_load_seconds": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "first_token_seconds": {
+        "startup_to_port_ready_seconds": {
           "type": [
             "number",
             "null"
@@ -393,9 +523,7 @@
       },
       "required": [
         "download_seconds",
-        "startup_including_load_seconds",
-        "model_load_seconds",
-        "first_token_seconds"
+        "startup_to_port_ready_seconds"
       ]
     },
     "gpu_memory": {

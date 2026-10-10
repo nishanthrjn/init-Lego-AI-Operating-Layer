@@ -32,7 +32,7 @@ def discover_source(root: Path, manifest_digest: str) -> Path:
             if hashlib.sha256(raw).hexdigest() != manifest_digest:
                 continue
             manifest = json.loads(raw)
-            if manifest["experiment"] != "FREE-GPU-MODEL-RUNTIME-KAGGLE-1E":
+            if manifest["experiment"] != "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F":
                 continue
             valid = True
             for name, digest in manifest["files"].items():
@@ -77,24 +77,34 @@ def bounded_diagnostics(text: str) -> str:
 def run_phase(source: Path, mode: str, timeout: int) -> None:
     if mode not in ("inspect", "bootstrap", "run"):
         raise ValueError("unsupported phase")
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            str(source / "runtime_probe.py"),
+            mode,
+            "--confirm-free-session",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
     try:
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(source / "runtime_probe.py"),
-                mode,
-                "--confirm-free-session",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-        print("stdout:\n" + bounded_diagnostics(result.stdout))
-        print("stderr:\n" + bounded_diagnostics(result.stderr))
-        print(f"return code: {result.returncode}")
-        if result.returncode:
+        stdout, stderr = process.communicate(timeout=timeout)
+        print("stdout:\n" + bounded_diagnostics(stdout))
+        print("stderr:\n" + bounded_diagnostics(stderr))
+        print(f"return code: {process.returncode}")
+        if process.returncode:
             raise RuntimeError("PHASE_FAILED; preserve evidence and stop")
     except subprocess.TimeoutExpired:
-        print("stdout:\nstderr:\nINTERNAL_BOUNDED_FAILURE\nreturn code: TIMEOUT")
+        print("stdout:\nstderr:\nRUNTIME_TIMEOUT\nreturn code: TIMEOUT")
         raise RuntimeError("PHASE_TIMEOUT; preserve evidence and stop") from None
+    finally:
+        # SIGTERM is handled by the source launcher: it unwinds its owned worker
+        # session and descendants. Allow its two ten-second cleanup waits.
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.communicate(timeout=25)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate(timeout=10)

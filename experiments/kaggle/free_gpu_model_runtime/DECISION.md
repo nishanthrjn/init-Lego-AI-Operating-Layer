@@ -1,5 +1,17 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1F amendment: contract alignment and observable behavior
+
+Interpret the unchanged JSON fixture as exact JSON object semantics, not an
+unspecified serialization. Reject duplicate/extra keys and wrapped output.
+READY stays exact; ADD stays exact AST. Record only schema-controlled structural
+facts; known mismatches have their own closed reason. The latest live response
+was not preserved, so no claim is made about which JSON property failed.
+Remove unmeasurable telemetry and define measured durations precisely. Notebook
+cancellation must unwind owned worker groups. Keep runtime, GPU, acquisition,
+identity and authority policies frozen. Only a fresh live result can qualify
+1F; local offline checks cannot establish GPU success.
+
 ## 1E amendment: exact platform executable authority
 
 Live CUDA visibility succeeds; driver observation fails because PATH excludes

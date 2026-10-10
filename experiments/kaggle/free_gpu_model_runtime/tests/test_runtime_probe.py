@@ -311,8 +311,11 @@ def test_generation_ceiling_and_failure_cleanup(
         assert result["outcome"] == "SYNTHETIC_READY"
         assert len(calls) == 4
     else:
-        with pytest.raises(probe.Stop):
+        with pytest.raises(probe.Stop) as error:
             probe.serve_and_probe(result)
+        if failure == "contract":
+            assert error.value.reason == "SYNTHETIC_OUTPUT_MISMATCH"
+            assert error.value.outcome == "SYNTHETIC_INFERENCE_FAILED"
         assert len(calls) == (0 if failure == "startup" else 2)
     assert stopped == [False]
     assert "CANARY" not in json.dumps(result)
@@ -333,6 +336,16 @@ def test_download_redirect_boundary(url: str) -> None:
 
 def validate_schema(value: Any, schema: dict[str, Any], root: dict[str, Any]) -> None:
     """Validate the bounded subset used by this experiment's closed JSON schema."""
+    if "oneOf" in schema:
+        matches = 0
+        for variant in schema["oneOf"]:
+            try:
+                validate_schema(value, variant, root)
+            except AssertionError:
+                continue
+            matches += 1
+        assert matches == 1
+        return
     if "$ref" in schema:
         schema = root["$defs"][schema["$ref"].rsplit("/", 1)[1]]
     if "const" in schema:
@@ -381,7 +394,7 @@ def test_artifact_schema_and_no_raw_output(
     probe.phase(result, "synthetic", "SYNTHETIC_READY")
     schema = json.loads((probe.SOURCE / "result.schema.json").read_text())
     validate_schema(json.loads(probe.RESULT.read_text()), schema, schema)
-    assert "content" not in probe.RESULT.read_text()
+    assert '"content":' not in probe.RESULT.read_text()
     assert "traceback" not in probe.RESULT.read_text()
     with pytest.raises(ValueError):
         probe.phase(result, "test", "raw private exception")

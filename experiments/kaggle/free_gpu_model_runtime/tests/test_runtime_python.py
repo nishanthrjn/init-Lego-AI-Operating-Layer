@@ -181,16 +181,19 @@ def test_notebook_discovery_identity_and_ambiguity(tmp_path: Path) -> None:
 def test_notebook_failure_diagnostics_before_raise(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(
-        subprocess,
-        "run",
-        lambda *a, **k: subprocess.CompletedProcess(
-            [],
-            1,
-            "inspect: RESULT_INCONCLUSIVE / RUNTIME_PYTHON_NOT_FOUND\n",
-            "PRIVATE/path/trace\n",
-        ),
-    )
+    class Process:
+        returncode = 1
+
+        def communicate(self, timeout: int) -> tuple[str, str]:
+            return (
+                "inspect: RESULT_INCONCLUSIVE / RUNTIME_PYTHON_NOT_FOUND\n",
+                "PRIVATE/path/trace\n",
+            )
+
+        def poll(self) -> int:
+            return self.returncode
+
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: Process())
     with pytest.raises(RuntimeError):
         notebook.run_phase(Path("source"), "inspect", 120)
     output = capsys.readouterr().out

@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1E"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1F"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
@@ -55,6 +55,9 @@ REASONS = frozenset(
         "RUNTIME_PACKAGE_VERSION_MISMATCH",
         "EXISTING_EVIDENCE",
         "INTERNAL_BOUNDED_FAILURE",
+        "SYNTHETIC_OUTPUT_MISMATCH",
+        "RUNTIME_INTERRUPTED",
+        "RUNTIME_TIMEOUT",
         "RUNTIME_ISOLATION_FAILED",
     }
 )
@@ -190,7 +193,7 @@ def versions() -> dict[str, Any]:
 def fresh_result() -> dict[str, Any]:
     return {
         "experiment": EXPERIMENT,
-        "schema_version": 2,
+        "schema_version": 3,
         "runtime_python_source": "to_be_bootstrapped",
         "system_uv_version": None,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -212,9 +215,7 @@ def fresh_result() -> dict[str, Any]:
         "assertions": [],
         "timings": {
             "download_seconds": None,
-            "startup_including_load_seconds": None,
-            "model_load_seconds": None,
-            "first_token_seconds": None,
+            "startup_to_port_ready_seconds": None,
         },
         "gpu_memory": {"sampled_peak_used_mib": [], "sampling_complete": True},
         "outcome": "RESULT_INCONCLUSIVE",
@@ -362,30 +363,27 @@ def require_hardware(observed: dict[str, Any]) -> None:
 
 
 def stop_process(process: subprocess.Popen[bytes], *, group: bool = True) -> None:
-    # Linux only. Outer workers own sessions; server descendants inherit them.
+    # Kill descendants even when their leader has already exited; always reap it.
     try:
         if group:
             os.killpg(process.pid, signal.SIGTERM)
         else:
             process.terminate()
     except ProcessLookupError:
-        return
+        pass
     try:
         process.wait(timeout=10)
     except subprocess.TimeoutExpired:
-        if group:
-            os.killpg(process.pid, signal.SIGKILL)
-        else:
-            process.kill()
-        process.wait(timeout=10)
+        pass
     finally:
-        if group:
-            # The leader can exit before its descendants; do not leave those
-            # running just because wait() has reaped the leader successfully.
-            try:
+        try:
+            if group:
                 os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass  # The owned process group has already disappeared.
+            elif process.poll() is None:
+                process.kill()
+        except ProcessLookupError:
+            pass
+        process.wait(timeout=10)
 
 
 def bounded_process(args: list[str], timeout: int) -> None:
@@ -477,24 +475,121 @@ def prompts() -> list[dict[str, str]]:
     return values
 
 
-def output_matches(identity: str, content: str) -> bool:
+def unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate key")
+        result[key] = value
+    return result
+
+
+def output_diagnostics(identity: str, content: str) -> tuple[bool, dict[str, Any]]:
     if len(content) > 4096:
-        return False
+        raise Stop("LOCAL_PROTOCOL_FAILED")
+    facts: dict[str, Any] = {"kind": identity, "content_length": len(content)}
     if identity == "ready":
-        return content == "READY"
+        matched = content == "READY"
+        facts.update(
+            exact_text_match=matched,
+            surrounding_whitespace_only=content.strip() == "READY",
+        )
+        return matched, facts
     if identity == "json":
-        return content.strip() == '{"status":"ready"}'
-    if identity == "add":
+        facts.update(
+            stripped_content_length=len(content.strip()),
+            parses_as_json=False,
+            parsed_type="invalid",
+            exact_key_set_matches=False,
+            status_is_string=False,
+            status_exact_match=False,
+            has_markdown_fence="```" in content,
+            exact_text_match=content.strip() == '{"status":"ready"}',
+            semantic_match=False,
+        )
         try:
-            actual = ast.dump(ast.parse(content), include_attributes=False)
-            expected = ast.dump(
-                ast.parse("def add(a: int, b: int) -> int:\n    return a + b\n"),
-                include_attributes=False,
-            )
-            return actual == expected
+            value = json.loads(content, object_pairs_hook=unique_json_object)
+        except (ValueError, RecursionError):
+            return False, facts
+        kind = (
+            "object"
+            if isinstance(value, dict)
+            else "array"
+            if isinstance(value, list)
+            else "string"
+            if isinstance(value, str)
+            else "null"
+            if value is None
+            else "boolean"
+            if isinstance(value, bool)
+            else "number"
+        )
+        keys = isinstance(value, dict) and set(value) == {"status"}
+        status_string = isinstance(value, dict) and isinstance(value.get("status"), str)
+        status_match = status_string and value["status"] == "ready"
+        matched = keys and status_match
+        facts.update(
+            parses_as_json=True,
+            parsed_type=kind,
+            exact_key_set_matches=keys,
+            status_is_string=status_string,
+            status_exact_match=status_match,
+            semantic_match=matched,
+        )
+        return matched, facts
+    if identity == "add":
+        facts.update(
+            parses_as_python=False,
+            one_top_level_function=False,
+            expected_name=False,
+            expected_argument_count=False,
+            expected_annotations=False,
+            expected_return_expression=False,
+            exact_ast_match=False,
+        )
+        try:
+            tree = ast.parse(content)
+            expected = ast.parse("def add(a: int, b: int) -> int:\n    return a + b\n")
+            matched = ast.dump(tree) == ast.dump(expected)
+            facts["parses_as_python"] = True
+            if len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef):
+                function = tree.body[0]
+                facts["one_top_level_function"] = True
+                facts["expected_name"] = function.name == "add"
+                args = function.args
+                facts["expected_argument_count"] = (
+                    len(args.args) == 2
+                    and not args.posonlyargs
+                    and not args.kwonlyargs
+                    and args.vararg is None
+                    and args.kwarg is None
+                )
+                facts["expected_annotations"] = (
+                    all(
+                        isinstance(arg.annotation, ast.Name)
+                        and arg.annotation.id == "int"
+                        for arg in args.args
+                    )
+                    and len(args.args) == 2
+                    and isinstance(function.returns, ast.Name)
+                    and function.returns.id == "int"
+                )
+                facts["expected_return_expression"] = len(
+                    function.body
+                ) == 1 and ast.dump(function.body[0]) == ast.dump(
+                    ast.parse("return a + b").body[0]
+                )
+            facts["exact_ast_match"] = matched
+            return matched, facts
         except (SyntaxError, ValueError, RecursionError):
-            return False
-    return False
+            return False, facts
+    raise Stop("LOCAL_PROTOCOL_FAILED")
+
+
+def output_matches(identity: str, content: str) -> bool:
+    if identity not in ("ready", "json", "add") or len(content) > 4096:
+        return False
+    return output_diagnostics(identity, content)[0]
 
 
 def local_request(path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -618,9 +713,11 @@ def validate_chat(response: dict[str, Any], identity: str) -> dict[str, Any]:
         content = choices[0]["message"]["content"]
         if not valid or not isinstance(content, str):
             raise Stop("LOCAL_PROTOCOL_FAILED")
+        matched, diagnostics = output_diagnostics(identity, content)
         return {
             "id": identity,
-            "passed": output_matches(identity, content),
+            "passed": matched,
+            "diagnostics": diagnostics,
             "prompt_tokens": prompt_count,
             "completion_tokens": completion_count,
         }
@@ -667,7 +764,7 @@ def serve_and_probe(result: dict[str, Any]) -> None:
                 time.sleep(2)
         else:
             raise Stop("RUNTIME_START_FAILED")
-        result["timings"]["startup_including_load_seconds"] = round(
+        result["timings"]["startup_to_port_ready_seconds"] = round(
             time.monotonic() - start, 3
         )
         catalog = local_request("/v1/models")
@@ -688,13 +785,14 @@ def serve_and_probe(result: dict[str, Any]) -> None:
                     "stream": False,
                 },
             )
+            request_seconds = time.monotonic() - start
             assertion = validate_chat(response, case["id"])
-            assertion["total_seconds"] = round(time.monotonic() - start, 3)
+            assertion["total_seconds"] = round(request_seconds, 3)
             result["assertions"].append(assertion)
             sample_memory(result)
             save(result)
             if not assertion["passed"]:
-                raise Stop("SYNTHETIC_INFERENCE_FAILED")
+                raise Stop("SYNTHETIC_INFERENCE_FAILED", "SYNTHETIC_OUTPUT_MISMATCH")
         phase(result, "synthetic", "SYNTHETIC_READY")
     finally:
         stop_process(process, group=False)
@@ -1078,10 +1176,25 @@ def main() -> int:
         outcome = error.outcome if isinstance(error, Stop) else "RESULT_INCONCLUSIVE"
         if active in ("download", "_download") and outcome == "RESULT_INCONCLUSIVE":
             outcome = "MODEL_DOWNLOAD_FAILED"
-        reason = error.reason if isinstance(error, Stop) else "INTERNAL_BOUNDED_FAILURE"
+        reason = (
+            error.reason
+            if isinstance(error, Stop)
+            else "RUNTIME_INTERRUPTED"
+            if isinstance(error, KeyboardInterrupt)
+            else "RUNTIME_TIMEOUT"
+            if isinstance(error, subprocess.TimeoutExpired)
+            else "INTERNAL_BOUNDED_FAILURE"
+        )
         phase(result, active, outcome, reason)
         return 1
 
 
+def interrupt_runtime(signum: int, frame: Any) -> None:
+    # Let ownership finally-blocks clean child sessions before the launcher exits.
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    raise KeyboardInterrupt
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, interrupt_runtime)
     raise SystemExit(main())

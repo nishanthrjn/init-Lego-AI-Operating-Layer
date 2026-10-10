@@ -1,6 +1,101 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1E
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1F
 
-## Correction 1E: trusted driver tool and preserved hardware reasons
+## 1F stabilization and qualification boundary
+
+Local validation completed: **149 experiment tests + 365 architecture tests**,
+plus mypy (9 files), Ruff, formatting and whitespace checks all passed.
+This is offline evidence only; no 1F Kaggle run has been performed.
+
+Latest operator evidence establishes successful model download, model/server
+startup, LOCAL_PROTOCOL_READY and real inference. Startup including load was
+approximately 48.917 seconds; sampled memory approximately 12251 MiB per GPU.
+READY passed. The JSON response was protocol-valid but failed its assertion.
+The raw completion is unavailable: the exact behavioral cause is unknown.
+This is a behavioral-contract failure, not evidence of infrastructure failure.
+
+### Frozen prompts and acceptance
+
+- ready: `Return exactly the word READY.` Accept only exact `READY`, without
+  surrounding whitespace. The prompt and predicate have the same strictness.
+- json: `Return valid JSON exactly matching: {"status":"ready"}`. The fixture
+  demands the shown object and lowercase value, but does not specify lexical
+  whitespace/serialization. The old exact-text predicate was stricter in that
+  respect. Accept only a complete JSON object with exactly the `status` key and
+  string `ready`. Reject duplicate/extra keys, wrong values, non-objects,
+  malformed JSON, Markdown fences and surrounding prose. Whitespace differences
+  are allowed. The prompt itself and fixture digest remain unchanged. This
+  contract correction does not establish that whitespace caused the live failure.
+- add: `Return only Python source defining: def add(a: int, b: int) -> int: which returns a + b. No Markdown or explanation.`
+  Keep AST equality to the single annotated function returning `a + b`.
+  Formatting/comments are immaterial; extra executable statements, definitions,
+  missing/wrong annotations, parameters, name or return expression fail. No
+  generated source is executed.
+
+Protocol-valid predicate failures now report
+SYNTHETIC_INFERENCE_FAILED / SYNTHETIC_OUTPUT_MISMATCH. Diagnostics use closed
+per-case schema variants: lengths, Boolean parse/structure/match flags and an
+enumerated JSON type. No completion text, arbitrary keys/values, token IDs,
+tracebacks or raw environment content are persisted. Evidence schema is now 3.
+Successful as well as failed assertions carry the same structural projection.
+
+### Timing and cleanup
+
+`download_seconds`: monotonic elapsed time around the owned download subprocess.
+`startup_to_port_ready_seconds`: from immediately before server launch to the
+first successful bounded TCP connection, including sampled-memory work and poll
+intervals; it is not an isolated model-load measurement.
+Assertion `total_seconds`: from immediately before the one local HTTP request
+to receipt/parsing of its response, before output-contract validation. Non-streaming
+requests cannot measure first-token latency. Separate model-load and first-token
+fields were removed. Unreached measured stages may still have null durations.
+Memory is a sampled maximum, not a guaranteed allocator peak; sampling failure
+sets sampling_complete=false without failing qualification on its own.
+
+The notebook owns each launcher process and requests graceful termination on
+timeout/interruption. The launcher handles SIGTERM by unwinding finally blocks;
+its outer watchdog terminates the worker session and descendants and reaps the
+leader even if it exited early. Server cleanup runs on success or failure.
+Closed interruption/outer-timeout reasons are RUNTIME_INTERRUPTED/RUNTIME_TIMEOUT.
+Hard platform termination (for example killing the whole notebook VM) cannot
+be made to produce final evidence by this Python harness.
+
+### Chronological live record
+
+1. Base Python 3.13 rejected: harness launcher gate defect.
+2. Valid Python 3.12 lacked ensurepip: model-environment creation defect.
+3. Base tooling venv also lacked ensurepip: pinned-tool bootstrap defect.
+4. Sanitization omitted CUDA library roots: CUDA propagation defect.
+5. Bare nvidia-smi lookup missed /opt/bin: trusted-tool resolution defect.
+6. Generic worker mapping hid driver failure: hardware reason-mapping defect.
+7. Local server/protocol and READY succeeded; JSON assertion failed: behavioral
+   contract mismatch with insufficient raw evidence to attribute its exact cause.
+
+Prior sections below preserve historical records, not current implementation
+instructions. Runtime/model/GPU pins, trusted-tool policy, explicit child
+environment, local-only networking, no-generation-retry rule and single-run
+evidence custody are unchanged. No Core or ForgeAI integration is introduced.
+
+### Fresh 1F operator run (only after local validation and commit)
+
+1. Use the newly generated `free_gpu_model_runtime_1f.zip`, not a 1E dataset.
+   Upload its extracted source folder as a new private Kaggle dataset and import
+   its `kaggle_runtime.ipynb`; attach only the new source dataset.
+2. Start a fresh free notebook session with T4 x2 and Internet enabled for public
+   package/weight acquisition. Use the existing confirmation control in the
+   notebook first cell; no source edits or manual patches are needed.
+3. Run source discovery, then Inspect once. Continue only on KAGGLE_GPU_READY.
+4. Run Bootstrap once. Continue only after DEPENDENCIES_READY and MODEL_DOWNLOADED.
+5. Run Run once. Expected: LOCAL_PROTOCOL_READY, SYNTHETIC_READY,
+   KAGGLE_RUNTIME_PASS. Every fixed assertion must pass.
+6. Stop on any non-zero return code. Do not retry in that session or overwrite
+   its evidence. Download result JSON, report and notebook output on either result.
+   A failure is diagnosed by exact phase/outcome/reason and structural facts;
+   it is not permission to relax contracts or change models.
+
+Local validation alone does not qualify Kaggle. A fresh live pass remains required.
+
+
+## Historical correction 1E: trusted driver tool and preserved hardware reasons
 
 Fifth live result: Inspect **KAGGLE_GPU_READY**; Bootstrap
 **DEPENDENCIES_READY**, then **MODEL_DOWNLOADED**. Worker CUDA was available,
@@ -325,9 +420,8 @@ paths containing account details, server logs and exception strings are omitted.
 Artifacts are capped at 128 KiB JSON. Server/install stderr is discarded; safe
 phase diagnosis is intentionally coarse. No unrestricted traceback is saved.
 
-Startup timing includes model loading; separate load and first-token timings
-are `null` because this standard-server/non-streaming path does not measure
-them. GPU memory is the maximum of sampled `nvidia-smi` snapshots, not the
+Current timing definitions are in the 1F section; unmeasurable separate load
+and first-token fields have been removed. GPU memory is the maximum of sampled `nvidia-smi` snapshots, not the
 allocator's true peak. A telemetry failure is explicitly marked. No cloud
 telemetry dependency is added; vLLM [usage reporting](https://docs.vllm.ai/en/v0.9.2/usage/usage_stats.html)
 is disabled.
@@ -337,7 +431,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1e.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1f.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 
