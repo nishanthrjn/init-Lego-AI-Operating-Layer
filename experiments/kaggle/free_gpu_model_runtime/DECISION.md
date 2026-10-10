@@ -1,5 +1,16 @@
 # Experiment decision: isolated free-GPU runtime qualification
 
+## 1D amendment: narrowly validated CUDA platform context
+
+Live diagnostics isolate CUDA invisibility to sanitized child environment
+construction. Preserve only exact observed LD_LIBRARY_PATH platform roots,
+bounded and deduplicated; reject all other paths. Exclude container-launch
+visibility selectors and all other ambient state. The existing frozen worker
+hardware preflight remains before server startup, now with a child-environment
+failure reason. Mocked contracts establish sanitization and ordering, not real
+CUDA sufficiency. Fresh Kaggle qualification remains required. Pins and GPU
+acceptance gates do not change.
+
 ## 1C amendment: pinned tool target installation
 
 The third live result proves both base and runtime Python lack ensurepip;

@@ -1,7 +1,48 @@
-# FREE-GPU-MODEL-RUNTIME-KAGGLE-1C
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1D
+
+## Correction 1D: validated CUDA library propagation
+
+Fourth live result: Inspect **KAGGLE_GPU_READY**; Bootstrap
+**DEPENDENCIES_READY**, then **MODEL_DOWNLOADED**; Run **RESULT_INCONCLUSIVE**
+with worker reason **CUDA_UNAVAILABLE**. Direct isolated-runtime diagnostics
+show torch 2.7.0+cu128 / CUDA 12.8 sees two Tesla T4 devices in the normal
+notebook environment, but zero devices with CUDA unavailable in the restricted
+harness environment. This is a **HARNESS CUDA-ENVIRONMENT PROPAGATION DEFECT**;
+it does not establish GPU, torch, vLLM, model-load or resource failure.
+
+Observed context: LD_LIBRARY_PATH contained NVIDIA/CUDA platform library roots
+(with a duplicate CUDA entry); NVIDIA_VISIBLE_DEVICES was `all`;
+CUDA_VISIBLE_DEVICES was absent. Raw environment values are not persisted.
+
+1D reads only LD_LIBRARY_PATH, bounded to 512 characters and 8 colon-separated
+entries. Every entry must exactly equal `/usr/local/nvidia/lib64` or
+`/usr/local/cuda/lib64`. Duplicates are removed preserving order. Empty, relative,
+NUL-containing, home, repository, /tmp and /kaggle paths fail closed with
+CUDA_PLATFORM_ENV_INVALID. If absent, it stays absent; no arbitrary defaults
+are inferred. All other child environment values remain explicit constants.
+
+NVIDIA_VISIBLE_DEVICES and CUDA_VISIBLE_DEVICES are excluded, including `all`
+and arbitrary device strings. NVIDIA documents the former as a
+[container-runtime GPU enumeration setting](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html).
+This harness launches processes inside an already configured container, not new
+containers. LD_LIBRARY_PATH alone is the narrow candidate correction. The mocked
+loader matrix specifies that boundary and cannot establish actual variable
+necessity or sufficiency on Kaggle; a fresh live run must establish that.
+
+The frozen Python worker is launched with the sanitized environment. Before
+server startup it observes CUDA availability and device count and applies the
+unchanged T4 x2 name, capability, memory and driver gates. A failed gate emits
+CUDA_CHILD_ENV_UNAVAILABLE and never starts the server. Secrets, proxies and
+arbitrary notebook/operator variables remain excluded.
+
+**1D local validation pending; Kaggle runtime not qualified.** Model download
+was observed in the fourth live run; successful model load, vLLM startup and
+inference were not. Preserve that evidence. After local validation and commit,
+rebuild the upload bundle and use a fresh session; stop on any failed phase.
 
 
-## Correction 1C: pinned tool bootstrap without ensurepip
+
+## Historical correction 1C: pinned tool bootstrap without ensurepip
 
 The third live run reached Inspect **KAGGLE_GPU_READY**, then Bootstrap
 **RESULT_INCONCLUSIVE / UV_TOOL_UNAVAILABLE**. Base CPython 3.13.15 at
@@ -253,7 +294,7 @@ is disabled.
 From the repository root in PowerShell:
 
 ```powershell
-uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1c.py
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1d.py
 if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
 ```
 

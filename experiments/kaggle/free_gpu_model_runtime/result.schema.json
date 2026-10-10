@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "experiment": {
-      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1C"
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1D"
     },
     "schema_version": {
       "const": 2
@@ -289,6 +289,8 @@
               null,
               "BASE_PLATFORM_UNSUPPORTED",
               "CUDA_UNAVAILABLE",
+              "CUDA_PLATFORM_ENV_INVALID",
+              "CUDA_CHILD_ENV_UNAVAILABLE",
               "GPU_COUNT_UNSUPPORTED",
               "GPU_MODEL_UNSUPPORTED",
               "GPU_MEMORY_UNSUPPORTED",

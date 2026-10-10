@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1C"
+EXPERIMENT = "FREE-GPU-MODEL-RUNTIME-KAGGLE-1D"
 RUNTIME_PYTHON_MAJOR = 3
 RUNTIME_PYTHON_MINOR = 12
 MANAGED_PYTHON = "3.12.12"
@@ -37,6 +37,8 @@ REASONS = frozenset(
     {
         "BASE_PLATFORM_UNSUPPORTED",
         "CUDA_UNAVAILABLE",
+        "CUDA_PLATFORM_ENV_INVALID",
+        "CUDA_CHILD_ENV_UNAVAILABLE",
         "GPU_COUNT_UNSUPPORTED",
         "GPU_MODEL_UNSUPPORTED",
         "GPU_MEMORY_UNSUPPORTED",
@@ -120,8 +122,8 @@ class Stop(Exception):
 
 
 def clean_environment() -> dict[str, str]:
-    # Construct from constants, never inherit notebook credentials or proxy settings.
-    return {
+    # Only validated CUDA library roots supplement the explicit constants.
+    environment = {
         "PATH": "/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin",
         "HOME": str(SCRATCH / "home"),
         "TMPDIR": str(SCRATCH),
@@ -144,6 +146,17 @@ def clean_environment() -> dict[str, str]:
         "NCCL_IB_DISABLE": "1",
         "VLLM_WORKER_MULTIPROC_METHOD": "spawn",
     }
+
+    value = os.environ.get("LD_LIBRARY_PATH")
+    if value is not None:
+        if len(value) > 512:
+            raise Stop("RESULT_INCONCLUSIVE", "CUDA_PLATFORM_ENV_INVALID")
+        entries = value.split(":")
+        allowed = {"/usr/local/nvidia/lib64", "/usr/local/cuda/lib64"}
+        if len(entries) > 8 or any(entry not in allowed for entry in entries):
+            raise Stop("RESULT_INCONCLUSIVE", "CUDA_PLATFORM_ENV_INVALID")
+        environment["LD_LIBRARY_PATH"] = ":".join(dict.fromkeys(entries))
+    return environment
 
 
 def safe_version(value: str) -> str:
@@ -850,7 +863,12 @@ def worker(result: dict[str, Any]) -> None:
     require_packages(result["runtime_versions"])
     result["hardware"] = hardware()
     save(result)
-    require_hardware(result["hardware"])
+    # Executed by the frozen Python worker under the same sanitized environment
+    # used for server startup; do not defer visibility failures to vLLM.
+    try:
+        require_hardware(result["hardware"])
+    except Stop:
+        raise Stop("RESULT_INCONCLUSIVE", "CUDA_CHILD_ENV_UNAVAILABLE") from None
     serve_and_probe(result)
     phase(result, "qualification", "KAGGLE_RUNTIME_PASS")
 
