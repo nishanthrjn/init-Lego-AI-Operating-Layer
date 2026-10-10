@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
 import shutil
 import subprocess
 import sys
@@ -135,9 +136,9 @@ def test_inspect_accepts_base_313_and_preserves_existing(
 ) -> None:
     monkeypatch.setattr(probe, "WORK", tmp_path)
     monkeypatch.setattr(probe, "RESULT", tmp_path / "result.json")
-    monkeypatch.setattr(probe.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(probe.platform, "machine", lambda: "x86_64")
-    monkeypatch.setattr(probe.platform, "python_version", lambda: "3.13.15")
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(platform, "python_version", lambda: "3.13.15")
     monkeypatch.setattr(sys, "version_info", (3, 13, 15))
     original = Path.is_dir
     monkeypatch.setattr(
