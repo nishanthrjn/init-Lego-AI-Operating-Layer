@@ -127,7 +127,7 @@ def test_complete_reasons_and_aggregate_counts() -> None:
     )
     for reason in R:
         assert f"  {reason.value}: {int(reason in expected)}" in lines
-    assert not any(line.startswith("rejected pair:") for line in lines)
+    assert not any(line.startswith("overlap observation") for line in lines)
 
 
 def test_sample_bound_order_and_no_ranking() -> None:
@@ -149,8 +149,8 @@ def test_sample_bound_order_and_no_ranking() -> None:
         )
     )
     assert lines == probe.eligibility_lines(reversed_result)
-    samples = [line for line in lines if line.startswith("rejected pair:")]
-    assert len(samples) == 5
+    samples = [line for line in lines if line.startswith("overlap observation")]
+    assert len(samples) == 4
     assert samples == sorted(samples)
     assert "  BACKEND_STATUS_NOT_LIVE: 6" in lines
     assert probe.shortlist(result) == ()
@@ -159,7 +159,9 @@ def test_sample_bound_order_and_no_ranking() -> None:
 def test_untrusted_metadata_and_identifiers_never_enter_output() -> None:
     result = observed(
         model_item(id=CANARY, description=CANARY),
-        model_item(providers=[backend(provider=CANARY, status="opaque-status")]),
+        model_item(
+            providers=[backend(provider="hf_" + CANARY, status="opaque-status")]
+        ),
     )
     text = "\n".join(probe.eligibility_lines(result))
     assert CANARY not in text

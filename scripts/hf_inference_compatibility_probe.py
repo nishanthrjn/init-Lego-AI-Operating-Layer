@@ -242,11 +242,22 @@ def evaluate_candidate(
     )
 
 
-def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
-    """Bounded aggregates; samples expose only two allowlisted identifiers.
+def _overlap_text_safe(value: str, limit: int) -> bool:
+    """Display guard only; never changes eligibility or establishes identity."""
+    return (
+        0 < len(value) <= limit
+        and all(33 <= ord(char) <= 126 and char != "*" for char in value)
+        and "://" not in value
+        and not value.lower().startswith("hf_")
+    )
 
-    Unknown identifiers could contain echoed material or URLs, even after parser
-    bounds. They contribute counts but never sample text. No raw catalog persists.
+
+def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
+    """Bounded observations, not processor identity, admission or routing.
+
+    Only allowlisted models may expose observed backend IDs. JSON escaping
+    prevents delimiter ambiguity. URLs and HF-token-shaped text are refused.
+    The input is normalized discovery values, never raw response or Secret data.
     """
     if result.outcome is not DiscoveryOutcome.LISTED or result.models != tuple(
         item.model for item in result.catalog
@@ -256,7 +267,7 @@ def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
         )
     counts = dict.fromkeys(RejectionReason, 0)
     pairs = eligible = allowed_models = empty_models = 0
-    samples: list[CandidateEvaluation] = []
+    samples: list[tuple[DiscoveredModel, DiscoveredProvider, CandidateEvaluation]] = []
     for model in result.catalog:
         allowed_models += model.model.value in CODING_MODELS
         empty_models += not model.providers
@@ -267,12 +278,16 @@ def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
             for reason in evaluation.reasons:
                 counts[reason] += 1
             if (
-                not evaluation.eligible
-                and RejectionReason.MODEL_NOT_ALLOWED not in evaluation.reasons
-                and RejectionReason.BACKEND_NOT_ALLOWED not in evaluation.reasons
+                RejectionReason.MODEL_NOT_ALLOWED not in evaluation.reasons
+                and _overlap_text_safe(provider.provider, 128)
+                and (provider.status is None or _overlap_text_safe(provider.status, 32))
+                and all(
+                    _overlap_text_safe(value, 32)
+                    for value in model.input_modalities + model.output_modalities
+                )
             ):
-                samples.append(evaluation)
-    samples.sort(key=lambda item: (item.model.value, item.provider))
+                samples.append((model, provider, evaluation))
+    samples.sort(key=lambda item: (item[0].model.value, item[1].provider))
     lines = [
         f"discovered models: {len(result.catalog)}",
         f"allowlisted models observed: {allowed_models}",
@@ -282,10 +297,24 @@ def eligibility_lines(result: ModelDiscovery) -> tuple[str, ...]:
         "rejection summary (counts overlap; each reason counts pairs):",
         *(f"  {reason.value}: {counts[reason]}" for reason in RejectionReason),
     ]
-    for sample in samples[:5]:
+    for model, provider, evaluation in samples[:4]:
         lines.append(
-            f"rejected pair: {sample.model.value}:{sample.provider}; "
-            + ", ".join(reason.value for reason in sample.reasons)
+            "overlap observation (not authority): "
+            + json.dumps(
+                {
+                    "model": model.model.value,
+                    "backend": provider.provider,
+                    "status": provider.status,
+                    "input_modalities": model.input_modalities,
+                    "output_modalities": model.output_modalities,
+                    "input_price": provider.input_price,
+                    "output_price": provider.output_price,
+                    "reasons": [reason.value for reason in evaluation.reasons],
+                },
+                ensure_ascii=True,
+                allow_nan=False,
+                separators=(",", ":"),
+            )
         )
     return tuple(lines)
 

@@ -34,9 +34,92 @@ readiness. The raw catalog was deliberately not persisted; the exact failed poli
 assumptions cannot be reconstructed from this transcript. The local custody database
 has not been copied into the repository, and no credential is recorded here.
 
-## HF-DISCOVERY-ELIGIBILITY-DIAGNOSTICS-1
+## LIVE PROBE 2 — DISCOVERY SUCCEEDED / NO ALLOWLIST OVERLAP
 
-Status: **IMPLEMENTED — LOCAL VALIDATION PENDING**. No provider call occurred
+Maintainer-observed on **2026-10-10**: one governed GET `/v1/models`, HTTP **200**,
+ModelDiscovery **LISTED**, attempt **COMPLETED**. Attempt metadata:
+`attempt-0737882d7ad3609dcb5927d5326b5c36`.
+128 models, 294 model/backend pairs, one allowlisted model observed, zero models
+without backend observations, and **zero eligible pairs**.
+
+Rejection counts (overlapping pair counts): MODEL_NOT_ALLOWED 292;
+BACKEND_NOT_ALLOWED 219; BACKEND_STATUS_NOT_LIVE 0; INPUT_MODALITY_MISSING 0;
+OUTPUT_MODALITY_MISSING 0; MODALITY_SHAPE_UNSUPPORTED 104; INPUT_PRICE_MISSING 104;
+OUTPUT_PRICE_MISSING 104; INPUT_PRICE_ABOVE_LIMIT 0; OUTPUT_PRICE_ABOVE_LIMIT 8.
+
+There were **two pairs for allowlisted models** (294 minus 292). Neither overlapped
+the current backend allowlist: otherwise the old both-allowlisted sampling rule
+would have printed a rejection sample or the pair would have been eligible.
+Their exact backend IDs were not printed and are not inferred here. Zero chat
+calls, no second Secret prompt, no repository disclosure, no retry/fallback.
+Final classification: **PROVIDER_IDENTITY_INDETERMINATE**. This remains discovery
+evidence only, not chat compatibility, processor identity or lasting availability.
+
+## HF-ALLOWLIST-OVERLAP-DIAGNOSTICS-2
+
+Status: **IMPLEMENTED — LOCAL VALIDATION PENDING**. Harness-local changes only.
+The prerequisite diagnostics-1 maintainer run passed **174** eligibility/security
+tests and **364** architecture tests (**538 total**), mypy on three files, Ruff
+lint/format and whitespace. Those results do not validate this new slice.
+
+Official documentation inspected on **2026-10-10**, separately from live evidence:
+HF's [Chat Completion recommendations](https://huggingface.co/docs/inference-providers/tasks/chat-completion)
+still list both `Qwen/Qwen2.5-Coder-32B-Instruct` and
+`Qwen/Qwen3-Coder-480B-A35B-Instruct` as coding models. The
+[provider matrix](https://huggingface.co/docs/inference-providers/index#partners)
+lists additional Chat Completion providers, including Cerebras, DeepInfra and Groq,
+beyond the harness's Fireworks/Novita/Together policy. This does not establish that
+any additional provider served either model in probe 2. Only public documentation
+was read; no discovery/inference API call occurred during implementation.
+
+The current diagnostic rule supersedes the diagnostics-1 sample rule below:
+sample only **allowlisted models**, regardless of backend allowlist membership.
+Do not sample arbitrary models even if their backend is allowed. At most **four
+observations total**, including eligible observations, are ordered lexically by
+model/backend ID. Existing aggregate counts remain unchanged; at most **20 lines**
+are emitted (six summary lines, ten reason counts, four observations).
+
+Each sample contains only the exact allowlisted model ID, observed backend ID,
+status, input/output modalities, input/output prices and closed rejection reasons.
+These come from parser-normalized observations, never a raw response. JSON string
+escaping prevents delimiter ambiguity; this is an explicit field projection, not
+a response/catalog dump. Absent values remain null or empty modality arrays.
+The display guard retains printable non-whitespace ASCII, no wildcard/control
+characters and 128-character backend / 32-character status/modality bounds.
+It additionally omits observations containing URLs or HF-token-shaped text.
+Such omissions never change aggregate counts or eligibility. No credential value
+or SecretRef is passed to diagnostics, and nothing is persisted.
+
+An observed backend ID is **not authority**: it does not establish identity or
+processor policy, construct a ProcessorDeclaration, change a binding, grant
+disclosure or admit chat. Unknown backends still receive BACKEND_NOT_ALLOWED.
+The evaluator, both allowlists, price ceiling, status and modality requirements,
+three-choice ordering, numbered selection, no-retry/no-fallback policy and Core
+contracts remain unchanged.
+
+Operator validation (existing locked environment; no Internet, Docker or provider):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_hf_allowlist_overlap_diagnostics_2.py
+```
+
+This runs overlap/eligibility/HF tests, discovery-v2, Secret/canary and architecture
+regressions, mypy, Ruff lint/format and whitespace checks. The agent has not run
+these checks. Stop after validation. One more **separately authorized governed
+discovery** is needed to observe the exact current backend IDs; it is not authorized
+or executed here. Its result would support either reviewing observed providers for
+an allowlist proposal or stopping HF work if none is acceptable.
+
+Any future backend review must cover official HF identity documentation, Chat
+Completion support, explicit model:provider routing, ADR-024 processor/privacy
+facts and observed status/modalities/prices. No provider is trusted simply because
+HF lists its ID. No backend policy review or allowlist expansion is implemented.
+
+## HF-DISCOVERY-ELIGIBILITY-DIAGNOSTICS-1 (historical sampling rule)
+
+Status: **LOCALLY VALIDATED** by the maintainer (538 tests and all static checks,
+as recorded above). The sample rule described in this historical section is
+superseded by diagnostics-2. No provider call occurred
 during this slice. Do not rerun discovery or `--live` as part of validation.
 
 The harness now evaluates each parser-normalized model/backend pair with a pure
