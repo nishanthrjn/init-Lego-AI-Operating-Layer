@@ -55,7 +55,115 @@ calls, no second Secret prompt, no repository disclosure, no retry/fallback.
 Final classification: **PROVIDER_IDENTITY_INDETERMINATE**. This remains discovery
 evidence only, not chat compatibility, processor identity or lasting availability.
 
-## HF-ALLOWLIST-OVERLAP-DIAGNOSTICS-2
+## LIVE PROBE 3 — NSCALE OBSERVED / CHAT NOT ATTEMPTED
+
+Maintainer-supplied bounded discovery observations, recorded 2026-10-10:
+`Qwen/Qwen2.5-Coder-32B-Instruct` had these two backend observations:
+
+| Backend | Status | Input/output | Input/output USD per million tokens | Rejections at probe time |
+| --- | --- | --- | --- | --- |
+| featherless-ai | live | text/text | UNKNOWN / UNKNOWN | BACKEND_NOT_ALLOWED, INPUT_PRICE_MISSING, OUTPUT_PRICE_MISSING |
+| nscale | live | text/text | 0.06 / 0.20 | BACKEND_NOT_ALLOWED |
+
+Zero chat calls, no repository disclosure, no retry/fallback; final classification
+**PROVIDER_IDENTITY_INDETERMINATE**. No attempt ID was supplied for this record.
+These are point-in-time observed values, not permanent availability or prices.
+The VERIFIED scope is limited to mechanical observation through the governed path;
+advertised status/prices do not verify actual service delivery, billing or policy.
+No raw catalog, credential or custody database is added to the repository.
+
+## HF-NSCALE-SYNTHETIC-BACKEND-POLICY-1
+
+Status: **IMPLEMENTED — LOCAL VALIDATION PENDING** (2026-10-10).
+The prerequisite overlap validator passed 184 regression tests and 364 architecture
+tests (**548 total**), mypy on four files, Ruff lint/format and whitespace checks.
+Those results do not cover this policy change. No provider API calls or credential
+prompts occurred during the review; public documentation lookup only.
+
+### Authoritative source review
+
+All sources below were inspected on 2026-10-10. Documentation statements are
+**PROVIDER_DECLARED**, never VERIFIED or OPERATOR_ATTESTED.
+
+- [HF Nscale provider documentation](https://huggingface.co/docs/inference-providers/providers/nscale)
+  identifies the Nscale inference service, lists Chat Completion and demonstrates
+  explicit `model:nscale` routing through the HF router. No specific contracting
+  Nscale legal entity is inferred for this routed request.
+- [HF security/privacy](https://huggingface.co/docs/inference-providers/security)
+  describes router-side handling: no request/response storage, no user-data storage
+  for training, and debugging logs retained up to 30 days without user data/tokens.
+  Those statements concern HF, not backend policy; HF directs readers to providers.
+- [Nscale Serverless Inference announcement](https://www.nscale.com/blog/introducing-nscale-serverless-inference-scalable-ai-without-infrastructure-hassles),
+  published 2025-04-02, explicitly says the Serverless service does not log or train
+  on request/response content. This is a service-specific content-handling claim,
+  not proof of no technical/account logs or human access.
+- [Nscale Serverless documentation overview](https://docs.nscale.com/docs/getting-started/overview)
+  and [Chat Completion API documentation](https://docs.nscale.com/api-reference/inference/create-chat-completion)
+  establish the documented Serverless/chat service context; neither is an executed
+  API request. They do not bind this HF-routed request to a processing region.
+- [Nscale privacy policy](https://www.nscale.com/policies/privacy-policy), updated
+  **2026-05-12**, covers usage details, technical logs/timestamps/routing metrics,
+  international transfers and purpose-dependent retention without a fixed maximum.
+  These broad personal-data statements are not prompt-content retention claims.
+- [Nscale subprocessor policy](https://www.nscale.com/policies/sub-processors), updated
+  **2026-09-15**, lists Auth0, Vercel, Neon, Upstash, Sentry, PostHog, Novu,
+  Metronome and Stripe. It qualifies service/customer applicability and says
+  processing locations can vary by configuration, region and subprocessors.
+  This list does not establish the exact processors of an HF inference request.
+
+### Fact disposition and decision
+
+| Fact | Review basis and scope | Executable declaration |
+| --- | --- | --- |
+| Processor identity | PROVIDER_DECLARED: Hugging Face router and Nscale service, from dated HF sources | `Hugging Face router; inference processor Nscale`, PROVIDER_DECLARED |
+| Training | PROVIDER_DECLARED: Serverless content is not used for training | Existing aggregate declaration remains UNKNOWN; no policy-fact specialization added |
+| Request/response retention | PROVIDER_DECLARED: Serverless request/response content is not logged; not a general all-data retention guarantee | UNKNOWN retained conservatively |
+| Service/account metadata retention | PROVIDER_DECLARED: metadata/usage collection and purpose-dependent retention; no precise duration established | No new Core field; kept separate in this review |
+| Location | UNKNOWN for the exact routed request; no region binding established | UNKNOWN |
+| Human access | UNKNOWN for inference content; no-access is not implied by non-logging, non-training or security controls | UNKNOWN |
+| Subprocessors | General list is PROVIDER_DECLARED; exact request-specific applicability UNKNOWN | UNKNOWN |
+
+ADR-024 §5.2 allows those UNKNOWN facts for **SYNTHETIC only**, while requiring a
+processor service/legal identity. The service identity satisfies that requirement;
+no legal-entity assumption or router-to-backend policy substitution is needed.
+The review therefore permits appending `("nscale", "Nscale", "nscale")` to the
+harness policy using its existing dated source and declaration mechanism. The prior
+three entries retain their order. The generic evaluator and Core are unchanged.
+
+This policy admits consideration of Nscale only for `Return exactly the word READY.`
+under a SYNTHETIC admission. No TASK_TEXT, REPOSITORY_CONTENT, DERIVED_DIAGNOSTIC
+or customer data is admitted. Featherless AI is not added: its observed prices
+were absent, so it is not eligible under current policy. This is not an assessment
+that Featherless is unsafe, incompatible or unsupported by HF.
+
+Nscale's observed live/text/text/0.06/0.20 shape becomes eligible solely through
+allowlist membership. Future discovery must re-observe the facts; no production
+code hard-codes that pair, availability or prices. Missing/non-live/unsupported/
+over-limit observations still fail. The operator must choose a number, approve
+SYNTHETIC disclosure and provision the second S1 credential before any chat.
+
+Operator validation from the repository root:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_hf_nscale_synthetic_backend_policy_1.py
+```
+
+The validator includes Nscale identity/policy, eligibility/overlap/HF harness,
+discovery-v2, disclosure governance, Secret/canary and architecture tests, mypy,
+Ruff lint/format and whitespace. Local synthetic TLS exercises the actual governed
+chat path with the Nscale suffix; no provider or Docker acquisition. No tests or
+checks were run internally by the agent; formatting edits only.
+
+After successful maintainer validation, the maximum claim is approval of the
+Nscale service identity for this harness's SYNTHETIC policy. This establishes no
+HF/Nscale chat compatibility, ForgeAI compatibility, repository-disclosure safety,
+production suitability, free-GPU qualification or persistent model availability.
+Stop after validation. A separately authorized future live probe may perform one
+discovery and, after fresh eligibility, selection, approval and separate S1
+provisioning, at most one chat. That would be the first HF chat attempt. No such
+run is authorized or executed by this change.
+
+## HF-ALLOWLIST-OVERLAP-DIAGNOSTICS-2 (prior policy context)
 
 Status: **IMPLEMENTED — LOCAL VALIDATION PENDING**. Harness-local changes only.
 The prerequisite diagnostics-1 maintainer run passed **174** eligibility/security
@@ -204,13 +312,15 @@ The visible shortlist policy is deliberately closed:
   from the official [chat recommendations](https://huggingface.co/docs/inference-providers/tasks/chat-completion).
 - Backend identities: [Fireworks AI](https://huggingface.co/docs/inference-providers/providers/fireworks-ai),
   [Novita](https://huggingface.co/docs/inference-providers/providers/novita),
-  [Together AI](https://huggingface.co/docs/inference-providers/providers/together).
+  [Together AI](https://huggingface.co/docs/inference-providers/providers/together),
+  then [Nscale](https://huggingface.co/docs/inference-providers/providers/nscale)
+  for SYNTHETIC only under the policy review above.
   These dated provider-declared identities do not establish live availability.
 - Each pair must actually appear in this governed discovery response, with
   status `live`, exactly text input/output and both prices present and at most
   USD 5 per million tokens each. This is price screening, not a billing guarantee.
   Missing facts exclude a candidate. No inference from model size or names.
-- Order follows the displayed allowlist and backend ID, not a quality, speed or
+- Order follows the displayed model and backend allowlist order, not a quality, speed or
   price ranking. Keep at most three. Only a displayed number can select a pair;
   no eligible candidate means no chat or second Secret prompt.
 
@@ -218,7 +328,7 @@ The declaration names both HF's router and the selected inference service using
 official identity sources retrieved 2026-10-10. Other processor facts remain
 UNKNOWN for this SYNTHETIC scope. Discovery grants no disclosure authority.
 ADR-024 §5.2 permits the legal **or service** name: the exact observed backend ID
-must match the closed Fireworks AI/Novita/Together AI mapping above. Its dated
+must match the closed Fireworks AI/Novita/Together AI/Nscale mapping above. Its dated
 official source and the HF router source populate a PROVIDER_DECLARED identity,
 not an operator-attested policy fact. An unknown backend cannot be shortlisted.
 The operator selects one numbered observed pair; that immutable candidate supplies

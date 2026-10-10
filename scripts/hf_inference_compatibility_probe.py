@@ -135,6 +135,7 @@ BACKENDS = (
     ("fireworks-ai", "Fireworks AI", "fireworks-ai"),
     ("novita", "Novita", "novita"),
     ("together", "Together AI", "together"),
+    ("nscale", "Nscale", "nscale"),
 )
 
 

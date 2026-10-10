@@ -152,7 +152,7 @@ def test_sample_bound_order_and_no_ranking() -> None:
     samples = [line for line in lines if line.startswith("overlap observation")]
     assert len(samples) == 4
     assert samples == sorted(samples)
-    assert "  BACKEND_STATUS_NOT_LIVE: 6" in lines
+    assert "  BACKEND_STATUS_NOT_LIVE: 8" in lines
     assert probe.shortlist(result) == ()
 
 

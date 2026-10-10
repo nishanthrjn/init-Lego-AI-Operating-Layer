@@ -375,16 +375,31 @@ def test_selected_backend_has_dated_identity_and_unknown_policy(
     )
 
 
+@pytest.mark.parametrize("backend_id", ["novita", "nscale"])
 @pytest.mark.parametrize(
     "answer,expected_calls", [("1", 2), ("arbitrary/model:novita", 1), ("", 1)]
 )
 def test_synthetic_get_then_selected_chat(
-    tmp_path: Path, answer: str, expected_calls: int
+    tmp_path: Path, answer: str, expected_calls: int, backend_id: str
 ) -> None:
-    listing = json.dumps({"data": [catalog_item()]}).encode()
+    listing = json.dumps(
+        {
+            "data": [
+                catalog_item(
+                    providers=[
+                        {
+                            "provider": backend_id,
+                            "status": "live",
+                            "pricing": {"input": 0.06, "output": 0.20},
+                        }
+                    ]
+                )
+            ]
+        }
+    ).encode()
     chat = json.dumps(
         {
-            "model": probe.CODING_MODELS[0] + ":novita",
+            "model": probe.CODING_MODELS[0] + ":" + backend_id,
             "choices": [
                 {
                     "finish_reason": "stop",
@@ -425,7 +440,7 @@ def test_synthetic_get_then_selected_chat(
         if expected_calls == 2:
             assert verdict is probe.Classification.HF_COMPATIBILITY_PASS
             body = json.loads(tls.bodies[1])
-            assert body["model"] == probe.CODING_MODELS[0] + ":novita"
+            assert body["model"] == probe.CODING_MODELS[0] + ":" + backend_id
             assert body["messages"] == [{"role": "user", "content": probe.PROMPT}]
             assert body["stream"] is False
         else:
