@@ -17,6 +17,16 @@ or semantics still require code behind the appropriate public boundary.
 
 ## 1. Executive status
 
+2026-10-10: [HF-INFERENCE-PROVIDERS-COMPATIBILITY-1](../docs/hf-inference-compatibility.md)
+is **PREFLIGHT BLOCKED**, with an offline harness and operator-run validator
+prepared but not executed. HF documents GET discovery; qualified discovery/T2
+supports POST only. The ID-only result also loses backend selection metadata;
+some requested diagnoses lack typed observations. Live authorization is deferred
+until these gaps are resolved and locally validated. No provider API calls ran.
+The requested sequence is named-provider compatibility, then separately authorized
+FORGEAI-HF-LIVE-PILOT-1 and FREE-GPU-MODEL-RUNTIME-KAGGLE-1 experiments. Neither
+experiment is implemented or qualified by this preflight.
+
 2026-10-10: FORGEAI-REMOTE-MODEL-PROFILE-1 implements explicit provider-neutral
 remote model composition using the existing S1/disclosure/custody/HTTPS path.
 ForgeAI stays local, and model binding is independent of GENERIC/PROJECT checks.

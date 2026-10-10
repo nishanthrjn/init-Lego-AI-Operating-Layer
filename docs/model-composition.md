@@ -32,6 +32,15 @@ OPENAI-COMPATIBLE-REMOTE-1 and this application slice supersede them. Stale
 pre-REMOTE explanatory comments also remain in the Core disclosure modules;
 the current public host and regression tests establish the implemented behavior.
 
+## HF named-provider preflight (2026-10-10)
+
+[HF-INFERENCE-PROVIDERS-COMPATIBILITY-1](hf-inference-compatibility.md) is blocked
+before live execution: documented GET discovery differs from the qualified POST
+transport, model IDs alone do not establish a live backend pairing, and some
+requested classifications lack distinct typed observations. An offline plan,
+admission factory and operator validator are prepared; validation is pending.
+No Core or ForgeAI runtime contract changed. No provider API call occurred.
+
 ## Development direction
 
 Build minimum stable primitives, prove an end-to-end runtime slice through a real
