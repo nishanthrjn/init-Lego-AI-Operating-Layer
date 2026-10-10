@@ -27,6 +27,22 @@ See the [M6.5 design](M6.5-MODEL-ROUTING-PLAN.md) and
 [validation handoff](../docs/model-routing.md#local-validation-required).
 Other remaining Phase C and later work remains planned and unstarted.
 
+## Deployment experiment update — 2026-10-10
+
+The operator requires **zero paid compute**. The HF named-provider route is
+paused after one governed SYNTHETIC chat returned HTTP **402**; the operator
+reports a **$0.00** HF credit balance. This is not an HF/Nscale incompatibility
+finding and does not authorize bypassing billing or retrying the provider.
+
+The next bounded deployment experiment is
+[FREE-GPU-MODEL-RUNTIME-KAGGLE-1](../experiments/kaggle/free_gpu_model_runtime/README.md):
+one pinned public coding model on free T4 x2, synthetic-only generation and a
+notebook-local OpenAI-compatible probe. Implementation is isolated from Core
+and ForgeAI; local validation and actual Kaggle qualification remain pending.
+No tunnel, local ForgeAI connection, paid compute or model-quality claim is
+part of this slice. A successful run would justify researching supported
+zero-cost integration options, not implementing them automatically.
+
 ## A. Corrected product direction
 
 LegoAI is a Python-first platform for composing reusable governed AI building

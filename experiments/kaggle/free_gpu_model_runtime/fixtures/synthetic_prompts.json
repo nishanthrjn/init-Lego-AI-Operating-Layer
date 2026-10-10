@@ -1,0 +1,5 @@
+[
+  {"id": "ready", "prompt": "Return exactly the word READY."},
+  {"id": "json", "prompt": "Return valid JSON exactly matching: {\"status\":\"ready\"}"},
+  {"id": "add", "prompt": "Return only Python source defining: def add(a: int, b: int) -> int: which returns a + b. No Markdown or explanation."}
+]

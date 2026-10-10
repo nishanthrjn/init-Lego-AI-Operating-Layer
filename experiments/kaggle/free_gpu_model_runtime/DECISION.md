@@ -1,0 +1,33 @@
+# Experiment decision: isolated free-GPU runtime qualification
+
+Status: accepted for implementation; local and Kaggle qualification pending.
+Scope: FREE-GPU-MODEL-RUNTIME-KAGGLE-1 only. No Core architecture change.
+
+The operator requires zero paid compute. HF returned HTTP 402 and the operator
+reports $0.00 credit. That route is paused rather than bypassed. We need evidence
+that one public coding model can load and satisfy tiny contracts on free GPUs.
+
+Reuse a published AWQ model and vLLM's standard local server. Keep a source
+probe, thin notebook, immutable fixtures, bounded artifacts and offline tests
+outside all product packages. An isolated venv avoids coupling to Kaggle's
+changing package image or LegoAI's Python 3.14 environment. The observed base
+hardware/Python/driver must meet the candidate gate before installation.
+
+Choose Qwen's own 14B AWQ distribution at an immutable revision, with vLLM
+0.9.2's explicit V0/Turing settings. Two-way tensor parallelism distributes
+weights; it does not merge GPU address spaces. Published artifact size supports
+trying the preferred model, not claiming a successful fit. A single T4, another
+accelerator or runtime failure stops. A 7B model would be a separately frozen
+experiment, not a runtime fallback.
+
+Alternatives considered: installing into Kaggle's base environment risks ABI
+conflicts; forcing the latest runtime leaves hardware/engine changes unfrozen;
+direct Transformers inference would not exercise the desired local protocol;
+publicly exposing Kaggle or integrating ForgeAI exceeds the authorized scope.
+
+Consequences: the candidate runtime is deliberately older and for isolated
+synthetic qualification only. Full transitive wheel locking and true offline
+replay remain unproven until a successful resolved environment is returned.
+Standard server startup errors remain coarse because unrestricted logs are not
+persisted. Tight output contracts may fail despite feasible GPU execution;
+such failures remain evidence, not permission to relax pass criteria.

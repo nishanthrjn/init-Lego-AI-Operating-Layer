@@ -1,6 +1,39 @@
 # HF-INFERENCE-PROVIDERS-COMPATIBILITY-1
 
-## Current status: discovery v2 locally qualified; SYNTHETIC LIVE-PROBE READY
+## Current program status: HF named-provider work paused; zero paid compute
+
+The operator has paused this route after LIVE PROBE 5 below and reports an HF
+credit balance of **$0.00**. The next deployment experiment is
+[FREE-GPU-MODEL-RUNTIME-KAGGLE-1](../experiments/kaggle/free_gpu_model_runtime/README.md).
+No billing workaround or further HF execution is authorized. Earlier readiness
+and qualification records below are historical; no HF runtime code changes are
+part of the Kaggle experiment.
+
+## LIVE PROBE 5 — ELIGIBLE NSCALE PAIR / CHAT HTTP 402
+
+The maintainer supplied one separately authorized live-run transcript:
+
+- Discovery `attempt-ede718cd372aa57afe2159b9b1e32334`: HTTP **200**,
+  **LISTED / COMPLETED**, 128 models, 290 observed pairs, one eligible pair.
+- Operator selected pair 1, `Qwen/Qwen2.5-Coder-32B-Instruct:nscale`, advertised
+  live/text-only, input USD 0.06/M and output USD 0.20/M.
+- SYNTHETIC approval and second hidden S1 provisioning occurred; disclosure
+  admission `hf-synthetic-chat@a1`, declaration `hf-probe-processor@r1`.
+- One chat execution `exec-df4ba241340947d086e13ebb330e6c09` returned a complete
+  **HTTP 402**; attempt **PROVIDER_REJECTED**, effect **NONE**, error
+  **DependencyFailure / terminal**.
+- Harness classification: **CHAT_CONTRACT_INCOMPATIBLE**, from its generic
+  other-4xx mapping. This does not establish protocol or Nscale incompatibility,
+  nor the specific cause of the rejection. No retry, fallback or repository
+  disclosure occurred. LIVE PROBE 4's status remains unknown.
+
+The preceding REMOTE-CHAT-HTTP-STATUS-DIAGNOSTICS-1 local qualification passed
+**821 regression tests + 365 architecture tests**, mypy on seven files, Ruff
+lint/format and whitespace checks, according to the maintainer's transcript.
+The fifth live run demonstrates exact complete-status visibility only, not
+successful chat compatibility or repository-disclosure readiness.
+
+## Historical readiness: discovery v2 locally qualified; SYNTHETIC LIVE-PROBE READY
 
 [PROVIDER-MODEL-DISCOVERY-2](provider-model-discovery-2.md) is **LOCALLY QUALIFIED**
 on 2026-10-10 at commit `c7353ccf180a54effbf2e80a048e8ae4b8197dc8`, branch

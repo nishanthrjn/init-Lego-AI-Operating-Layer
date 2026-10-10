@@ -1,0 +1,196 @@
+# FREE-GPU-MODEL-RUNTIME-KAGGLE-1
+
+**Implemented; local validation pending; Kaggle runtime not qualified.**
+This is a disposable, synthetic-only runtime experiment. It does not import,
+upload or connect LegoAI/ForgeAI. No model-quality claim is made.
+
+## Verified platform baseline (2026-10-10)
+
+- Kaggle's [official retirement announcement](https://www.kaggle.com/product-announcements/735239)
+  retires P100 on September 15, 2026 and identifies T4 x2 with **16 GB per GPU**
+  as the replacement. This is nominal capacity, not a promise of exactly 16 GiB
+  reported by CUDA. The harness records actual bytes; the memories are separate.
+- [Notebook documentation](https://www.kaggle.com/docs/notebooks) describes free
+  GPU queues, a 12-hour CPU/GPU execution ceiling, 20 GB of saved working output,
+  an Internet setting, pip installation, and clean-session Save & Run All.
+  Its older P100 paragraph conflicts with the newer announcement above.
+- [Kaggle's package documentation](https://www.kaggle.com/docs/packages) describes
+  Add-ons → Install Dependencies and saved installation archives.
+- [Kaggle staff's persistence description](https://www.kaggle.com/discussions/product-feedback/355440)
+  distinguishes optional working-file persistence from temporary files.
+
+Availability, quotas, idleness and session termination remain controlled by
+Kaggle. Check the free allocation shown in your account. There is no purchased
+compute path. If the interface requires payment, **STOP:
+ZERO_COST_REQUIREMENT_VIOLATED**. Ephemeral sessions are not production hosting.
+
+## Frozen experiment decision
+
+See [the experiment decision record](DECISION.md). The sole model is
+[`Qwen/Qwen2.5-Coder-14B-Instruct-AWQ`](https://huggingface.co/Qwen/Qwen2.5-Coder-14B-Instruct-AWQ),
+revision [`eb3172f06a6d6b3a15f08947b0668d782e4d2d2c`](https://huggingface.co/Qwen/Qwen2.5-Coder-14B-Instruct-AWQ/commit/eb3172f06a6d6b3a15f08947b0668d782e4d2d2c).
+Qwen publishes the Apache-2.0 4-bit AWQ artifact. Its approximately 10 GB of
+weights and attention-head counts divisible by two make two T4s a reasonable
+bounded feasibility candidate, **not a demonstrated fit**.
+
+The selected runtime is **vLLM 0.9.2, V0 engine, XFormers attention, FP16,
+AWQ, tensor parallel 2, eager mode**. This deliberately fixed candidate retains
+the documented V0 switch and Turing AWQ support. It is not a recommendation for
+a public or production server. Sources:
+[GPU requirements](https://docs.vllm.ai/en/v0.9.2/getting_started/installation/gpu.html),
+[AWQ hardware matrix](https://docs.vllm.ai/en/v0.9.2/features/quantization/supported_hardware.html),
+[V0 switch](https://docs.vllm.ai/en/v0.9.2/usage/v1_guide.html),
+[Chat Completions and generation configuration](https://docs.vllm.ai/en/v0.9.2/serving/openai_compatible_server.html).
+
+No 7B fallback, dynamic quantization, remote model code, alternate backend,
+model-quality benchmark, or post-failure retry is implemented. A failed load
+is evidence to return, not permission to change the experiment.
+
+## Dependencies and reproducibility boundary
+
+The Kaggle **base image** supplies Linux, Python, NVIDIA driver, and the torch
+installation used only for initial hardware inspection. Their versions are
+observed, never assumed. The candidate gate requires Python 3.10–3.12, exactly
+two T4 devices with capability 7.5, actual per-device memory between 14 and
+17 GiB, working CUDA, and driver-visible CUDA capability at least 12.8. A gate
+failure is RESULT_INCONCLUSIVE, not a claim that all other environments fail.
+
+**Explicit experiment packages** are pinned in `requirements-kaggle.txt`.
+vLLM's [release dependencies](https://github.com/vllm-project/vllm/blob/v0.9.2/requirements/cuda.txt)
+require torch 2.7.0 and its matching audio/vision packages. We select their
+CUDA 12.8 wheels from PyTorch's official index and create a separate temporary
+venv. Kaggle's base packages and this repository's lockfile are not modified.
+No `pip install -U`, source build, Docker, credential or paid API is required.
+
+The standard pip mechanism is used in this first slice so installation remains
+isolated from the notebook kernel. Package Manager is supported by Kaggle but
+is not configured here to mutate the base environment. Transitive packages
+are resolver-selected; the full resolved **name/version** inventory is captured
+after bootstrap. This is not a complete hash-locked wheel archive. Return that
+inventory before claiming exact-environment replay. Missing wheels stop the
+experiment; they do not trigger compilation or a different runtime.
+
+Weights are ten fixed public files at the pinned revision, downloaded once
+without credentials. HTTPS redirects are confined to Hugging Face download
+domains. Downloads are capped at 12 GiB overall and 30 minutes; no resumptions
+or automatic retries. An authentication/download failure stops. No inference
+service is contacted. Runtime loading uses local files and offline flags.
+
+Temporary venv, weights and caches live under `/tmp/legoai-kaggle-runtime-1`,
+not saved notebook output. Only the small result files go in `/kaggle/working`.
+A fresh session rebuilds temporary state. No fully offline reproducibility
+claim exists until demonstrated on Kaggle.
+
+## Operator steps
+
+1. **First run the local validator below** and return failures before using a GPU.
+2. Sign in at Kaggle, open **Code → New Notebook**. Keep the notebook private.
+3. Set **Settings → Accelerator → GPU T4 x2**. This may restart the session or
+   queue. If unavailable, stop and wait for a future free session; do not rent GPU.
+4. Enable **Internet** in notebook settings for package/weight acquisition.
+   Use a fresh session with persistence disabled. The experiment refuses an
+   existing result file so evidence is not silently replaced.
+5. On your computer, upload **only this experiment folder** as a private Kaggle
+   Dataset (Datasets → New Dataset → upload files/folder → create). Preserve
+   `fixtures/`. Do not upload the repository, customer files or credentials.
+6. In the notebook use **Add Input** to attach that dataset. Import
+   `kaggle_runtime.ipynb` using the notebook's import/upload command. The notebook
+   has four code cells and no embedded implementation or execution outputs.
+7. In its first cell set `SOURCE` to the exact directory containing
+   `runtime_probe.py`, as shown in the Input panel. Kaggle may add dataset/version
+   path components. Set `CONFIRM_FREE_SESSION = True` only after confirming the
+   selected GPU allocation requires no payment. Run that cell.
+8. Run **Inspect**. Read `inspect: KAGGLE_GPU_READY`; otherwise stop. Actual
+   GPU names/count/bytes, torch CUDA runtime and driver observations are saved.
+9. Run **Bootstrap** once. It creates the venv and downloads the frozen weights.
+   Wait for `download: MODEL_DOWNLOADED`. If installation or acquisition fails,
+   do not rerun the cell or supply authentication; download the failure result.
+10. Run **Load/probe** once. It loads the model, waits for its owned loopback
+    listener, sends one GET `/v1/models` and at most three POST chat requests,
+    then terminates the runtime. There is no enduring server to connect to.
+    You may turn Internet off after bootstrap if the UI preserves the current
+    session; restarting at that point loses temporary downloads. Child runtime
+    processes use explicit offline/telemetry-disabled settings either way.
+11. Download `kaggle_runtime_result.json` and `kaggle_runtime_report.md` from
+    `/kaggle/working` using the notebook's Output/files panel, including on failure.
+12. Optionally **Save Version → Save & Run All** for a deliberate fresh-session
+    replay with all inputs attached. This runs the experiment again and consumes
+    another free session allocation; it is not merely saving existing results.
+    Quick Save snapshots the notebook without replay. Download evidence before
+    ending the session; do not assume temporary or unsaved files survive.
+
+No Kaggle account token is used by the harness. A command failure stops the
+notebook cell (`check=True`). Do not proceed to later cells after a failure.
+If Kaggle kills the entire session, artifact completion is not guaranteed;
+missing evidence is inconclusive, never PASS.
+
+## Limits, phases and evidence
+
+The endpoint is fixed at `http://127.0.0.1:8765/v1` within the same session.
+The API and distributed worker interfaces are configured for loopback; there
+is no tunnel, relay, external endpoint option, public binding or ForgeAI client.
+Loopback is a same-session boundary, not protection from other code you run
+inside that notebook. Do not run unrelated clients during qualification.
+
+Three immutable fixtures (digest-checked, accepting CRLF/LF) request READY,
+exact JSON `{"status":"ready"}`, and an annotated Python `add` function.
+Generated Python is parsed and compared structurally, **never executed**.
+Limits: 512 input characters, 256 templated input tokens, 96 output tokens,
+temperature 0, seed 0, one sequence, context 512, no CPU offload, no swap,
+80% per-device GPU-memory target. Deterministic settings do not promise
+bit-for-bit GPU reproducibility across environments.
+
+Startup is bounded by 600 seconds; each HTTP exchange has a 90-second socket
+timeout and 16 KiB response cap. The outer load/probe watchdog caps the whole
+run at 960 seconds and stops its process group, including server workers.
+Bootstrap has separate 30-minute installation and download ceilings. Listener
+readiness checks are bounded TCP observations, not generation retries or HTTP
+polling. The client has no redirects, proxies, request retries or fallback.
+
+Closed outcomes are defined in `runtime_probe.py` and `result.schema.json`.
+Only all three contract assertions, exact response model identity, `stop`
+finish reasons, bounded usage, successful local model listing, and the GPU
+gates allow KAGGLE_RUNTIME_PASS. HTTP 200 or server startup alone cannot pass.
+Startup failure is coarse RUNTIME_START_FAILED; no attempt is made to infer
+OOM, payment, authentication or load causes from runtime exception text.
+RESOURCE_EXHAUSTED is used only for a directly observed resource bound.
+
+The schema contains experiment/time, model/revision/quantization, fixed settings,
+hardware, base/runtime versions, phase outcomes, timings, memory observations,
+and at most three synthetic assertion records. Token fields are **counts**,
+not credentials or token IDs. Generated content, raw HTTP bodies, environment,
+paths containing account details, server logs and exception strings are omitted.
+Artifacts are capped at 128 KiB JSON. Server/install stderr is discarded; safe
+phase diagnosis is intentionally coarse. No unrestricted traceback is saved.
+
+Startup timing includes model loading; separate load and first-token timings
+are `null` because this standard-server/non-streaming path does not measure
+them. GPU memory is the maximum of sampled `nvidia-smi` snapshots, not the
+allocator's true peak. A telemetry failure is explicitly marked. No cloud
+telemetry dependency is added; vLLM [usage reporting](https://docs.vllm.ai/en/v0.9.2/usage/usage_stats.html)
+is disabled.
+
+## Local verification and handoff
+
+From the repository root in PowerShell:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_free_gpu_model_runtime_kaggle_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Kaggle harness local validation failed' }
+```
+
+The validator uses mock-only experiment tests, existing architecture tests,
+mypy, Ruff with Python 3.10 syntax, formatting and whitespace checks. It never
+imports torch/vLLM, installs dependencies, opens a network connection or starts
+a GPU. Product-directory changes cause a boundary failure for review. A pass
+means **HARNESS LOCALLY READY**, not **KAGGLE RUNTIME QUALIFIED**.
+
+Return the local validator transcript first. After a Kaggle run, return the
+two result files and whether the session completed or Kaggle terminated it.
+Do not return account details, tokens, package-download URLs, raw logs or model
+responses. Missing or unsuccessful evidence remains unqualified.
+
+If local OpenAI protocol and runtime qualification succeed, the next research
+slice is KAGGLE-FORGEAI-INTEGRATION-OPTIONS-1: supported zero-cost notebook/job
+artifact exchange without public tunnels. No such integration is implemented.
+If no supported path exists, Kaggle remains a runtime/evaluation sandbox.

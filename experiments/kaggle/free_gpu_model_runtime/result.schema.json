@@ -1,0 +1,431 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "experiment": {
+      "const": "FREE-GPU-MODEL-RUNTIME-KAGGLE-1"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "maxLength": 96
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"
+        },
+        "revision": {
+          "const": "eb3172f06a6d6b3a15f08947b0668d782e4d2d2c"
+        },
+        "quantization": {
+          "const": "awq-4bit"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "quantization"
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "temperature": {
+          "type": "integer",
+          "const": 0
+        },
+        "seed": {
+          "type": "integer",
+          "const": 0
+        },
+        "tensor_parallel_size": {
+          "type": "integer",
+          "const": 2
+        },
+        "max_input_chars": {
+          "type": "integer",
+          "const": 512
+        },
+        "max_input_tokens": {
+          "type": "integer",
+          "const": 256
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "const": 96
+        },
+        "max_generations": {
+          "type": "integer",
+          "const": 3
+        },
+        "request_timeout_seconds": {
+          "type": "integer",
+          "const": 90
+        }
+      },
+      "required": [
+        "temperature",
+        "seed",
+        "tensor_parallel_size",
+        "max_input_chars",
+        "max_input_tokens",
+        "max_output_tokens",
+        "max_generations",
+        "request_timeout_seconds"
+      ]
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cuda_available": {
+          "type": "boolean"
+        },
+        "device_count": {
+          "type": "integer"
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 96
+              },
+              "total_memory_bytes": {
+                "type": "integer"
+              },
+              "capability": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "index",
+              "name",
+              "total_memory_bytes",
+              "capability"
+            ]
+          },
+          "maxItems": 8
+        },
+        "torch_cuda_runtime": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "driver_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 96
+          },
+          "maxItems": 8
+        },
+        "driver_visible_cuda": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 32
+        }
+      },
+      "required": []
+    },
+    "base_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "type": "string",
+          "maxLength": 96
+        },
+        "torch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "transformers": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "vllm": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "resolved": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 96
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 96
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ]
+          },
+          "maxItems": 512
+        }
+      },
+      "required": []
+    },
+    "runtime_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "type": "string",
+          "maxLength": 96
+        },
+        "torch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "transformers": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "vllm": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 96
+        },
+        "resolved": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 96
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 96
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ]
+          },
+          "maxItems": 512
+        }
+      },
+      "required": []
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "phase": {
+            "type": "string",
+            "maxLength": 96
+          },
+          "outcome": {
+            "enum": [
+              "KAGGLE_GPU_READY",
+              "DEPENDENCIES_READY",
+              "MODEL_DOWNLOADED",
+              "LOCAL_PROTOCOL_READY",
+              "SYNTHETIC_READY",
+              "KAGGLE_RUNTIME_PASS",
+              "MODEL_DOWNLOAD_FAILED",
+              "MODEL_LOAD_FAILED",
+              "RUNTIME_START_FAILED",
+              "LOCAL_PROTOCOL_FAILED",
+              "SYNTHETIC_INFERENCE_FAILED",
+              "RESOURCE_EXHAUSTED",
+              "RESULT_INCONCLUSIVE",
+              "ZERO_COST_REQUIREMENT_VIOLATED"
+            ]
+          }
+        },
+        "required": [
+          "phase",
+          "outcome"
+        ]
+      },
+      "maxItems": 16
+    },
+    "assertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "ready",
+              "json",
+              "add"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 256
+          },
+          "completion_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 96
+          },
+          "total_seconds": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "passed",
+          "prompt_tokens",
+          "completion_tokens",
+          "total_seconds"
+        ]
+      },
+      "maxItems": 3
+    },
+    "timings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "download_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "startup_including_load_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "model_load_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "first_token_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "download_seconds",
+        "startup_including_load_seconds",
+        "model_load_seconds",
+        "first_token_seconds"
+      ]
+    },
+    "gpu_memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sampled_peak_used_mib": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2
+        },
+        "sampling_complete": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sampled_peak_used_mib",
+        "sampling_complete"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "KAGGLE_GPU_READY",
+        "DEPENDENCIES_READY",
+        "MODEL_DOWNLOADED",
+        "LOCAL_PROTOCOL_READY",
+        "SYNTHETIC_READY",
+        "KAGGLE_RUNTIME_PASS",
+        "MODEL_DOWNLOAD_FAILED",
+        "MODEL_LOAD_FAILED",
+        "RUNTIME_START_FAILED",
+        "LOCAL_PROTOCOL_FAILED",
+        "SYNTHETIC_INFERENCE_FAILED",
+        "RESOURCE_EXHAUSTED",
+        "RESULT_INCONCLUSIVE",
+        "ZERO_COST_REQUIREMENT_VIOLATED"
+      ]
+    }
+  },
+  "required": [
+    "experiment",
+    "schema_version",
+    "timestamp",
+    "model",
+    "settings",
+    "hardware",
+    "base_versions",
+    "runtime_versions",
+    "phases",
+    "assertions",
+    "timings",
+    "gpu_memory",
+    "outcome"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
