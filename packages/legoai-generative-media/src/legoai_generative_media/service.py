@@ -11,6 +11,8 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 
+from legoai.kernel.errors import ErrorCategory
+
 from .comfyui import ComfyTextToImageAdapter
 from .composition import TRY_ON_OFFER, invoke, invoke_try_on
 from .config import GenerationConfig, ProviderConfig, TryOnConfig, resolve_secret
@@ -262,8 +264,12 @@ async def open_virtual_try_on(
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> TryOnService:
-    """Remote deployments build, but every try-on is refused before any I/O."""
+    """Refuse unsupported deployment before credentials or driver construction."""
     provider = config.provider
+    if provider.deployment != "local":
+        raise ProviderError(
+            ErrorCategory.POLICY_VIOLATION, "remote_personal_images_forbidden"
+        )
     driver = await _driver(provider, environ, transports, clock)
     adapter = ComfyVirtualTryOnAdapter(
         config.workflow.load(),

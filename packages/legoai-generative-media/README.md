@@ -74,7 +74,14 @@ refused before I/O, and deletion is never claimed. See
 
 Virtual try-on (`VirtualTryOnPort`, capability `legoai.virtual-try-on` 1.0.0):
 `TryOnRequest(person, garment, seed)` in, `GenerationResult` out.
-`service.open_virtual_try_on(config)` does the following, in order:
+`service.open_virtual_try_on(config)` checks the explicit deployment declaration
+first. Unsupported remote VTO raises the existing `ProviderError` with category
+`POLICY_VIOLATION` and reason `remote_personal_images_forbidden`, before credential
+resolution/environment lookup, transport construction, discovery (including auto),
+workflow loading or personal-image handling. No refusal-capable remote adapter is
+constructed. Local family selection and auto-discovery are preserved.
+
+Images enter later through `try_on(request)`, which performs:
 
 - local and capability checks;
 - node and model preflight before any personal image is sent;
@@ -83,6 +90,13 @@ Virtual try-on (`VirtualTryOnPort`, capability `legoai.virtual-try-on` 1.0.0):
   (fixed 768x1024 portrait; model files come from configuration).
 
 Nothing is retried. See [VTO-2](../../planning/VIRTUAL-TRY-ON-VTO2.md).
+
+Explicit `probe_provider` diagnostics remain a separate operator operation with
+their existing contract; opening unsupported VTO never invokes them. This M-04
+construction correction is pending maintainer validation. H-01 (purpose-bound
+credential use) and M-01 (private Core host coupling) remain open. ADR-027 remains
+Proposed; no credentialed media, remote VTO or live ComfyUI is qualified. The
+ADR-026 public execution facade is not implemented by this correction.
 
 From the repository root:
 
