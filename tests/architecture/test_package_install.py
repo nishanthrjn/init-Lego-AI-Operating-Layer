@@ -345,7 +345,9 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/architecture/test_model_routing.py",
             "examples/local_host.py",
             "tests/integration/composition/test_local_host.py",
+            "tests/integration/composition/test_governed_execution.py",
             "tests/architecture/test_local_host.py",
+            "tests/architecture/test_governed_execution.py",
             "tests/architecture/test_credential_https.py",
             "tests/architecture/test_openai_compatible_remote.py",
             "tests/architecture/test_openai_compatible.py",
@@ -730,8 +732,50 @@ import legoai.runtime.local as local
 for module in (api, local):
     assert Path(module.__file__).is_relative_to(Path(sys.prefix)), module.__file__
 assert callable(local.open_local_host)
+assert callable(local.open_governed_execution)
+assert hasattr(api, "GovernedExecutionConfig")
 assert [p.value for p in api.ModelPurpose] == ["chat", "embedding"]
 assert api.HostError(api.HostFailure.CAPACITY_EXHAUSTED).failure.value == "capacity_exhausted"
+import asyncio
+from datetime import UTC, datetime, timedelta
+from legoai.capabilities.values import CapabilityId, CapabilityOffer
+from legoai.execution.values import ExecutionResult, ExecutionState
+from legoai.governance.values import GrantId, PolicyRef
+from legoai.kernel.effects import EffectExtent
+from legoai.kernel.identity import ApplicationId, PrincipalId, TenantId
+from legoai.kernel.references import (
+    ApplicationRef, ConfigurationRef, ConfigurationRevisionRef,
+    PrincipalRef, ReferenceScope,
+)
+from legoai.kernel.versions import Version
+from legoai.plugins.values import PluginDeclaration, PluginId
+now = datetime(2026, 10, 11, tzinfo=UTC)
+version = Version(1, 0, 0)
+offer = CapabilityOffer(CapabilityId("legoai.intelligence.model.chat"), version)
+revision = ConfigurationRevisionRef(
+    ConfigurationRef(
+        ApplicationRef(ReferenceScope("operator", TenantId("t")), ApplicationId("a")),
+        "execution",
+    ), "r1", version,
+)
+config = api.GovernedExecutionConfig(
+    revision, PrincipalRef("operator", PrincipalId("p")),
+    PolicyRef("operator", "policy", version),
+    api.OperatorGrant(GrantId("g"), "invoke-capability", offer.capability.value,
+                      now, now + timedelta(minutes=1)),
+    PluginDeclaration(PluginId("fixture", "model"), version, (offer,)), offer,
+    1, timedelta(seconds=10), timedelta(seconds=1), timedelta(seconds=1),
+)
+async def control_smoke():
+    host = local.open_governed_execution(config, clock=lambda: now)
+    context = host.establish()
+    ready = await host.coordinate(context)
+    await host.claim(context, ready, configuration=revision, contribution=host.contribution)
+    facts = ExecutionResult(context.execution_id, ExecutionState.SUCCEEDED,
+                            EffectExtent.NONE, None)
+    assert await host.settle(context, facts) == facts
+    assert await host.close() == ()
+asyncio.run(control_smoke())
 """
     result = run([str(interpreter), "-I", "-B", "-c", public], tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr

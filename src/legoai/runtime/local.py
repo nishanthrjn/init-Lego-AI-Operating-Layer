@@ -11,6 +11,9 @@ published and constructed (its constructor exactly once); unselected bindings
 are validated as configuration only. There is no global state: each call
 returns an independent host.
 
+ADR-026 adds `open_governed_execution` for shared controls only. It constructs
+no provider or owner adapter; owner invocation stays outside its concrete facade.
+
 OPENAI-COMPATIBLE-REMOTE-1: the one supported REMOTE profile is a credentialed
 OpenAI-compatible binding under ADR-023 SRCP-1 and ADR-024: admitted by the
 remote-disclosure configuration, https only, a `bearer_credential` issued by
@@ -33,11 +36,17 @@ from legoai.capabilities.values import (
     CapabilityVersionRange,
 )
 from legoai.execution.agent.ports import AgentChatResult, AgentRuntimePort
-from legoai.execution.ports import CoordinationOutcome, CoordinationRequest
+from legoai.execution.ports import (
+    CoordinationOutcome,
+    CoordinationRequest,
+    CoordinationResult,
+    ExecutionTransitionError,
+)
 from legoai.execution.values import (
     ExecutionContext,
     ExecutionId,
     ExecutionResult,
+    ExecutionState,
     SecurityContextRef,
 )
 from legoai.governance.disclosure import endpoint_parts
@@ -54,9 +63,14 @@ from legoai.intelligence.model.values import (
 )
 from legoai.kernel.context import TenantContext
 from legoai.kernel.effects import EffectExtent
-from legoai.kernel.errors import ErrorDetail, Recoverability
+from legoai.kernel.errors import ErrorCategory, ErrorDetail, Recoverability
 from legoai.kernel.identity import CorrelationId, OperationId
-from legoai.kernel.references import ConfigurationRef, OperationRef, ReferenceScope
+from legoai.kernel.references import (
+    ConfigurationRef,
+    ConfigurationRevisionRef,
+    OperationRef,
+    ReferenceScope,
+)
 from legoai.plugins.ports import PluginAdmissionId
 from legoai.plugins.values import PluginDeclaration
 from legoai.reference._secret_domain import _OrderingDomain
@@ -66,6 +80,7 @@ from legoai.reference.evidence import InMemoryEvidenceCustody
 from legoai.reference.execution import (
     DeterministicDispatchArbiter,
     ExecutionCoordinator,
+    _BoundExecutionSupervisor,
     current_thread_ident,
     running_event_loop,
 )
@@ -124,6 +139,7 @@ from legoai.runtime.api import (
     ExecutionDisclosure,
     GovernedChatResult,
     GovernedEmbeddingResult,
+    GovernedExecutionConfig,
     GovernedHost,
     HostError,
     HostFailure,
@@ -878,6 +894,299 @@ def open_local_host(
         gate=gate,
         remote=plane,
     )
+
+
+class GovernedExecution:
+    """ADR-026 concrete bound control facade, not a provider/callback executor.
+
+    Public methods use canonical owner contracts only. Context identity is a
+    process-local lineage guard, not a hostile-code security boundary. Keep this
+    handle in trusted invoking-plane code; model/task data cannot settle it.
+    """
+
+    def __init__(
+        self,
+        config: GovernedExecutionConfig,
+        *,
+        clock: Callable[[], datetime] = _utc_now,
+    ) -> None:
+        if type(config) is not GovernedExecutionConfig:
+            raise TypeError("governed execution requires GovernedExecutionConfig")
+        if not callable(clock):
+            raise TypeError("clock must be callable")
+        self._config = config
+        self._clock = clock
+        now = self._now()
+        self._thread = current_thread_ident()
+        self._loop: object | None = None
+        self._closed = False
+        self._tenant = TenantContext(
+            config.configuration.configuration.application.scope.tenant_id
+        )
+        self._principal = Principal(config.principal)
+        self._grant = Grant(
+            config.grant.grant_id,
+            self._principal,
+            self._principal,
+            self._tenant,
+            config.grant.action,
+            config.grant.resource_scope,
+            False,
+            config.grant.not_before,
+            config.grant.expires_at,
+        )
+        self._catalog = InMemoryCatalog()
+        try:
+            declaration = config.declaration
+            record = admit(
+                validate(inspect(declaration), declaration, evaluated_at=now),
+                self._tenant,
+                PluginAdmissionId(f"execution-{uuid4().hex}"),
+                established_at=now,
+            )
+            active = activate(
+                initialize(record, established_at=now), established_at=now
+            )
+            self._entry = self._catalog.publish(
+                active, declaration, config.offer, established_at=now
+            )
+        except TypeError, ValueError:
+            raise HostError(HostFailure.UNSUPPORTED_COMPOSITION) from None
+        self._grants = InMemoryGrantRegistry()
+        approvals = InMemoryApprovalRegistry()
+        authorization = DeterministicAuthorizationEvaluator(
+            self._grants, approvals, InMemoryPolicyRegistry()
+        )
+        arbiter = DeterministicDispatchArbiter(
+            authorization, self._catalog, InMemoryEvidenceCustody(), approvals
+        )
+        self._contexts = _HostSecurityContexts(self._now)
+        self._coordinator = ExecutionCoordinator(
+            self._contexts, arbiter, clock=self._now
+        )
+        self._supervisor = _BoundExecutionSupervisor(
+            self._coordinator,
+            arbiter,
+            self._now,
+            config.preparation_timeout.total_seconds(),
+            config.shutdown_timeout.total_seconds(),
+        )
+        self._minted: dict[ExecutionId, ExecutionContext] = {}
+        self._attempted: set[ExecutionId] = set()
+        self._ready: dict[ExecutionId, CoordinationResult] = {}
+        self._claimed: set[ExecutionId] = set()
+        self._settled: dict[ExecutionId, ExecutionResult] = {}
+
+    def _now(self) -> datetime:
+        now = self._clock()
+        if type(now) is not datetime or now.utcoffset() is None:
+            raise TypeError("clock must return a timezone-aware datetime")
+        return now
+
+    def _thread_check(self) -> None:
+        if current_thread_ident() != self._thread:
+            raise HostError(HostFailure.WRONG_EVENT_LOOP)
+
+    def _enter(self) -> None:
+        self._thread_check()
+        loop = running_event_loop()
+        if self._loop is None:
+            self._loop = loop
+        elif self._loop is not loop:
+            raise HostError(HostFailure.WRONG_EVENT_LOOP)
+
+    def _accepting(self) -> None:
+        if self._closed:
+            raise HostError(HostFailure.CLOSED)
+
+    def _require(self, context: ExecutionContext) -> None:
+        if type(context) is not ExecutionContext:
+            raise TypeError("execution requires ExecutionContext")
+        if self._minted.get(context.execution_id) is not context:
+            raise HostError(HostFailure.FOREIGN_CONTEXT)
+
+    def _security(self, context: ExecutionContext) -> SecurityContext:
+        return SecurityContext(
+            self._principal,
+            self._tenant,
+            context.operation,
+            self._grant.action,
+            self._grant.resource_scope,
+            self._grant,
+            None,
+            self._config.policy,
+            self._now(),
+        )
+
+    @property
+    def configuration(self) -> ConfigurationRevisionRef:
+        return self._config.configuration
+
+    @property
+    def contribution(self) -> CatalogEntry:
+        return self._entry
+
+    def establish(
+        self,
+        *,
+        deadline: datetime | None = None,
+        correlation: CorrelationId | None = None,
+    ) -> ExecutionContext:
+        """Mint a scoped context; callers may shorten, never extend its bound."""
+        self._thread_check()
+        self._accepting()
+        now = self._now()
+        maximum = now + self._config.execution_timeout
+        if deadline is not None:
+            if type(deadline) is not datetime or deadline.utcoffset() is None:
+                raise TypeError("deadline must be timezone-aware datetime")
+            if deadline > maximum:
+                raise HostError(HostFailure.INVALID_CONFIGURATION)
+        if correlation is not None and type(correlation) is not CorrelationId:
+            raise TypeError("correlation requires CorrelationId")
+        if len(self._minted) >= self._config.max_executions:
+            raise HostError(HostFailure.CAPACITY_EXHAUSTED)
+        token = uuid4().hex
+        context = ExecutionContext(
+            ExecutionId(f"exec-{token}"),
+            OperationRef(
+                self.configuration.configuration,
+                OperationId(f"invoke-{token}"),
+                "invoke-capability",
+            ),
+            self._tenant,
+            SecurityContextRef("legoai.runtime.local", token),
+            correlation if correlation is not None else CorrelationId(f"corr-{token}"),
+            None,
+            deadline if deadline is not None else maximum,
+            None,
+        )
+        self._contexts.register(context.security_context_ref, self._security(context))
+        self._minted[context.execution_id] = context
+        return context
+
+    async def coordinate(self, context: ExecutionContext) -> CoordinationResult:
+        self._enter()
+        self._accepting()
+        self._require(context)
+        identity = context.execution_id
+        if identity in self._attempted:
+            raise HostError(HostFailure.WRONG_EXECUTION_STATE)
+        self._attempted.add(identity)
+        result = await self._supervisor.coordinate(
+            CoordinationRequest(context, self._entry)
+        )
+        if result.outcome is CoordinationOutcome.READY:
+            self._ready[identity] = result
+        return result
+
+    async def claim(
+        self,
+        context: ExecutionContext,
+        ready: CoordinationResult,
+        *,
+        configuration: ConfigurationRevisionRef,
+        contribution: CatalogEntry,
+    ) -> None:
+        """Claim one owner attempt; never permission for a later protected send."""
+        self._enter()
+        self._accepting()
+        self._require(context)
+        if type(configuration) is not ConfigurationRevisionRef:
+            raise TypeError("claim requires ConfigurationRevisionRef")
+        if (
+            type(contribution) is not CatalogEntry
+            or type(ready) is not CoordinationResult
+        ):
+            raise TypeError("claim requires canonical contribution and coordination")
+        if configuration != self.configuration:
+            raise HostError(HostFailure.STALE_CONFIGURATION)
+        if contribution != self._entry:
+            raise HostError(HostFailure.UNKNOWN_BINDING)
+        identity = context.execution_id
+        if self._ready.get(identity) is not ready:
+            raise HostError(HostFailure.FOREIGN_CONTEXT)
+        if identity in self._claimed:
+            raise HostError(HostFailure.DUPLICATE_CLAIM)
+        try:
+            category = await self._supervisor.claim(
+                CoordinationRequest(context, self._entry), self._security(context)
+            )
+        except ExecutionTransitionError:
+            raise HostError(HostFailure.WRONG_EXECUTION_STATE) from None
+        if category is not None:
+            if category is ErrorCategory.DEADLINE_EXCEEDED:
+                failure = HostFailure.DEADLINE_EXCEEDED
+            elif category is ErrorCategory.CONFLICT:
+                failure = HostFailure.UNKNOWN_BINDING
+            else:
+                failure = HostFailure.UNAUTHORIZED
+            raise HostError(failure)
+        self._claimed.add(identity)
+
+    async def settle(
+        self, context: ExecutionContext, observed: ExecutionResult
+    ) -> ExecutionResult:
+        """Record trusted owner facts, including UNKNOWN; allowed after close."""
+        self._enter()
+        self._require(context)
+        if type(observed) is not ExecutionResult:
+            raise TypeError("settlement requires ExecutionResult")
+        identity = context.execution_id
+        if observed.execution_id != identity:
+            raise HostError(HostFailure.FOREIGN_CONTEXT)
+        if (
+            identity not in self._claimed
+            or identity in self._settled
+            or observed.final_state is ExecutionState.REJECTED
+        ):
+            raise HostError(HostFailure.WRONG_EXECUTION_STATE)
+        try:
+            result = await self._coordinator.settle(
+                self._ready[identity],
+                final_state=observed.final_state,
+                effect=observed.effect,
+                error=observed.error,
+            )
+        except ExecutionTransitionError:
+            raise HostError(HostFailure.WRONG_EXECUTION_STATE) from None
+        self._settled[identity] = result
+        return result
+
+    def revoke_authority(self) -> None:
+        """Operator invalidator for the sole bound grant; no grant issuance API."""
+        self._thread_check()
+        self._grants.revoke(self._grant.grant_id)
+
+    def retire_contribution(self) -> None:
+        """Operator invalidator; no replacement, refresh or reselection."""
+        self._thread_check()
+        entry = self._entry
+        self._catalog.withdraw(
+            entry.plugin_id, entry.release, entry.offer, entry.tenant_context
+        )
+
+    async def close(self) -> tuple[ExecutionId, ...]:
+        """Bounded preparation shutdown, reporting unresolved control obligations.
+
+        No owner operation is supervised by this facade. Report ready/unsettled
+        and still-preparing executions without inferring cessation or effects.
+        Keep lineage/claim history, permitting late owner settlement and re-close.
+        """
+        self._enter()
+        self._closed = True
+        pending = await self._supervisor.close()
+        unresolved = set(pending) | (self._ready.keys() - self._settled.keys())
+        return tuple(sorted(unresolved, key=lambda identity: identity.value))
+
+
+def open_governed_execution(
+    config: GovernedExecutionConfig,
+    *,
+    clock: Callable[[], datetime] = _utc_now,
+) -> GovernedExecution:
+    """Explicit trusted local admission; inert with respect to all owner I/O."""
+    return GovernedExecution(config, clock=clock)
 
 
 def _remote_plane(

@@ -1,4 +1,4 @@
-"""ADR-014 public local-host contract: types and a Protocol, never a factory.
+"""ADR-014/026 public runtime contracts: values/Protocols, never a factory.
 
 Applications import this module, owner values/Ports, and (from their
 composition root only) `legoai.runtime.local.open_local_host`. Nothing here
@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
-from legoai.capabilities.values import CapabilityId
+from legoai.capabilities.values import CapabilityId, CapabilityOffer
 from legoai.execution.agent.ports import AgentRuntimePort
 from legoai.execution.values import ExecutionContext, ExecutionResult, ExecutionState
 from legoai.governance.disclosure import (
@@ -46,7 +46,8 @@ from legoai.kernel.references import (
     OperationRef,
     PrincipalRef,
 )
-from legoai.plugins.values import PluginId
+from legoai.kernel.versions import Version
+from legoai.plugins.values import PluginDeclaration, PluginId
 
 
 class HostFailure(Enum):
@@ -70,6 +71,12 @@ class HostFailure(Enum):
     FOREIGN_CONTEXT = "foreign_context"
     CAPACITY_EXHAUSTED = "capacity_exhausted"
     WRONG_EVENT_LOOP = "wrong_event_loop"
+    # ADR-026 bound control failures; settlement failures preserve owner effects.
+    CLOSED = "closed"
+    DUPLICATE_CLAIM = "duplicate_claim"
+    WRONG_EXECUTION_STATE = "wrong_execution_state"
+    UNAUTHORIZED = "unauthorized"
+    DEADLINE_EXCEEDED = "deadline_exceeded"
 
 
 class HostError(Exception):
@@ -141,6 +148,85 @@ class OperatorGrant:
         if not _aware(self.not_before) or not _aware(self.expires_at):
             raise HostError(HostFailure.INVALID_GRANT)
         if self.expires_at <= self.not_before:
+            raise HostError(HostFailure.INVALID_GRANT)
+
+
+@dataclass(frozen=True, slots=True)
+class GovernedExecutionConfig:
+    """ADR-026 trusted operator bootstrap for ONE selected contribution.
+
+    Runtime owns this binding contract. Model/media composition are its two
+    consumers; canonical Plugin/Capability/configuration/authority values are
+    reused. This is neither task data nor permission to load a plugin. Passing
+    it to the factory is the operator's explicit local admission act, under
+    the same trusted-process limit as LocalHostConfig. No constructor is run.
+    The independent OperatorGrant authorizes only invoke-capability control;
+    Secret, disclosure and protected transport authority are not represented.
+
+    Bounds: 1..100,000 lifetime contexts; execution 0..1 day (exclusive zero);
+    preparation 0..60 seconds; shutdown 0..30 seconds. No guard eviction.
+    """
+
+    configuration: ConfigurationRevisionRef
+    principal: PrincipalRef
+    policy: PolicyRef
+    grant: OperatorGrant
+    declaration: PluginDeclaration
+    offer: CapabilityOffer
+    max_executions: int
+    execution_timeout: timedelta
+    preparation_timeout: timedelta
+    shutdown_timeout: timedelta
+
+    def __post_init__(self) -> None:
+        for value, expected in (
+            (self.configuration, ConfigurationRevisionRef),
+            (self.principal, PrincipalRef),
+            (self.policy, PolicyRef),
+            (self.grant, OperatorGrant),
+            (self.declaration, PluginDeclaration),
+            (self.offer, CapabilityOffer),
+        ):
+            if type(value) is not expected:
+                raise TypeError(
+                    "governed execution requires canonical bootstrap values"
+                )
+        if type(self.max_executions) is not int:
+            raise TypeError("max_executions must be an exact int")
+        if not 1 <= self.max_executions <= 100_000:
+            raise HostError(HostFailure.INVALID_CONFIGURATION)
+        for bound, maximum in (
+            (self.execution_timeout, timedelta(days=1)),
+            (self.preparation_timeout, timedelta(seconds=60)),
+            (self.shutdown_timeout, timedelta(seconds=30)),
+        ):
+            if type(bound) is not timedelta:
+                raise TypeError("execution bounds require timedelta")
+            if not timedelta(0) < bound <= maximum:
+                raise HostError(HostFailure.INVALID_CONFIGURATION)
+        # A closed first profile, not generic capability hosting. These are
+        # existing owner capability identities, never provider implementations.
+        supported = {
+            "legoai.intelligence.model.chat",
+            "legoai.intelligence.model.embedding",
+            "legoai.text-to-image",
+            "legoai.virtual-try-on",
+        }
+        if (
+            self.offer.capability.value not in supported
+            or self.offer.version != Version(1, 0, 0)
+        ):
+            raise HostError(HostFailure.UNSUPPORTED_COMPOSITION)
+        if (
+            not 1 <= len(self.declaration.offers) <= 4
+            or self.offer not in self.declaration.offers
+            or self.declaration.requirements
+        ):
+            raise HostError(HostFailure.UNKNOWN_BINDING)
+        if (
+            self.grant.action != "invoke-capability"
+            or self.grant.resource_scope != self.offer.capability.value
+        ):
             raise HostError(HostFailure.INVALID_GRANT)
 
 

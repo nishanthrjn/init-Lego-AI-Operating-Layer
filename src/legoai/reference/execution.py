@@ -763,6 +763,84 @@ class StaticSecurityContextRegistry:
         return context
 
 
+class _BoundExecutionSupervisor:
+    """ADR-026 private bounded supervision; no owner invocation or new states.
+
+    The local facade confines all callers/invalidators to one thread and loop.
+    Only coordinate callers are supervised here, never owner work after claim.
+    A cancelled caller retains responsibility for its own structured task.
+    Close reports any preparation still pending instead of detaching it.
+    """
+
+    def __init__(
+        self,
+        coordinator: ExecutionCoordinator,
+        arbiter: DispatchArbiterPort,
+        clock: Callable[[], datetime],
+        preparation_seconds: float,
+        shutdown_seconds: float,
+    ) -> None:
+        self._coordinator = coordinator
+        self._arbiter = arbiter
+        self._clock = clock
+        self._preparation_seconds = preparation_seconds
+        self._shutdown_seconds = shutdown_seconds
+        self._pending: dict[ExecutionId, asyncio.Task[object]] = {}
+        self._closed = False
+
+    async def coordinate(self, request: CoordinationRequest) -> CoordinationResult:
+        if self._closed:
+            raise ExecutionTransitionError("closed")
+        task = asyncio.current_task()
+        assert task is not None
+        execution_id = request.context.execution_id
+        self._pending[execution_id] = task
+        try:
+            async with asyncio.timeout(self._preparation_seconds):
+                return await self._coordinator.coordinate(request)
+        except TimeoutError:
+            # Coordinator recorded cancellation, not a fictional owner effect.
+            return CoordinationResult(
+                execution_id,
+                CoordinationOutcome.CANCELLED,
+                ExecutionState.CANCELLED,
+                None,
+                None,
+            )
+        finally:
+            self._pending.pop(execution_id, None)
+
+    async def claim(
+        self, request: CoordinationRequest, security: SecurityContext
+    ) -> ErrorCategory | None:
+        if self._closed:
+            raise ExecutionTransitionError("closed")
+        deadline = request.context.deadline
+        now = self._clock()
+        if deadline is not None and now >= deadline:
+            return ErrorCategory.DEADLINE_EXCEEDED
+        # No caller-controlled await between current arbitration and the
+        # uncontended coordinator lock. All invalidators share loop confinement.
+        decision = self._arbiter.arbitrate(
+            DispatchRequest(security, request.resolved_entry), evaluated_at=now
+        )
+        if decision.outcome is not DispatchOutcome.PERMITTED:
+            return decision.category
+        await self._coordinator.claim_invocation(request.context.execution_id)
+        return None
+
+    async def close(self) -> tuple[ExecutionId, ...]:
+        self._closed = True
+        pending = tuple(self._pending.items())
+        for _, task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.wait(
+                {task for _, task in pending}, timeout=self._shutdown_seconds
+            )
+        return tuple(self._pending)
+
+
 def running_event_loop() -> object:
     """The caller's running event loop, as an opaque identity (ADR-014 §5).
 

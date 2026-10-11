@@ -182,6 +182,11 @@ def test_host_failure_vocabulary_is_closed() -> None:
         "foreign_context",
         "capacity_exhausted",
         "wrong_event_loop",
+        "closed",
+        "duplicate_claim",
+        "wrong_execution_state",
+        "unauthorized",
+        "deadline_exceeded",
     }
 
 
