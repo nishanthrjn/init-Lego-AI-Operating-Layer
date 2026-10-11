@@ -1,5 +1,13 @@
 # Assessment starter: LegoAI reference consumer
 
+Architecture boundary: this older direct-Model example imports private Core
+reference implementations, including its optional Ollama adapter. It is not a
+current public governed-host consumption recipe. New applications should follow
+[the assembly guide](../../docs/ASSEMBLING-APPLICATIONS.md) and public
+`legoai.runtime.local` API. Migration is recorded as audit debt in
+[the conformance audit](../../planning/LEGOAI-ARCHITECTURE-DESIGN-CONFORMANCE-AUDIT-1.md);
+the example's existing behavior and qualification scope are unchanged.
+
 A maintained, offline example: React → FastAPI → AnswerService → existing
 ModelPort → existing FixedModel. It validates direct application consumption,
 without routing, governance, execution, Agents, persistence, embeddings or RAG.

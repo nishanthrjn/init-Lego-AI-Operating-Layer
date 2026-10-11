@@ -10,6 +10,10 @@ description: >
 
 # Engineering Implementation
 
+Read [AGENTS.md](../../../AGENTS.md) for the shared engineering policy and
+ownership/architecture review requirements. This workflow is shared by Codex
+and Claude; tool entry points reference it rather than duplicate it.
+
 Approach the task as the responsible senior/principal engineer for this
 codebase.
 
@@ -154,6 +158,10 @@ Test meaningful failure paths, not only successful execution.
 Avoid tests that merely duplicate implementation details.
 
 ## Verify
+
+Follow the task's validation authority. If the maintainer has reserved execution,
+prepare the applicable scripts/commands, do not run checks internally, and report
+LOCAL VALIDATION PENDING until the maintainer supplies results.
 
 Run all applicable repository verification available for the affected area,
 such as:

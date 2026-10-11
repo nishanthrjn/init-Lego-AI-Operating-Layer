@@ -7,8 +7,9 @@ records a safe `DisclosureObservation` and the caller settles NONE without
 touching the provider. Recorded Evidence is never read back: it is not
 admission state.
 
-No caller in the public host constructs a gate yet: REMOTE bindings are still
-refused at open, so LOCAL invocations never reach this module.
+The public local host constructs this gate for supported REMOTE bindings under
+ADR-023/024. LOCAL invocations do not require a remote disclosure gate. Opening
+a host does not itself authorize an invocation or contact a provider.
 """
 
 from collections.abc import Callable

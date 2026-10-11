@@ -340,6 +340,7 @@ def test_build_and_fresh_wheel(tmp_path: Path) -> None:
             "tests/integration/composition/test_model_governed.py",
             "tests/integration/composition/test_model_selection.py",
             "tests/architecture/test_import_boundaries.py",
+            "tests/architecture/test_consumer_private_boundaries.py",
             "tests/architecture/test_package_install.py",
             "tests/architecture/test_model_routing.py",
             "examples/local_host.py",

@@ -59,3 +59,43 @@ Before making a substantial change, inspect the applicable:
 - relevant tests.
 
 More specific AGENTS.md files may define module-local constraints.
+
+## Architecture and ownership review
+
+This file is the shared engineering policy for repository coding agents.
+Tool-specific entry points reference it; they must not fork this policy.
+Canonical specifications and accepted ADRs govern architectural semantics;
+skills describe the implementation workflow, not alternative authority.
+
+- REUSE > EXTEND > CREATE. Apply KISS and YAGNI before adding abstraction.
+  Prefer deterministic logic, then one model invocation, then workflows,
+  then autonomous or multi-agent behavior, only as requirements justify.
+- Keep application intent, domain values, orchestration and acceptance criteria
+  in the application. Generalization requires independent consumers with the
+  same semantics, ownership, authority/effects and failure behavior.
+- Consumers use documented public Ports/APIs, not `legoai.reference.*`,
+  `legoai.runtime._composition.*` or another owner's private names.
+  Owner-internal implementation and focused contract tests are different scopes.
+- Concrete adapters, provider SDKs and deployment choices belong in composition
+  or adapter code, not domain code. Configuration selects supported variation;
+  configuration != authorization, plugin admission or permission to execute code.
+- Model/Agent output is data, never authority. Deterministic boundaries enforce
+  authorization, disclosure and effects. Preserve explicit unknown/partial
+  effects, retry bounds, cancellation and reconciliation; never weaken security
+  or effect truth to make a test pass.
+- Review SOLID, DRY (one authority for knowledge), KISS, YAGNI, separation of
+  concerns and Law of Demeter. Immutable value traversal is not automatically
+  a violation. Preserve deliberately independent evaluation fixtures.
+- For every new Port/interface, record the semantic owner, independent consumers,
+  expected implementations and concrete substitution requirement. Without
+  concrete answers, do not introduce it. Read accepted architecture/ADRs before
+  changing a boundary; record unresolved decisions instead of inventing semantics.
+- Place fixes with their semantic owner: application logic, reusable capability,
+  adapter/provider, composition, configuration, governance or deployment.
+- Tests must prove observable behavior and failure boundaries. Architecture
+  fitness checks need known-bad and allowed controls where practical.
+
+Use the shared implementation workflow in
+`.agents/skills/engineering-implementation/SKILL.md` for substantial changes.
+Respect the task's validation authority: when the maintainer will run checks,
+provide exact commands and keep validation pending until results are supplied.

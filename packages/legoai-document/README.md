@@ -2,14 +2,28 @@
 
 **Lego AI Document Capability Pack** — an optional, independently installable, first-party capability pack for document-processing applications built on the Lego AI Operating Layer.
 
-This is **not** part of Lego AI Core. Core has no dependency on this package, and this package depends on Core only where a specific capability genuinely needs it (see below — the current capability needs nothing from Core at all). See `planning/documind/CHUNKING-CAPABILITY-DESIGN.md` in the `legoai-reference` repository for the full design rationale, including why this lives as a separate distribution rather than inside the `legoai` import namespace.
+This is **not** part of Lego AI Core. Core has no dependency on this package.
+Parsing and chunking remain independently usable; embedding and answering use
+Core Model values through caller-supplied governed callables. See
+`planning/documind/CHUNKING-CAPABILITY-DESIGN.md` for the original extraction
+rationale and `examples/documind` for the current public-host composition.
 
 ## Current capabilities
 
 - **`document.chunking`** — deterministic, sliding-window word-count text chunking. Pure, stateless, effect-free: no I/O, no persistence, no network access, no external provider.
 - **`document.parsing`** — deterministic text extraction for `TEXT`, `MARKDOWN`, `HTML` (strict UTF-8 decode, content preserved exactly as-is) and text-bearing `PDF` (one page of extracted text per physical PDF page, via [`pypdf`](https://pypi.org/project/pypdf/)). **No OCR, no vision models, no LLMs are used anywhere in this capability.** A blank or image-only PDF page returns empty text — that is a valid, successful result, never an error.
 
-No other capability is implemented yet. Beyond `pypdf` (used only inside `document.parsing`'s implementation, never exposed in its public API), this package does not depend on and does not implement any part of Semantic Kernel, Microsoft Agent Framework, any model-provider or OCR SDK, a database driver, or a workflow engine. Future capabilities that need such dependencies will not be added to this capability's own dependency closure without deliberate review.
+- **`document.embedding`** — chunk embedding through an injected governed callable.
+- **`document.ingestion`** — document processing and local index storage.
+- **`document.retrieval`** — hybrid vector/lexical search over `SQLiteRetrievalStore`.
+- **`document.rerank`** — deterministic identity/truncation with a callable seam.
+- **`document.answering`** — bounded context, governed chat and citations.
+
+The package uses `pypdf` internally for parsing and standard-library SQLite for
+the local retrieval store. It imports no model-provider SDK or workflow engine.
+The retrieval/ingestion/answering signatures currently name the concrete SQLite
+store; arbitrary storage substitution is not a supported Port contract. This
+inventory describes implementation, not new quality or runtime qualification.
 
 ### `document.parsing`'s guarantees and limits
 
