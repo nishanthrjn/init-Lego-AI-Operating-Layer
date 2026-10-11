@@ -84,6 +84,17 @@ def config(
     )
 
 
+def config_with_timeout(field: str, bound: timedelta) -> GovernedExecutionConfig:
+    candidate = config()
+    if field == "execution_timeout":
+        return replace(candidate, execution_timeout=bound)
+    if field == "preparation_timeout":
+        return replace(candidate, preparation_timeout=bound)
+    if field == "shutdown_timeout":
+        return replace(candidate, shutdown_timeout=bound)
+    raise AssertionError("unknown timeout field in test fixture")
+
+
 async def claim(
     host: GovernedExecution, context: ExecutionContext, ready: CoordinationResult
 ) -> None:
@@ -425,7 +436,7 @@ def test_invalid_capacity(bound: int) -> None:
 )
 def test_zero_lifetime_bounds_refuse(field: str) -> None:
     with pytest.raises(HostError):
-        replace(config(), **{field: timedelta(0)})
+        config_with_timeout(field, timedelta(0))
 
 
 def test_configuration_does_not_create_unrelated_authority() -> None:
@@ -608,7 +619,7 @@ def test_other_thread_cannot_establish_or_invalidate() -> None:
 )
 def test_upper_time_bounds_refuse(field: str, bound: timedelta) -> None:
     with pytest.raises(HostError):
-        replace(config(), **{field: bound})
+        config_with_timeout(field, bound)
 
 
 def test_invalid_input_does_not_spend_context_capacity() -> None:
