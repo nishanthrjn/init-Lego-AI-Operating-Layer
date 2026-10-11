@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded synthetic ForgeAI quality result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluation_version", "package_digest", "model_id", "model_revision", "runtime", "generation_settings", "plan", "scenarios", "total_model_calls", "elapsed_seconds", "failure", "thresholds", "classification"],
+  "properties": {
+    "evaluation_version": {"const": "FORGEAI-KAGGLE-MODEL-QUALITY-EVALUATION-1"},
+    "package_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "model_id": {"const": "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"},
+    "model_revision": {"const": "eb3172f06a6d6b3a15f08947b0668d782e4d2d2c"},
+    "generation_settings": {"const": {"temperature": 0, "seed": 0, "max_input_bytes": 16384, "max_input_tokens": 3072, "max_output_bytes": 16384, "max_output_tokens": 1024, "timeout_seconds": 180}},
+    "plan": {
+      "type": "array", "maxItems": 10,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["scenario", "role", "initial_prompt_digest", "max_calls"],
+        "properties": {
+          "scenario": {"type": "string", "pattern": "^[A-Z_]{1,64}$"},
+          "role": {"enum": ["coding", "reviewer"]},
+          "initial_prompt_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "max_calls": {"enum": [1, 2]}
+        }
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "python": {"const": "3.12.3"}, "torch": {"const": "2.7.0+cu128"},
+        "transformers": {"const": "4.51.3"}, "vllm": {"const": "0.9.2"},
+        "pytest": {"const": "9.1.1"}, "mypy": {"const": "2.3.1"}, "ruff": {"const": "0.16.8"},
+        "gpu": {"const": ["Tesla T4", "Tesla T4"]},
+        "tensor_parallel_size": {"const": 2}, "quantization": {"const": "awq-4bit"},
+        "max_model_len": {"const": 4096}, "transport": {"const": "in-process-vllm"},
+        "model_inventory_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "scenarios": {"type": "array", "maxItems": 10, "items": {"$ref": "#/$defs/scenario"}},
+    "total_model_calls": {"type": "integer", "minimum": 0, "maximum": 11},
+    "elapsed_seconds": {"type": "number", "minimum": 0},
+    "failure": {"type": ["string", "null"], "maxLength": 64},
+    "thresholds": {"const": {"contract_validity": 1.0, "scope_discipline": 1.0, "coding_correct_minimum": 6, "coding_cases": 7, "static_quality_minimum": 6, "context_use": 1.0, "test_strength": 1.0, "review_accuracy": 1.0, "rework_quality": 1.0}},
+    "classification": {"enum": ["MODEL_QUALITY_PROMISING", "MODEL_QUALITY_INSUFFICIENT", "MODEL_CONTRACT_UNSTABLE", "EVALUATION_INCOMPLETE", "RESULT_INCONCLUSIVE"]}
+  },
+  "$defs": {
+    "dimensions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["CONTRACT_VALIDITY", "TASK_CORRECTNESS", "TEST_STRENGTH", "SCOPE_DISCIPLINE", "CONTEXT_USE", "STATIC_QUALITY", "REVIEW_ACCURACY", "REWORK_QUALITY"],
+      "properties": {
+        "CONTRACT_VALIDITY": {"$ref": "#/$defs/score"}, "TASK_CORRECTNESS": {"$ref": "#/$defs/score"},
+        "TEST_STRENGTH": {"$ref": "#/$defs/score"}, "SCOPE_DISCIPLINE": {"$ref": "#/$defs/score"},
+        "CONTEXT_USE": {"$ref": "#/$defs/score"}, "STATIC_QUALITY": {"$ref": "#/$defs/score"},
+        "REVIEW_ACCURACY": {"$ref": "#/$defs/score"}, "REWORK_QUALITY": {"$ref": "#/$defs/score"}
+      }
+    },
+    "score": {"enum": ["PASS", "FAIL", "NOT_APPLICABLE"]},
+    "failures": {"type": "array", "maxItems": 16, "items": {"type": "string", "pattern": "^[A-Z_]{1,64}$"}},
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["prompt_digest", "output_digest", "seconds"],
+      "properties": {
+        "prompt_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "output_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "seconds": {"type": "number", "minimum": 0},
+        "first_dimensions": {"$ref": "#/$defs/dimensions"},
+        "first_failures": {"$ref": "#/$defs/failures"}
+      }
+    },
+    "scenario": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scenario", "role", "dimensions", "failures", "attempts", "raw_json", "false_positive", "false_negative"],
+      "properties": {
+        "scenario": {"enum": ["SIMPLE_BUG_FIX", "CREATE_WITH_CONTEXT", "TYPE_SAFETY", "RUFF_TRAP", "SCOPE_TRAP", "VACUOUS_TEST_TRAP", "CHECK_FEEDBACK_REWORK", "REVIEW_GOOD_PATCH", "REVIEW_BAD_PATCH", "REVIEW_VACUOUS_TEST"]},
+        "role": {"enum": ["coding", "reviewer"]},
+        "dimensions": {"$ref": "#/$defs/dimensions"},
+        "failures": {"$ref": "#/$defs/failures"},
+        "attempts": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/attempt"}},
+        "raw_json": {"type": ["boolean", "null"]},
+        "false_positive": {"type": ["boolean", "null"]},
+        "false_negative": {"type": ["boolean", "null"]}
+      }
+    }
+  }
+}

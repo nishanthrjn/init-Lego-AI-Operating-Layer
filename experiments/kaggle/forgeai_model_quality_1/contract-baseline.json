@@ -1,0 +1,11 @@
+{
+  "packages/legoai-engineering/src/legoai_engineering/coding/values.py": "1a85e3eb149b5ef2a3f9e9e50e79e5df6963a4d4456f3f79ba69d0d21be8f0b7",
+  "packages/legoai-engineering/src/legoai_engineering/coding/api.py": "6e1aeafbce44463401ed33c8f71471cb10085a5363bbdcb4ce2fee57631dddd5",
+  "packages/legoai-engineering/src/legoai_engineering/coding/definition.py": "f47db2c406cdfc7782348df312bb0e5962886fb1515b1e78bc36ee9cf4bfcf64",
+  "packages/legoai-engineering/src/legoai_engineering/reviewer/values.py": "e63ee9c92c38acd5a514b0027a5c67b60ae6bef014cc95943ec8772e36f087d0",
+  "packages/legoai-engineering/src/legoai_engineering/reviewer/api.py": "5287084cb325f529e14ec27434b5005bdeaf22a7f53501acc471e706e076e642",
+  "packages/legoai-engineering/src/legoai_engineering/reviewer/definition.py": "f855125d4d24fab8017c586e6964ae8605111918f341ce5b82b5c232d682976d",
+  "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102",
+  "examples/forgeai/src/forgeai/review.py": "d7d079fd00e24a12908e77ec70e3ce127fac0ec90b23c26e611eab1d8dc64bda",
+  "adrs/ADR-021.md": "83ee329a5520de81b575e8be0371b00d811921922d757d62abfa9163a4a341e7"
+}
