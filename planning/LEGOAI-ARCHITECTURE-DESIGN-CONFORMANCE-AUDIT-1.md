@@ -1,6 +1,7 @@
 # LEGOAI-ARCHITECTURE-DESIGN-CONFORMANCE-AUDIT-1
 
-Status: IMPLEMENTED — LOCAL VALIDATION PENDING. Static audit, 2026-10-11.
+Status: LOCAL CHECKS PASSED — maintainer-reported validation, 2026-10-11.
+Recorded architectural debt remains open; no live or global conformance qualified.
 This record is not an ADR, release qualification or authorization to execute live work.
 
 ## 1. Executive conclusion
@@ -44,10 +45,11 @@ No generic host, storage Port, provider registry, workflow or Team was invented.
 
 No pytest, mypy, Ruff, validation script or live runtime was executed by the audit
 agent. The static source inventory is analysis, not passing conformance evidence.
-Maintainer execution is reserved under the standing task workflow. Prior supplied
-validation logs are historical evidence for their subjects, not fresh results for
-this patch. In particular, the previous 365 architecture tests and 48 Kaggle quality
-harness tests do not measure model quality or qualify this audit's additions.
+Maintainer execution is reserved under the standing task workflow. The complete
+audit-validator result is recorded in §14: 572 tests and all static/whitespace
+phases passed. Earlier unrelated logs remain evidence only for their own subjects;
+the previous 365 architecture tests and 48 Kaggle quality harness tests do not
+measure model quality or independently qualify this audit's additions.
 
 ## 3. Evidence hierarchy and authority reviewed
 
@@ -77,7 +79,7 @@ These are source-level assessments with the stated scope, not release statuses.
 
 | Boundary | Implementation evidence | Assessment / limit |
 | --- | --- | --- |
-| Kernel/domain independence | `src/legoai/kernel/{context,effects,errors,versions}.py`; Core AST matrix | Stable values, not provider SDK objects; matrix/cycle checks exist but await fresh execution |
+| Kernel/domain independence | `src/legoai/kernel/{context,effects,errors,versions}.py`; Core AST matrix | Stable values, not provider SDK objects; matrix/cycle checks passed in the maintainer's audit run |
 | Public composition | `src/legoai/runtime/local.py:open_local_host`; `runtime/api.py` | Core-owned internals are legitimate here; facade returns public contracts; no provider call merely to open the Model host |
 | Owner dependency direction | `tests/architecture/test_import_boundaries.py:violations`, cycle traversal and known-bad fixtures | Existing detailed matrix is reused; this audit adds cross-distribution coverage rather than replacing it |
 | Model/provider separation | `intelligence/model/ports.py:ModelPort`; `reference/model.py`; `reference/model_openai_compatible.py` | Provider protocols stay in adapters; closed host-selection branches are supported composition, not automatic OCP violations |
@@ -251,7 +253,7 @@ None established in the reviewed paths. This is not proof that none exists elsew
 
 ### LOW
 
-**L-01 — Agent policy/workflow had duplicate authorities. CORRECTED, validation pending.**
+**L-01 — Agent policy/workflow had duplicate authorities. CORRECTED, local checks passed.**
 
 - Location: `AGENTS.md`, `CLAUDE.md`, both engineering-implementation `SKILL.md` files.
 - Evidence: the root policy and full implementation workflow were duplicated
@@ -279,7 +281,7 @@ None established in the reviewed paths. This is not proof that none exists elsew
   are not rewritten or promoted by this audit.
 - Owner: **documentation**.
 
-**L-03 — Cross-distribution import coverage was fragmented. CORRECTED, validation pending.**
+**L-03 — Cross-distribution import coverage was fragmented. CORRECTED, local checks passed.**
 
 - Location: existing Core `tests/architecture/test_import_boundaries.py`, ForgeAI
   architecture tests and Document architecture tests; new
@@ -489,9 +491,9 @@ the only runtime source edit is a docstring, guarded by AST equality. Full model
 quality, Docker, GPU, live provider and browser camera suites are not part of this
 validator. Its scope guard intentionally refuses unrelated edits from this baseline.
 
-Required outcome: all listed local phases pass. The final message must still retain
-the recorded debt and state that neither live nor global conformance is qualified.
-Do not mark the audit locally validated until the maintainer supplies the log.
+The maintainer supplied a complete passing log for all listed local phases; see
+§14. This establishes local check completion only. The recorded debt remains, and
+neither live nor global conformance is qualified.
 
 ## 14. Claims still not proven
 
@@ -508,8 +510,6 @@ Do not mark the audit locally validated until the maintainer supplies the log.
   availability. Successful synthetic/no-provider harness checks prove none of these.
 - Complete Python dynamic dependency or TypeScript/browser conformance, or that no
   vulnerability exists outside the reviewed control-flow paths.
-- Complete local validation after the formatting correction; the latest supplied
-  log passes tests, typing and lint, but stops at format before whitespace checks.
 
 ### Maintainer validation follow-up
 
@@ -524,16 +524,34 @@ and whitespace phases were not reached.
 Correction: add only that expected archive member, allow the packaging test in the
 audit validator's change scope, and include it in typing/lint/format checks. The
 manifest equality assertion remains strict; no packaging check is skipped or
-relaxed. The correction has not been executed internally. Rerun the same full
-maintainer command in §13; overall local validation remains pending.
+relaxed. The correction was not executed internally; the maintainer reran the
+full command in §13.
 
 The subsequent maintainer run reports **423 Core/consumer architecture tests,
 133 Engineering tests and 16 public-host/VTO tests passed** (572 total), plus
 successful typing of four files and lint. Formatting alone stopped this run:
 Ruff requires `[: -node.level]` for the relative-import slice. That exact spacing
 correction is applied without behavioral changes. Working/staged whitespace
-checks were not reached. No checks were run internally; overall validation remains
-pending the maintainer's rerun.
+checks were not reached in that run. No checks were run internally.
+
+The final supplied maintainer run completed every phase:
+
+| Phase | Maintainer-reported result |
+| --- | --- |
+| Audit scope, runtime AST and shared instructions | Passed |
+| Core/consumer architecture and fitness controls | 423 passed in 21.14 s |
+| Engineering architecture and effect authorization | 133 passed in 1.69 s |
+| Public host and VTO effect truth | 16 passed in 0.57 s |
+| Typing | No issues in 4 source files |
+| Lint | All checks passed |
+| Format | 4 files already formatted |
+| Working and staged whitespace | Passed |
+
+Total: **572 tests passed**. The validator ended with
+`LEGOAI-ARCHITECTURE-DESIGN-CONFORMANCE-AUDIT-1 LOCAL CHECKS PASSED; RECORDED DEBT REMAINS; NO LIVE OR GLOBAL CONFORMANCE QUALIFIED`.
+Git's LF-to-CRLF notices were warnings and did not fail the whitespace phases.
+This closeout changes only the evidence report; no executable code, tests or
+canonical architecture statuses are changed. Checks were not rerun by the agent.
 
 ## 15. Separate audit verdicts
 
@@ -544,7 +562,7 @@ NOT_PROVEN is not silently converted into FAIL or PASS.
 | Dimension | Verdict | Basis |
 | --- | --- | --- |
 | ARCHITECTURE | PASS_WITH_FINDINGS | Accepted owner/effect model is coherent; media/public host and credential profile decisions remain necessary |
-| IMPLEMENTATION | FAIL | H-01 and M-01/M-03 prevent all-path conformance; fresh checks pending |
+| IMPLEMENTATION | FAIL | H-01 and M-01/M-03 prevent all-path conformance despite passing local checks |
 | SOLID | FAIL | Known DIP mismatches prevent all-principle conformance; SRP/OCP/ISP retain scoped findings and LSP breadth is unproven |
 | DRY | PASS_WITH_FINDINGS | Instruction duplication corrected; host knowledge duplication remains |
 | KISS | PASS_WITH_FINDINGS | Bounded consumers, no speculative framework; measured hotspots need scoped review |
@@ -552,12 +570,12 @@ NOT_PROVEN is not silently converted into FAIL or PASS.
 | SOC | FAIL | Concrete storage/application coupling and media host/Secret integration gaps |
 | LAW_OF_DEMETER | PASS_WITH_FINDINGS | Concrete DocuMind runtime/configuration reach-through; immutable value navigation not penalized |
 | CONSUMER_CONFORMANCE | FAIL | ForgeAI's reviewed shape is sound; DocuMind storage limitation and media/assessment private consumption remain |
-| AGENT_SKILL_GOVERNANCE | PASS_WITH_FINDINGS | One policy/workflow with tool wrappers implemented; local link/scope validation pending |
+| AGENT_SKILL_GOVERNANCE | PASS_WITH_FINDINGS | One policy/workflow with tool wrappers implemented; maintainer local link/scope checks passed, broader architectural findings remain |
 
 Canonical decision: no change to intent/SPEC/Architecture/Contracts is proposed to
 excuse these findings. H-01 and M-01 need accountable mechanism/public-host design
 review before implementation; M-04 needs a precise construction contract decision.
-None is made implicitly by this audit. Await the maintainer's validation results;
+None is made implicitly by this audit. Maintainer local validation is complete;
 this report does not authorize or recommend execution of a new implementation slice.
 
 Proposed commit message:
