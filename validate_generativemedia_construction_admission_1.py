@@ -30,7 +30,8 @@ def unaffected_service(source: str) -> str:
         node
         for node in tree.body
         if not (
-            isinstance(node, ast.AsyncFunctionDef) and node.name == "open_virtual_try_on"
+            isinstance(node, ast.AsyncFunctionDef)
+            and node.name == "open_virtual_try_on"
         )
         and not (
             isinstance(node, ast.ImportFrom)
@@ -164,7 +165,15 @@ def main() -> int:
             run("lint", [sys.executable, "-m", "ruff", "check", "--no-cache", *TARGETS])
             run(
                 "format",
-                [sys.executable, "-m", "ruff", "format", "--check", "--no-cache", *TARGETS],
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "format",
+                    "--check",
+                    "--no-cache",
+                    *TARGETS,
+                ],
             )
             run("working whitespace", ["git", "diff", "--check", BASELINE, "--"])
             run(

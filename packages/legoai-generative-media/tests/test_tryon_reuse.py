@@ -154,7 +154,11 @@ def test_second_consumer_reconciles_without_uploads(
 @pytest.mark.parametrize("remote", ["https://comfy.example.org", "https://127.0.0.1"])
 @pytest.mark.parametrize("injected", [False, True])
 def test_remote_construction_refuses_before_effects(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, family: str, remote: str, injected: bool
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    family: str,
+    remote: str,
+    injected: bool,
 ) -> None:
     candidate = config(
         tmp_path,
@@ -214,7 +218,9 @@ def test_remote_construction_refuses_before_effects(
 
 
 @pytest.mark.parametrize("family", ["auto", "legacy", "v2"])
-def test_local_construction_preserves_family_selection(tmp_path: Path, family: str) -> None:
+def test_local_construction_preserves_family_selection(
+    tmp_path: Path, family: str
+) -> None:
     http = FakeHTTP() if family == "legacy" else FakeV2()
     transports = Transports({LOCAL: http})
     built = asyncio.run(
