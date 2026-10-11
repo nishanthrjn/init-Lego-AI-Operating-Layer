@@ -64,7 +64,7 @@ def references(source: str, module: str) -> set[str]:
         elif isinstance(node, ast.ImportFrom):
             base = node.module or ""
             if node.level:
-                package = module.split(".")[:-node.level]
+                package = module.split(".")[: -node.level]
                 base = ".".join(package + ([base] if base else []))
             found.add(base)
             for item in node.names:

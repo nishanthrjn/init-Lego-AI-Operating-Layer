@@ -508,8 +508,8 @@ Do not mark the audit locally validated until the maintainer supplies the log.
   availability. Successful synthetic/no-provider harness checks prove none of these.
 - Complete Python dynamic dependency or TypeScript/browser conformance, or that no
   vulnerability exists outside the reviewed control-flow paths.
-- Complete local validation after the packaging-manifest correction; later phases
-  have not yet run in the supplied maintainer log.
+- Complete local validation after the formatting correction; the latest supplied
+  log passes tests, typing and lint, but stops at format before whitespace checks.
 
 ### Maintainer validation follow-up
 
@@ -526,6 +526,14 @@ audit validator's change scope, and include it in typing/lint/format checks. The
 manifest equality assertion remains strict; no packaging check is skipped or
 relaxed. The correction has not been executed internally. Rerun the same full
 maintainer command in §13; overall local validation remains pending.
+
+The subsequent maintainer run reports **423 Core/consumer architecture tests,
+133 Engineering tests and 16 public-host/VTO tests passed** (572 total), plus
+successful typing of four files and lint. Formatting alone stopped this run:
+Ruff requires `[: -node.level]` for the relative-import slice. That exact spacing
+correction is applied without behavioral changes. Working/staged whitespace
+checks were not reached. No checks were run internally; overall validation remains
+pending the maintainer's rerun.
 
 ## 15. Separate audit verdicts
 
