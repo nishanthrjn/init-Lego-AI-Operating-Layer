@@ -41,7 +41,9 @@ def identity(source: Path = SOURCE) -> str:
     manifest: Any = json.loads(manifest_bytes)
     if set(manifest) != {"evaluation_version", "files"}:
         raise Rejected("PACKAGE_INVALID")
-    if manifest["evaluation_version"] != VERSION or set(manifest["files"]) != set(FILES):
+    if manifest["evaluation_version"] != VERSION or set(manifest["files"]) != set(
+        FILES
+    ):
         raise Rejected("PACKAGE_INVALID")
     for name in FILES:
         content = normalized(source / name)

@@ -206,9 +206,7 @@ def test_transfer_manifest_and_notebook() -> None:
 
 
 def test_tampered_package_rejected(tmp_path: Path) -> None:
-    (tmp_path / "manifest.json").write_text(
-        '{"evaluation_version":"wrong","files":{}}'
-    )
+    (tmp_path / "manifest.json").write_text('{"evaluation_version":"wrong","files":{}}')
     with pytest.raises(contracts.Rejected):
         package.identity(tmp_path)
 
@@ -290,7 +288,7 @@ def test_infrastructure_failure_is_not_weak_model(
 
 
 def test_collection_error_never_counts_as_test_strength(
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def tool_error(root: Path, filename: str) -> int:
         raise contracts.Rejected("TOOL_FAILURE")

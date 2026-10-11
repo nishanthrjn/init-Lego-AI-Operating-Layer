@@ -108,7 +108,8 @@ def admitted(source: str, *, test: bool) -> ast.Module:
                 if annotation is not None and not (
                     isinstance(annotation, ast.Name)
                     and annotation.id in {"int", "bool", "str"}
-                    or isinstance(annotation, ast.Constant) and annotation.value is None
+                    or isinstance(annotation, ast.Constant)
+                    and annotation.value is None
                 ):
                     raise Rejected("PYTHON_SUBSET_REJECTED")
         if isinstance(node, ast.Assign):

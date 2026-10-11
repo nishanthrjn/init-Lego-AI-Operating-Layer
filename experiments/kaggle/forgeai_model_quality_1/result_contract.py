@@ -23,7 +23,9 @@ def _validate(value: Any, rule: dict[str, Any], document: dict[str, Any]) -> Non
         reference = rule["$ref"]
         if not reference.startswith("#/$defs/"):
             raise Rejected("RESULT_SCHEMA_INVALID")
-        _validate(value, document["$defs"][reference.removeprefix("#/$defs/")], document)
+        _validate(
+            value, document["$defs"][reference.removeprefix("#/$defs/")], document
+        )
         return
     types = {
         "object": type(value) is dict,

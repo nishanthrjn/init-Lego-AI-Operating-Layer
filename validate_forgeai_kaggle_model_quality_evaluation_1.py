@@ -30,8 +30,7 @@ def boundaries() -> None:
     changed = set(git("diff", BASELINE, "--name-only").splitlines())
     changed.update(git("ls-files", "--others", "--exclude-standard").splitlines())
     if any(
-        path != VALIDATOR and not path.startswith(EXPERIMENT + "/")
-        for path in changed
+        path != VALIDATOR and not path.startswith(EXPERIMENT + "/") for path in changed
     ):
         raise ValueError("changes outside the experiment and validator")
     source = ROOT / EXPERIMENT

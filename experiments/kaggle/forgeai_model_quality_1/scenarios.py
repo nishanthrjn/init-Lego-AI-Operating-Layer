@@ -61,7 +61,7 @@ CASES = (
         "TYPE_SAFETY",
         "solve(value: int) must return an int: negative values become zero; "
         "other values remain unchanged. Satisfy mypy strict.",
-        'def solve(value: int) -> int:\n    if value < 0:\n'
+        "def solve(value: int) -> int:\n    if value < 0:\n"
         '        return "0"\n    return value\n',
         (((-3,), 0), ((0,), 0), ((8,), 8)),
         "def solve(value: int) -> int:\n    if value < 0:\n"
