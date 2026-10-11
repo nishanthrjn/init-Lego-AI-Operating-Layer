@@ -72,7 +72,7 @@ normalize or change unrelated records.
 
 | ADR | Decision | Class / priority / type | Dependencies | Status / trigger / rationale |
 | --- | --- | --- | --- | --- | --- |
-| [ADR-026](ADR-026.md) | Public governed execution composition boundary | C / P2 / 2 | ADR-002/003/005/006/007/008/009/014/015; preserves ADR-010/020/023/024 | Proposed. M-01: two invoking planes share coordination/claim/settlement. Public extension scope Blocked pending ADR-014 review; secret-free migration can proceed independently after acceptance and separate implementation authorization |
+| [ADR-026](ADR-026.md) | Public governed execution composition boundary | C / P2 / 2 | ADR-002/003/005/006/007/008/009/014/015; preserves ADR-010/020/023/024 | Accepted 2026-10-11 by maintainer-delegated architecture review. M-01: narrow shared execution controls only; ADR-014 section 15 records the bounded extension. No implementation or credential/disclosure authority |
 | [ADR-027](ADR-027.md) | Generative Media purpose-bound probe credential profile | C / P2 / 2 | ADR-002/003/005/006/007/008/009/010/014/015/020/023/024; ADR-026 for planned integration | Proposed. H-01: raw resolution lacks exact-use enforcement. MPBP-1 probe-only exception scope Blocked pending ADR-007/010 amendments and ADR-023 cross-reference; independent security evidence required |
 
 Two records follow the one-choice-per-ADR rule: public execution composition and
@@ -82,6 +82,24 @@ or qualifies credentialed media. ADR-020 still prohibits remote personal images.
 No production implementation authorized. No live execution authorized.
 Document validation is pending; architecture approval is a separate decision.
 <!-- GENERATIVE-MEDIA-GOVERNED-EXECUTION-SECRET-ADR-1 END -->
+
+<!-- GENERATIVE-MEDIA-ADR-026-ACCEPTANCE-REVIEW-1 BEGIN -->
+### ADR-026 acceptance review — 2026-10-11
+
+The preceding preparation narrative records the earlier Proposed state and is
+historical. Current decision: ADR-026 Accepted for narrow shared execution
+composition only, under the maintainer-delegated review recorded in ADR-026.
+Its former ADR-014 extension blocker is resolved by ADR-014 section 15. The
+preparation document checks passed according to maintainer evidence; validation
+of these acceptance-review changes remains pending.
+
+ADR-027 remains Proposed with its amendment/security scope blocked. No MPBP-1,
+credential use, media probe, personal-image disclosure or remote VTO is authorized.
+ADR-027's preparation-time reference to ADR-026 as Proposed is historical; the
+new acceptance does not resolve ADR-027's independent security gates.
+ADR-020 and Model SRCP-1 remain unchanged. No production implementation or live
+execution is authorized. No other ADR status or historical decision is changed.
+<!-- GENERATIVE-MEDIA-ADR-026-ACCEPTANCE-REVIEW-1 END -->
 
 ### Original planning record
 
