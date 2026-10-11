@@ -62,6 +62,27 @@ The next work follows the [forward plan](../planning/PYTHON-FIRST-REUSABLE-AI-PL
 not the historical §18 instruction. ADR-016 neither allocates ADR-014 nor accepts
 ADR-012/013. The original 14-decision backlog and its proof obligations follow.
 
+<!-- GENERATIVE-MEDIA-GOVERNED-EXECUTION-SECRET-ADR-1 BEGIN -->
+### Generative Media boundary proposals — 2026-10-11
+
+This explicit preparation task allocates ADR-026 and ADR-027, the next unused
+IDs after existing ADR-001 through ADR-025. No historical number is reused.
+Older totals/status observations remain historical; this addendum does not
+normalize or change unrelated records.
+
+| ADR | Decision | Class / priority / type | Dependencies | Status / trigger / rationale |
+| --- | --- | --- | --- | --- | --- |
+| [ADR-026](ADR-026.md) | Public governed execution composition boundary | C / P2 / 2 | ADR-002/003/005/006/007/008/009/014/015; preserves ADR-010/020/023/024 | Proposed. M-01: two invoking planes share coordination/claim/settlement. Public extension scope Blocked pending ADR-014 review; secret-free migration can proceed independently after acceptance and separate implementation authorization |
+| [ADR-027](ADR-027.md) | Generative Media purpose-bound probe credential profile | C / P2 / 2 | ADR-002/003/005/006/007/008/009/010/014/015/020/023/024; ADR-026 for planned integration | Proposed. H-01: raw resolution lacks exact-use enforcement. MPBP-1 probe-only exception scope Blocked pending ADR-007/010 amendments and ADR-023 cross-reference; independent security evidence required |
+
+Two records follow the one-choice-per-ADR rule: public execution composition and
+media credential currentness have independent review/evidence gates. Neither
+accepts an ADR, changes an accepted decision body, authorizes M-04 implementation
+or qualifies credentialed media. ADR-020 still prohibits remote personal images.
+No production implementation authorized. No live execution authorized.
+Document validation is pending; architecture approval is a separate decision.
+<!-- GENERATIVE-MEDIA-GOVERNED-EXECUTION-SECRET-ADR-1 END -->
+
 ### Original planning record
 
 This index identifies unresolved **reference implementation choices**, not new canonical requirements. The eight accepted governing documents were reviewed in authority order. No language, framework, database, broker, vendor, deployment platform, public protocol, or isolation technology is selected. Repository inspection found the governing Markdown documents and no existing implementation or language decision to preserve.
