@@ -147,7 +147,9 @@ def documents(contents: dict[str, str], old_adr: str, old_index: str) -> None:
             raise ValueError(f"inconsistent index metadata: {value}")
     review(contents[REVIEW])
     for name, source in contents.items():
-        whitespace(name, source)
+        # The unchanged index contains historical Markdown hard breaks.
+        # Its exact baseline preservation is enforced above; check our row only.
+        whitespace(name, rows[0] + "\n" if name == INDEX else source)
 
 
 def controls(contents: dict[str, str], old_adr: str, old_index: str) -> None:
@@ -157,6 +159,12 @@ def controls(contents: dict[str, str], old_adr: str, old_index: str) -> None:
         (ADR, "Status: Proposed", "Status: Accepted"),
         (ADR, "## Context", "## Altered context"),
         (INDEX, "Proposed; readiness Blocked", "Accepted; readiness Blocked"),
+        (
+            INDEX,
+            "No acceptance or implementation authority |\n",
+            "No acceptance or implementation authority | \n",
+        ),
+        (INDEX, "# Lego AI Operating Layer", "#  Lego AI Operating Layer"),
         (REVIEW, "ADR_027_BLOCKED", "ADR_027_READY_FOR_DECISION"),
         (REVIEW, "H-01: OPEN", "H-01: CLOSED"),
         (REVIEW, "## 8. Material lifetime and source", "## Missing"),
@@ -224,8 +232,8 @@ def main() -> int:
             staged_contents = {
                 name: decode(git(["show", f":{name}"])) for name in ALLOWED
             }
-            if staged_contents != contents:
-                raise ValueError("stage the complete reviewed slice or leave it unstaged")
+            # Validate each snapshot independently. A committed document slice
+            # can remain valid while its validator correction is still unstaged.
             documents(staged_contents, old_adr, old_index)
         for phase, args in (
             ("working whitespace", ["diff", "--check", BASELINE, "--"]),
