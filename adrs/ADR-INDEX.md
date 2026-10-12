@@ -73,7 +73,7 @@ normalize or change unrelated records.
 | ADR | Decision | Class / priority / type | Dependencies | Status / trigger / rationale |
 | --- | --- | --- | --- | --- | --- |
 | [ADR-026](ADR-026.md) | Public governed execution composition boundary | C / P2 / 2 | ADR-002/003/005/006/007/008/009/014/015; preserves ADR-010/020/023/024 | Accepted 2026-10-11 by maintainer-delegated architecture review. M-01: narrow shared execution controls only; ADR-014 section 15 records the bounded extension. No implementation or credential/disclosure authority |
-| [ADR-027](ADR-027.md) | Generative Media purpose-bound probe credential profile | C / P2 / 2 | ADR-002/003/005/006/007/008/009/010/014/015/020/023/024; ADR-026 for planned integration | Proposed. H-01: raw resolution lacks exact-use enforcement. MPBP-1 probe-only exception scope Blocked pending ADR-007/010 amendments and ADR-023 cross-reference; independent security evidence required |
+| [ADR-027](ADR-027.md) | Generative Media purpose-bound probe credential profile | C / P2 / 2 | ADR-002/003/005/006/007/008/009/010/014/015/020/023/024; ADR-026 Accepted, integration locally qualified | Proposed; readiness Blocked (2026-10-12). H-01 OPEN; M-01 and M-04 CLOSED. Five blockers B-01–B-05 in [readiness review](../planning/GENERATIVE-MEDIA-ADR-027-READINESS-REVIEW-1.md): upstream amendments, exact probe contract, source/composition contract, ordered invalidators, custody/effect contract. No acceptance or implementation authority |
 
 Two records follow the one-choice-per-ADR rule: public execution composition and
 media credential currentness have independent review/evidence gates. Neither
