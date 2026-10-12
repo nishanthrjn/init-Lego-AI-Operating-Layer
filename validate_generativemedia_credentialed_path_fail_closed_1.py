@@ -75,7 +75,9 @@ def paths(args: list[str]) -> set[str]:
 
 def check_scope() -> None:
     changed = paths(["diff", "--name-only", "--no-renames", "-z", BASELINE])
-    changed |= paths(["diff", "--cached", "--name-only", "--no-renames", "-z", BASELINE])
+    changed |= paths(
+        ["diff", "--cached", "--name-only", "--no-renames", "-z", BASELINE]
+    )
     changed |= paths(["ls-files", "--others", "--exclude-standard", "-z"])
     if changed - ALLOWED:
         raise ValueError(f"outside media correction scope: {sorted(changed - ALLOWED)}")

@@ -80,7 +80,8 @@ def credential_environment_access(source: str) -> bool:
             aliases.update(a.asname or a.name for a in node.names if a.name == "os")
         if isinstance(node, ast.ImportFrom) and node.module == "os":
             if any(
-                a.name in {"environ", "getenv", "environb", "getenvb"} for a in node.names
+                a.name in {"environ", "getenv", "environb", "getenvb"}
+                for a in node.names
             ):
                 return True
     return any(

@@ -190,9 +190,7 @@ def test_exchange_cannot_serialize_authorization() -> None:
     writer.write.side_effect = AssertionError("send forbidden")
     with pytest.raises(ValueError, match=REASON):
         asyncio.run(
-            _exchange(
-                reader, writer, "127.0.0.1", "GET", "/", b"", 100, (), "canary"
-            )
+            _exchange(reader, writer, "127.0.0.1", "GET", "/", b"", 100, (), "canary")
         )
     assert reader.mock_calls == [] and writer.mock_calls == []
 
