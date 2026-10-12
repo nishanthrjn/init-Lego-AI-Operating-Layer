@@ -1,7 +1,7 @@
 # GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1
 
-Status: implemented; pending maintainer validation. M-01 remains OPEN until the
-maintainer supplies passing evidence. Baseline:
+Status: LOCALLY QUALIFIED from the maintainer-supplied complete validator log.
+M-01 CLOSED. Implementation baseline:
 `9dae5680f8f86e92c5056534a2e2cee0416b8cd3`.
 
 Authority: the maintainer's bounded migration request, accepted ADR-026 and the
@@ -122,15 +122,31 @@ and isolated installed-wheel invocation with a synthetic owner. Socket transport
 tests are excluded. Typing, lint, format and working/staged whitespace follow.
 
 No tests, validators, typing, lint, formatting, builds, installs or provider/network
-operations were executed by the implementation agent. All verification is pending.
+operations were executed by the implementation agent. The maintainer subsequently
+ran the full validator successfully and supplied the complete phase log.
+
+### Maintainer qualification evidence
+
+The supplied run reports 529 passing tests: 50 architecture/private-boundary,
+26 media facade/custody/signature, 262 text regression, 158 VTO/M-04 regression,
+and 33 Core public execution contract tests. Both Core and media wheels built
+offline, installed into a fresh isolated Python 3.14.5 environment, and passed
+the synthetic installed-wheel invocation. Mypy passed for 12 source files;
+lint passed; all 12 files were formatted; working and staged whitespace phases
+passed. Git's LF-to-CRLF notices were warnings, not validation failures.
+
+Recorded result: `GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1 LOCALLY QUALIFIED;
+M-01 CLOSED`. This evidence qualifies the local migration and its deterministic
+media regressions only. H-01 remains OPEN, ADR-027 remains Proposed, remote VTO
+remains unsupported, and no live or credentialed media is qualified by this run.
+This documentation closeout changes no validated production or test code.
 
 ```powershell
 uv run --locked --offline --no-sync python .\validate_generativemedia_public_execution_migration_1.py
 if ($LASTEXITCODE -ne 0) { throw 'Generative Media public execution migration validation failed' }
 ```
 
-Return the full phase log, including any traceback/failure and final exit status.
-Only a complete pass permits `GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1 LOCALLY
-QUALIFIED; M-01 CLOSED`. H-01 stays OPEN and ADR-027 stays Proposed. No automatic
-credential work follows; the next step is the evidence/debt closeout, then a
-separately authorized architecture decision if credential work is requested.
+The command above remains the reproducible maintainer validation entry point.
+Evidence/debt closeout is recorded here. H-01 stays OPEN and ADR-027 stays Proposed.
+No automatic credential work follows; any such work needs a separately authorized
+architecture decision and implementation slice.

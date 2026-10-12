@@ -67,7 +67,7 @@ READY work cannot be settled by inventing owner facts. Other facade refusals map
 to `media_execution_refused`. Provider/coordinator internals are not error text.
 
 [Public execution migration](../../planning/GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1.md)
-is **pending maintainer validation**; M-01 closes only after that validation passes.
+is **locally qualified** by the maintainer's complete passing validator; M-01 is closed.
 H-01 remains open, ADR-027 remains Proposed, remote VTO remains unsupported and
 credentialed media is not qualified. This migration adds no Secret-use authority.
 `probe_provider` remains a separate explicit diagnostic; reconciliation remains
@@ -110,11 +110,12 @@ Images enter later through `try_on(request)`, which performs:
 Nothing is retried. See [VTO-2](../../planning/VIRTUAL-TRY-ON-VTO2.md).
 
 Explicit `probe_provider` diagnostics remain a separate operator operation with
-their existing contract; opening unsupported VTO never invokes them. This M-04
-construction correction is pending maintainer validation. H-01 (purpose-bound
-credential use) and M-01 (private Core host coupling) remain open. ADR-027 remains
-Proposed; no credentialed media, remote VTO or live ComfyUI is qualified. The
-ADR-026 public execution facade is not implemented by this correction.
+their existing contract; opening unsupported VTO never invokes them. M-04 remains
+locally qualified, including the migration's passing early-refusal regressions.
+M-01 (private Core host coupling) is closed through the ADR-026 public facade.
+H-01 (purpose-bound credential use) remains open and ADR-027 remains Proposed.
+These checks qualify neither credentialed media nor live ComfyUI; remote VTO
+remains unsupported.
 
 From the repository root:
 
