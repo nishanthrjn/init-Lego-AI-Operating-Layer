@@ -74,12 +74,15 @@ def test_public_claim_refuses_without_provider_effect(case: str) -> None:
                 revision,
                 TextToImageRequest("x"),
             )
-        assert refused.value.failure is {
-            "foreign": HostFailure.FOREIGN_CONTEXT,
-            "stale": HostFailure.STALE_CONFIGURATION,
-            "revoked": HostFailure.UNAUTHORIZED,
-            "retired": HostFailure.UNKNOWN_BINDING,
-        }[case]
+        assert (
+            refused.value.failure
+            is {
+                "foreign": HostFailure.FOREIGN_CONTEXT,
+                "stale": HostFailure.STALE_CONFIGURATION,
+                "revoked": HostFailure.UNAUTHORIZED,
+                "retired": HostFailure.UNKNOWN_BINDING,
+            }[case]
+        )
         assert http.calls == []
         assert await session.execution.close() == (session.context.execution_id,)
 

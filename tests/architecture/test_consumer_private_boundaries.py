@@ -130,7 +130,9 @@ def test_reusable_python_packages_never_import_consumer_applications() -> None:
 
 def test_media_has_no_private_core_edges() -> None:
     for path in (ROOT / MEDIA).rglob("*.py"):
-        assert private_edges(path.read_text(encoding="utf-8"), module_name(path)) == set()
+        assert (
+            private_edges(path.read_text(encoding="utf-8"), module_name(path)) == set()
+        )
 
 
 @pytest.mark.parametrize(

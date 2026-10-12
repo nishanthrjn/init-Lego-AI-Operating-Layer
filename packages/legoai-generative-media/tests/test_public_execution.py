@@ -137,7 +137,9 @@ def test_services_use_public_claim_and_settlement_once(
         http.fail_at = failure or ""
         result = await call(service)
         assert result.effect is effect
-        assert result.outcome is (Outcome.SUCCESS if failure is None else Outcome.FAILED)
+        assert result.outcome is (
+            Outcome.SUCCESS if failure is None else Outcome.FAILED
+        )
         sent = failure != "/object_info"
         assert len(http.prompts()) == int(sent)
         assert http.uploads() == (2 if try_on and sent else 0)
