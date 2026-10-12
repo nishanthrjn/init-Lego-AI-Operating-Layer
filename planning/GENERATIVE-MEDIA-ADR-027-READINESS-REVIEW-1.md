@@ -5,7 +5,7 @@ Review baseline: `5dd89f66cc1207ca22c8a9704a002c4d4f9ab67c`.
 Readiness decision: ADR_027_BLOCKED
 ADR-027 status: Proposed; MPBP-1 readiness: Blocked.
 H-01: OPEN. M-01: CLOSED. M-04: CLOSED.
-Verification: NOT RUN — Awaiting user execution.
+Verification: Maintainer-run document validator PASSED; supplied output recorded below.
 No acceptance, implementation or live execution authorized.
 Credentialed media NOT QUALIFIED; remote VTO UNSUPPORTED.
 
@@ -13,8 +13,9 @@ This is a source-based readiness review by the implementation assistant, not an
 independent security certification. The maintainer supplied successful facade
 and media migration validation, including migration's 529 tests, isolated wheel
 invocation, typing, lint and formatting. Those results establish their stated
-local scope only. No checks, imports of project code, Secret resolution,
-environment credential reads, provider calls or network access ran in this review.
+local scope only. The assistant ran no checks, imports of project code, Secret
+resolution, environment credential reads, provider calls or network access in this
+review. The maintainer subsequently ran the document validator successfully.
 
 Authority: [ADR-INDEX](../adrs/ADR-INDEX.md) sections 1 and 14 require an affected
 option to remain blocked while an upstream amendment or mandatory evidence is
@@ -352,8 +353,9 @@ scoped-blocker convention. H-01 remains open and no ADR is accepted here.
 
 ## 17. Next step and maintainer handoff
 
-First run the document-only validator from the repository root, with Git and the
-existing locked uv/Python environment available. No credential environment variables
+The maintainer successfully ran the document-only validator
+`validate_generativemedia_adr_027_readiness_review_1.py` from the repository root,
+using the existing locked uv/Python environment and Git. No credential environment variables
 or new dependencies are required. It uses stdlib and local Git only; no project
 imports, tests, providers, network or Secret resolution. It checks working and
 staged scope against the pinned baseline, preserved ADR history, decision/status,
@@ -366,12 +368,20 @@ uv run --locked --offline --no-sync python .\validate_generativemedia_adr_027_re
 if ($LASTEXITCODE -ne 0) { throw 'ADR-027 readiness review validation failed' }
 ```
 
-Expected final evidence: LOCAL DOCUMENT CHECKS PASSED; ADR-027 PROPOSED;
-READINESS BLOCKED; H-01 OPEN; NO IMPLEMENTATION OR LIVE EXECUTION AUTHORIZED.
-Paste the full result before further changes. Validation is pending; the validator
-does not prove security adequacy, source correctness or provider compatibility.
+Recorded final result:
 
-After successful document validation, request a separately authorized **document-only
+```text
+GENERATIVE-MEDIA-ADR-027-READINESS-REVIEW-1 LOCAL DOCUMENT CHECKS PASSED;
+ADR-027 PROPOSED; READINESS BLOCKED; H-01 OPEN;
+NO IMPLEMENTATION OR LIVE EXECUTION AUTHORIZED.
+```
+
+The supplied output confirms all document-validation phases passed, including
+positive/negative controls and working/staged whitespace. The LF-to-CRLF warning
+was informational. B-01 through B-05 remain unresolved. This is local document
+validation only, not security, credential, provider or live qualification.
+
+With successful document validation recorded, request a separately authorized **document-only
 blocker-resolution slice**: resolve B-01 with the upstream decision owners and
 prepare B-02–B-05 contracts. Do not edit accepted ADRs without that authority.
 Only after all exits are recorded should a new readiness review recommend an

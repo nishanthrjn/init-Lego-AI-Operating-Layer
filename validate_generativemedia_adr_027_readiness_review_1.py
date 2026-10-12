@@ -19,7 +19,9 @@ METADATA = (
     "Current prerequisite snapshot: ADR-026 Accepted; public facade and media "
     "migration locally qualified; M-01 and M-04 CLOSED; H-01 OPEN. "
     "Historical context below is unchanged.\n"
-    "Readiness validation: NOT RUN — Awaiting user execution. "
+    "Readiness validation: Maintainer-run "
+    "validate_generativemedia_adr_027_readiness_review_1.py succeeded; "
+    "local document checks only. "
     "No acceptance, implementation or live execution authorized.\n"
 )
 HEADINGS = (
@@ -87,7 +89,7 @@ def review(source: str) -> None:
         "Readiness decision: ADR_027_BLOCKED",
         "ADR-027 status: Proposed; MPBP-1 readiness: Blocked.",
         "H-01: OPEN. M-01: CLOSED. M-04: CLOSED.",
-        "Verification: NOT RUN — Awaiting user execution.",
+        "Verification: Maintainer-run document validator PASSED; supplied output recorded below.",
         "No acceptance, implementation or live execution authorized.",
         "Credentialed media NOT QUALIFIED; remote VTO UNSUPPORTED.",
     ):
