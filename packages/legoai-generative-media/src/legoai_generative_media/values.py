@@ -100,6 +100,7 @@ class GeneratedImage:
 REASONS = frozenset(
     {
         "authentication_failed",
+        "credentialled_provider_unsupported",
         "forbidden",
         "insufficient_credits",
         "invalid_workflow",

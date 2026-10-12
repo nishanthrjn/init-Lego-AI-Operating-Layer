@@ -27,6 +27,7 @@ from media_support import (
 )
 
 from legoai_generative_media import local_host
+from legoai_generative_media import config as media_config
 from legoai_generative_media import service as media_service
 from legoai_generative_media.comfyui import ComfyUIConfig, LocalComfyUIAdapter
 from legoai_generative_media.composition import (
@@ -133,7 +134,7 @@ def test_services_use_public_claim_and_settlement_once(
         service = await build(tmp_path, http, try_on)
         assert captured == []  # Construction/diagnostics is not invocation.
         secret = Mock(side_effect=AssertionError("no invocation credential lookup"))
-        monkeypatch.setattr(media_service, "resolve_secret", secret)
+        monkeypatch.setattr(media_config, "resolve_secret", secret)
         http.fail_at = failure or ""
         result = await call(service)
         assert result.effect is effect

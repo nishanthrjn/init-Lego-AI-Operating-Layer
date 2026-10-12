@@ -22,6 +22,7 @@ from media_support import (
     write_tryon_workflow,
 )
 
+from legoai_generative_media import config as media_config
 from legoai_generative_media import local_host
 from legoai_generative_media import service as media_service
 from legoai_generative_media.config import (
@@ -178,7 +179,6 @@ def test_remote_construction_refuses_before_effects(
     monkeypatch.setattr(local_host, "open_governed_execution", facade)
     spies.append(facade)
     for name in (
-        "resolve_secret",
         "default_transports",
         "LocalHTTP",
         "RemoteHTTPS",
@@ -187,6 +187,9 @@ def test_remote_construction_refuses_before_effects(
         spy = Mock(side_effect=AssertionError(f"{name} must not occur"))
         monkeypatch.setattr(media_service, name, spy)
         spies.append(spy)
+    secret = Mock(side_effect=AssertionError("Secret resolution must not occur"))
+    monkeypatch.setattr(media_config, "resolve_secret", secret)
+    spies.append(secret)
     discovery = AsyncMock(side_effect=AssertionError("discovery must not occur"))
     monkeypatch.setattr(media_service, "discover", discovery)
     spies.append(discovery)
@@ -238,9 +241,7 @@ def test_local_construction_preserves_family_selection(
         assert http.calls == []
 
 
-def test_remote_diagnostics_remain_explicit_after_construction_refusal(
-    tmp_path: Path,
-) -> None:
+def test_remote_diagnostics_refuse_unsupported_credentials(tmp_path: Path) -> None:
     remote = "https://comfy.example.org"
     candidate = config(
         tmp_path,
@@ -264,12 +265,11 @@ def test_remote_diagnostics_remain_explicit_after_construction_refusal(
         candidate.provider,
         WorkflowConfig(candidate.workflow.path, candidate.workflow.sha256, "unused"),
     )
-    profile = asyncio.run(
-        probe_provider(diagnostic, environ=environment, transports=transports)
-    )
-    assert profile.family == "v2"
-    assert transports.opened == [(remote, environment["COMFY_API_KEY"])]
-    assert fake.calls and all(call[0] == "GET" for call in fake.calls)
+    with pytest.raises(ProviderError, match="credentialled_provider_unsupported"):
+        asyncio.run(
+            probe_provider(diagnostic, environ=environment, transports=transports)
+        )
+    assert transports.opened == [] and fake.calls == []
 
 
 def test_shipped_config_parses_and_pins_models() -> None:

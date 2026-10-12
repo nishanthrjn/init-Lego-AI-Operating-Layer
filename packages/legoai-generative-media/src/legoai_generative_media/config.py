@@ -1,9 +1,8 @@
 """Operator provider configuration: strict TOML, secret references only.
 
-Precedence: the configuration file is the only source of settings. The
-environment is consulted solely to resolve an explicit `env:NAME` secret
-reference. There are no other environment overrides. This is an
-adapter-local reference resolver, not a secret-management system.
+The configuration file is the only source of settings. Legacy env:NAME
+references remain representable, but credentialed operations are unsupported.
+No environment or supplied mapping is consulted for credential material.
 """
 
 import hashlib
@@ -15,8 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from legoai.kernel.errors import ErrorCategory
+
 from .comfyui import CompletionPolicy
-from .drivers.base import Capabilities
+from .drivers.base import Capabilities, ProviderError
 from .http import Endpoint, https_origin
 from .tryon import TEMPLATE_ID, ApprovedTryOnWorkflow, TryOnModels
 from .values import ApprovedWorkflowRef, identifier
@@ -368,12 +369,9 @@ def local_config(
 
 
 def resolve_secret(ref: str | None, environ: Mapping[str, str]) -> str | None:
-    """Resolve env:NAME; the error names the variable, never any value."""
+    """Compatibility entry point: never resolve material while ADR-027 is deferred."""
     if ref is None:
         return None
-    if not SECRET_REF.fullmatch(ref):
-        raise ValueError("secret_ref must be env:NAME")
-    value = environ.get(ref[4:])
-    if not value:
-        raise ValueError(f"secret reference unresolved: {ref}")
-    return value
+    raise ProviderError(
+        ErrorCategory.POLICY_VIOLATION, "credentialled_provider_unsupported"
+    )

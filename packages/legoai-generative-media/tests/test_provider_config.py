@@ -15,6 +15,7 @@ from legoai_generative_media.config import (
     parse_config,
     resolve_secret,
 )
+from legoai_generative_media.service import ProviderError
 from legoai_generative_media.values import TextToImageRequest
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "examples" / "generative-media-minimal"
@@ -160,15 +161,13 @@ def test_credentials_in_other_tables_rejected(tmp_path: Path, key: str) -> None:
         parse_config(data, tmp_path)
 
 
-def test_secret_resolved_only_from_named_env_reference() -> None:
-    assert resolve_secret("env:COMFY_API_KEY", {"COMFY_API_KEY": SECRET}) == SECRET
+def test_secret_resolution_is_unsupported_without_echo() -> None:
     assert resolve_secret(None, {"COMFY_API_KEY": SECRET}) is None
-    with pytest.raises(ValueError) as caught:
-        resolve_secret("env:COMFY_API_KEY", {"OTHER": SECRET})
-    assert "COMFY_API_KEY" in str(caught.value) and SECRET not in str(caught.value)
-    for ref in ("COMFY_API_KEY", "env:lower", "env:A B", "vault:x"):
-        with pytest.raises(ValueError):
+    for ref in ("env:COMFY_API_KEY", "env:lower", "env:A B", "vault:x"):
+        with pytest.raises(ProviderError) as caught:
             resolve_secret(ref, {"COMFY_API_KEY": SECRET})
+        assert str(caught.value) == "credentialled_provider_unsupported"
+        assert ref not in str(caught.value) and SECRET not in str(caught.value)
 
 
 def test_digest_binds_settings_not_secret_values(tmp_path: Path) -> None:

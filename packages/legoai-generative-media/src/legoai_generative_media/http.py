@@ -69,11 +69,7 @@ class Response:
 def _authorization(value: str | None) -> str | None:
     if value is None:
         return None
-    if type(value) is not str or not 1 <= len(value) <= 4096:
-        raise ValueError("invalid credential")
-    if any(not 0x21 <= ord(c) <= 0x7E for c in value):
-        raise ValueError("invalid credential")
-    return "Bearer " + value
+    raise ValueError("credentialled_provider_unsupported")
 
 
 def _check(method: str, path: str, body: bytes, limit: int, headers: Headers) -> None:
@@ -86,7 +82,7 @@ def _check(method: str, path: str, body: bytes, limit: int, headers: Headers) ->
     if len(body) > MAX_REQUEST_BODY or not 0 < limit <= 16 * 1024 * 1024:
         raise ValueError("invalid HTTP bound")
     for key, value in headers:
-        if key.lower() in ("authorization", "host", "content-length") or any(
+        if key.lower() not in ("content-type", "idempotency-key") or any(
             not 0x20 <= ord(c) <= 0x7E or c == ":" for c in key
         ):
             raise ValueError("forbidden header")
@@ -105,11 +101,13 @@ async def _exchange(
     headers: Headers,
     authorization: str | None,
 ) -> Response:
+    # Defense in depth for direct internal calls; never serialize auth material.
+    if authorization is not None:
+        raise ValueError("credentialled_provider_unsupported")
+    _check(method, path, body, limit, headers)
     extra = "".join(f"{k}: {v}\r\n" for k, v in headers)
     if not any(k.lower() == "content-type" for k, _ in headers):
         extra = "Content-Type: application/json\r\n" + extra
-    if authorization is not None:
-        extra += f"Authorization: {authorization}\r\n"
     head_out = (
         f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n"
         f"Connection: close\r\nAccept-Encoding: identity\r\n"

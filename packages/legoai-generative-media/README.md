@@ -68,8 +68,12 @@ to `media_execution_refused`. Provider/coordinator internals are not error text.
 
 [Public execution migration](../../planning/GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1.md)
 is **locally qualified** by the maintainer's complete passing validator; M-01 is closed.
-H-01 remains open, ADR-027 remains Proposed, remote VTO remains unsupported and
-credentialed media is not qualified. This migration adds no Secret-use authority.
+H-01 CLOSURE PENDING LOCAL VALIDATION: the
+[credential fail-closed correction](../../planning/GENERATIVE-MEDIA-CREDENTIALED-PATH-FAIL-CLOSED-1.md)
+refuses credential-bearing paths before resolution or transport construction.
+ADR-027 is Deferred; credentialed media remains unsupported/unqualified and
+remote VTO remains unsupported. No purpose-bound credential profile is implemented.
+This migration adds no Secret-use authority.
 `probe_provider` remains a separate explicit diagnostic; reconciliation remains
 read-only and media-owned. Neither opens an execution facade.
 
@@ -77,8 +81,19 @@ Provider selection is configuration. `service.open_text_to_image(config)`
 returns a governed `TextToImagePort` + `JobReconciliationPort`. A closed
 driver registry chooses the legacy OSS API or Comfy API v2 (Comfy Cloud,
 deployments, `comfy-api-proxy`) by explicit `api_family` or by read-only
-discovery. Remote endpoints require HTTPS, an allowlisted origin and a bearer
-token referenced as `env:NAME`. See
+discovery. Safe configuration can still represent bearer `env:NAME` references;
+representation is not permission to resolve them. Any configured authentication
+or Secret reference refuses with `ProviderError(POLICY_VIOLATION,
+"credentialled_provider_unsupported")`, including local bearer configurations.
+The existing remote configuration requires bearer auth, so it is not executable.
+No environment or supplied credential mapping is read. Explicit and auto probes,
+text-to-image and image-transfer construction refuse before provider work; local
+VTO preflight returns a failed credential-scope report before workflow loading.
+Remote VTO retains its earlier independent M-04 refusal. Secret-free local
+construction, diagnostics, image transfer and governed invocation are preserved.
+Direct raw-token transports also refuse; custom request headers are restricted to
+the existing drivers' Content-Type and Idempotency-Key headers. Injected transports
+remain trusted host/test code, not a sandbox against arbitrary Python code. See
 [provider compatibility](../../planning/COMFYUI-PROVIDER-COMPATIBILITY-SLICE.md)
 and `uv run --locked python .alidate_comfyui_provider_compatibility.py`.
 

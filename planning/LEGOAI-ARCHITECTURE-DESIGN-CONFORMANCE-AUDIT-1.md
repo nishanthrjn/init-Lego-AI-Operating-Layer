@@ -153,7 +153,18 @@ None established in the reviewed paths. This is not proof that none exists elsew
 
 ### HIGH
 
-**H-01 — Credentialed media has no purpose-bound Secret-use enforcement. OPEN.**
+**H-01 — H-01 CLOSURE PENDING LOCAL VALIDATION.**
+
+Current correction: [GENERATIVE-MEDIA-CREDENTIALED-PATH-FAIL-CLOSED-1](GENERATIVE-MEDIA-CREDENTIALED-PATH-FAIL-CLOSED-1.md)
+removes the unsafe reachable credential scope by refusing before material access
+or authenticated transport construction. H-01 remains open until maintainer
+validation. Closure will mean only that no supported media operation resolves or
+uses credentials; it will not mean purpose-bound credential use is implemented.
+ADR-027 remains Deferred, B-02 STILL_BLOCKED, credentialed media unsupported and
+unqualified, and remote VTO unsupported. M-01/M-04 remain closed; local secret-free
+media is preserved. No security/provider/live qualification is claimed.
+
+Historical finding and original remediation reasoning (preserved):
 
 - Location: `packages/legoai-generative-media/src/legoai_generative_media/config.py:370`
   (`resolve_secret`), `service.py:probe_provider/_driver`, `http.py:RemoteHTTPS`.

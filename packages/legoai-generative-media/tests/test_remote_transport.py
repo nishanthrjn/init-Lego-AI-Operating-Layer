@@ -1,4 +1,4 @@
-"""Remote HTTPS boundary: explicit origin, verified TLS, credentials by reference."""
+"""Secret-free HTTPS mechanics; credential construction is unsupported."""
 
 import asyncio
 import ssl
@@ -51,8 +51,14 @@ def test_malformed_credentials_rejected_without_echo(token: str) -> None:
 
 
 def test_credentials_never_in_repr() -> None:
-    assert SECRET not in repr(RemoteHTTPS("https://cloud.comfy.org", token=SECRET))
-    assert SECRET not in repr(LocalHTTP(Endpoint(), token=SECRET))
+    for factory in (
+        lambda: RemoteHTTPS("https://cloud.comfy.org", token=SECRET),
+        lambda: LocalHTTP(Endpoint(), token=SECRET),
+    ):
+        with pytest.raises(ValueError) as caught:
+            factory()
+        assert str(caught.value) == "credentialled_provider_unsupported"
+        assert SECRET not in str(caught.value)
 
 
 @pytest.mark.parametrize(
@@ -75,30 +81,11 @@ def test_per_request_headers_cannot_override_security(
         )
 
 
-def test_bearer_header_sent_and_redirect_returned_not_followed() -> None:
-    """Shared HTTP/1.1 exchange, exercised over a loopback server."""
-    seen: list[bytes] = []
+def test_bearer_refuses_before_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    from unittest.mock import Mock
 
-    async def run() -> None:
-        async def handler(
-            reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-        ) -> None:
-            seen.append(await reader.readuntil(b"\r\n\r\n"))
-            writer.write(
-                b"HTTP/1.1 302 Found\r\nLocation: https://evil.example/x\r\n"
-                b"Content-Length: 0\r\n\r\n"
-            )
-            await writer.drain()
-            writer.close()
-
-        server = await asyncio.start_server(handler, "127.0.0.1", 0)
-        async with server:
-            port = server.sockets[0].getsockname()[1]
-            http = LocalHTTP(Endpoint(f"http://127.0.0.1:{port}"), token=SECRET)
-            with pytest.raises(ValueError) as caught:
-                await http.request("GET", "/x", limit=100)
-            assert SECRET not in str(caught.value)
-
-    asyncio.run(run())
-    assert b"Authorization: Bearer " + SECRET.encode() in seen[0]
-    assert b"evil.example" not in seen[0]
+    network = Mock(side_effect=AssertionError("network forbidden"))
+    monkeypatch.setattr(asyncio, "open_connection", network)
+    with pytest.raises(ValueError, match="credentialled_provider_unsupported"):
+        LocalHTTP(Endpoint(), token=SECRET)
+    network.assert_not_called()

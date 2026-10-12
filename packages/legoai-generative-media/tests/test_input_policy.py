@@ -21,7 +21,7 @@ from legoai_generative_media.comfyui import ComfyUIConfig, LocalComfyUIAdapter
 from legoai_generative_media.config import parse_config
 from legoai_generative_media.drivers import legacy, v2
 from legoai_generative_media.drivers.legacy import LegacyDriver
-from legoai_generative_media.service import open_image_transfer
+from legoai_generative_media.service import ProviderError, open_image_transfer
 from legoai_generative_media.transfer import ImageTransfer
 from legoai_generative_media.values import (
     ImageInput,
@@ -69,17 +69,16 @@ def test_remote_and_cloud_refused_before_any_io(
     tmp_path: Path, endpoint: str, family: str, fake: str
 ) -> None:
     server: Any = FakeHTTP() if fake == "legacy" else FakeV2()
-    transfer = asyncio.run(
-        open_image_transfer(
-            config(tmp_path, **remote(endpoint, family)),
-            environ={"COMFY_API_KEY": "sk-test"},
-            transports=Transports({endpoint: server}),
+    transports = Transports({endpoint: server})
+    with pytest.raises(ProviderError, match="credentialled_provider_unsupported"):
+        asyncio.run(
+            open_image_transfer(
+                config(tmp_path, **remote(endpoint, family)),
+                environ={"COMFY_API_KEY": "sk-test"},
+                transports=transports,
+            )
         )
-    )
-    result = asyncio.run(transfer.upload((PERSON, GARMENT)))
-    assert result.disclosure is EffectExtent.NONE and result.uploaded == ()
-    assert result.error is ErrorCategory.POLICY_VIOLATION
-    assert result.reason == "remote_personal_images_forbidden"
+    assert transports.opened == []
     assert server.calls == []  # Zero upload requests, zero requests at all.
 
 

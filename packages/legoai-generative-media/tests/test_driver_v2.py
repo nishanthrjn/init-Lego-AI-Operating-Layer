@@ -326,43 +326,23 @@ def cloud_config(tmp_path: Path) -> Any:
     )
 
 
-def test_cloud_auth_injected_from_secret_ref_and_never_leaked(tmp_path: Path) -> None:
+@pytest.mark.parametrize("environment", [{}, {"COMFY_API_KEY": SECRET}])
+def test_cloud_credentials_unsupported_before_io(
+    tmp_path: Path, environment: dict[str, str]
+) -> None:
+    from legoai_generative_media.service import ProviderError
+
     fake = FakeV2()
-    fake.redirect = SIGNED
-    fake.submit = envelope(402, "insufficient_credits")
-    transports = Transports({CLOUD: fake, STORAGE: FakeStorage(png())})
-    service = asyncio.run(
-        open_text_to_image(
-            cloud_config(tmp_path),
-            environ={"COMFY_API_KEY": SECRET},
-            transports=transports,
-        )
-    )
-    assert transports.opened[0] == (CLOUD, SECRET)  # Only the API origin gets it.
-    result = asyncio.run(service.generate(TextToImageRequest("red mug", 42)))
-    assert (
-        result.reason == "insufficient_credits" and result.effect is EffectExtent.NONE
-    )
-    for text in (
-        repr(service),
-        repr(result),
-        str(service.describe()),
-        repr(fake.calls),
-    ):
-        assert SECRET not in text
-    assert service.describe()["api_family"] == "v2"
-    assert "idempotent_submission" in service.describe()["capabilities"]
-
-
-def test_cloud_missing_secret_fails_before_io(tmp_path: Path) -> None:
-    transports = Transports({})
-    with pytest.raises(ValueError) as caught:
+    transports = Transports({CLOUD: fake})
+    with pytest.raises(ProviderError) as caught:
         asyncio.run(
             open_text_to_image(
-                cloud_config(tmp_path), environ={}, transports=transports
+                cloud_config(tmp_path), environ=environment, transports=transports
             )
         )
-    assert "COMFY_API_KEY" in str(caught.value) and transports.opened == []
+    assert str(caught.value) == "credentialled_provider_unsupported"
+    assert caught.value.category is ErrorCategory.POLICY_VIOLATION
+    assert transports.opened == [] and fake.calls == []
 
 
 @pytest.mark.parametrize("code", ["not_found", "job_not_found"])

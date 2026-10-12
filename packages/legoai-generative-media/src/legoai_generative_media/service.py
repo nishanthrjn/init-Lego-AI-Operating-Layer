@@ -1,12 +1,11 @@
 """Configuration-driven composition: applications receive ports, never drivers.
 
-`open_text_to_image` resolves the secret reference, discovers or trusts the
+`open_text_to_image` admits secret-free scope, discovers or trusts the
 configured API family, selects an admitted driver from the closed registry
 and returns a governed TextToImagePort + JobReconciliationPort.
 """
 
 import asyncio
-import os
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
@@ -15,7 +14,7 @@ from legoai.kernel.errors import ErrorCategory
 
 from .comfyui import ComfyTextToImageAdapter
 from .composition import TRY_ON_OFFER, invoke, invoke_try_on
-from .config import GenerationConfig, ProviderConfig, TryOnConfig, resolve_secret
+from .config import GenerationConfig, ProviderConfig, TryOnConfig
 from .discovery import DRIVERS, confirm, discover
 from .drivers.base import (
     Budget,
@@ -53,10 +52,22 @@ __all__ = [
 ]
 
 
+def _require_secret_free(provider: ProviderConfig) -> None:
+    if provider.auth != "none" or provider.secret_ref is not None:
+        raise ProviderError(
+            ErrorCategory.POLICY_VIOLATION, "credentialled_provider_unsupported"
+        )
+
+
 def default_transports(provider: ProviderConfig) -> TransportFactory:
+    _require_secret_free(provider)
     timeout = provider.completion.request_timeout_seconds
 
     def make(origin: str, token: str | None) -> LocalHTTP | RemoteHTTPS:
+        if token is not None:
+            raise ProviderError(
+                ErrorCategory.POLICY_VIOLATION, "credentialled_provider_unsupported"
+            )
         if provider.deployment == "local":
             return LocalHTTP(Endpoint(origin), timeout, token=token)
         return RemoteHTTPS(origin, timeout, token=token)
@@ -126,11 +137,9 @@ async def probe_provider(
 ) -> ProviderProfile:
     """Read-only reachability/family/capability check; never submits."""
     provider = config.provider
-    token = resolve_secret(
-        provider.secret_ref, os.environ if environ is None else environ
-    )
+    _require_secret_free(provider)
     factory = transports or default_transports(provider)
-    primary = factory(provider.origin, token)
+    primary = factory(provider.origin, None)
     timeout = provider.completion.request_timeout_seconds
     if provider.api_family == "auto":
         found, version = await discover(
@@ -173,11 +182,9 @@ async def _driver(
     transports: TransportFactory | None,
     clock: Callable[[], float],
 ) -> ComfyDriver:
-    token = resolve_secret(
-        provider.secret_ref, os.environ if environ is None else environ
-    )
+    _require_secret_free(provider)
     factory = transports or default_transports(provider)
-    primary = factory(provider.origin, token)
+    primary = factory(provider.origin, None)
     family, version = await discover(
         provider.api_family,
         primary,
@@ -357,17 +364,19 @@ async def preflight_virtual_try_on(
         return report(False)
     lines.append(("local-only policy", "PASS"))
     try:
+        _require_secret_free(provider)
+    except ProviderError as error:
+        lines.append(("credential scope", f"FAIL ({error.reason})"))
+        return report(False)
+    try:
         workflow = config.workflow.load()
     except (OSError, ValueError, TypeError) as error:
         lines.append(("approved template", f"FAIL ({str(error)[:120]})"))
         return report(False)
     width, height = workflow.geometry
     lines.append(("approved template", f"PASS {workflow.kind.value} {width}x{height}"))
-    token = resolve_secret(
-        provider.secret_ref, os.environ if environ is None else environ
-    )
     factory = transports or default_transports(provider)
-    primary = factory(provider.origin, token)
+    primary = factory(provider.origin, None)
     timeout = provider.completion.request_timeout_seconds
     try:
         if provider.api_family == "auto":
