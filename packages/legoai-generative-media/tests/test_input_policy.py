@@ -7,7 +7,6 @@ from typing import Any
 
 import pytest
 from legoai.kernel.effects import EffectExtent
-from legoai.kernel.errors import ErrorCategory
 from media_support import (
     FakeHTTP,
     FakeV2,

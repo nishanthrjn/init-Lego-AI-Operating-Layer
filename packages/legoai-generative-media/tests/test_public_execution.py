@@ -26,8 +26,8 @@ from media_support import (
     write_workflow,
 )
 
-from legoai_generative_media import local_host
 from legoai_generative_media import config as media_config
+from legoai_generative_media import local_host
 from legoai_generative_media import service as media_service
 from legoai_generative_media.comfyui import ComfyUIConfig, LocalComfyUIAdapter
 from legoai_generative_media.composition import (
