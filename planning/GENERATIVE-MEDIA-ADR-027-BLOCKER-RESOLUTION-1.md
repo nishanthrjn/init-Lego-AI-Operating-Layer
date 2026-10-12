@@ -1,6 +1,12 @@
 # GENERATIVE-MEDIA-ADR-027-BLOCKER-RESOLUTION-1
 
 Status: Proposed — NOT ACCEPTED.
+<!-- GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1 CURRENT BEGIN -->
+Current resolution record: [GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1](GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1.md).
+Current states: B-01 RESOLUTION_DRAFT_READY; B-02 STILL_BLOCKED; B-03 RESOLUTION_DRAFT_READY; B-04 RESOLUTION_DRAFT_READY; B-05 RESOLUTION_DRAFT_READY. No blocker is CLOSED; all approvals remain pending.
+Prior blocker-package document validation: maintainer-run LOCAL DOCUMENT CHECKS PASSED. This new remaining-blockers slice awaits maintainer validation.
+Historical baseline, states, reasoning and handoff below describe the preceding slice and are preserved unchanged.
+<!-- GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1 CURRENT END -->
 Baseline: `e1376135509185b9b4f91f4b23d14fc9e501a1d6`.
 ADR-027: Proposed. Readiness: Blocked. H-01: OPEN.
 M-01: CLOSED. M-04: CLOSED. ADR-026: Accepted.
