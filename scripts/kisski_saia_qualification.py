@@ -108,7 +108,8 @@ def plan_lines(*, live: bool = False) -> tuple[str, ...]:
         "SYNTHETIC only; no repository input, file mutation or generated-code execution",
         "512 output tokens per chat; 60-second client timeout; no provider-capacity claim",
         "Stage 4 coding quality is deferred to FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1",
-        "No live run is authorized by local validation; --live requires: " + AUTHORIZATION,
+        "No live run is authorized by local validation; --live requires: "
+        + AUTHORIZATION,
     )
 
 
@@ -268,7 +269,9 @@ def run(
         )
         discovered = legacy._discover(config, owned_source, credential, clock(), clock)
         write(f"discovery outcome: {discovered.outcome.value}")
-        write(f"discovery state: {discovered.state.value if discovered.state else 'none'}")
+        write(
+            f"discovery state: {discovered.state.value if discovered.state else 'none'}"
+        )
         if discovered.attempt_id is not None:
             write(f"discovery attempt: {discovered.attempt_id.value}")
         if discovered.status is not None:
@@ -286,7 +289,10 @@ def run(
             return Outcome.DECLINED
         model = discovered.models[index - 1]
         write("pinned model: " + json.dumps(model.value, ensure_ascii=True))
-        if ask("Approve one tiny SYNTHETIC chat with this model? [y/N] ").strip() != "y":
+        if (
+            ask("Approve one tiny SYNTHETIC chat with this model? [y/N] ").strip()
+            != "y"
+        ):
             return Outcome.DECLINED
         # The public source provisions only remote-model-bearer. The first
         # revision cannot serve chat; no material is copied between purposes.

@@ -106,7 +106,9 @@ def test_default_and_plan_have_no_io(args: list[str]) -> None:
         assert probe.main(args) == 0
 
 
-@pytest.mark.parametrize("option", ["--token", "--api-key", "--model", "--config", "--li"])
+@pytest.mark.parametrize(
+    "option", ["--token", "--api-key", "--model", "--config", "--li"]
+)
 def test_invalid_arguments_are_not_echoed(
     option: str, capsys: pytest.CaptureFixture[str]
 ) -> None:

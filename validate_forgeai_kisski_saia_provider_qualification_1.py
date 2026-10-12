@@ -115,7 +115,8 @@ def main() -> int:
                 ),
             )
             tests(
-                "REMOTE SRCP-1, disclosure, custody and protected transport", REMOTE_TESTS
+                "REMOTE SRCP-1, disclosure, custody and protected transport",
+                REMOTE_TESTS,
             )
             tests("LOCAL and Ollama preservation", LOCAL_TESTS)
             tests(

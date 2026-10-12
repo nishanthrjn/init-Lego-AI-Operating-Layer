@@ -60,9 +60,10 @@ def test_existing_forgeai_proposal_parser_and_review_are_provider_neutral(
             remote.responses["/v1/chat/completions"] = json.dumps(value).encode()
 
         remote.on_request = respond
-        with configured(
-            tmp_path, remote, policy=saia_profile(remote.port, model)
-        ) as (cfg, _):
+        with configured(tmp_path, remote, policy=saia_profile(remote.port, model)) as (
+            cfg,
+            _,
+        ):
             result, approvals, checks = execute(cfg)
             if valid:
                 assert result.disposition is TaskDisposition.SUCCEEDED
