@@ -1,15 +1,21 @@
 # GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1
 
-Status: Proposed — NOT ACCEPTED.
+Status: Preserved proposal evidence — non-normative; ADR-027 Deferred.
+<!-- GENERATIVE-MEDIA-ADR-027-DEFER-1 BEGIN -->
+Current disposition: ADR-027 / MPBP-1 Deferred by explicit maintainer decision; [ADR-027](../adrs/ADR-027.md) defines the authoritative reopen trigger. Only the credentialed profile is deferred, not all media.
+B-02 remains STILL_BLOCKED; B-01/B-03/B-04/B-05 remain preserved proposed resolution drafts, non-normative and not implementation authority. No blocker is closed. H-01 OPEN; M-01 CLOSED; M-04 CLOSED.
+Next: separately authorize GENERATIVE-MEDIA-CREDENTIALED-PATH-FAIL-CLOSED-1, preserving qualified local/secret-free media. After correction and validation, return to ForgeAI; no further credential architecture slices before the reopen trigger.
+No implementation or live execution authorized. No security, credential, provider or live qualification claimed. Historical research and earlier proposal states below are preserved.
+<!-- GENERATIVE-MEDIA-ADR-027-DEFER-1 END -->
 Baseline: `cb0f4fb02c9140c2e2ab1f1a12d30405725c0676`.
-ADR-027: Proposed. Readiness: Blocked. H-01: OPEN.
+Historical review state: ADR-027: Proposed. Readiness: Blocked. H-01: OPEN.
 B-01: RESOLUTION_DRAFT_READY.
 B-02: STILL_BLOCKED.
 B-03: RESOLUTION_DRAFT_READY.
 B-04: RESOLUTION_DRAFT_READY.
 B-05: RESOLUTION_DRAFT_READY.
 No blocker is CLOSED. Architecture approval is pending.
-Verification: NOT RUN — Awaiting user execution.
+Verification: Maintainer-run validate_generativemedia_mpbp1_remaining_blockers_1.py PASSED; local document checks only.
 No implementation or live execution authorized.
 Credentialed media NOT QUALIFIED; remote VTO UNSUPPORTED.
 SRCP-1 remains Model-only. No generic credential service approved.
@@ -337,9 +343,9 @@ uv run --locked --offline --no-sync python .\validate_generativemedia_mpbp1_rema
 if ($LASTEXITCODE -ne 0) { throw 'MPBP-1 remaining blocker validation failed' }
 ```
 
-Expected: LOCAL DOCUMENT CHECKS PASSED; PACKAGE INCOMPLETE; B-02 STILL BLOCKED;
+Recorded maintainer result: GENERATIVE-MEDIA-MPBP1-REMAINING-BLOCKERS-1 LOCAL DOCUMENT CHECKS PASSED; PACKAGE INCOMPLETE; B-02 STILL BLOCKED;
 ADR-027 PROPOSED; H-01 OPEN; NO IMPLEMENTATION OR LIVE EXECUTION AUTHORIZED.
-Paste output before further changes. Document success proves no security,
+All reported phases passed, including positive/negative fixtures and working/staged checks. Document success proves no security,
 credential, provider, margin or storage guarantees. If B-02 later has sufficient
 evidence, conduct explicit upstream/addendum architecture acceptance review and
 then fresh ADR-027 readiness after required decisions are accepted. While incomplete,
