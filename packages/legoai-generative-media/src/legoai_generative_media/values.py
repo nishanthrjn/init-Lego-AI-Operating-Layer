@@ -114,6 +114,8 @@ REASONS = frozenset(
         "canceled",
         "expired",
         "remote_personal_images_forbidden",
+        "media_execution_refused",
+        "media_execution_unsettled",
     }
 )
 

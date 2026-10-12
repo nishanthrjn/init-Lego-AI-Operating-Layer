@@ -2,8 +2,7 @@
 
 `legoai.runtime.api` is contract-only; `legoai.runtime.local` is the single
 public module allowed to import reference realizations or private composition.
-Migrated consumers import neither. The generative-media internal composition
-remains an explicit, listed exception until CR-1c.
+Migrated consumers, including generative-media composition, import neither.
 """
 
 import ast
@@ -25,11 +24,6 @@ from tests.architecture.test_import_boundaries import violations
 
 ROOT = Path(__file__).resolve().parents[2]
 INTERNAL = ("legoai.reference", "legoai.runtime._composition")
-# CR-1c owns this migration; nothing else may join the list.
-CR1C_EXCEPTIONS = {
-    "packages/legoai-generative-media/src/legoai_generative_media/local_host.py",
-    "packages/legoai-generative-media/src/legoai_generative_media/composition.py",
-}
 # Existing authorization-adversarial fixtures, not application/domain code.
 # Keep this exception exact; no production consumer may join it.
 INTERNAL_TEST_FIXTURES = {
@@ -250,14 +244,14 @@ def _consumer_files() -> Iterator[Path]:
             yield from _walk(root)
 
 
-def test_consumers_import_no_core_internals_except_listed_cr1c() -> None:
+def test_consumers_import_no_core_internals_except_owner_fixtures() -> None:
     if not (ROOT / "packages").is_dir():
         pytest.skip("repository consumer layout unavailable (e.g. extracted sdist)")
     offenders = set()
     for path in _consumer_files():
         if _internal(_imports(path.read_text(encoding="utf-8"))):
             offenders.add(path.relative_to(ROOT).as_posix())
-    assert offenders == CR1C_EXCEPTIONS | INTERNAL_TEST_FIXTURES
+    assert offenders == INTERNAL_TEST_FIXTURES
 
 
 def test_migrated_consumers_do_not_self_issue_authority() -> None:

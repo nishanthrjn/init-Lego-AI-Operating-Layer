@@ -88,11 +88,15 @@ image-disclosure or transport authority and offers no generic callbacks, dispatc
 or workflow hosting. Closed `HostFailure` additions describe closed handles,
 duplicate claims, wrong state, unauthorized claims and expired deadlines.
 
-Existing Model `GovernedHost` behavior is unchanged. Generative Media has **not**
-migrated: M-01 stays open until `GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1`.
+Existing Model `GovernedHost` behavior is unchanged. Generative Media consumes
+this facade in `GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1`, pending maintainer
+validation; M-01 stays open until that migration validator passes. Each media
+invocation owns one handle; unresolved close retains owner-private exception
+custody and reports a media failure, never an invented settled effect.
 H-01 remains open, ADR-027 remains Proposed, and remote VTO remains unsupported.
-`GOVERNED-EXECUTION-PUBLIC-FACADE-1` is implemented with maintainer validation
-pending; no live or credentialed media is qualified.
+`GOVERNED-EXECUTION-PUBLIC-FACADE-1` is locally qualified by the maintainer-reported
+passing validator. That evidence does not qualify this pending media migration,
+live providers or credentialed media.
 
 ## Persistence boundary
 

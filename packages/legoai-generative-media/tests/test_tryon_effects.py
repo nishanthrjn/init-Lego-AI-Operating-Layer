@@ -2,8 +2,6 @@
 and the governed path."""
 
 import asyncio
-from dataclasses import replace
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from legoai.execution.values import ExecutionState
@@ -59,7 +57,7 @@ def test_governed_success_propagates_disclosure() -> None:
             adapter, "r1", approved=adapter.workflow.reference, offer=TRY_ON_OFFER
         )
         execution, output = await invoke_try_on(
-            session.coordinator,
+            session.execution,
             session.ready,
             session.context,
             session.contribution,
@@ -69,6 +67,7 @@ def test_governed_success_propagates_disclosure() -> None:
         assert execution.final_state is ExecutionState.SUCCEEDED
         assert output.input_disclosure is EffectExtent.COMPLETED
         assert session.contribution.entry.offer == TRY_ON_OFFER
+        assert await session.execution.close() == ()
 
     asyncio.run(scenario())
 
@@ -79,15 +78,16 @@ def test_governed_deadline_keeps_disclosure_receipt() -> None:
         http.wait_at = "/history"
         adapter = tryon_adapter(http)
         session = await prepare_local(
-            adapter, "r1", approved=adapter.workflow.reference, offer=TRY_ON_OFFER
-        )
-        context = replace(
-            session.context, deadline=datetime.now(UTC) + timedelta(seconds=0.3)
+            adapter,
+            "r1",
+            approved=adapter.workflow.reference,
+            offer=TRY_ON_OFFER,
+            timeout=0.3,
         )
         execution, output = await invoke_try_on(
-            session.coordinator,
+            session.execution,
             session.ready,
-            context,
+            session.context,
             session.contribution,
             session.contribution.revision,
             tryon_request(),
@@ -96,6 +96,7 @@ def test_governed_deadline_keeps_disclosure_receipt() -> None:
         assert output.effect is EffectExtent.UNKNOWN
         assert output.input_disclosure is EffectExtent.COMPLETED
         assert execution.final_state is ExecutionState.FAILED
+        assert await session.execution.close() == ()
 
     asyncio.run(scenario())
 
@@ -108,7 +109,7 @@ def test_governed_remote_refusal_is_nothing_sent() -> None:
             adapter, "r1", approved=adapter.workflow.reference, offer=TRY_ON_OFFER
         )
         _, output = await invoke_try_on(
-            session.coordinator,
+            session.execution,
             session.ready,
             session.context,
             session.contribution,
@@ -118,5 +119,6 @@ def test_governed_remote_refusal_is_nothing_sent() -> None:
         assert output.effect is EffectExtent.NONE
         assert output.input_disclosure is EffectExtent.NONE
         assert http.calls == []
+        assert await session.execution.close() == ()
 
     asyncio.run(scenario())

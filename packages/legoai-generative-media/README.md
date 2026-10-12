@@ -47,13 +47,31 @@ never cause resubmission. Successful generation followed by failed image retriev
 retains COMPLETED generation effect while reporting a failed result. Remote
 cessation is UNKNOWN, not promised. Process crashes lose in-memory job state.
 
-Composition selects a known exact Contribution using existing Catalog/Plugin
-lifecycle/version resolution; configuration cannot import code or grant admission.
-The reference local host explicitly issues a scoped grant and uses existing
-in-memory authorization, dispatch arbitration, invocation claim and settlement.
-Its operator authority is illustrative single-process scope, not durable IAM or
-multi-tenant isolation. Constructors/settings are trusted; current lifecycle
-withdrawal remains the host's responsibility. No generic provider registry.
+Generative Media now consumes `legoai.runtime.local.open_governed_execution`
+for Catalog/lifecycle admission, authorization, dispatch, context establishment,
+one-shot claim and canonical settlement. Trusted single-operator composition pins
+the exact configuration revision, principal, policy, grant and existing media
+Plugin/capability. Requests cannot establish authority. Media retains its adapter,
+workflow binding, result validation, image disclosure and job/effect semantics.
+This remains process-local operator authority, not durable IAM or tenant isolation.
+
+Each service invocation owns one facade (capacity 1), with the configured media
+execution deadline and 5-second preparation/shutdown bounds. It closes on return
+or failure, after recording any owner result, including cancellation receipts.
+Unresolved close raises the existing `ProviderError` family with the closed reason
+`media_execution_unsettled`; owner-private exception custody retains the handle,
+unresolved IDs and any failed-settlement receipt. It is not a clean shutdown or
+evidence of effect NONE. There is no automatic retry, repair worker or durable
+custody; callers must retain the failure for operator investigation. Unclaimed
+READY work cannot be settled by inventing owner facts. Other facade refusals map
+to `media_execution_refused`. Provider/coordinator internals are not error text.
+
+[Public execution migration](../../planning/GENERATIVE-MEDIA-PUBLIC-EXECUTION-MIGRATION-1.md)
+is **pending maintainer validation**; M-01 closes only after that validation passes.
+H-01 remains open, ADR-027 remains Proposed, remote VTO remains unsupported and
+credentialed media is not qualified. This migration adds no Secret-use authority.
+`probe_provider` remains a separate explicit diagnostic; reconciliation remains
+read-only and media-owned. Neither opens an execution facade.
 
 Provider selection is configuration. `service.open_text_to_image(config)`
 returns a governed `TextToImagePort` + `JobReconciliationPort`. A closed

@@ -96,22 +96,22 @@ class TextToImageService:
 
     async def generate(self, request: TextToImageRequest) -> GenerationResult:
         policy = self.adapter.completion
-        session = await prepare_local(
+        async with await prepare_local(
             self.adapter,
             self.config.digest,
             approved=self.adapter.workflow.reference,
             timeout=policy.max_wait_seconds,
             binding=self.adapter.binding,
-        )
-        _, result = await invoke(
-            session.coordinator,
-            session.ready,
-            session.context,
-            session.contribution,
-            session.contribution.revision,
-            request,
-        )
-        return result
+        ) as session:
+            _, result = await invoke(
+                session.execution,
+                session.ready,
+                session.context,
+                session.contribution,
+                session.contribution.revision,
+                request,
+            )
+            return result
 
     async def reconcile(self, job: ProviderJobRef) -> ReconciliationResult:
         return await self.adapter.reconcile(job)
@@ -234,23 +234,23 @@ class TryOnService:
         }
 
     async def try_on(self, request: TryOnRequest) -> GenerationResult:
-        session = await prepare_local(
+        async with await prepare_local(
             self.adapter,
             self.config.digest,
             approved=self.adapter.workflow.reference,
             timeout=self.adapter.completion.max_wait_seconds,
             binding=self.adapter.binding,
             offer=TRY_ON_OFFER,
-        )
-        _, result = await invoke_try_on(
-            session.coordinator,
-            session.ready,
-            session.context,
-            session.contribution,
-            session.contribution.revision,
-            request,
-        )
-        return result
+        ) as session:
+            _, result = await invoke_try_on(
+                session.execution,
+                session.ready,
+                session.context,
+                session.contribution,
+                session.contribution.revision,
+                request,
+            )
+            return result
 
     async def reconcile(self, job: ProviderJobRef) -> ReconciliationResult:
         return await self.adapter.reconcile(job)

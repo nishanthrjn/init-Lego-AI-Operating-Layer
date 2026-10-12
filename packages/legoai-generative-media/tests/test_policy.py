@@ -197,7 +197,7 @@ def test_governed_900_second_execution_has_no_hidden_ceiling() -> None:
         remaining = (session.context.deadline - datetime.now(UTC)).total_seconds()
         assert 890 < remaining <= 900
         _, output = await invoke(
-            session.coordinator,
+            session.execution,
             session.ready,
             session.context,
             session.contribution,
@@ -205,6 +205,7 @@ def test_governed_900_second_execution_has_no_hidden_ceiling() -> None:
             TextToImageRequest("red mug", 42),
         )
         assert output.outcome is Outcome.SUCCESS and http.posts() == 1
+        assert await session.execution.close() == ()
 
     asyncio.run(run())
 

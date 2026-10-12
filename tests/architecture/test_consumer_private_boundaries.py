@@ -17,17 +17,6 @@ ASSESSMENT = "examples/assessment_starter/backend/src/assessment_starter/"
 # Exact module edges, never a whole-file or whole-package exemption. Removal
 # also fails until the corresponding debt entry is retired deliberately.
 DEBT = {
-    MEDIA + "composition.py": {
-        "legoai.reference.execution",
-        "legoai.reference.resolution",
-    },
-    MEDIA + "local_host.py": {
-        "legoai.reference.catalog",
-        "legoai.reference.evidence",
-        "legoai.reference.execution",
-        "legoai.reference.governance",
-        "legoai.reference.plugins",
-    },
     ASSESSMENT + "model_factory.py": {"legoai.reference.model"},
     ASSESSMENT + "model.py": {"legoai.reference.model_fake"},
     ASSESSMENT + "fixtures.py": {"legoai.reference.model_fake"},
@@ -139,6 +128,23 @@ def test_reusable_python_packages_never_import_consumer_applications() -> None:
             assert consumer_edges(source, module) == set(), path
 
 
+def test_media_has_no_private_core_edges() -> None:
+    for path in (ROOT / MEDIA).rglob("*.py"):
+        assert private_edges(path.read_text(encoding="utf-8"), module_name(path)) == set()
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from legoai.reference.execution import ExecutionCoordinator",
+        "from legoai.runtime._composition import direct",
+        "from legoai import reference\nreference.catalog.InMemoryCatalog()",
+    ],
+)
+def test_media_private_import_negative_controls(source: str) -> None:
+    assert private_edges(source, "legoai_generative_media.local_host")
+
+
 def consumer_edges(source: str, module: str) -> set[str]:
     applications = {"forgeai", "documind_app", "assessment_starter"}
     roots = {target.split(".")[0] for target in references(source, module)}
@@ -173,6 +179,15 @@ def test_forbidden_private_controls(source: str, expected: str) -> None:
     ("module", "source"),
     [
         ("consumer.app", "from legoai.runtime.local import open_local_host"),
+        (
+            "legoai_generative_media.local_host",
+            "from legoai.runtime.local import open_governed_execution",
+        ),
+        (
+            "legoai_generative_media.local_host",
+            "from legoai.runtime.api import GovernedExecutionConfig",
+        ),
+        ("legoai_generative_media.service", "from .local_host import prepare_local"),
         ("consumer.app", "from legoai.intelligence.model.ports import ModelPort"),
         ("legoai.runtime.local", "from legoai.reference.catalog import Catalog"),
         ("legoai_engineering.checks.local", "from ._commands import _arguments"),

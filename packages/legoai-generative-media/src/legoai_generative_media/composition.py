@@ -6,12 +6,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import cast
 
-from legoai.capabilities.ports import CatalogEntry, CatalogPort
-from legoai.capabilities.values import (
-    CapabilityId,
-    CapabilityOffer,
-    CapabilityRequirement,
-)
+from legoai.capabilities.ports import CatalogEntry
+from legoai.capabilities.values import CapabilityId, CapabilityOffer
 from legoai.execution.ports import CoordinationOutcome, CoordinationResult
 from legoai.execution.values import ExecutionContext, ExecutionResult, ExecutionState
 from legoai.kernel.effects import EffectExtent
@@ -20,10 +16,9 @@ from legoai.kernel.references import ConfigurationRevisionRef
 from legoai.kernel.versions import Version
 from legoai.observability.ports import ObservationSinkPort
 from legoai.observability.values import Observation, ObservationEventCode
-from legoai.plugins.ports import PluginLifecycleRecord, PluginLifecycleState
-from legoai.reference.execution import ExecutionCoordinator
-from legoai.reference.resolution import resolve
+from legoai.runtime.local import GovernedExecution
 
+from .drivers.base import ProviderError
 from .ports import TextToImagePort, VirtualTryOnPort
 from .values import (
     ApprovedWorkflowRef,
@@ -40,12 +35,40 @@ OFFER = CapabilityOffer(CapabilityId("legoai.text-to-image"), Version(1, 0, 0))
 TRY_ON_OFFER = CapabilityOffer(CapabilityId("legoai.virtual-try-on"), Version(1, 0, 0))
 
 
+class _SettlementFailure(ProviderError):
+    """Retain owner facts when recording fails; never infer NONE or retry."""
+
+    def __init__(
+        self,
+        observed: ExecutionResult,
+        result: GenerationResult,
+        failure: BaseException,
+    ) -> None:
+        super().__init__(ErrorCategory.EXECUTION_FAILURE, "media_execution_unsettled")
+        self._observed = observed
+        self._result = result
+        self._failure = failure
+
+
+async def _record(
+    execution: GovernedExecution,
+    context: ExecutionContext,
+    observed: ExecutionResult,
+    output: GenerationResult,
+) -> ExecutionResult:
+    try:
+        return await execution.settle(context, observed)
+    except BaseException as failure:
+        # This includes cancellation of settlement after an owner receipt exists.
+        # Session close retains this exception alongside unresolved control work.
+        raise _SettlementFailure(observed, output, failure) from None
+
+
 @dataclass(frozen=True, slots=True)
 class Contribution:
     binding: str
     revision: ConfigurationRevisionRef
     entry: CatalogEntry
-    activation: PluginLifecycleRecord
     workflow: ApprovedWorkflowRef
     adapter: TextToImagePort | VirtualTryOnPort = field(repr=False, compare=False)
 
@@ -55,59 +78,17 @@ class Contribution:
             raise TypeError("approved workflow required")
         if type(self.revision) is not ConfigurationRevisionRef:
             raise TypeError("exact configuration revision required")
-        if (
-            type(self.entry) is not CatalogEntry
-            or type(self.activation) is not PluginLifecycleRecord
-        ):
+        if type(self.entry) is not CatalogEntry:
             raise TypeError("admitted contribution required")
         if (
             self.revision.configuration.application.scope.tenant_id
             != self.entry.tenant_context.tenant_id
         ):
             raise ValueError("tenant mismatch")
-        if (
-            self.activation.plugin_id,
-            self.activation.release,
-            self.activation.admission_id,
-            self.activation.tenant_context,
-        ) != (
-            self.entry.plugin_id,
-            self.entry.release,
-            self.entry.admission_id,
-            self.entry.tenant_context,
-        ):
-            raise ValueError("activation mismatch")
-
-
-def select(
-    requirement: CapabilityRequirement,
-    binding: str,
-    revision: ConfigurationRevisionRef,
-    contributions: tuple[Contribution, ...],
-    catalog: CatalogPort,
-    now: datetime,
-    offer: CapabilityOffer = OFFER,
-) -> Contribution:
-    identifier(binding)
-    if type(contributions) is not tuple or not 1 <= len(contributions) <= 16:
-        raise ValueError("bounded contributions required")
-    matches = [c for c in contributions if c.binding == binding]
-    if len(matches) != 1:
-        raise ValueError("unknown or ambiguous binding")
-    chosen = matches[0]
-    if chosen.revision != revision:
-        raise ValueError("stale configuration")
-    if chosen.activation.state is not PluginLifecycleState.ACTIVE:
-        raise ValueError("inactive plugin")
-    snapshot = catalog.snapshot(chosen.entry.tenant_context)
-    resolution = resolve(requirement, snapshot, resolved_at=now)
-    if chosen.entry not in resolution.candidates or chosen.entry.offer != offer:
-        raise ValueError("unavailable or incompatible contribution")
-    return chosen
 
 
 async def invoke(
-    coordinator: ExecutionCoordinator,
+    execution: GovernedExecution,
     ready: CoordinationResult,
     context: ExecutionContext,
     chosen: Contribution,
@@ -118,7 +99,7 @@ async def invoke(
 ) -> tuple[ExecutionResult, GenerationResult]:
     adapter = cast(TextToImagePort, chosen.adapter)
     return await _invoke(
-        coordinator,
+        execution,
         ready,
         context,
         chosen,
@@ -131,7 +112,7 @@ async def invoke(
 
 
 async def invoke_try_on(
-    coordinator: ExecutionCoordinator,
+    execution: GovernedExecution,
     ready: CoordinationResult,
     context: ExecutionContext,
     chosen: Contribution,
@@ -142,7 +123,7 @@ async def invoke_try_on(
 ) -> tuple[ExecutionResult, GenerationResult]:
     adapter = cast(VirtualTryOnPort, chosen.adapter)
     return await _invoke(
-        coordinator,
+        execution,
         ready,
         context,
         chosen,
@@ -155,7 +136,7 @@ async def invoke_try_on(
 
 
 async def _invoke(
-    coordinator: ExecutionCoordinator,
+    execution: GovernedExecution,
     ready: CoordinationResult,
     context: ExecutionContext,
     chosen: Contribution,
@@ -176,14 +157,25 @@ async def _invoke(
     def unknown_disclosure(started: bool) -> EffectExtent:
         return EffectExtent.UNKNOWN if may_disclose and started else EffectExtent.NONE
 
+    if ready.outcome is CoordinationOutcome.CANCELLED:
+        raise GenerationCancelled(
+            GenerationResult(Outcome.CANCELLED, EffectExtent.NONE)
+        )
     if ready.outcome is not CoordinationOutcome.READY or ready.permit is None:
-        raise ValueError("governed READY result required")
+        raise ProviderError(
+            ready.category or ErrorCategory.EXECUTION_FAILURE,
+            "media_execution_refused",
+        )
     if context.execution_id != ready.execution_id:
         raise ValueError("execution mismatch")
-    await coordinator.claim_invocation(ready.execution_id)
+    await execution.claim(
+        context,
+        ready,
+        configuration=expected_revision,
+        contribution=chosen.entry,
+    )
     if (
         chosen.revision != expected_revision
-        or chosen.activation.state is not PluginLifecycleState.ACTIVE
         or ready.permit.resolved_entry != chosen.entry
         or ready.permit.operation != context.operation
         or context.operation.subject != expected_revision.configuration
@@ -240,11 +232,13 @@ async def _invoke(
                 cessation=Cessation.UNKNOWN,
                 input_disclosure=unknown_disclosure(started),
             )
-            await coordinator.settle(
-                ready,
-                final_state=ExecutionState.CANCELLED,
-                effect=output.effect,
-                error=None,
+            await _record(
+                execution,
+                context,
+                ExecutionResult(
+                    context.execution_id, ExecutionState.CANCELLED, output.effect, None
+                ),
+                output,
             )
             raise GenerationCancelled(output) from None
         except TimeoutError:
@@ -279,8 +273,11 @@ async def _invoke(
         if output.error is None
         else ErrorDetail(output.error, Recoverability.REQUIRES_INTERVENTION, ())
     )
-    execution = await coordinator.settle(
-        ready, final_state=state, effect=output.effect, error=error
+    settled = await _record(
+        execution,
+        context,
+        ExecutionResult(context.execution_id, state, output.effect, error),
+        output,
     )
     if sink is not None:
         try:
@@ -301,4 +298,4 @@ async def _invoke(
         except Exception:
             # Diagnostic delivery never changes an already settled external effect.
             pass
-    return execution, output
+    return settled, output

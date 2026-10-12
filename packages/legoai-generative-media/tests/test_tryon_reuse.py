@@ -22,6 +22,7 @@ from media_support import (
     write_tryon_workflow,
 )
 
+from legoai_generative_media import local_host
 from legoai_generative_media import service as media_service
 from legoai_generative_media.config import (
     GenerationConfig,
@@ -173,6 +174,9 @@ def test_remote_construction_refuses_before_effects(
     environment.__getitem__.side_effect = AssertionError("environment must not be read")
     transport = Mock(side_effect=AssertionError("transport must not be constructed"))
     spies: list[Mock] = [transport]
+    facade = Mock(side_effect=AssertionError("facade must not open"))
+    monkeypatch.setattr(local_host, "open_governed_execution", facade)
+    spies.append(facade)
     for name in (
         "resolve_secret",
         "default_transports",
