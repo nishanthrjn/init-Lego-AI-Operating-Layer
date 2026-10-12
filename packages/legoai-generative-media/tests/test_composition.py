@@ -10,7 +10,11 @@ from media_support import FakeHTTP, workflow
 from legoai_generative_media.comfyui import ComfyUIConfig, LocalComfyUIAdapter
 from legoai_generative_media.composition import invoke
 from legoai_generative_media.local_host import prepare_local
-from legoai_generative_media.values import GenerationCancelled, Outcome, TextToImageRequest
+from legoai_generative_media.values import (
+    GenerationCancelled,
+    Outcome,
+    TextToImageRequest,
+)
 
 
 def test_governed_success_and_replay() -> None:

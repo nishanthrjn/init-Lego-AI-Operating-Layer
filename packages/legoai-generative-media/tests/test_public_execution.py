@@ -382,5 +382,5 @@ def test_public_request_result_and_service_shapes() -> None:
     )
     for method in (TextToImageService.generate, TryOnService.try_on):
         assert tuple(inspect.signature(method).parameters) == ("self", "request")
-    for method in (TextToImageService.reconcile, TryOnService.reconcile):
-        assert tuple(inspect.signature(method).parameters) == ("self", "job")
+    for reconcile in (TextToImageService.reconcile, TryOnService.reconcile):
+        assert tuple(inspect.signature(reconcile).parameters) == ("self", "job")
