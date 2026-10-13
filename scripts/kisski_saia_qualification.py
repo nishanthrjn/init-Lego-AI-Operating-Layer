@@ -225,6 +225,8 @@ async def chat_once(
             f"chat error: {execution.error.category.value} / "
             f"{execution.error.recoverability.value}"
         )
+    if result.failure is not None:
+        write(f"chat model failure: {result.failure.value}")
     # Never print provider text, even a short excerpt of a successful response.
     return result, chat_failure(result, attempt)
 

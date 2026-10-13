@@ -1,7 +1,7 @@
 # FORGEAI-KISSKI-SAIA-PROVIDER-QUALIFICATION-1
 
-Status: IMPLEMENTED — MAINTAINER VALIDATION REQUIRED.
-Verification: NOT RUN — Awaiting user execution.
+Status: ORIGINAL PROFILE LOCALLY QUALIFIED; DIAGNOSTIC CORRECTION PENDING.
+Correction verification: NOT RUN — Awaiting user execution.
 Baseline: `c01df354d1987a498dd8af27286ce6c00c04d106`.
 Integration classification: CONFIG_ONLY. No production source, dependency,
 public export, accepted ADR or API-key storage change. No API call was made.
@@ -302,3 +302,36 @@ content, permission confused with configuration, discovery failure before chat
 provisioning, model substitution, stale admissions, indefinite retry and false
 success after structured failure. Synthetic controls are prepared; verification
 is NOT RUN — Awaiting user execution. No commit was made.
+
+## 14. Maintainer evidence and incomplete-chat diagnostic correction
+
+The maintainer subsequently ran the local validator successfully: 1,103 tests
+passed, two Docker cases were deselected, and typing, lint, formatting and
+working/staged whitespace passed. This qualifies the original local profile
+only; the earlier pending statements above describe the initial handoff.
+
+The maintainer then authorized and ran the synthetic live procedure. Discovery
+returned HTTP 200 and the operator selected `qwen3-coder-next`. The first chat
+ended UNKNOWN with DependencyFailure / requires intervention. Stage 3 did not
+run. Live connectivity and coding quality remain unqualified.
+
+Read-only inspection of that existing attempt found `sent_all` and
+`response_incomplete`, with approximately 0.183 seconds between attempt creation
+and settlement. Full handoff to the OS is not proof of provider execution.
+The short duration does not support the configured 60-second timeout as the
+explanation. Framing rejection and an early close remain hypotheses: the saved
+record does not preserve the precise transport failure. No raw record, provider
+body, credential material or additional provider call was used in this inspection.
+
+The runner omitted an already available public `GovernedChatResult.failure`.
+It now prints that safe enum as `chat model failure`, without changing transport,
+retry, custody, disclosure or effect semantics. Synthetic tests distinguish
+`protocol_incompatible` for chunked framing, `timeout` for a response deadline,
+and the coarse `provider_execution_failure` for truncation. Complete error and
+invalid-response diagnostics are also asserted; successful transport with a
+wrong synthetic token does not fabricate a Model failure.
+
+This output cannot retroactively recover the lost category for the recorded
+live attempt. Re-run the local validator in section 10 and paste the output.
+The correction has not been tested internally. No live retry is requested or
+authorized by this correction; unknown effects and existing custody remain intact.

@@ -185,12 +185,20 @@ def test_complete_chat_rejection_stops_without_retry_or_fallback(
         assert "chat effect: none" in runner.lines
         recoverability = "potentially retryable" if status in (429, 503) else "terminal"
         assert f"chat error: DependencyFailure / {recoverability}" in runner.lines
+        assert "chat model failure: request_rejected" in runner.lines
     runner.no_leak(caplog)
 
 
-@pytest.mark.parametrize("mode", ["truncated", "chunked", "timeout"])
+@pytest.mark.parametrize(
+    "mode,failure",
+    [
+        ("truncated", "provider_execution_failure"),
+        ("chunked", "protocol_incompatible"),
+        ("timeout", "timeout"),
+    ],
+)
 def test_incomplete_chat_is_unknown_and_not_replayed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, failure: str
 ) -> None:
     runner = Runner(tmp_path, monkeypatch)
     with server() as remote:
@@ -204,6 +212,7 @@ def test_incomplete_chat_is_unknown_and_not_replayed(
         assert remote.requests == 2
         assert "chat effect: unknown" in runner.lines
         assert "chat attempt state: unknown" in runner.lines
+        assert f"chat model failure: {failure}" in runner.lines
 
 
 @pytest.mark.parametrize("fault", ["json", "model", "finish", "content"])
@@ -230,6 +239,12 @@ def test_complete_bad_response_never_advances(
         )
         assert runner.invoke(remote) is expected
         assert remote.requests == 2
+        if fault == "content":
+            assert not any(
+                line.startswith("chat model failure:") for line in runner.lines
+            )
+        else:
+            assert "chat model failure: protocol_incompatible" in runner.lines
     runner.no_leak(caplog)
 
 
