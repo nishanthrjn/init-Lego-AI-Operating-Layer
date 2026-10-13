@@ -205,7 +205,9 @@ def test_complete_rejections_are_never_retried(tmp_path: Path, mode: str) -> Non
         leak_free(tmp_path, result)
 
 
-@pytest.mark.parametrize("mode", ["truncated", "chunked", "malformed", "timeout"])
+@pytest.mark.parametrize(
+    "mode", ["truncated", "malformed-chunk", "malformed", "timeout"]
+)
 def test_incomplete_responses_are_unknown(tmp_path: Path, mode: str) -> None:
     with server(mode) as tls, discovery(tmp_path, tls.port, CANARY) as x:
         result = x.run(timeout=1.0)

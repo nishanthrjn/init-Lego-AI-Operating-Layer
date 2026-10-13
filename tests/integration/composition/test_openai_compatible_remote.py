@@ -1176,7 +1176,7 @@ def test_embedding_shape_failure_rejected(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "mode", ["truncated", "malformed", "chunked", "timeout", "199", "600"]
+    "mode", ["truncated", "malformed", "malformed-chunk", "timeout", "199", "600"]
 )
 def test_sent_without_a_complete_response_is_unknown(tmp_path: Path, mode: str) -> None:
     with server(mode) as tls:

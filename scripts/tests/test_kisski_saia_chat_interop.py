@@ -120,8 +120,10 @@ def chat_custody(runner: Runner) -> tuple[str, list[str]]:
     return state, observations
 
 
-@pytest.mark.parametrize("case", ["complete", "delayed", "keepalive", "http10"])
-def test_complete_length_response_without_waiting_for_close(
+@pytest.mark.parametrize(
+    "case", ["complete", "delayed", "keepalive", "http10", "chunked"]
+)
+def test_complete_ordinary_response_without_waiting_for_close(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
@@ -155,7 +157,6 @@ def test_complete_length_response_without_waiting_for_close(
     [
         ("timeout", "timeout"),
         ("headers-stall", "timeout"),
-        ("chunked", "protocol_incompatible"),
         ("malformed-chunk", "protocol_incompatible"),
         ("close-delimited", "protocol_incompatible"),
         ("length-and-transfer", "protocol_incompatible"),

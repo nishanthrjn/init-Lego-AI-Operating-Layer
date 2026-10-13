@@ -163,7 +163,8 @@ def test_complete_non_success_responses_are_returned_not_followed(mode: str) -> 
 
 
 @pytest.mark.parametrize(
-    "mode", ["truncated", "malformed", "chunked", "oversized", "close-before-request"]
+    "mode",
+    ["truncated", "malformed", "malformed-chunk", "oversized", "close-before-request"],
 )
 def test_incomplete_or_unsupported_responses_are_not_complete(mode: str) -> None:
     with TlsServer(mode, expected=TOKEN) as server:

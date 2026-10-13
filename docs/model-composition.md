@@ -459,9 +459,11 @@ is not a ModelPort, a public HTTP client or a provider client.
 **Request.** `POST` to the exact API-root path, with only `Host`,
 `Content-Type`, `Accept`, `Authorization: Bearer <material>`, `Content-Length`
 and `Connection: close`. One connection per attempt. There are no redirects,
-proxies, cookies, compression, chunking, pooling or retries. The response must
-use `Content-Length` framing, with bounded headers (64) and body (4 MiB);
-malformed, chunked, oversized or truncated responses are incomplete. A single
+proxies, cookies, compression, request chunking, pooling or retries. Responses
+use bounded `Content-Length` or the accepted narrow HTTP/1.1 chunked profile
+described below (implementation validation pending). Headers are bounded to
+32 KiB/64 fields and decoded bodies to 4 MiB. Malformed, unsupported, oversized
+or truncated responses are incomplete. A single
 monotonic deadline bounds connect, TLS, send readiness and the response.
 Cancellation never retracts accepted bytes.
 
@@ -680,7 +682,7 @@ is refused for discovery, and the reverse also holds.
 | --- | --- |
 | REFUSED | Refused before custody, with a `DiscoveryRefusal`. |
 | NOT_SENT | No credential-bearing byte was sent. |
-| UNKNOWN | Partial or full send without a complete response (chunked framing included). |
+| UNKNOWN | Partial or full send without a complete response (including incomplete or unsupported chunked framing). |
 | PROVIDER_REJECTED | Complete non-2xx; the status is reported. |
 | MALFORMED | Complete 2xx outside the model-list contract; the attempt stays COMPLETED. |
 | LISTED | The advertised ids. |
@@ -780,3 +782,46 @@ harness now reports the exact `/models` status and labels PLAN and LIVE runs.
 ```powershell
 uv run python .\validate_kisski_compatibility_preflight.py
 ```
+
+## Bounded chunked responses — T2-BOUNDED-CHUNKED-RESPONSE-1
+
+Implemented under the accepted ADR-023 bounded chunked-response addendum.
+Verification: **NOT RUN — Awaiting user execution**. Prior qualification
+records above describe their historical slices, not this implementation.
+
+Generic private T2 accepts exactly one case-insensitive `chunked` transfer token
+with surrounding SP/HTAB, HTTP/1.1 only and no Content-Length. CL+TE, coding
+chains/duplicates, extensions, nonempty trailers, HTTP/2 and close-delimited
+bodies remain refused. This intentionally restricted profile is not a general
+RFC recipient. SSE media types are refused; Model `stream=false` is unchanged.
+
+The incremental decoder retains bounded decoded bytes, an at-most-eight-byte
+size line and finite counters. It accepts 1–6 hexadecimal digits, exact CRLF,
+at most 6552 nonterminal chunks, 32768 framing bytes and 4194304 decoded bytes.
+Terminal zero plus empty trailer closure is mandatory. Buffered surplus is
+refused; no partial body is published. Every read/parser continuation shares the
+original absolute monotonic deadline. Header limits apply to completed headers
+as well as partial ones. No credential handoff, custody schema, retry or public
+API changes. Incomplete framing after send preserves possible UNKNOWN effects.
+
+Safe optional counters distinguish decoded bytes from encoded observations;
+the existing encoded-byte diagnostic remains saturated at its existing cap.
+No body, extension, trailer or credential is rendered in diagnostics. Diagnostic
+failure cannot change parsing or effect settlement.
+
+The new synthetic TLS contracts cover framing/bounds/segmentation/deadlines,
+canary containment and the existing adapter/custody path. Old valid-chunked
+refusal cases now have positive controls; malformed chunks retain refusal and
+UNKNOWN controls. No live compatibility or coding quality is established.
+
+From the repository root, using the existing locked uv environment and Git:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_t2_bounded_chunked_response_1.py
+if ($LASTEXITCODE -ne 0) { throw 'T2 bounded chunked response validation failed' }
+```
+
+No credentials or environment-variable setup is needed. Only synthetic loopback
+TLS is used; no provider calls or builds. Paste results before further work.
+After local qualification and commit, any one-chat qwen3-coder-next/KISSKI_OK
+live requalification needs separate authorization; no JSON Stage 3 initially.

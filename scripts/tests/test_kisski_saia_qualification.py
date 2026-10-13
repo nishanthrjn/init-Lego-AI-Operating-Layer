@@ -193,7 +193,7 @@ def test_complete_chat_rejection_stops_without_retry_or_fallback(
     "mode,failure",
     [
         ("truncated", "provider_execution_failure"),
-        ("chunked", "protocol_incompatible"),
+        ("malformed-chunk", "protocol_incompatible"),
         ("timeout", "timeout"),
     ],
 )

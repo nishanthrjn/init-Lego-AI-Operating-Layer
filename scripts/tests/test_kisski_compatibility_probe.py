@@ -247,7 +247,7 @@ def test_invalid_selection_makes_no_chat_call(tmp_path: Path, answer: str) -> No
             Classification.MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE,
         ),
         ("ok", {"models": listing()}, Classification.RESULT_INCONCLUSIVE),
-        ("chunked", {}, Classification.RESULT_INCONCLUSIVE),
+        ("malformed-chunk", {}, Classification.RESULT_INCONCLUSIVE),
         ("truncated", {}, Classification.RESULT_INCONCLUSIVE),
     ],
     ids=[
@@ -260,7 +260,7 @@ def test_invalid_selection_makes_no_chat_call(tmp_path: Path, answer: str) -> No
         "429",
         "malformed",
         "empty",
-        "chunked",
+        "malformed-chunk",
         "truncated",
     ],
 )

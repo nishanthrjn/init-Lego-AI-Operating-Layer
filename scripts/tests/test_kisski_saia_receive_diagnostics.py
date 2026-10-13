@@ -100,7 +100,7 @@ def test_timeout_stage_is_observed_without_changing_effects(
     "case,framing,eof,cap,rejected",
     [
         ("truncated", "content_length", "true", "false", "false"),
-        ("chunked", "chunked", "false", "false", "true"),
+        ("malformed-chunk", "chunked", "false", "false", "true"),
         ("close-delimited", "close_delimited", "false", "false", "true"),
         ("length-and-transfer", "cl_and_te", "false", "false", "true"),
         ("malformed", "unknown", "false", "false", "true"),
@@ -175,7 +175,7 @@ def test_diagnostic_failure_cannot_replay_or_change_custody(
     else:
         owner, attribute = probe, "_remote_chat_receive_diagnostics"
     with patch.object(owner, attribute, side_effect=ValueError(CANARY)):
-        with DiagnosticServer("chunked") as server:
+        with DiagnosticServer("malformed-chunk") as server:
             assert runner.invoke(server) is probe.Outcome.INCONCLUSIVE
             assert server.requests == 2
     assert "chat receive diagnostics: unavailable" in runner.lines
@@ -198,7 +198,7 @@ def test_exact_safe_runner_projection(
     runner = Runner(tmp_path, monkeypatch)
     expected = ReceiveDiagnostics().safe_items()
     with patch.object(probe, "_remote_chat_receive_diagnostics", return_value=expected):
-        with DiagnosticServer("chunked") as server:
+        with DiagnosticServer("malformed-chunk") as server:
             assert runner.invoke(server) is probe.Outcome.INCONCLUSIVE
     assert [line for line in runner.lines if line.startswith("chat receive ")] == [
         f"chat receive {name}: {value}" for name, value in expected

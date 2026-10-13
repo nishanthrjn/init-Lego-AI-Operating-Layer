@@ -125,6 +125,10 @@ class ReceiveDiagnostics:
     first_byte_to_headers_ms: int | None = None
     headers_to_body_complete_ms: int | None = None
     total_receive_ms: int | None = None
+    chunks_observed: int | None = None
+    decoded_body_bytes: int | None = None
+    terminal_chunk_seen: bool | None = None
+    trailer_present: bool | None = None
 
     def safe_items(self) -> tuple[tuple[str, str], ...]:
         """Closed projection; reject arbitrary values, including corrupt data."""
@@ -136,6 +140,8 @@ class ReceiveDiagnostics:
             elif type(value) is bool:
                 text = "true" if value else "false"
             elif type(value) is int and 0 <= value <= _max_response_body():
+                if item.name == "chunks_observed" and value > 6552:
+                    raise ValueError("invalid receive diagnostic")
                 text = str(value)
             elif type(value) in (
                 ReceiveStage,
@@ -414,6 +420,7 @@ class _CredentialFlight:
                 current,
                 cap_reached=current.cap_reached
                 or (end < 0 and len(data) > _max_header_bytes())
+                or (end >= 0 and end + 4 > _max_header_bytes())
                 or len(data) > _max_header_bytes() + _max_response_body(),
             )
         elif event == "complete":
@@ -635,22 +642,43 @@ class _CredentialFlight:
         return SendProgress.PARTIAL
 
     def receive(self) -> HttpResponse | None:
-        """Bounded HTTP/1.1 framing (Content-Length only); None if incomplete."""
+        """One bounded ordinary response; no partial delivery or streaming."""
         if self.progress() is not SendProgress.ALL or self._tls is None:
             return None
         plaintext = bytearray()
+        decoder: _Chunked | None = None
+        status = 0
         try:
             while True:
                 try:
+                    self._remaining()
                     data = self._tls.read(65_536)
                     if not data:
                         self._note("eof")
                         break
-                    plaintext += data
-                    self._note("data", plaintext)
-                    if len(plaintext) > _max_header_bytes() + _max_response_body():
-                        raise TransportError(TransportFailure.PROTOCOL)
-                    response = _parse(bytes(plaintext))
+                    if decoder is None:
+                        plaintext += data
+                        self._note("data", plaintext)
+                        head = _response_head(plaintext)
+                        if head is not None and head[1] is None:
+                            status, _, offset = head
+                            decoder = _Chunked(self._deadline)
+                            data = bytes(plaintext[offset:])
+                            plaintext.clear()
+                    if decoder is not None:
+                        try:
+                            complete = decoder.feed(data)
+                        finally:
+                            self._note_chunked(decoder)
+                        response = (
+                            HttpResponse(status, bytes(decoder.body))
+                            if complete
+                            else None
+                        )
+                    else:
+                        if len(plaintext) > _max_header_bytes() + _max_response_body():
+                            raise TransportError(TransportFailure.PROTOCOL)
+                        response = _parse(bytes(plaintext))
                     if response is not None:
                         self._note("complete")
                         return response
@@ -669,7 +697,28 @@ class _CredentialFlight:
         except ssl.SSLError, OSError:
             self._note("read_error")
             return None
+        if decoder is not None:
+            self._failure = TransportFailure.PROTOCOL
+            self._note("failure")
+            return None
         return _parse(bytes(plaintext))
+
+    def _note_chunked(self, decoder: _Chunked) -> None:
+        """Copy bounded observations only; parser never reads diagnostic state."""
+        if self._diagnostics is None:
+            return
+        try:
+            self._diagnostics = replace(
+                self._diagnostics,
+                chunks_observed=min(decoder.chunks, 6552),
+                decoded_body_bytes=len(decoder.body),
+                terminal_chunk_seen=decoder.terminal,
+                trailer_present=decoder.trailer,
+                body_bytes_observed=min(decoder.wire, _max_response_body()),
+                cap_reached=decoder.cap_reached,
+            )
+        except Exception:
+            self._diagnostics = None
 
     def observe(self, response: HttpResponse | None) -> HandoffObservation:
         self._note("observed")
@@ -692,13 +741,15 @@ class _CredentialFlight:
             self._sock = None
 
 
-def _parse(data: bytes) -> HttpResponse | None:
-    """Complete response or None (need more); malformed raises PROTOCOL."""
+def _response_head(data: bytes | bytearray) -> tuple[int, int | None, int] | None:
+    """Validated status, length (None for chunked), body offset; no body copies."""
     end = data.find(b"\r\n\r\n")
     if end < 0:
         if len(data) > _max_header_bytes():
             raise TransportError(TransportFailure.PROTOCOL)
         return None
+    if end + 4 > _max_header_bytes():
+        raise TransportError(TransportFailure.PROTOCOL)
     head = data[:end].decode("latin-1")
     lines = head.split("\r\n")
     status = lines[0].split(" ", 2)
@@ -706,29 +757,139 @@ def _parse(data: bytes) -> HttpResponse | None:
         len(lines) > _max_headers() + 1
         or len(status) < 2
         or status[0] not in ("HTTP/1.1", "HTTP/1.0")
+        or not status[1].isascii()
         or not status[1].isdigit()
         or len(status[1]) != 3
         or not 200 <= int(status[1]) <= 599
     ):
         raise TransportError(TransportFailure.PROTOCOL)
     length: int | None = None
+    transfers: list[str] = []
     for line in lines[1:]:
         name, separator, value = line.partition(":")
         if not separator or not name or name != name.strip():
             raise TransportError(TransportFailure.PROTOCOL)
         lowered = name.lower()
         if lowered == "transfer-encoding":
+            transfers.append(value.strip(" \t").lower())
+        if (
+            lowered == "content-type"
+            and value.split(";", 1)[0].strip().lower() == "text/event-stream"
+        ):
             raise TransportError(TransportFailure.PROTOCOL)
         if lowered == "content-length":
             value = value.strip()
             if length is not None or not value.isdigit():
                 raise TransportError(TransportFailure.PROTOCOL)
-            length = int(value)
+            digits = value.lstrip("0") or "0"
+            if len(digits) > 7:
+                raise TransportError(TransportFailure.PROTOCOL)
+            try:
+                length = int(digits)
+            except ValueError:
+                raise TransportError(TransportFailure.PROTOCOL) from None
+    if transfers:
+        if length is not None or transfers != ["chunked"] or status[0] != "HTTP/1.1":
+            raise TransportError(TransportFailure.PROTOCOL)
+        return int(status[1]), None, end + 4
     if length is None or length > _max_response_body():
         raise TransportError(TransportFailure.PROTOCOL)
-    body = data[end + 4 :]
+    return int(status[1]), length, end + 4
+
+
+def _parse(data: bytes) -> HttpResponse | None:
+    """Existing fixed-length completion contract; headers share one authority."""
+    head = _response_head(data)
+    if head is None:
+        return None
+    status, length, offset = head
+    if length is None:
+        raise TransportError(TransportFailure.PROTOCOL)
+    body = data[offset:]
     if len(body) < length:
         return None
     if len(body) > length:
         raise TransportError(TransportFailure.PROTOCOL)
-    return HttpResponse(int(status[1]), body)
+    return HttpResponse(status, body)
+
+
+class _Chunked:
+    """Private bounded response state; raw data is never rendered or published."""
+
+    def __init__(self, deadline: float) -> None:
+        self.deadline = deadline
+        self.state = "size"
+        self.line = bytearray()
+        self.body = bytearray()
+        self.remaining = 0
+        self.framing = 0
+        self.chunks = 0
+        self.wire = 0
+        self.terminal = False
+        self.trailer = False
+        self.cap_reached = False
+
+    def _refuse(self, *, cap: bool = False) -> None:
+        self.cap_reached = cap
+        raise TransportError(TransportFailure.PROTOCOL)
+
+    def feed(self, data: bytes) -> bool:
+        self.wire += len(data)
+        position = 0
+        while position < len(data):
+            if time.monotonic() >= self.deadline:
+                raise TransportError(TransportFailure.TIMEOUT)
+            if self.state == "complete":
+                self._refuse()
+            if self.state == "data":
+                count = min(self.remaining, len(data) - position)
+                self.body.extend(data[position : position + count])
+                position += count
+                self.remaining -= count
+                if not self.remaining:
+                    self.state = "data_crlf"
+                continue
+            self.framing += 1
+            if self.framing > 32768:
+                self._refuse(cap=True)
+            value = data[position]
+            position += 1
+            if self.state == "size" and len(self.line) >= 8:
+                self._refuse(cap=True)
+            self.line.append(value)
+            if self.state == "size":
+                if value != 10:
+                    if value not in b"0123456789abcdefABCDEF\r":
+                        self._refuse()
+                    continue
+                if not self.line.endswith(b"\r\n"):
+                    self._refuse()
+                digits = self.line[:-2]
+                if not 1 <= len(digits) <= 6 or any(
+                    digit not in b"0123456789abcdefABCDEF" for digit in digits
+                ):
+                    self._refuse()
+                size = int(digits, 16)
+                self.line.clear()
+                if size == 0:
+                    self.terminal = True
+                    self.state = "trailer_end"
+                else:
+                    if (
+                        self.chunks >= 6552
+                        or size > _max_response_body() - len(self.body)
+                    ):
+                        self._refuse(cap=True)
+                    self.chunks += 1
+                    self.remaining = size
+                    self.state = "data"
+            else:
+                if value != (13 if len(self.line) == 1 else 10):
+                    self.trailer = self.state == "trailer_end"
+                    self._refuse()
+                if len(self.line) == 2:
+                    self.line.clear()
+                    self.state = "complete" if self.state == "trailer_end" else "size"
+        if time.monotonic() >= self.deadline:
+            raise TransportError(TransportFailure.TIMEOUT)
+        return self.state == "complete"
