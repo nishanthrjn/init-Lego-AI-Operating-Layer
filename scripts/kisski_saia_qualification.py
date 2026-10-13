@@ -50,6 +50,7 @@ from legoai.runtime.api import (
 )
 from legoai.runtime.local import (
     _remote_chat_http_status,
+    _remote_chat_receive_diagnostics,
     open_credential_source,
     open_local_host,
 )
@@ -57,6 +58,9 @@ from scripts import kisski_compatibility_probe as legacy
 
 PROFILE = "kisski-saia"
 AUTHORIZATION = "AUTHORIZE FORGEAI-KISSKI-SAIA-PROVIDER-QUALIFICATION-1 LIVE SYNTHETIC"
+DIAGNOSTIC_AUTHORIZATION = (
+    "AUTHORIZE FORGEAI-KISSKI-SAIA-BOUNDED-RECEIVE-DIAGNOSTICS-1 LIVE SYNTHETIC"
+)
 TINY_PROMPT = "Return the exact token KISSKI_OK."
 EXPECTED_JSON = (
     '{"summary":"Synthetic fixture","changes":[{"path":"synthetic.txt",'
@@ -90,26 +94,39 @@ def live_config(custody: Path) -> legacy.ProbeConfig:
     )
 
 
-def plan_lines(*, live: bool = False) -> tuple[str, ...]:
+def plan_lines(*, live: bool = False, diagnostic_only: bool = False) -> tuple[str, ...]:
     state = (
         "LIVE REQUESTED; authorization pending"
         if live
         else "PLAN; no credential prompt or I/O"
     )
     return (
-        "FORGEAI-KISSKI-SAIA-PROVIDER-QUALIFICATION-1 " + state,
+        (
+            "FORGEAI-KISSKI-SAIA-BOUNDED-RECEIVE-DIAGNOSTICS-1 "
+            if diagnostic_only
+            else "FORGEAI-KISSKI-SAIA-PROVIDER-QUALIFICATION-1 "
+        )
+        + state,
         "profile: kisski-saia; kind: openai-compatible; deployment: REMOTE",
         "API root: https://chat-ai.academiccloud.de/v1; system TLS trust only",
         "Stage 1: one POST /v1/models (official documented listing method)",
         "Stage 2: one approved chat: " + TINY_PROMPT,
-        "Stage 3: one separately approved fixed synthetic JSON proposal chat",
-        "Maximum: 1 discovery + 2 chats; no retries, fallback or model reselection",
+        (
+            "Stage 3: disabled for receive diagnostics; exact displayed model ID selection"
+            if diagnostic_only
+            else "Stage 3: one separately approved fixed synthetic JSON proposal chat"
+        ),
+        (
+            "Maximum: 1 discovery + 1 chat; no retries, fallback or model reselection"
+            if diagnostic_only
+            else "Maximum: 1 discovery + 2 chats; no retries, fallback or model reselection"
+        ),
         "Two separate hidden S1 provisions: discovery and remote-model-bearer purposes",
         "SYNTHETIC only; no repository input, file mutation or generated-code execution",
         "512 output tokens per chat; 60-second client timeout; no provider-capacity claim",
         "Stage 4 coding quality is deferred to FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1",
         "No live run is authorized by local validation; --live requires: "
-        + AUTHORIZATION,
+        + (DIAGNOSTIC_AUTHORIZATION if diagnostic_only else AUTHORIZATION),
     )
 
 
@@ -227,6 +244,14 @@ async def chat_once(
         )
     if result.failure is not None:
         write(f"chat model failure: {result.failure.value}")
+        try:
+            diagnostics = _remote_chat_receive_diagnostics(host, execution.execution_id)
+        except Exception:
+            diagnostics = ()
+        if not diagnostics:
+            write("chat receive diagnostics: unavailable")
+        for name, value in diagnostics:
+            write(f"chat receive {name}: {value}")
     # Never print provider text, even a short excerpt of a successful response.
     return result, chat_failure(result, attempt)
 
@@ -236,6 +261,8 @@ async def chat_stages(
     config: legacy.ProbeConfig,
     ask: Callable[[str], str],
     write: Callable[[str], None],
+    *,
+    diagnostic_only: bool = False,
 ) -> Outcome:
     result, failure = await chat_once(host, config, TINY_PROMPT, write)
     if failure is not None:
@@ -243,6 +270,8 @@ async def chat_stages(
     if result.response is None or result.response.content != "KISSKI_OK":
         return Outcome.CONTENT_REJECTED
     write("stage 2: exact synthetic token passed; coding quality NOT QUALIFIED")
+    if diagnostic_only:
+        return Outcome.CONNECTIVITY_ONLY
     if ask("Approve one fixed SYNTHETIC JSON proposal chat? [y/N] ").strip() != "y":
         return Outcome.CONNECTIVITY_ONLY
     result, failure = await chat_once(host, config, STRUCTURED_PROMPT, write)
@@ -259,6 +288,7 @@ def run(
     ask: Callable[[str], str],
     write: Callable[[str], None],
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+    diagnostic_only: bool = False,
 ) -> Outcome:
     """Trusted entry after CLI opt-in; tests substitute only synthetic S1/TLS."""
     source: CredentialSource = open_credential_source(legacy._scope())
@@ -283,13 +313,22 @@ def run(
         # Escape terminal-control characters in provider-controlled identifiers.
         for number, model in enumerate(discovered.models, 1):
             write(f"{number}. {json.dumps(model.value, ensure_ascii=True)}")
-        answer = ask("Select one listed model number (blank declines): ").strip()
-        if not answer.isascii() or not answer.isdecimal() or len(answer) > 4:
-            return Outcome.DECLINED
-        index = int(answer)
-        if not 1 <= index <= len(discovered.models):
-            return Outcome.DECLINED
-        model = discovered.models[index - 1]
+        if diagnostic_only:
+            answer = ask(
+                "Enter one exact displayed model ID (blank declines): "
+            ).strip()
+            selected = [model for model in discovered.models if model.value == answer]
+            if len(selected) != 1:
+                return Outcome.DECLINED
+            model = selected[0]
+        else:
+            answer = ask("Select one listed model number (blank declines): ").strip()
+            if not answer.isascii() or not answer.isdecimal() or len(answer) > 4:
+                return Outcome.DECLINED
+            index = int(answer)
+            if not 1 <= index <= len(discovered.models):
+                return Outcome.DECLINED
+            model = discovered.models[index - 1]
         write("pinned model: " + json.dumps(model.value, ensure_ascii=True))
         if (
             ask("Approve one tiny SYNTHETIC chat with this model? [y/N] ").strip()
@@ -307,7 +346,9 @@ def run(
                 source, config.custody, config.margin, config.trust_anchor
             ),
         )
-        return asyncio.run(chat_stages(host, config, ask, write))
+        return asyncio.run(
+            chat_stages(host, config, ask, write, diagnostic_only=diagnostic_only)
+        )
     finally:
         source.close()
 
@@ -315,7 +356,9 @@ def run(
 class _SafeParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         # argparse normally echoes invalid arguments, possibly a pasted key.
-        self.exit(2, "Invalid options; only --plan or --live is accepted.\n")
+        self.exit(
+            2, "Invalid options; use --plan or --live, optionally --receive-diagnostic.\n"
+        )
 
 
 def main(options: list[str] | None = None) -> int:
@@ -323,21 +366,30 @@ def main(options: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--plan", action="store_true")
     group.add_argument("--live", action="store_true")
+    parser.add_argument("--receive-diagnostic", action="store_true")
     args = parser.parse_args(options)
-    for line in plan_lines(live=args.live):
+    for line in plan_lines(live=args.live, diagnostic_only=args.receive_diagnostic):
         print(line)
     if not args.live:
         return 0
     if not (sys.stdin.isatty() and sys.stdout.isatty()):
         print("Live execution refused: interactive terminal required")
         return 2
-    if input("Type the exact live authorization above: ").strip() != AUTHORIZATION:
+    authorization = (
+        DIAGNOSTIC_AUTHORIZATION if args.receive_diagnostic else AUTHORIZATION
+    )
+    if input("Type the exact live authorization above: ").strip() != authorization:
         print("Live execution declined; no credentials or provider calls")
         return 2
     custody = Path(tempfile.mkdtemp(prefix="kisski-saia-qualification-"))
     print(f"local custody directory: {custody}")
     try:
-        outcome = run(live_config(custody), ask=input, write=print)
+        outcome = run(
+            live_config(custody),
+            ask=input,
+            write=print,
+            diagnostic_only=args.receive_diagnostic,
+        )
     except Exception, KeyboardInterrupt:
         # No raw exceptions/tracebacks: preserve custody and do not infer no send.
         outcome = Outcome.INCONCLUSIVE

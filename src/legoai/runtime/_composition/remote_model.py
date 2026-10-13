@@ -156,9 +156,15 @@ class RemoteModelPlane:
         # entry per durable attempt (the existing store capacity bounds it).
         # Nothing here participates in settlement, disclosure or retry decisions.
         self._chat_http_statuses: dict[ExecutionId, int] = {}
+        self._receive_diagnostics: dict[ExecutionId, tuple[tuple[str, str], ...]] = {}
 
     def _chat_http_status(self, execution: ExecutionId) -> int | None:
         return self._chat_http_statuses.get(execution)
+
+    def _chat_receive_diagnostics(
+        self, execution: ExecutionId
+    ) -> tuple[tuple[str, str], ...]:
+        return self._receive_diagnostics.get(execution, ())
 
     def __repr__(self) -> str:
         return "RemoteModelPlane(<binding>)"
@@ -281,6 +287,14 @@ class _Invocation:
             )
         except Exception as error:
             raise self._unsettled(receipt) from error
+        if path == "/chat/completions" and observation.diagnostics is not None:
+            try:
+                items = observation.diagnostics.safe_items()
+                plane._receive_diagnostics[self._check.context.execution_id] = items
+            except Exception:
+                # Optional diagnostics can be unavailable; never alter the
+                # already-settled attempt or the Model outcome, and never log.
+                pass
         diagnostic = (
             {
                 TransportFailure.CONNECT: ModelFailure.ENDPOINT_UNAVAILABLE,

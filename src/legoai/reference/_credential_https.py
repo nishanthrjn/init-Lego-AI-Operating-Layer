@@ -18,7 +18,7 @@ import selectors
 import socket
 import ssl
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, replace
 from enum import Enum
 from pathlib import Path
 
@@ -70,6 +70,84 @@ class SendProgress(Enum):
     PARTIAL = "partial"
     ALL = "all"
     UNKNOWN = "unknown"
+
+
+class ReceiveStage(Enum):
+    CONNECT = "connect"
+    TLS = "tls"
+    SEND = "send"
+    WAIT_FIRST_BYTE = "wait_first_byte"
+    READ_HEADERS = "read_headers"
+    READ_BODY = "read_body"
+    COMPLETE = "complete"
+
+
+class ResponseFraming(Enum):
+    CONTENT_LENGTH = "content_length"
+    CHUNKED = "chunked"
+    CLOSE_DELIMITED = "close_delimited"
+    CL_AND_TE = "cl_and_te"
+    UNKNOWN = "unknown"
+
+
+class HttpVersion(Enum):
+    HTTP10 = "http_1_0"
+    HTTP11 = "http_1_1"
+    OTHER = "other"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True, repr=False)
+class ReceiveDiagnostics:
+    """Ephemeral observations only; never input to parsing or settlement."""
+
+    receive_stage: ReceiveStage = ReceiveStage.CONNECT
+    connected: bool = False
+    tls_completed: bool = False
+    request_fully_sent: bool = False
+    first_byte_seen: bool = False
+    headers_complete: bool = False
+    protocol_version: HttpVersion = HttpVersion.UNKNOWN
+    header_status_code: int | None = None
+    content_length_present: bool | None = None
+    transfer_encoding_present: bool | None = None
+    framing: ResponseFraming = ResponseFraming.UNKNOWN
+    content_length_declared: int | None = None
+    body_bytes_observed: int = 0
+    body_complete: bool = False
+    eof_seen: bool = False
+    parser_rejected: bool = False
+    cap_reached: bool = False
+    read_error: bool = False
+    deadline_stage: ReceiveStage | None = None
+    failure_category: TransportFailure | None = None
+    send_to_first_byte_ms: int | None = None
+    first_byte_to_headers_ms: int | None = None
+    headers_to_body_complete_ms: int | None = None
+    total_receive_ms: int | None = None
+
+    def safe_items(self) -> tuple[tuple[str, str], ...]:
+        """Closed projection; reject arbitrary values, including corrupt data."""
+        result: list[tuple[str, str]] = []
+        for item in fields(self):
+            value = getattr(self, item.name)
+            if value is None:
+                text = "unknown"
+            elif type(value) is bool:
+                text = "true" if value else "false"
+            elif type(value) is int and 0 <= value <= _max_response_body():
+                text = str(value)
+            elif type(value) in (
+                ReceiveStage,
+                ResponseFraming,
+                HttpVersion,
+                TransportFailure,
+            ):
+                text = value.value
+            else:
+                raise ValueError("invalid receive diagnostic")
+            result.append((item.name, text))
+        return tuple(result)
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +220,9 @@ class HandoffObservation:
     time_violation: bool
     stopped: bool  # a later gate refused, timed out or failed: no more bytes
     failure: TransportFailure | None = None
+    diagnostics: ReceiveDiagnostics | None = field(
+        default=None, repr=False, compare=False
+    )
 
 
 def tls_context(trust_anchor: Path | None = None) -> ssl.SSLContext:
@@ -204,6 +285,179 @@ class _CredentialFlight:
         self._stopped = False
         self._failure: TransportFailure | None = None
         self._time_violation = False
+        self._diagnostics: ReceiveDiagnostics | None = ReceiveDiagnostics()
+        self._sent_at: float | None = None
+        self._first_at: float | None = None
+        self._headers_at: float | None = None
+
+    def _note(self, event: str, data: bytes | bytearray = b"") -> None:
+        # Observability is optional: failure discards it, never changes the
+        # exchange, deadline, failure category, custody or retry behavior.
+        if self._diagnostics is None:
+            return
+        try:
+            self._update_diagnostics(event, data)
+        except Exception:
+            self._diagnostics = None
+
+    def _update_diagnostics(self, event: str, data: bytes | bytearray) -> None:
+        current = self._diagnostics
+        assert current is not None
+        now = time.monotonic()
+
+        def elapsed(start: float | None) -> int | None:
+            if start is None:
+                return None
+            return min(3_600_000, max(0, int((now - start) * 1000)))
+
+        if event == "connected":
+            current = replace(current, connected=True, receive_stage=ReceiveStage.TLS)
+        elif event == "tls":
+            current = replace(
+                current, tls_completed=True, receive_stage=ReceiveStage.SEND
+            )
+        elif event == "sent":
+            self._sent_at = now
+            current = replace(
+                current,
+                request_fully_sent=True,
+                receive_stage=ReceiveStage.WAIT_FIRST_BYTE,
+            )
+        elif event == "data":
+            if not current.first_byte_seen:
+                self._first_at = now
+                current = replace(
+                    current,
+                    first_byte_seen=True,
+                    receive_stage=ReceiveStage.READ_HEADERS,
+                    send_to_first_byte_ms=elapsed(self._sent_at),
+                )
+            end = data.find(b"\r\n\r\n")
+            if end >= 0:
+                if not current.headers_complete:
+                    current = replace(
+                        current,
+                        headers_complete=True,
+                        receive_stage=ReceiveStage.READ_BODY,
+                        first_byte_to_headers_ms=elapsed(self._first_at),
+                    )
+                    self._headers_at = now
+                    # Bounded metadata scan only; the original parser remains
+                    # the sole authority. Never retain any raw header value.
+                    if end <= _max_header_bytes():
+                        lines = bytes(data[:end]).split(b"\r\n")
+                        status = lines[0].split(b" ", 2)
+                        version = {
+                            b"HTTP/1.0": HttpVersion.HTTP10,
+                            b"HTTP/1.1": HttpVersion.HTTP11,
+                        }.get(status[0], HttpVersion.OTHER)
+                        code = (
+                            int(status[1])
+                            if len(status) > 1
+                            and len(status[1]) == 3
+                            and status[1].isdigit()
+                            else None
+                        )
+                        current = replace(
+                            current,
+                            protocol_version=version,
+                            header_status_code=(
+                                code if code is not None and 100 <= code <= 599 else None
+                            ),
+                        )
+                        lengths: list[bytes] = []
+                        transfers: list[bytes] = []
+                        malformed = False
+                        for line in lines[1:]:
+                            name, separator, value = line.partition(b":")
+                            if not separator or not name or name != name.strip():
+                                malformed = True
+                            if separator and name.lower() == b"content-length":
+                                lengths.append(value.strip())
+                            if separator and name.lower() == b"transfer-encoding":
+                                transfers.append(value.strip().lower())
+                        length = None
+                        over = False
+                        if len(lengths) == 1 and lengths[0].isdigit():
+                            digits = lengths[0].lstrip(b"0") or b"0"
+                            over = (
+                                len(digits) > 7 or int(digits) > _max_response_body()
+                            )
+                            if not over:
+                                length = int(digits)
+                        framing = ResponseFraming.UNKNOWN
+                        if lengths and transfers:
+                            framing = ResponseFraming.CL_AND_TE
+                        elif transfers == [b"chunked"]:
+                            framing = ResponseFraming.CHUNKED
+                        elif not lengths and not transfers:
+                            framing = ResponseFraming.CLOSE_DELIMITED
+                        elif length is not None and not transfers:
+                            framing = ResponseFraming.CONTENT_LENGTH
+                        if malformed:
+                            framing = ResponseFraming.UNKNOWN
+                        current = replace(
+                            current,
+                            content_length_present=bool(lengths),
+                            transfer_encoding_present=bool(transfers),
+                            framing=framing,
+                            content_length_declared=length,
+                            cap_reached=over,
+                        )
+                count = len(data) - end - 4
+                current = replace(
+                    current,
+                    body_bytes_observed=min(count, _max_response_body()),
+                    cap_reached=current.cap_reached or count > _max_response_body(),
+                )
+            current = replace(
+                current,
+                cap_reached=current.cap_reached
+                or (end < 0 and len(data) > _max_header_bytes())
+                or len(data) > _max_header_bytes() + _max_response_body(),
+            )
+        elif event == "complete":
+            current = replace(
+                current,
+                receive_stage=ReceiveStage.COMPLETE,
+                body_complete=True,
+                headers_to_body_complete_ms=elapsed(self._headers_at),
+            )
+        elif event == "eof":
+            current = replace(current, eof_seen=True)
+        elif event == "read_error":
+            current = replace(current, read_error=True)
+        elif event == "failure":
+            current = replace(
+                current,
+                parser_rejected=self._failure is TransportFailure.PROTOCOL,
+                deadline_stage=(
+                    current.receive_stage
+                    if self._failure is TransportFailure.TIMEOUT
+                    else None
+                ),
+            )
+        elif event in {"connect_timeout", "connect_error", "tls_error"}:
+            category = {
+                "connect_timeout": TransportFailure.TIMEOUT,
+                "connect_error": TransportFailure.CONNECT,
+                "tls_error": TransportFailure.TLS,
+            }[event]
+            current = replace(
+                current,
+                failure_category=category,
+                deadline_stage=(
+                    current.receive_stage
+                    if category is TransportFailure.TIMEOUT
+                    else None
+                ),
+            )
+        current = replace(
+            current,
+            total_receive_ms=elapsed(self._sent_at),
+            failure_category=self._failure or current.failure_category,
+        )
+        self._diagnostics = current
 
     def __repr__(self) -> str:
         return f"_CredentialFlight(accepted={self._accepted}, total={self._total})"
@@ -218,10 +472,13 @@ class _CredentialFlight:
                 (self.target.host, self.target.port), timeout=self._remaining()
             )
         except TimeoutError:
+            self._note("connect_timeout")
             raise TransportError(TransportFailure.TIMEOUT) from None
         except OSError:
+            self._note("connect_error")
             raise TransportError(TransportFailure.CONNECT) from None
         self._sock = sock
+        self._note("connected")
         sock.setblocking(False)
         self._selector = selectors.DefaultSelector()
         self._tls = self._context.wrap_bio(
@@ -238,15 +495,19 @@ class _CredentialFlight:
                 except ssl.SSLWantWriteError:
                     self._flush_plain()
             self._flush_plain()
+            self._note("tls")
         except ssl.SSLError:
+            self._note("tls_error")
             raise TransportError(TransportFailure.TLS) from None
         except OSError:
+            self._note("connect_error")
             raise TransportError(TransportFailure.CONNECT) from None
 
     def _remaining(self) -> float:
         remaining = self._deadline - time.monotonic()
         if remaining <= 0:
             self._failure = TransportFailure.TIMEOUT
+            self._note("failure")
             raise TransportError(TransportFailure.TIMEOUT)
         return remaining
 
@@ -256,6 +517,7 @@ class _CredentialFlight:
         try:
             if not self._selector.select(self._remaining()):
                 self._failure = TransportFailure.TIMEOUT
+                self._note("failure")
                 raise TransportError(TransportFailure.TIMEOUT)
         finally:
             self._selector.unregister(key.fileobj)
@@ -339,6 +601,8 @@ class _CredentialFlight:
             return
         del self._pending[:sent]
         self._accepted += sent
+        if self._accepted >= self._total:
+            self._note("sent")
 
     @property
     def _flight_pending(self) -> bool:
@@ -380,33 +644,42 @@ class _CredentialFlight:
                 try:
                     data = self._tls.read(65_536)
                     if not data:
+                        self._note("eof")
                         break
                     plaintext += data
+                    self._note("data", plaintext)
                     if len(plaintext) > _max_header_bytes() + _max_response_body():
                         raise TransportError(TransportFailure.PROTOCOL)
                     response = _parse(bytes(plaintext))
                     if response is not None:
+                        self._note("complete")
                         return response
                 except ssl.SSLWantReadError:
                     self._receive_some()
                 except ssl.SSLZeroReturnError:
+                    self._note("eof")
                     break
                 except ssl.SSLEOFError:
+                    self._note("eof")
                     break
         except TransportError as error:
             self._failure = error.failure
+            self._note("failure")
             return None
         except ssl.SSLError, OSError:
+            self._note("read_error")
             return None
         return _parse(bytes(plaintext))
 
     def observe(self, response: HttpResponse | None) -> HandoffObservation:
+        self._note("observed")
         return HandoffObservation(
             self.progress(),
             response,
             self._time_violation,
             self._stopped,
             self._failure,
+            self._diagnostics,
         )
 
     def close(self) -> None:

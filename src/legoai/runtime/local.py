@@ -454,6 +454,18 @@ class _HostSecurityContexts:
         return replace(context, established_at=self._clock())
 
 
+def _remote_chat_receive_diagnostics(
+    host: GovernedHost, execution: ExecutionId
+) -> tuple[tuple[str, str], ...]:
+    """Private, ephemeral, closed safe projection; never authority or custody."""
+    if type(host) is not _LocalGovernedHost or type(execution) is not ExecutionId:
+        raise TypeError("local host and exact execution identity required")
+    host._require_thread()
+    if execution not in host._minted or host._remote is None:
+        return ()
+    return host._remote._chat_receive_diagnostics(execution)
+
+
 def _remote_chat_http_status(host: GovernedHost, execution: ExecutionId) -> int | None:
     """Private trusted inspection, not a GovernedHost/ModelPort contract.
 
