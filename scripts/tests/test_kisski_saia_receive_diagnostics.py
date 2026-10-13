@@ -33,8 +33,7 @@ class DiagnosticServer(WireServer):
                 self._stop.wait(10)
             elif self.case == "partial-body":
                 conn.sendall(
-                    b"HTTP/1.1 200 OK\r\nContent-Length: 4096\r\n\r\n"
-                    + CANARY.encode()
+                    b"HTTP/1.1 200 OK\r\nContent-Length: 4096\r\n\r\n" + CANARY.encode()
                 )
                 self._stop.wait(10)
             elif self.case == "malformed":

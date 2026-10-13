@@ -357,7 +357,8 @@ class _SafeParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         # argparse normally echoes invalid arguments, possibly a pasted key.
         self.exit(
-            2, "Invalid options; use --plan or --live, optionally --receive-diagnostic.\n"
+            2,
+            "Invalid options; use --plan or --live, optionally --receive-diagnostic.\n",
         )
 
 

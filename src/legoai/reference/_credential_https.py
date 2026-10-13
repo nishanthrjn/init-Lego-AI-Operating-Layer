@@ -362,7 +362,9 @@ class _CredentialFlight:
                             current,
                             protocol_version=version,
                             header_status_code=(
-                                code if code is not None and 100 <= code <= 599 else None
+                                code
+                                if code is not None and 100 <= code <= 599
+                                else None
                             ),
                         )
                         lengths: list[bytes] = []
@@ -380,9 +382,7 @@ class _CredentialFlight:
                         over = False
                         if len(lengths) == 1 and lengths[0].isdigit():
                             digits = lengths[0].lstrip(b"0") or b"0"
-                            over = (
-                                len(digits) > 7 or int(digits) > _max_response_body()
-                            )
+                            over = len(digits) > 7 or int(digits) > _max_response_body()
                             if not over:
                                 length = int(digits)
                         framing = ResponseFraming.UNKNOWN
