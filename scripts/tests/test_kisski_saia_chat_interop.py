@@ -128,7 +128,8 @@ def test_complete_length_response_without_waiting_for_close(
     case: str,
 ) -> None:
     runner = Runner(tmp_path, monkeypatch)
-    with WireServer(case) as remote:
+    remote = WireServer(case)
+    with remote:
         outcome = runner.invoke(remote, ("2", "y", "n"))
         assert outcome is probe.Outcome.CONNECTIVITY_ONLY
         assert remote.paths == ["POST " + MODELS, "POST " + CHAT]
