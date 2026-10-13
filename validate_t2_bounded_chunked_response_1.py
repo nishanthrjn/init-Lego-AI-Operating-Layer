@@ -91,7 +91,10 @@ def main() -> int:
         scope()
         with tempfile.TemporaryDirectory(prefix="t2-chunked-offline-") as temporary:
             suites = (
-                ("chunked bounds, deadlines, diagnostics and synthetic adapter", (TEST,)),
+                (
+                    "chunked bounds, deadlines, diagnostics and synthetic adapter",
+                    (TEST,),
+                ),
                 (
                     "receive diagnostics and KiSSKI-like interop",
                     (

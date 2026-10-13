@@ -875,9 +875,8 @@ class _Chunked:
                     self.terminal = True
                     self.state = "trailer_end"
                 else:
-                    if (
-                        self.chunks >= 6552
-                        or size > _max_response_body() - len(self.body)
+                    if self.chunks >= 6552 or size > _max_response_body() - len(
+                        self.body
                     ):
                         self._refuse(cap=True)
                     self.chunks += 1

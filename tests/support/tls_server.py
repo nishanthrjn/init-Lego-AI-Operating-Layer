@@ -170,8 +170,6 @@ class TlsServer:
                 b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n"
             )
         elif self.mode == "malformed-chunk":
-            conn.sendall(
-                b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nZ\r\n"
-            )
+            conn.sendall(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nZ\r\n")
         elif self.mode == "oversized":
             conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 999999999\r\n\r\n")
