@@ -1,6 +1,6 @@
 # ADR-023 proposed addendum: bounded chunked response framing
 
-Status: Proposed — NOT ACCEPTED.
+Status: Accepted — maintainer-delegated decision; local document validation pending.
 
 Owner: T2 protected HTTPS transport. Parent: [ADR-023](ADR-023.md),
 especially §7.3; application result semantics remain [ADR-014](ADR-014.md)
@@ -158,3 +158,45 @@ separate. Required observable cases and the staged live plan are in the linked
 review. No implementation, credentials, provider call or acceptance occurs here.
 
 Final decision: T2_BOUNDED_CHUNKED_SUPPORT_RECOMMENDED
+
+<!-- T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 BEGIN -->
+## Current acceptance record — 2026-10-13
+
+Decision: ACCEPT_BOUNDED_CHUNKED_ADDENDUM
+
+Accepted by maintainer-delegated architecture review under the explicit
+T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 instruction. Local document
+validation of this acceptance record is pending. This is not an independent
+third-party security review.
+
+The Proposed title, classification, contract and recommendation above preserve
+the original reasoning and proposal-time authority limits. This current record
+accepts that exact bounded contract without changing its numeric limits or
+excluded scope. Its earlier requirement for explicit acceptance is now resolved;
+its statements that acceptance has not occurred are historical, not current.
+ADR-023 itself and all other accepted ADR decision bodies remain unchanged.
+
+The maintainer reported successful execution of
+`validate_t2_bounded_chunked_response_adr_1.py`, ending exactly:
+
+```text
+T2-BOUNDED-CHUNKED-RESPONSE-ADR-1 LOCAL DOCUMENT CHECKS PASSED; PROPOSED ONLY; NO IMPLEMENTATION OR LIVE EXECUTION AUTHORIZED
+```
+
+Accepted scope: generic T2 bounded HTTP/1.1 chunked ordinary response framing,
+with the unchanged Proposed contract table above now binding on the next slice.
+Extension/trailer refusal remains a restricted interoperability profile, not
+general RFC recipient conformance or evidence of future provider compatibility.
+
+Acceptance authorizes the separate implementation slice
+T2-BOUNDED-CHUNKED-RESPONSE-1, after maintainer document validation. It is not
+implementation qualification and does not authorize implementation in this
+documentary task. No live execution is authorized. UNKNOWN historical effects
+remain UNKNOWN; no replay or retrospective provider qualification is permitted.
+
+Frozen implementation criteria A–Z and bound reviews are recorded in the
+[acceptance review](../planning/T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1.md).
+The [ADR index](ADR-INDEX.md) registers this addendum under ADR-023 without a
+new ID or supersession. Protocol implementation, credentials, live connectivity
+and coding quality remain unqualified by this acceptance.
+<!-- T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 END -->

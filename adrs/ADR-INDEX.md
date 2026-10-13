@@ -101,6 +101,26 @@ ADR-020 and Model SRCP-1 remain unchanged. No production implementation or live
 execution is authorized. No other ADR status or historical decision is changed.
 <!-- GENERATIVE-MEDIA-ADR-026-ACCEPTANCE-REVIEW-1 END -->
 
+<!-- T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 BEGIN -->
+### T2 bounded chunked response addendum acceptance — 2026-10-13
+
+[ADR-023 bounded chunked response addendum](ADR-023-BOUNDED-CHUNKED-RESPONSE-ADDENDUM-1.md)
+is Accepted by maintainer-delegated architecture review; local document
+validation pending. The [acceptance review](../planning/T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1.md)
+records the rationale, evidence and frozen implementation criteria.
+This is a compatible bounded extension of ADR-023 §7.3, not a new numbered ADR,
+supersession, streaming decision or change to Secret ordering/effect semantics.
+Historical register counts and accepted ADR-023 reasoning remain unchanged.
+
+Dependency/sequence: proposal document validation PASSED by maintainer; acceptance
+document validation pending; then separate T2-BOUNDED-CHUNKED-RESPONSE-1.
+Implementation qualification and separately authorized live requalification
+remain subsequent gates. Risks: new parser attack surface and restricted-profile
+interoperability (extensions/trailers remain refused); no provider support claim.
+No upstream architectural blocker was found for this bounded extension.
+No production code changed. No live execution authorized.
+<!-- T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 END -->
+
 ### Original planning record
 
 This index identifies unresolved **reference implementation choices**, not new canonical requirements. The eight accepted governing documents were reviewed in authority order. No language, framework, database, broker, vendor, deployment platform, public protocol, or isolation technology is selected. Repository inspection found the governing Markdown documents and no existing implementation or language decision to preserve.
