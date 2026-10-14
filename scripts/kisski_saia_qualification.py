@@ -49,6 +49,7 @@ from legoai.runtime.api import (
     RemoteModelRuntime,
 )
 from legoai.runtime.local import (
+    _remote_chat_contract_diagnostics,
     _remote_chat_http_status,
     _remote_chat_receive_diagnostics,
     open_credential_source,
@@ -242,8 +243,21 @@ async def chat_once(
             f"chat error: {execution.error.category.value} / "
             f"{execution.error.recoverability.value}"
         )
+    if prompt == TINY_PROMPT:
+        try:
+            contract = _remote_chat_contract_diagnostics(host, execution.execution_id)
+        except Exception:
+            contract = ()
+        if not contract:
+            write("chat contract diagnostics: unavailable")
+        for name, value in contract:
+            write(f"chat contract {name}: {value}")
+        if result.response is not None:
+            matched = result.response.content == "KISSKI_OK"
+            write(f"chat contract expected_token_match: {str(matched).lower()}")
     if result.failure is not None:
         write(f"chat model failure: {result.failure.value}")
+    if result.failure is not None or prompt == TINY_PROMPT:
         try:
             diagnostics = _remote_chat_receive_diagnostics(host, execution.execution_id)
         except Exception:

@@ -76,6 +76,7 @@ from legoai.reference.governance import (
     InMemoryPolicyRegistry,
 )
 from legoai.reference.model_capabilities import model_chat_offer, model_embedding_offer
+from legoai.reference.model_openai_compatible import OpenAICompatibleModelAdapter
 from legoai.reference.secret import _ProvisionedSecretSource, _SecretClock
 from legoai.runtime._composition.credential_https import exchange
 from legoai.runtime._composition.disclosure import DisclosureCheck
@@ -157,6 +158,7 @@ class RemoteModelPlane:
         # Nothing here participates in settlement, disclosure or retry decisions.
         self._chat_http_statuses: dict[ExecutionId, int] = {}
         self._receive_diagnostics: dict[ExecutionId, tuple[tuple[str, str], ...]] = {}
+        self._contract_diagnostics: dict[ExecutionId, tuple[tuple[str, str], ...]] = {}
 
     def _chat_http_status(self, execution: ExecutionId) -> int | None:
         return self._chat_http_statuses.get(execution)
@@ -166,6 +168,11 @@ class RemoteModelPlane:
     ) -> tuple[tuple[str, str], ...]:
         return self._receive_diagnostics.get(execution, ())
 
+    def _chat_contract_diagnostics(
+        self, execution: ExecutionId
+    ) -> tuple[tuple[str, str], ...]:
+        return self._contract_diagnostics.get(execution, ())
+
     def __repr__(self) -> str:
         return "RemoteModelPlane(<binding>)"
 
@@ -173,7 +180,20 @@ class RemoteModelPlane:
         self, check: DisclosureCheck, decision: DisclosureDecision, request: ChatRequest
     ) -> ChatResult:
         invocation = _Invocation(self, check, decision, model_chat_offer().capability)
-        return await self._adapter(invocation.exchange).chat(request)
+        adapter = self._adapter(invocation.exchange)
+        try:
+            return await adapter.chat(request)
+        finally:
+            # Per-invocation adapter; never recover or retain a provider body.
+            # Completion/errors and durable custody remain entirely unchanged.
+            try:
+                if type(adapter) is OpenAICompatibleModelAdapter:
+                    items = adapter._chat_contract_items()
+                    if items:
+                        self._contract_diagnostics[check.context.execution_id] = items
+            except Exception:
+                # Optional projection cannot replace an invocation outcome.
+                pass
 
     async def embed(
         self,

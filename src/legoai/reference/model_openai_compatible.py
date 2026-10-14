@@ -21,6 +21,7 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import NoReturn
 
 from legoai.capabilities.values import CapabilityOffer
@@ -156,6 +157,42 @@ def _optional_tokens(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
+class _ChatContractReason(Enum):
+    JSON_INVALID = "JSON_INVALID"
+    ROOT_NOT_OBJECT = "ROOT_NOT_OBJECT"
+    MODEL_FIELD_MISSING = "MODEL_FIELD_MISSING"
+    MODEL_FIELD_NOT_STRING = "MODEL_FIELD_NOT_STRING"
+    MODEL_ID_MISMATCH = "MODEL_ID_MISMATCH"
+    CHOICES_MISSING = "CHOICES_MISSING"
+    CHOICES_NOT_LIST = "CHOICES_NOT_LIST"
+    CHOICE_COUNT_INVALID = "CHOICE_COUNT_INVALID"
+    CHOICE_NOT_OBJECT = "CHOICE_NOT_OBJECT"
+    FINISH_REASON_MISSING = "FINISH_REASON_MISSING"
+    FINISH_REASON_INVALID = "FINISH_REASON_INVALID"
+    MESSAGE_MISSING = "MESSAGE_MISSING"
+    MESSAGE_NOT_OBJECT = "MESSAGE_NOT_OBJECT"
+    ROLE_INVALID = "ROLE_INVALID"
+    CONTENT_MISSING = "CONTENT_MISSING"
+    CONTENT_NULL = "CONTENT_NULL"
+    CONTENT_NOT_STRING = "CONTENT_NOT_STRING"
+    TOOL_CALL_PRESENT = "TOOL_CALL_PRESENT"
+    FUNCTION_CALL_PRESENT = "FUNCTION_CALL_PRESENT"
+    RESULT_CONSTRUCTION_FAILED = "RESULT_CONSTRUCTION_FAILED"
+    VALIDATED = "VALIDATED"
+
+
+def _observe_contract(
+    observer: Callable[[_ChatContractReason], None] | None,
+    reason: _ChatContractReason,
+) -> None:
+    if observer is not None:
+        try:
+            observer(reason)
+        except Exception:
+            # Optional evidence must not alter parsing, errors or effects.
+            pass
+
+
 def _json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     fields: dict[str, object] = {}
     for name, value in pairs:
@@ -169,7 +206,12 @@ def _invalid_constant(value: str) -> NoReturn:
     raise ValueError("Non-JSON numeric constant")
 
 
-def _payload(status: int, raw: bytes) -> dict[str, object]:
+def _payload(
+    status: int,
+    raw: bytes,
+    *,
+    _observer: Callable[[_ChatContractReason], None] | None = None,
+) -> dict[str, object]:
     """Shared status mapping and JSON decoding of one complete response.
 
     Only a closed model-not-found code is projected; no provider text is retained.
@@ -196,7 +238,7 @@ def _payload(status: int, raw: bytes) -> dict[str, object]:
         raise ModelResponseRejectedError(
             f"Model rejected HTTP {status}", failure=failure
         )
-    return _json_body(raw)
+    return _json_body(raw, _observer=_observer)
 
 
 def _finite_float(text: str) -> float:
@@ -206,8 +248,14 @@ def _finite_float(text: str) -> float:
     return value
 
 
-def _json_body(raw: bytes, *, finite_numbers: bool = False) -> dict[str, object]:
+def _json_body(
+    raw: bytes,
+    *,
+    finite_numbers: bool = False,
+    _observer: Callable[[_ChatContractReason], None] | None = None,
+) -> dict[str, object]:
     """The one strict JSON decoding of a complete success body."""
+    invalid = False
     try:
         payload = json.loads(
             raw,
@@ -219,7 +267,14 @@ def _json_body(raw: bytes, *, finite_numbers: bool = False) -> dict[str, object]
         # Reject outside the handler so JSONDecodeError.doc (the provider
         # body) is not retained in the public exception's causal chain.
         payload = None
+        invalid = True
     if not isinstance(payload, dict):
+        _observe_contract(
+            _observer,
+            _ChatContractReason.JSON_INVALID
+            if invalid
+            else _ChatContractReason.ROOT_NOT_OBJECT,
+        )
         _reject()
     return payload
 
@@ -384,8 +439,40 @@ class OpenAICompatibleModelAdapter:
         self._config = config
         self._provider_id = provider_id
         self._exchange = exchange
+        self._contract_reason: _ChatContractReason | None = None
+
+    def _record_contract(self, reason: _ChatContractReason) -> None:
+        self._contract_reason = reason
+
+    def _contract_reject(self, reason: _ChatContractReason) -> NoReturn:
+        _observe_contract(self._record_contract, reason)
+        _reject()
+
+    def _chat_contract_items(self) -> tuple[tuple[str, str], ...]:
+        """Ephemeral closed projection; no body, content or model IDs retained."""
+        reason = self._contract_reason
+        if type(reason) is not _ChatContractReason:
+            return ()
+        items = [
+            ("rejection_reason", reason.value),
+            (
+                "json_valid",
+                "false" if reason is _ChatContractReason.JSON_INVALID else "true",
+            ),
+        ]
+        if reason is _ChatContractReason.MODEL_ID_MISMATCH:
+            items.append(("returned_model_matches_requested", "false"))
+        elif reason not in {
+            _ChatContractReason.JSON_INVALID,
+            _ChatContractReason.ROOT_NOT_OBJECT,
+            _ChatContractReason.MODEL_FIELD_MISSING,
+            _ChatContractReason.MODEL_FIELD_NOT_STRING,
+        }:
+            items.append(("returned_model_matches_requested", "true"))
+        return tuple(items)
 
     async def chat(self, request: ChatRequest) -> ChatResult:
+        self._contract_reason = None
         if type(request) is not ChatRequest:
             raise TypeError("chat requires ChatRequest")
         if request.response_format is not None:
@@ -408,22 +495,52 @@ class OpenAICompatibleModelAdapter:
         payload = await self._request("/chat/completions", body)
         model = payload.get("model")
         if type(model) is not str or model != self._config.chat_model:
-            _reject()
+            self._contract_reject(
+                _ChatContractReason.MODEL_FIELD_MISSING
+                if "model" not in payload
+                else _ChatContractReason.MODEL_FIELD_NOT_STRING
+                if type(model) is not str
+                else _ChatContractReason.MODEL_ID_MISMATCH
+            )
         choices = payload.get("choices")
         if not isinstance(choices, list) or len(choices) != 1:
-            _reject()
+            self._contract_reject(
+                _ChatContractReason.CHOICES_MISSING
+                if "choices" not in payload
+                else _ChatContractReason.CHOICES_NOT_LIST
+                if not isinstance(choices, list)
+                else _ChatContractReason.CHOICE_COUNT_INVALID
+            )
         choice = choices[0]
-        if not isinstance(choice, dict) or choice.get("finish_reason") != "stop":
-            _reject()
+        if not isinstance(choice, dict):
+            self._contract_reject(_ChatContractReason.CHOICE_NOT_OBJECT)
+        if choice.get("finish_reason") != "stop":
+            self._contract_reject(
+                _ChatContractReason.FINISH_REASON_MISSING
+                if "finish_reason" not in choice
+                else _ChatContractReason.FINISH_REASON_INVALID
+            )
         message = choice.get("message")
-        if (
-            not isinstance(message, dict)
-            or message.get("role") != "assistant"
-            or type(message.get("content")) is not str
-            or "tool_calls" in message
-            or "function_call" in message
-        ):
-            _reject()
+        if not isinstance(message, dict):
+            self._contract_reject(
+                _ChatContractReason.MESSAGE_MISSING
+                if "message" not in choice
+                else _ChatContractReason.MESSAGE_NOT_OBJECT
+            )
+        if message.get("role") != "assistant":
+            self._contract_reject(_ChatContractReason.ROLE_INVALID)
+        if type(message.get("content")) is not str:
+            self._contract_reject(
+                _ChatContractReason.CONTENT_MISSING
+                if "content" not in message
+                else _ChatContractReason.CONTENT_NULL
+                if message.get("content") is None
+                else _ChatContractReason.CONTENT_NOT_STRING
+            )
+        if "tool_calls" in message:
+            self._contract_reject(_ChatContractReason.TOOL_CALL_PRESENT)
+        if "function_call" in message:
+            self._contract_reject(_ChatContractReason.FUNCTION_CALL_PRESENT)
         raw_usage = payload.get("usage")
         usage = None
         if isinstance(raw_usage, dict):
@@ -431,7 +548,17 @@ class OpenAICompatibleModelAdapter:
                 _optional_tokens(raw_usage.get("prompt_tokens")),
                 _optional_tokens(raw_usage.get("completion_tokens")),
             )
-        return ChatResult(message["content"], ModelId(model), self._provider_id, usage)
+        try:
+            result = ChatResult(
+                message["content"], ModelId(model), self._provider_id, usage
+            )
+        except Exception:
+            _observe_contract(
+                self._record_contract, _ChatContractReason.RESULT_CONSTRUCTION_FAILED
+            )
+            raise
+        _observe_contract(self._record_contract, _ChatContractReason.VALIDATED)
+        return result
 
     async def embed(self, request: EmbeddingRequest) -> EmbeddingResult:
         if type(request) is not EmbeddingRequest:
@@ -482,7 +609,11 @@ class OpenAICompatibleModelAdapter:
         if self._exchange is None:
             return await asyncio.to_thread(self._post, path, body)
         status, raw = self._exchange(path, json.dumps(body).encode("utf-8"))
-        return _payload(status, raw)
+        return _payload(
+            status,
+            raw,
+            _observer=self._record_contract if path == "/chat/completions" else None,
+        )
 
     def _post(self, path: str, body: dict[str, object]) -> dict[str, object]:
         request = urllib.request.Request(
@@ -530,4 +661,8 @@ class OpenAICompatibleModelAdapter:
             ) from None
         except OSError, http.client.HTTPException, ValueError:
             raise ModelResponseUncertainError("Model transport uncertain") from None
-        return _payload(status, raw)
+        return _payload(
+            status,
+            raw,
+            _observer=self._record_contract if path == "/chat/completions" else None,
+        )

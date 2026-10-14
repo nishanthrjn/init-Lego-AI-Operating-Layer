@@ -466,6 +466,18 @@ def _remote_chat_receive_diagnostics(
     return host._remote._chat_receive_diagnostics(execution)
 
 
+def _remote_chat_contract_diagnostics(
+    host: GovernedHost, execution: ExecutionId
+) -> tuple[tuple[str, str], ...]:
+    """Private execution-scoped contract evidence; no ModelPort API or custody."""
+    if type(host) is not _LocalGovernedHost or type(execution) is not ExecutionId:
+        raise TypeError("local host and exact execution identity required")
+    host._require_thread()
+    if execution not in host._minted or host._remote is None:
+        return ()
+    return host._remote._chat_contract_diagnostics(execution)
+
+
 def _remote_chat_http_status(host: GovernedHost, execution: ExecutionId) -> int | None:
     """Private trusted inspection, not a GovernedHost/ModelPort contract.
 
