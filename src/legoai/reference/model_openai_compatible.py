@@ -157,6 +157,38 @@ def _optional_tokens(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
+class _CallFieldShape(Enum):
+    ABSENT = "ABSENT"
+    NULL = "NULL"
+    EMPTY_OBJECT = "EMPTY_OBJECT"
+    NONEMPTY_OBJECT = "NONEMPTY_OBJECT"
+    EMPTY_ARRAY = "EMPTY_ARRAY"
+    NONEMPTY_ARRAY = "NONEMPTY_ARRAY"
+    STRING = "STRING"
+    NUMBER = "NUMBER"
+    BOOLEAN = "BOOLEAN"
+    OTHER = "OTHER"
+
+
+def _call_field_shape(message: dict[str, object], field: str) -> _CallFieldShape:
+    if field not in message:
+        return _CallFieldShape.ABSENT
+    value = message[field]
+    if value is None:
+        return _CallFieldShape.NULL
+    if type(value) is dict:
+        return _CallFieldShape.NONEMPTY_OBJECT if value else _CallFieldShape.EMPTY_OBJECT
+    if type(value) is list:
+        return _CallFieldShape.NONEMPTY_ARRAY if value else _CallFieldShape.EMPTY_ARRAY
+    if type(value) is str:
+        return _CallFieldShape.STRING
+    if type(value) is bool:
+        return _CallFieldShape.BOOLEAN
+    if type(value) in (int, float):
+        return _CallFieldShape.NUMBER
+    return _CallFieldShape.OTHER
+
+
 class _ChatContractReason(Enum):
     JSON_INVALID = "JSON_INVALID"
     ROOT_NOT_OBJECT = "ROOT_NOT_OBJECT"
@@ -440,6 +472,13 @@ class OpenAICompatibleModelAdapter:
         self._provider_id = provider_id
         self._exchange = exchange
         self._contract_reason: _ChatContractReason | None = None
+        self._call_shapes: tuple[_CallFieldShape, _CallFieldShape] | None = None
+
+    def _record_call_shapes(self, message: dict[str, object]) -> None:
+        self._call_shapes = (
+            _call_field_shape(message, "function_call"),
+            _call_field_shape(message, "tool_calls"),
+        )
 
     def _record_contract(self, reason: _ChatContractReason) -> None:
         self._contract_reason = reason
@@ -469,10 +508,22 @@ class OpenAICompatibleModelAdapter:
             _ChatContractReason.MODEL_FIELD_NOT_STRING,
         }:
             items.append(("returned_model_matches_requested", "true"))
+        shapes = self._call_shapes
+        if (
+            type(shapes) is tuple
+            and len(shapes) == 2
+            and all(type(shape) is _CallFieldShape for shape in shapes)
+        ):
+            for field, shape in zip(("function_call", "tool_calls"), shapes):
+                items.append(
+                    (field + "_present", str(shape is not _CallFieldShape.ABSENT).lower())
+                )
+                items.append((field + "_shape", shape.value))
         return tuple(items)
 
     async def chat(self, request: ChatRequest) -> ChatResult:
         self._contract_reason = None
+        self._call_shapes = None
         if type(request) is not ChatRequest:
             raise TypeError("chat requires ChatRequest")
         if request.response_format is not None:
@@ -537,6 +588,11 @@ class OpenAICompatibleModelAdapter:
                 if message.get("content") is None
                 else _ChatContractReason.CONTENT_NOT_STRING
             )
+        try:
+            self._record_call_shapes(message)
+        except Exception:
+            # Observation failure must not change the following presence gates.
+            self._call_shapes = None
         if "tool_calls" in message:
             self._contract_reject(_ChatContractReason.TOOL_CALL_PRESENT)
         if "function_call" in message:
