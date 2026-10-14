@@ -103,7 +103,6 @@ provide exact commands and keep validation pending until results are supplied.
 
 ## Documentation rules
 - Do not create new .md files unless asked. Update existing ones instead.
-- Plans for a feature go in docs/specs/<yyyy-mm-slug>/ only.
 - When a feature is merged: set the spec's status to done and move it to docs/archive/.
 - Any significant architectural choice gets a new ADR; never edit an accepted ADR — supersede it.
 - After changing behavior, update ARCHITECTURE.md if it is now wrong.
