@@ -177,7 +177,9 @@ def _call_field_shape(message: dict[str, object], field: str) -> _CallFieldShape
     if value is None:
         return _CallFieldShape.NULL
     if type(value) is dict:
-        return _CallFieldShape.NONEMPTY_OBJECT if value else _CallFieldShape.EMPTY_OBJECT
+        return (
+            _CallFieldShape.NONEMPTY_OBJECT if value else _CallFieldShape.EMPTY_OBJECT
+        )
     if type(value) is list:
         return _CallFieldShape.NONEMPTY_ARRAY if value else _CallFieldShape.EMPTY_ARRAY
     if type(value) is str:
@@ -518,7 +520,10 @@ class OpenAICompatibleModelAdapter:
                 ("function_call", "tool_calls"), shapes, strict=True
             ):
                 items.append(
-                    (field + "_present", str(shape is not _CallFieldShape.ABSENT).lower())
+                    (
+                        field + "_present",
+                        str(shape is not _CallFieldShape.ABSENT).lower(),
+                    )
                 )
                 items.append((field + "_shape", shape.value))
         return tuple(items)
