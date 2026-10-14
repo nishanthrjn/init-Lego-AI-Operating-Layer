@@ -76,7 +76,6 @@ from legoai.reference.governance import (
     InMemoryPolicyRegistry,
 )
 from legoai.reference.model_capabilities import model_chat_offer, model_embedding_offer
-from legoai.reference.model_openai_compatible import OpenAICompatibleModelAdapter
 from legoai.reference.secret import _ProvisionedSecretSource, _SecretClock
 from legoai.runtime._composition.credential_https import exchange
 from legoai.runtime._composition.disclosure import DisclosureCheck
@@ -146,6 +145,8 @@ class RemoteModelPlane:
         margin: timedelta,
         clock: Callable[[], datetime],
         adapter: Callable[[Exchange], ModelPort],
+        contract_items: Callable[[ModelPort], tuple[tuple[str, str], ...]]
+        | None = None,
     ) -> None:
         self._association = association
         self._attempts, self._uses = attempts, uses
@@ -153,6 +154,7 @@ class RemoteModelPlane:
         self._grant, self._policy = grant, policy
         self._tls, self._timeout, self._margin = tls, timeout, margin
         self._clock, self._adapter = clock, adapter
+        self._contract_items = contract_items
         # Ephemeral, content-free diagnostics for this host only. At most one
         # entry per durable attempt (the existing store capacity bounds it).
         # Nothing here participates in settlement, disclosure or retry decisions.
@@ -187,8 +189,8 @@ class RemoteModelPlane:
             # Per-invocation adapter; never recover or retain a provider body.
             # Completion/errors and durable custody remain entirely unchanged.
             try:
-                if type(adapter) is OpenAICompatibleModelAdapter:
-                    items = adapter._chat_contract_items()
+                if self._contract_items is not None:
+                    items = self._contract_items(adapter)
                     if items:
                         self._contract_diagnostics[check.context.execution_id] = items
             except Exception:
@@ -473,6 +475,7 @@ def compose_remote_plane(
     ],
     consumer: tuple[InMemoryCatalog, CatalogEntry],
     adapter: Callable[[Exchange], ModelPort],
+    contract_items: Callable[[ModelPort], tuple[tuple[str, str], ...]] | None = None,
 ) -> RemoteModelPlane:
     """Open owner-local custody and the per-invocation Secret-use factory.
 
@@ -534,4 +537,5 @@ def compose_remote_plane(
         margin=margin,
         clock=clock,
         adapter=adapter,
+        contract_items=contract_items,
     )

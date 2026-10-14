@@ -63,7 +63,9 @@ def scope() -> None:
     changed.update(git("ls-files", "--others", "--exclude-standard").splitlines())
     changed.difference_update(PINNED_INSTRUCTIONS)
     if changed - ALLOWED:
-        raise ValueError("outside seven-file diagnostic scope: " + repr(changed - ALLOWED))
+        raise ValueError(
+            "outside seven-file diagnostic scope: " + repr(changed - ALLOWED)
+        )
     preserved = {
         ADAPTER: (
             "_reject",

@@ -20,6 +20,7 @@ from legoai.reference.model_openai_compatible import (
     OpenAICompatibleModelAdapter,
     OpenAICompatibleModelConfig,
     _ChatContractReason,
+    _json_body,
 )
 from scripts import kisski_saia_qualification as probe
 from scripts.tests.test_kisski_saia_chat_interop import chat_custody
@@ -172,7 +173,6 @@ def test_exact_rejection_reason_without_raw_content(reason: str) -> None:
         b'{"model":"a","model":"b"}',
         b'{"x":NaN}',
         b"\xff",
-        b"[" * 2000 + b"]" * 2000,
     ],
 )
 def test_strict_json_failure_is_distinct_from_root_shape(raw: bytes) -> None:
@@ -181,6 +181,24 @@ def test_strict_json_failure_is_distinct_from_root_shape(raw: bytes) -> None:
         asyncio.run(owner.chat(request()))
     assert dict(owner._chat_contract_items())["rejection_reason"] == "JSON_INVALID"
     assert raised.value.__context__ is None
+
+
+def test_json_decoder_recursion_failure_is_safely_rejected() -> None:
+    # A fixed nesting depth need not exceed every runtime's decoder limit.
+    owner = adapter(Exchange(b"[]"))
+    with patch(
+        "legoai.reference.model_openai_compatible.json.loads",
+        side_effect=RecursionError(CANARY),
+    ):
+        with pytest.raises(ModelResponseRejectedError) as raised:
+            _json_body(b"[]", _observer=owner._record_contract)
+    assert dict(owner._chat_contract_items()) == {
+        "rejection_reason": "JSON_INVALID",
+        "json_valid": "false",
+    }
+    assert raised.value.failure is ModelFailure.PROTOCOL_INCOMPATIBLE
+    assert raised.value.__context__ is None and raised.value.__cause__ is None
+    assert CANARY not in str(raised.value) + repr(owner._chat_contract_items())
 
 
 @pytest.mark.parametrize("raw", [b"null", b"1", b'"synthetic"', b"true", b"[]"])
@@ -215,7 +233,9 @@ def test_multiple_choices_remain_refused() -> None:
     owner = adapter(Exchange(json.dumps(payload).encode()))
     with pytest.raises(ModelResponseRejectedError):
         asyncio.run(owner.chat(request()))
-    assert dict(owner._chat_contract_items())["rejection_reason"] == "CHOICE_COUNT_INVALID"
+    assert (
+        dict(owner._chat_contract_items())["rejection_reason"] == "CHOICE_COUNT_INVALID"
+    )
 
 
 @pytest.mark.parametrize("content", ["KISSKI_OK", "wrong-token", "", CANARY])
@@ -289,7 +309,11 @@ def test_result_construction_failure_keeps_original_exception() -> None:
 
 @pytest.mark.parametrize("valid_response", [False, True])
 def test_recording_failure_does_not_change_acceptance(valid_response: bool) -> None:
-    raw = json.dumps(valid()).encode() if valid_response else rejected_body("JSON_INVALID")
+    raw = (
+        json.dumps(valid()).encode()
+        if valid_response
+        else rejected_body("JSON_INVALID")
+    )
     owner = adapter(Exchange(raw))
     with patch.object(owner, "_record_contract", side_effect=ValueError(CANARY)):
         if valid_response:

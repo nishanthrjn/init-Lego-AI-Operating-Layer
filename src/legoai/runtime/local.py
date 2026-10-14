@@ -1247,6 +1247,11 @@ def _remote_plane(
     def adapter(exchange: Callable[[str, bytes], tuple[int, bytes]]) -> ModelPort:
         return OpenAICompatibleModelAdapter(settings, provider_id, exchange=exchange)
 
+    def contract_items(owner: ModelPort) -> tuple[tuple[str, str], ...]:
+        if type(owner) is OpenAICompatibleModelAdapter:
+            return owner._chat_contract_items()
+        return ()
+
     try:
         record = admit(
             validate(inspect(declaration), declaration, evaluated_at=now),
@@ -1277,6 +1282,7 @@ def _remote_plane(
             registries=registries,
             consumer=(catalog, entry),
             adapter=adapter,
+            contract_items=contract_items,
         )
     except (OSError, RuntimeError, TypeError, ValueError) as error:
         raise HostError(HostFailure.INITIALIZATION_FAILURE) from error

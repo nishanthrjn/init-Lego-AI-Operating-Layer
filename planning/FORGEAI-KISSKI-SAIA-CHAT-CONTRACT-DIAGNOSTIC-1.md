@@ -144,7 +144,12 @@ reasoning, tool argument, provider field/key, digest, credential, SecretRef or
 request ID is collected. No content length is needed for first-gate diagnosis.
 
 REMOTE composition copies the closed projection after the per-invocation adapter
-finishes/raises, keyed by exact ExecutionId. The private local-host accessor
+finishes/raises, keyed by exact ExecutionId. The local composition root owns the
+concrete adapter type check and supplies a private projection callback alongside
+the existing adapter factory. The invocation plane depends only on ModelPort and
+the callback; it imports no concrete adapter and performs no protocol parsing.
+The callback is optional, has no public API or authorization role, and its
+failure cannot replace the invocation outcome. The private local-host accessor
 enforces host type, thread confinement and minted execution identity as existing
 receive diagnostics do. At most one tuple per attempted execution is retained,
 bounded by the existing attempt capacity. Nothing is persisted in custody.
@@ -157,7 +162,8 @@ successful tiny responses.
 ## Synthetic coverage and design review
 
 `scripts/tests/test_kisski_saia_contract_diagnostics.py` exercises every rejection
-reason, malformed/duplicate/nonfinite/deep JSON, non-object roots, count and finish
+reason, malformed/duplicate/nonfinite JSON, decoder recursion failure,
+non-object roots, count and finish
 policies, required message fields, empty tool keys, optional usage, exact/wrong
 tokens, harmless/reasoning extras, construction exception identity, stale-state
 reset, corrupted enum refusal and callback failures. Synthetic chunked TLS tests
