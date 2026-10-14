@@ -514,7 +514,9 @@ class OpenAICompatibleModelAdapter:
             and len(shapes) == 2
             and all(type(shape) is _CallFieldShape for shape in shapes)
         ):
-            for field, shape in zip(("function_call", "tool_calls"), shapes):
+            for field, shape in zip(
+                ("function_call", "tool_calls"), shapes, strict=True
+            ):
                 items.append(
                     (field + "_present", str(shape is not _CallFieldShape.ABSENT).lower())
                 )

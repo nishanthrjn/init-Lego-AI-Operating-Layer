@@ -10,8 +10,8 @@ import pytest
 from legoai.intelligence.model.ports import ModelResponseRejectedError
 from legoai.intelligence.model.values import ModelFailure
 from legoai.reference.model_openai_compatible import (
-    _CallFieldShape,
     _call_field_shape,
+    _CallFieldShape,
 )
 from scripts import kisski_saia_qualification as probe
 from scripts.tests.test_kisski_saia_chat_interop import chat_custody
