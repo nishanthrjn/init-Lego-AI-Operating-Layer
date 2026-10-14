@@ -286,10 +286,14 @@ def test_usage_absent_and_reasoning_only_is_not_content() -> None:
 
 @pytest.mark.parametrize("key", ["tool_calls", "function_call"])
 @pytest.mark.parametrize("value", [None, [], {}])
-def test_tool_fields_refused_even_when_empty(key: str, value: object) -> None:
+def test_tool_fields_refused_except_legacy_null(key: str, value: object) -> None:
     payload = valid()
     payload["choices"][0]["message"][key] = value
     owner = adapter(Exchange(json.dumps(payload).encode()))
+    if key == "function_call" and value is None:
+        assert asyncio.run(owner.chat(request())).content == "KISSKI_OK"
+        assert dict(owner._chat_contract_items())["function_call_shape"] == "NULL"
+        return
     with pytest.raises(ModelResponseRejectedError):
         asyncio.run(owner.chat(request()))
 

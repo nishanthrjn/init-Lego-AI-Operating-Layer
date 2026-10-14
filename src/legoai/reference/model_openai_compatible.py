@@ -602,7 +602,7 @@ class OpenAICompatibleModelAdapter:
             self._call_shapes = None
         if "tool_calls" in message:
             self._contract_reject(_ChatContractReason.TOOL_CALL_PRESENT)
-        if "function_call" in message:
+        if "function_call" in message and message["function_call"] is not None:
             self._contract_reject(_ChatContractReason.FUNCTION_CALL_PRESENT)
         raw_usage = payload.get("usage")
         usage = None

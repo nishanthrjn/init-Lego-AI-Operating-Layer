@@ -503,6 +503,31 @@ REMOTE provider support, no OpenAI-compatible REMOTE, no KISSKI or ForgeAI
 remote support, no production credential management, no strict wall-clock
 atomic expiry and no provider-side revocation ordering.
 
+## Legacy function_call null compatibility (OPENAI-COMPAT-FUNCTION-CALL-NULL-1)
+
+Implementation complete; maintainer validation pending. The shared LOCAL/REMOTE
+OpenAI-compatible adapter permits absent or explicitly null `message.function_call`
+when all other response gates pass. Every non-null value remains rejected,
+including `{}`, `[]`, `""`, `0` and `false`. Every present `tool_calls` value still
+rejects first. This is serialization compatibility, not function/tool support.
+
+Strict JSON, exact model identity, exactly one choice, `finish_reason == "stop"`,
+assistant role, string content, usage handling and result construction are
+unchanged. Accepted null responses retain truthful private diagnostics:
+`function_call_present=true`, `function_call_shape=NULL`. Diagnostic failures
+cannot change acceptance. The existing successful Model path applies; transport
+custody, disclosure, Secret use, retry and UNKNOWN handling are unchanged.
+Historical live rejections are not rewritten. See
+`planning/OPENAI-COMPAT-FUNCTION-CALL-NULL-COMPATIBILITY-REVIEW-1.md` for the
+maintainer-validated null-only decision. No accepted ADR is changed.
+
+Run `validate_openai_compat_function_call_null_1.py` for local synthetic checks.
+No live connectivity, tool/function capability, coding quality or global
+OpenAI compatibility is established by this implementation. After local
+qualification and commit, a fresh separately authorized synthetic diagnostic
+may use exact `qwen3-coder-next`, stream=false and `KISSKI_OK`, with no JSON stage,
+retry or fallback. Exact token agreement and all response gates remain required.
+
 ## Credentialed REMOTE OpenAI-compatible binding (OPENAI-COMPATIBLE-REMOTE-1)
 
 **Status: LOCALLY QUALIFIED (2026-10-09; commit `f411fc4`), within the scope

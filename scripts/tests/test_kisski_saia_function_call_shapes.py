@@ -46,27 +46,34 @@ CASES = [
 
 @pytest.mark.parametrize("field", ["function_call", "tool_calls"])
 @pytest.mark.parametrize("value,shape", CASES)
-def test_present_shapes_remain_rejected(field: str, value: object, shape: str) -> None:
+def test_present_shapes_preserve_null_only_policy(
+    field: str, value: object, shape: str
+) -> None:
     payload = valid()
     payload["choices"][0]["message"][field] = value
     payload["choices"][0]["message"]["content"] = CANARY
     exchange = Exchange(json.dumps(payload).encode())
     owner = adapter(exchange)
-    with pytest.raises(ModelResponseRejectedError) as raised:
-        asyncio.run(owner.chat(request()))
+    accepted = field == "function_call" and value is None
+    if accepted:
+        assert asyncio.run(owner.chat(request())).content == CANARY
+    else:
+        with pytest.raises(ModelResponseRejectedError) as raised:
+            asyncio.run(owner.chat(request()))
+        assert raised.value.failure is ModelFailure.PROTOCOL_INCOMPATIBLE
+        assert raised.value.__context__ is None
+        assert raised.value.__cause__ is None
+        assert CANARY not in str(raised.value)
     facts = dict(owner._chat_contract_items())
     reason = (
         "FUNCTION_CALL_PRESENT" if field == "function_call" else "TOOL_CALL_PRESENT"
     )
-    assert facts["rejection_reason"] == reason
+    assert facts["rejection_reason"] == ("VALIDATED" if accepted else reason)
     assert facts[field + "_shape"] == shape
     assert facts[field + "_present"] == "true"
     other = "tool_calls" if field == "function_call" else "function_call"
     assert facts[other + "_shape"] == "ABSENT"
     assert facts[other + "_present"] == "false"
-    assert raised.value.failure is ModelFailure.PROTOCOL_INCOMPATIBLE
-    assert raised.value.__context__ is None
-    assert raised.value.__cause__ is None
     assert set(facts) == {
         "rejection_reason",
         "json_valid",
@@ -76,7 +83,7 @@ def test_present_shapes_remain_rejected(field: str, value: object, shape: str) -
         "tool_calls_present",
         "tool_calls_shape",
     }
-    assert CANARY not in repr(facts) + str(raised.value)
+    assert CANARY not in repr(facts)
     assert exchange.calls == 1
 
 
@@ -119,11 +126,7 @@ def test_observation_failure_cannot_change_acceptance(
         payload["choices"][0]["message"]["function_call"] = None
     owner = adapter(Exchange(json.dumps(payload).encode()))
     monkeypatch.setattr(owner, "_record_call_shapes", broken_diagnostic)
-    if present:
-        with pytest.raises(ModelResponseRejectedError):
-            asyncio.run(owner.chat(request()))
-    else:
-        assert asyncio.run(owner.chat(request())).content == "KISSKI_OK"
+    assert asyncio.run(owner.chat(request())).content == "KISSKI_OK"
     assert not any("_shape" in key for key, _ in owner._chat_contract_items())
 
 
@@ -165,16 +168,19 @@ def test_other_shape_never_inspects_arbitrary_objects() -> None:
         pytest.param({"name": CANARY}, "NONEMPTY_OBJECT", id="object"),
     ],
 )
+@pytest.mark.parametrize("content", ["KISSKI_OK", "synthetic-wrong-token"])
 def test_runner_prints_only_closed_shapes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     value: object,
     shape: str,
+    content: str,
 ) -> None:
     runner = Runner(tmp_path, monkeypatch)
     payload = valid()
     payload["choices"][0]["message"]["function_call"] = value
+    payload["choices"][0]["message"]["content"] = content
     raw = json.dumps(payload).encode()
     wire = b"%x\r\n%s\r\n0\r\n\r\n" % (len(raw), raw)
     answers = iter(("selected-model", "y"))
@@ -186,11 +192,19 @@ def test_runner_prints_only_closed_shapes(
             diagnostic_only=True,
         )
         assert server.requests == server.connections == 2
-    assert outcome is probe.Outcome.CONTRACT_REJECTED
+    expected = probe.Outcome.CONTRACT_REJECTED
+    if value is None:
+        expected = (
+            probe.Outcome.CONNECTIVITY_ONLY
+            if content == "KISSKI_OK"
+            else probe.Outcome.CONTENT_REJECTED
+        )
+    assert outcome is expected
     assert f"chat contract function_call_shape: {shape}" in runner.lines
     assert "chat contract function_call_present: true" in runner.lines
     assert "chat contract tool_calls_present: false" in runner.lines
-    assert "chat effect: none" in runner.lines
+    effect = "completed" if value is None else "none"
+    assert f"chat effect: {effect}" in runner.lines
     state, facts = chat_custody(runner)
     assert state == "completed"
     assert set(facts) == {"sent_all", "response_complete"}
