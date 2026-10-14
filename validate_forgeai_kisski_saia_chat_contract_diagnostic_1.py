@@ -20,6 +20,11 @@ SELF = "validate_forgeai_kisski_saia_chat_contract_diagnostic_1.py"
 DOCUMENT = "planning/FORGEAI-KISSKI-SAIA-CHAT-CONTRACT-DIAGNOSTIC-1.md"
 TARGETS = (ADAPTER, PLANE, LOCAL, RUNNER, TEST, SELF)
 ALLOWED = {*TARGETS, DOCUMENT}
+# Independently committed instruction edits; not part of the diagnostic slice.
+PINNED_INSTRUCTIONS = {
+    "AGENTS.md": "f088b2208ddae119ac79f8b9de1789a8f82f0a35",
+    "CLAUDE.md": "2dda046c4bf89de4261bc0459a21a9a43921203c",
+}
 
 
 def git(*args: str) -> str:
@@ -43,11 +48,20 @@ def definitions(source: str) -> dict[str, str]:
 
 
 def scope() -> None:
+    for name, blob in PINNED_INSTRUCTIONS.items():
+        path = ROOT / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("missing or symlinked instruction file: " + name)
+        working = git("hash-object", "--path=" + name, name).strip()
+        staged = git("rev-parse", ":" + name).strip()
+        if working != blob or staged != blob:
+            raise ValueError("pinned instruction content changed: " + name)
     changed = set(git("diff", "--name-only", "--no-renames", BASELINE).splitlines())
     changed.update(
         git("diff", "--cached", "--name-only", "--no-renames", BASELINE).splitlines()
     )
     changed.update(git("ls-files", "--others", "--exclude-standard").splitlines())
+    changed.difference_update(PINNED_INSTRUCTIONS)
     if changed - ALLOWED:
         raise ValueError("outside seven-file diagnostic scope: " + repr(changed - ALLOWED))
     preserved = {
