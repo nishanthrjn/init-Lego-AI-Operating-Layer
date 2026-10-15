@@ -41,7 +41,14 @@ def safe_line(line: str) -> str | None:
     fields: dict[str, tuple[str, Set[str]]] = {
         "chat attempt state": (
             "transport_completion",
-            {"none", "intended", "not_sent", "provider_rejected", "completed", "unknown"},
+            {
+                "none",
+                "intended",
+                "not_sent",
+                "provider_rejected",
+                "completed",
+                "unknown",
+            },
         ),
         "chat effect": ("effect", {"none", "completed", "partial", "unknown"}),
         "chat contract finish_reason_category": ("finish_reason_category", CATEGORIES),
@@ -120,7 +127,9 @@ def main(options: list[str] | None = None) -> int:
     args = parser.parse_args(options)
     print(VERSION + "; attended diagnostic only; no model-quality claim")
     print("selected_model: " + MODEL)
-    print("Maximum 1 discovery + 1 chat; no retry, fallback, reselection or continuation")
+    print(
+        "Maximum 1 discovery + 1 chat; no retry, fallback, reselection or continuation"
+    )
     print("SYNTHETIC token request; 512 output tokens; 60-second timeout")
     print("Two separate hidden S1 provisions; no repository input")
     print("Required authorization: " + AUTHORIZATION)
@@ -137,7 +146,7 @@ def main(options: list[str] | None = None) -> int:
         custody = Path(tempfile.mkdtemp(prefix="finish-reason-diagnostic-"))
         print("local custody directory: " + str(custody))
         outcome = run(saia.live_config(custody), ask=input, write=print)
-    except (Exception, KeyboardInterrupt):
+    except Exception, KeyboardInterrupt:
         print("invocation_outcome: INCONCLUSIVE; inspect custody; no retry")
         return 1
     print("invocation_outcome: " + outcome.name)

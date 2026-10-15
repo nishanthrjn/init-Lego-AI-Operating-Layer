@@ -81,9 +81,7 @@ def test_real_probe_flow_stays_one_discovery_one_chat(
 ) -> None:
     fixture = Runner(tmp_path, monkeypatch)
     models = [] if case == "missing" else [{"id": diagnostic.MODEL}]
-    finish = (
-        CANARY if case == "unknown" else "length" if case == "length" else "stop"
-    )
+    finish = CANARY if case == "unknown" else "length" if case == "length" else "stop"
     payload = {
         "model": diagnostic.MODEL,
         "choices": [
