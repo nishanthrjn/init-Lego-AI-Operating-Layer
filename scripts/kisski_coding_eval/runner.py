@@ -307,7 +307,7 @@ def save(
         final = "MODEL_QUALIFIED_FOR_REVIEW_ONLY"
     else:
         final = "NO_MODEL_QUALIFIED"
-    value = {
+    value: dict[str, object] = {
         "evaluation": VERSION,
         "pack_digest": digest(),
         "phase": phase,
