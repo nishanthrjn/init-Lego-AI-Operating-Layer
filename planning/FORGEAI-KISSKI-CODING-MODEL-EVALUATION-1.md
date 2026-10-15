@@ -1,0 +1,308 @@
+# FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1
+
+Status: IMPLEMENTED — MAINTAINER VALIDATION REQUIRED.
+Verification: NOT RUN — Awaiting user execution.
+No live evaluation is authorized by this implementation or local validation.
+
+## Goal and ownership
+
+Compare bounded coding/proposal and independent-review performance on eight frozen,
+synthetic task families. This is operator evaluation tooling in
+`scripts/kisski_coding_eval`, not a new generic evaluation framework or production
+agent. There are no new Ports, providers, dependencies, routing policies or ADRs.
+No production worker, CodingAgent, IndependentReviewer, T2, Secret, disclosure,
+mutation, public API or accepted ADR changes are needed.
+
+The first slice deliberately measures scalar miniature fixtures. It cannot establish
+general repository engineering competence, deployment readiness, production tool
+use, test-writing ability or behavior on a private repository. No model wins by
+name, size, reputation or latency. Equally qualified candidates remain tied.
+
+## Current qualification basis
+
+Maintainer-provided evidence shows the exact `kisski-saia` / `qwen3-coder-next`
+path at `https://chat-ai.academiccloud.de/v1` completed discovery, the exact
+`KISSKI_OK` response and a fixed structured synthetic proposal smoke. The reported
+chat executions were `exec-db303efaec154db888521a43ea63dbef` and
+`exec-3d2d2c7c69dd49b3b6ac3b539f5cdd4d`. The tiny response used complete bounded
+ordinary HTTP/1.1 chunked framing, exact model identity, `function_call: null` and
+absent `tool_calls`. This is supplied evidence, not a run performed by this agent.
+
+That run qualifies its connectivity/smoke path only. It does not qualify coding
+quality, every listed model, SSE, HTTP/2, arbitrary tool calls or repository access.
+
+## Reused assets and contract authority
+
+- Existing Kaggle ForgeAI quality `contracts.py`: frozen CodingProposal and
+  IndependentReviewer document parsers and instructions. No second proposal format.
+- Its `safety.py`: bounded scalar language admission, not an arbitrary Python sandbox.
+- Its `contract-baseline.json`: pins canonical coding/reviewer values, API,
+  definitions, JSON framing, ForgeAI review policy and ADR-021. Drift blocks the
+  local validator and live entry until explicitly reviewed.
+- Existing KiSSKI qualification composition, discovery, public governed chat,
+  hidden S1 provision and safe contract diagnostics. Trusted script-private
+  bootstrap remains outside consumer/domain code; no new public discovery API.
+- Existing Kaggle evaluation regression tests and REMOTE/architecture controls.
+  Existing EVAL-3 sufficiency/analyst work informs evidence separation only;
+  unreliable Analyst sufficiency behavior is not a qualification gate here.
+
+Production CodingAgent/IndependentReviewer orchestration and sandbox/check profiles
+remain independent. Their filesystem mutation/check semantics are not simulated
+or claimed by these in-memory checks. Production schemas constrain the mirror;
+production modules are not imported to obtain private parsers.
+
+## Candidate selection
+
+The account-observed inventory is frozen as:
+
+`qwen3-coder-next`, `qwen3.5-397b-a17b`, `qwen3.8-27b`, `qwen3.6-35b-a3b`,
+`deepseek-v4-flash-0731`, `glm-5.3-flash`, `gemma-4-31b-it`,
+`qwen3-30b-a3b-instruct-2507`, `meta-llama-3.1-8b-instruct`,
+`qwen3-omni-30b-a3b-instruct`.
+
+An operator enters comma-separated **exact model IDs**, never menu numbers.
+Selection must be unique, in this inventory and in that phase's fresh discovery.
+Phase B also requires screening eligibility. Removed models are refused; newly
+discovered models outside the frozen inventory require a separate pack revision.
+No automatic reselection is performed.
+
+The request's suggested initial comparison is `qwen3-coder-next`,
+`qwen3.5-397b-a17b`, `qwen3.8-27b`, `deepseek-v4-flash-0731`, and `glm-5.3-flash`.
+This is an operator shortlist for coding/review comparison, not evidence of relative
+capability. The runner accepts any 1–5 eligible IDs, with 3–5 intended for comparison;
+one model is supported for a deliberately smaller authorized run.
+
+## Frozen tasks and equal conditions
+
+| ID | Phase / role | Frozen requirement |
+| --- | --- | --- |
+| bug | A / coding | Correct inclusive endpoint counting. |
+| refactor | A / coding | Remove else after return without changing clamping. |
+| api | A / coding | Add required `limit` argument while preserving exact argument names. |
+| diagnosis | A / coding | Repair zero-boundary failing test without editing tests. |
+| multi | B / coding | Supply both independent full-file replacements in exact scope. |
+| security | B / coding | Preserve authorization AND existence; reject truthy bypass values. |
+| abstention | B / reviewer | Missing policy and patch require insufficient evidence. |
+| review | B / reviewer | Identify defect, regression and security issue; spare harmless/correct changes. |
+
+Every model gets the same task/role system instruction, user text, source fixture,
+allowed files, response schema, constraints and budget. Reference replacements and
+targeted/regression vectors are evaluator-only, never prompt hints. There is no
+per-model tuning, rework, retry, fallback, command execution or model-generated test.
+The same task remains the same across models; roles use their existing distinct
+schema instructions. All inputs are fictional/public-safe; no repository files are
+sent to the provider. Source reads for local hash integrity are never prompt inputs.
+
+`manifest.json` pins normalized source bytes for the pack, scorer, runner, integrity
+module and reused contract/language files. The plan/report additionally identifies
+the task/prompt/budget digest. Change of tasks, scoring, instructions or reused
+contracts requires explicit review and a new evaluation version; never silently
+refresh pins to mix old Phase A evidence with changed Phase B criteria.
+
+## Patch application and deterministic checks
+
+Proposals are parsed as existing complete-file create/update documents, restricted
+here to exact **update** targets. All required targets must be supplied. Paths are
+data keys; they are never opened as filesystem destinations. Full-file replacement
+is confined to a disposable in-memory map. `patch_application = in_memory_only`
+is recorded; `patch_applies` does not claim a disk patch or governed mutation.
+
+The shared language gate bounds each candidate to 8 KiB and 512 AST nodes, one
+`solve` function, scalar assignments, branches, comparisons and addition/subtraction.
+A small deterministic AST interpreter evaluates frozen vectors, with bounded
+integer arithmetic. It never calls `exec`, `eval`, subprocesses or generated Python.
+There are no imports, recursion, loops, attributes, subscripts, calls or arbitrary
+fixture commands. This replaces the execution stage only for this restricted pack;
+general filesystem changes require the existing governed mutation/check mechanism
+in a separately scoped evaluation.
+
+Targeted and regression results, exact argument-name adherence, schema validity,
+scope and safety are separate. Checks sample finite vectors; passing them is not
+a proof for all possible inputs. Test names in the JSON refer to these scalar
+oracle checks, not pytest execution of generated source.
+
+## Rubric and minimum gates
+
+Coder dimensions: correctness (targeted AND regression), instruction adherence,
+schema validity, scope discipline and absence of critical safety violations.
+Per-task evidence also records patch applicability, unsupported file touches,
+invented paths, acceptance, abstention, review detection and rationale proxy.
+
+Coder weights are **45/20/15/10/10** for correctness/adherence/schema/scope/safety.
+Correctness plus safety dominate; style and speed receive zero weight. Reviewer
+results are deliberately not blended into the coder total.
+
+Final coder eligibility requires all six coding tasks correct, 100% coder schema,
+adherence and scope, no critical coder safety violation, and correct plain-JSON
+abstention on the missing-context task. Any hard gate failure overrides total score.
+Final reviewer eligibility independently requires both review tasks schema-valid,
+plain JSON, correct abstention and all three expected blocking defect categories,
+no false findings, no missed critical issue. A weak coder may qualify for review
+only; a weak reviewer does not erase an otherwise qualifying coder result.
+
+Both phases and all eight unique records are required for final classification.
+Missing/duplicate records or provider/protocol failure make the result inconclusive.
+Phase A alone never qualifies a model. All final eligible coders score 100 under
+these conservative gates; eligible reviewers separately score 100. The report lists
+qualified rank groups as ties, with lexical display order carrying no preference.
+The pack therefore may establish eligibility without choosing a unique winner.
+
+Supported results:
+
+- `MODEL_QUALIFIED_FOR_FORGEAI_CODING`
+- `MODEL_QUALIFIED_FOR_REVIEW_ONLY`
+- `MODEL_NOT_QUALIFIED`
+- `NO_MODEL_QUALIFIED`
+- `RESULT_INCONCLUSIVE`
+
+These are **frozen-pack results only**, not authorization to deploy or a general
+claim about ForgeAI v0.2. Automatic role configuration/routing is not added.
+
+## Abstention, security and reviewer limits
+
+The production coding schema requires at least one change, so it cannot represent
+a zero-change abstention. The existing reviewer `insufficient_evidence` schema is
+used, with nonempty unknowns and no findings. This measures explicit abstention in
+that role, not a new production CodingAgent `CONTEXT_INCOMPLETE` behavior. Invented
+acceptance fails the abstention gate; invented evidence IDs fail schema validation.
+
+Security vectors reject both missing authorization and truthy values other than
+the specified integer 1. Unsafe language constructs and out-of-scope targets are
+critical failures. They are never executed or written into a workspace.
+
+Reviewer evidence has five independent patches: r1 correctness bug, r2 zero
+regression, r3 authorization bypass, r4 harmless refactor, r5 correct identity.
+True positives require an unambiguous expected evidence ID/category, blocking
+severity and required action. Extra/duplicate/mismatched findings are false findings;
+missing r3 is a missed critical issue. The false-positive rate is the fraction of
+the two clean patches flagged. References and categories are deterministic proxies:
+the scorer does not prove the natural-language explanation or correction is sound.
+No hidden keyword/spelling requirements are used to award defect credit.
+
+`reasoning_sufficiency_proxy` means required rationale exists (coding) or review
+fixture gates pass (reviewing); it is not semantic reasoning qualification.
+`unsupported_assumption_rate` is null because free-text assertions cannot be
+soundly counted without another adjudication contract. Invented paths and unknown
+review references are detected separately. Full reasoning quality remains outside
+this narrow automatic qualification; it is not silently assigned a perfect score.
+
+## Structured-output reliability and operations
+
+Derived evidence separates completed provider responses from evaluation failures.
+Per model: valid schema count, malformed document count, provider/protocol failures,
+typed protocol rejection count, forbidden call-field rejections, wrong-model
+rejections and finish-reason failures. Optional safe diagnostics may be unavailable;
+their absence never changes the governed outcome. Truncation is explicitly
+`NOT_SEPARATELY_OBSERVABLE`; finish failures do not prove token exhaustion.
+
+Each record includes exact selected model/task/role/phase, safe execution ID,
+invocation outcome, closed contract/failure categories, bounded elapsed duration,
+and reported output tokens if available. Latency is secondary. Cost is
+`NOT_AVAILABLE`; repeatability is `NOT_MEASURED` (one sample, no provider determinism
+claim or guaranteed seed). Identical prompts/budgets are reproducible methodology,
+not a promise of identical generations.
+
+## Quota and phase gates
+
+| Phase | Models | Tasks per model | Maximum chats | Discovery |
+| --- | --- | --- | --- | --- |
+| A screening | 1–5 (normally 3–5) | 4 | 20 | 1 |
+| B finalists | 1–2 | 4 | 8 | 1 |
+
+One authorized run of each phase: **28 chats + 2 discovery calls = 30 calls**.
+Each chat requests at most 1024 output tokens and a 60-second client timeout.
+Combined completion-token request ceiling is 28,672; actual accounting is not
+claimed. System plus user input is bounded to 16 KiB per task. T2/SRCP-1 retain
+their existing framing, body and deadline bounds. No automatic quota expansion.
+
+Phase A screening requires four complete unique tasks, schema/adherence/scope
+success and no critical safety failure, with at least 3/4 correct. An imperfect
+screen can proceed for review evaluation but cannot meet final 6/6 coding gates.
+The operator selects at most two eligible finalists in a separately authorized
+Phase B run. Phase B imports a bounded, closed-record Phase A report with matching
+pack identity; it does not rerun Phase A. It performs one new discovery.
+
+A protocol/provider failure halts the entire current phase and retains partial
+evidence as inconclusive. No automatic replay of uncertain effects. A completed
+but incorrect/schema-invalid answer is recorded once; subsequent preapproved
+tasks may continue without correcting that answer. No switch within a task.
+
+## Evidence schema and custody
+
+`evaluation.json` contains evaluation version, pack digest, phase, task records,
+per-model role summaries, reliability counters, tied qualified groups, final result,
+scope/cost/repeatability limits. It is written atomically to a fresh temporary
+operator custody directory, with separate numbered attempt stores for each host.
+No raw model text, proposed file content, credentials, exception messages or
+arbitrary provider keys are retained by the evaluation report. Existing governed
+attempt custody semantics remain unchanged.
+
+The local report is operator evidence, **not authenticated authority**. Closed
+shape/size/type validation rejects malformed imports but cannot prove an operator
+has not edited valid scores. Preserve the original report and custody together;
+do not use this JSON as an authorization token or production policy decision.
+The runner offers no resume or repeat authorization through a prior report.
+
+## Operator flow and maintainer validation
+
+Prerequisites: repository root, the existing locked root uv environment with its
+development dependencies already installed, Python 3.14, and existing synthetic
+TLS test prerequisites used by the KiSSKI validators. No new dependencies or
+environment variables. Offline checks use only synthetic/replay/local TLS fixtures.
+The validator does not acquire packages, build wheels or contact a provider.
+
+Run only the local validator now:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_kisski_coding_model_evaluation_1.py
+if ($LASTEXITCODE -ne 0) { throw 'ForgeAI KiSSKI coding-model evaluation validation failed' }
+```
+
+It checks exact slice scope, normalized source pins and canonical schema drift,
+new contract/scoring/security/inertness controls, existing frozen ForgeAI evaluation
+regressions, REMOTE and KiSSKI contracts, architecture, typing, lint, format and
+working/staged whitespace. No tests or validators were executed during implementation.
+
+Expected local success:
+
+`FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1 HARNESS LOCALLY QUALIFIED; NO MODEL QUALITY QUALIFIED; NO LIVE EXECUTION AUTHORIZED`
+
+Future attended flow, only after maintainer validation and fresh authorization:
+
+```powershell
+uv run --locked --offline --no-sync python -m scripts.kisski_coding_eval.runner --plan
+uv run --locked --offline --no-sync python -m scripts.kisski_coding_eval.runner --live --phase A
+```
+
+Phase A exact phrase:
+`AUTHORIZE FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1 PHASE A LIVE SYNTHETIC`
+
+The default/plan does not prompt, create custody or make provider calls. Live mode
+requires an interactive terminal and exact phrase, verifies frozen source identity,
+then provisions discovery through hidden S1 input. After discovery, exact model
+selection and explicit bounded-phase approval, it provisions chat separately for
+`remote-model-bearer`; discovery uses `provider-model-discovery`. No credential
+arguments, environment variables, config files or piped input are introduced.
+
+After Phase A evidence is reviewed, a separate future command is:
+
+```powershell
+uv run --locked --offline --no-sync python -m scripts.kisski_coding_eval.runner --live --phase B
+```
+
+Phase B exact phrase:
+`AUTHORIZE FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1 PHASE B LIVE SYNTHETIC`
+
+It requests the Phase A derived-report path, then fresh discovery and eligible
+exact IDs. All models/tasks are approved before the bounded phase. No implicit
+Phase B, retries, fallback, model reselection or automatic winner deployment.
+
+## Claims and next decision
+
+Local success qualifies the harness only. Await maintainer results before further
+implementation or live evaluation. A future live result is evidence for this
+frozen scalar pack and role only. Repository disclosure, production mutation,
+general coding quality, semantic review reasoning and deployment remain separate
+qualification work. No security, capacity, cost or universal provider claim follows.
+
+Suggested commit: `feat(eval): add bounded KiSSKI coding model evaluation harness`
