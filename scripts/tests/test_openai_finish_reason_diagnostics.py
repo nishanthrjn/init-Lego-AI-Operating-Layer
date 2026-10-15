@@ -167,7 +167,9 @@ def test_acceptance_fitness_control_detects_relaxation() -> None:
         "        except Exception:\n"
         "            self._finish_category = None\n"
     )
-    instrumented = source.replace("        if choice", observation + "        if choice")
+    instrumented = source.replace(
+        "        if choice", observation + "        if choice"
+    )
     assert acceptance(source) == acceptance(instrumented)
     relaxed = source.replace("!= 'stop'", "not in ('stop', 'length')")
     assert acceptance(source) != acceptance(relaxed)
