@@ -1,0 +1,17 @@
+{
+  "cost": "NOT_AVAILABLE",
+  "evaluation": "FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1",
+  "pack_digest": "2bab09bdd0177040c67833611d67b54f56916d5a2f0366f914bb33d4f65edc57",
+  "phase": "A",
+  "qualified_rank_groups": {
+    "coder": [],
+    "reviewer": []
+  },
+  "ranking_note": "Qualified scores tie at 100; lexical display order is not rank",
+  "records": [],
+  "reliability": {},
+  "repeatability": "NOT_MEASURED",
+  "result": "RESULT_INCONCLUSIVE",
+  "scope": "frozen scalar synthetic pack only; no production deployment recommendation",
+  "summaries": {}
+}
