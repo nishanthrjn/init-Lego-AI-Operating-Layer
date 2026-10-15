@@ -280,6 +280,19 @@ async def invoke(host: Any, config: legacy.ProbeConfig, task: Task) -> dict[str,
         "JSON_INVALID",
     }
     row["contract_reason"] = reason if reason in known else "OTHER_OR_UNAVAILABLE"
+    category = facts.get("finish_reason_category")
+    if reason in {"FINISH_REASON_MISSING", "FINISH_REASON_INVALID"} and category in {
+        "ABSENT",
+        "NULL",
+        "STOP",
+        "LENGTH",
+        "CONTENT_FILTER",
+        "TOOL_CALLS",
+        "FUNCTION_CALL",
+        "OTHER_STRING",
+        "NON_STRING",
+    }:
+        row["finish_reason_category"] = category
     row["duration_ms"] = duration
     row["execution_id"] = context.execution_id.value
     return row

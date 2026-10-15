@@ -157,6 +157,35 @@ def _optional_tokens(value: object) -> int | None:
     return value if type(value) is int and value >= 0 else None
 
 
+class _FinishReasonCategory(Enum):
+    ABSENT = "ABSENT"
+    NULL = "NULL"
+    STOP = "STOP"
+    LENGTH = "LENGTH"
+    CONTENT_FILTER = "CONTENT_FILTER"
+    TOOL_CALLS = "TOOL_CALLS"
+    FUNCTION_CALL = "FUNCTION_CALL"
+    OTHER_STRING = "OTHER_STRING"
+    NON_STRING = "NON_STRING"
+
+
+def _finish_reason_category(choice: dict[str, object]) -> _FinishReasonCategory:
+    if "finish_reason" not in choice:
+        return _FinishReasonCategory.ABSENT
+    value = choice["finish_reason"]
+    if value is None:
+        return _FinishReasonCategory.NULL
+    if type(value) is not str:
+        return _FinishReasonCategory.NON_STRING
+    return {
+        "stop": _FinishReasonCategory.STOP,
+        "length": _FinishReasonCategory.LENGTH,
+        "content_filter": _FinishReasonCategory.CONTENT_FILTER,
+        "tool_calls": _FinishReasonCategory.TOOL_CALLS,
+        "function_call": _FinishReasonCategory.FUNCTION_CALL,
+    }.get(value, _FinishReasonCategory.OTHER_STRING)
+
+
 class _CallFieldShape(Enum):
     ABSENT = "ABSENT"
     NULL = "NULL"
@@ -475,6 +504,10 @@ class OpenAICompatibleModelAdapter:
         self._exchange = exchange
         self._contract_reason: _ChatContractReason | None = None
         self._call_shapes: tuple[_CallFieldShape, _CallFieldShape] | None = None
+        self._finish_category: _FinishReasonCategory | None = None
+
+    def _record_finish_category(self, choice: dict[str, object]) -> None:
+        self._finish_category = _finish_reason_category(choice)
 
     def _record_call_shapes(self, message: dict[str, object]) -> None:
         self._call_shapes = (
@@ -510,6 +543,8 @@ class OpenAICompatibleModelAdapter:
             _ChatContractReason.MODEL_FIELD_NOT_STRING,
         }:
             items.append(("returned_model_matches_requested", "true"))
+        if type(self._finish_category) is _FinishReasonCategory:
+            items.append(("finish_reason_category", self._finish_category.value))
         shapes = self._call_shapes
         if (
             type(shapes) is tuple
@@ -531,6 +566,7 @@ class OpenAICompatibleModelAdapter:
     async def chat(self, request: ChatRequest) -> ChatResult:
         self._contract_reason = None
         self._call_shapes = None
+        self._finish_category = None
         if type(request) is not ChatRequest:
             raise TypeError("chat requires ChatRequest")
         if request.response_format is not None:
@@ -572,6 +608,11 @@ class OpenAICompatibleModelAdapter:
         choice = choices[0]
         if not isinstance(choice, dict):
             self._contract_reject(_ChatContractReason.CHOICE_NOT_OBJECT)
+        try:
+            self._record_finish_category(choice)
+        except Exception:
+            # Optional observation must never change acceptance or failure.
+            self._finish_category = None
         if choice.get("finish_reason") != "stop":
             self._contract_reject(
                 _ChatContractReason.FINISH_REASON_MISSING

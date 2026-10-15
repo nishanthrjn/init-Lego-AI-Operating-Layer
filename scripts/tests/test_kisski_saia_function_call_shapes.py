@@ -76,6 +76,7 @@ def test_present_shapes_preserve_null_only_policy(
     assert facts[other + "_present"] == "false"
     assert set(facts) == {
         "rejection_reason",
+        "finish_reason_category",
         "json_valid",
         "returned_model_matches_requested",
         "function_call_present",
