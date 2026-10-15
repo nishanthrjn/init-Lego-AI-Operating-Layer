@@ -1,7 +1,7 @@
 # FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1
 
-Status: BASE HARNESS LOCALLY QUALIFIED; SELECTION DIAGNOSTIC VALIDATION PENDING.
-Verification of diagnostic correction: NOT RUN — Awaiting user execution.
+Status: HARNESS AND DIAGNOSTICS LOCALLY QUALIFIED; HOST-LIFECYCLE VALIDATION PENDING.
+Host-lifecycle verification: NOT RUN — Awaiting user execution.
 No live evaluation is authorized by this implementation or local validation.
 
 ## Goal and ownership
@@ -368,9 +368,10 @@ This syntax example is not authorization to retry. Frozen tasks, prompts to the
 model, scoring, call budgets and production behavior remain unchanged. Only the
 runner source pin changes. The existing validator is reused with focused offline
 tests for quote rejection, safe diagnostics, pre-chat ordering and exact scope.
-It ignores only the existing **untracked** preserved `evaluation.json` when checking
-implementation scope; staging it or introducing other untracked implementation
-files remains rejected. It never reads the preserved custody as a test fixture.
+The original scope exception covered only the untracked report. After both
+historical reports became tracked, the validator was corrected to pin their exact
+index and working contents. Changed reports or unrelated files remain rejected.
+It never reads the preserved custody as a test fixture.
 
 Run the existing maintainer validator command above, then return its output.
 No live retry is authorized. Suggested correction commit:
@@ -379,8 +380,11 @@ No live retry is authorized. Suggested correction commit:
 ## Phase A partial-run diagnostic — 2026-10-15
 
 The maintainer subsequently validated the selection diagnostic: 1,151 tests,
-typing, lint, format and whitespace passed. This new partial-run diagnostic is
-NOT RUN — Awaiting user execution. No live retry is authorized.
+typing, lint, format and whitespace passed. The partial-run diagnostic was then
+maintainer-validated: 1,162 tests, typing, lint, format and working/staged whitespace
+passed, with source manifest
+`6ab24a42647e9c46aa594efcd24d8b212cd7755f2b16cf38dded75220dfedac9`.
+No live retry is authorized.
 
 Preserved custody inspected read-only:
 `C:\Users\nisha\AppData\Local\Temp\kisski-coding-eval-1o169lhx`.
@@ -396,7 +400,7 @@ No second model attempt exists in the preserved store. The writer sidecars and
 credential source/evidence databases were not opened; raw records, prompts,
 responses and headers were not selected. Original custody was not modified.
 
-Authoritative ordering is model-major and task-minor: the loop retains the host
+At the time of the failed run, ordering was model-major and task-minor: the loop retains the host
 for `qwen3-coder-next`, then advances from `bug` to `refactor`, followed by `api`
 and `diagnosis`. After `bug`, it saves the report, prints the completed row,
 checks the outcome, and starts `asyncio.run(invoke(...refactor...))`.
@@ -414,7 +418,7 @@ second response. The old handler discarded the safe HostFailure category.
 | --- | --- |
 | FACT | Report and model custody confirm completed `qwen3-coder-next` / `bug`. |
 | FACT | Only one model directory and one model attempt; no second durable attempt. |
-| FACT | Runner creates a fresh event loop per task; host forbids changing loops. |
+| FACT | The failed-run runner created a fresh event loop per task; host forbids changing loops. |
 | INFERENCE | Under this source/run ordering, second `refactor` invocation hits `wrong_event_loop` before send; second effect NONE. |
 | UNKNOWN | Historical exception/category and second in-memory execution ID were not persisted. No second provider response is evidenced. |
 | INFERENCE | Replaying the whole phase would duplicate the known completed bug call. No uncertain second send is indicated by this guard and custody; retry remains unauthorized. |
@@ -442,3 +446,58 @@ second-task identity, native loop/capacity categories, unknown/cancelled effect
 conservatism, absence of retries, and canary suppression. Only runner source pins
 are refreshed; task and scorer pins stay unchanged. Suggested commit:
 `fix(eval): preserve safe partial-run invocation diagnostics`.
+
+
+## Phase A host-lifecycle correction — 2026-10-15
+
+FORGEAI-KISSKI-CODING-EVAL-HOST-LIFECYCLE-1 is implemented in evaluation tooling;
+local validation is NOT RUN — Awaiting user execution. Earlier diagnostic
+validation passed as recorded above; this new lifecycle correction is pending.
+
+The historical root cause was reuse of one governed host across per-task
+`asyncio.run` loops. The public host contract correctly binds async use to one
+loop. The runner now constructs each model host inside `run_model_tasks` and
+awaits its frozen tasks sequentially. Exactly one `asyncio.run` surrounds each
+model sequence. The host is not retained or reused across models or phases; its
+loop closes before the next model host is constructed. No production host guard
+or resource-management API changes are made.
+
+The runner admits only phases A/B with exactly four frozen tasks before I/O.
+It replaces only the evaluation host configuration's `max_executions` with
+`len(tasks)`. Phase A and Phase B each receive four slots; the shared qualification
+configuration and production defaults remain unchanged. A fifth task is never
+scheduled. Frozen tasks, prompts, scoring, call quotas, provider settings and
+credential/disclosure/custody boundaries are unchanged.
+
+Model-major/task-minor ordering is preserved: Phase A runs bug, refactor, api,
+diagnosis before the next model; Phase B retains frozen pack order. There is no
+concurrency, retry, resume, replay, fallback, model reselection or skip-completed
+behavior. A returned invocation failure stops the whole phase, as does a thrown
+failure. Completed rows and bounded diagnostics remain persisted; UNKNOWN failures
+remain UNKNOWN. The existing known loop-guard diagnostic is unchanged.
+
+Both preserved historical report directories remain untouched and content-pinned.
+Their partial results are not imported into a fresh Phase A run. Existing Phase B
+screening remains unchanged; this correction adds no continuation mechanism.
+
+Offline fake-host tests cover both phases, construction and invocation on the
+same loop, distinct loops/hosts per model, four-slot capacity, no fifth call,
+sequential order, no concurrent calls, returned failures, unknown exceptions,
+partial evidence and rejection of zero/unexpected task counts before I/O.
+Existing selection, diagnostic, report-pin and production regression suites remain
+in the reused validator. No tests, validators, builds or live calls were run by
+the implementation agent, and no credentials were accessed.
+
+After successful maintainer validation only, the expected claim is:
+
+```text
+FORGEAI-KISSKI-CODING-EVAL-HOST-LIFECYCLE-1 LOCALLY QUALIFIED;
+NO MODEL QUALITY QUALIFIED;
+NO LIVE EXECUTION AUTHORIZED
+```
+
+A completely fresh live Phase A requires implementation, maintainer validation,
+commit and fresh explicit authorization. It must not reuse historical partial
+records. This change does not claim Phase A passed or any model coding quality.
+
+Suggested commit: `fix(eval): bound model tasks to one governed host event loop`.

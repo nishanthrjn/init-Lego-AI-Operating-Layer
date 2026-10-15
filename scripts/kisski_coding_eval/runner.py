@@ -380,6 +380,9 @@ def reliability(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def live(phase: str, custody: Path) -> bool:
+    tasks = tuple(t for t in TASKS if t.phase == phase)
+    if phase not in {"A", "B"} or len(tasks) != 4:
+        raise ValueError("invalid frozen phase task count")
     previous: list[dict[str, Any]] = []
     if phase == "B":
         previous = prior_report(Path(input("Phase A derived report path: ")))
@@ -417,7 +420,6 @@ def live(phase: str, custody: Path) -> bool:
             phase,
             eligible,
         )
-        tasks = tuple(t for t in TASKS if t.phase == phase)
         print(
             f"Frozen bound: {len(models) * len(tasks)} chats; no retries or expansion"
         )
@@ -426,12 +428,17 @@ def live(phase: str, custody: Path) -> bool:
         records = [r for r in previous if r.get("model_id") in models]
         credential = source.provision("eval-chat")
         save(report, phase, records, True)
-        for index, model in enumerate(models):
+
+        async def run_model_tasks(index: int, model: str) -> bool:
+            # Construct and use this model host within one owning event loop.
             # Each host owns a distinct attempt store; never reopen an active writer.
             model_custody = custody / f"model-{index}"
             model_custody.mkdir()
             host = open_local_host(
-                saia.host_config(config, credential, ModelId(model), now()),
+                replace(
+                    saia.host_config(config, credential, ModelId(model), now()),
+                    max_executions=len(tasks),
+                ),
                 {"revision": "r1", "binding": legacy.BINDING},
                 clock=now,
                 remote=RemoteModelRuntime(
@@ -440,7 +447,7 @@ def live(phase: str, custody: Path) -> bool:
             )
             for task in tasks:
                 try:
-                    row = asyncio.run(invoke(host, config, task))
+                    row = await invoke(host, config, task)
                 except HostError as error:
                     raise InvocationFailure(
                         model, task.task_id, error.failure
@@ -461,6 +468,11 @@ def live(phase: str, custody: Path) -> bool:
                 )
                 if row["invocation_outcome"] != "completed":
                     return False
+            return True
+
+        for index, model in enumerate(models):
+            if not asyncio.run(run_model_tasks(index, model)):
+                return False
         stopped = False
         return True
     except SelectionError as error:

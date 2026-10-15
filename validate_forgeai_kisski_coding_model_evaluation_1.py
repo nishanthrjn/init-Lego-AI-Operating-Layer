@@ -96,7 +96,7 @@ def main() -> int:
         with tempfile.TemporaryDirectory(prefix="kisski-evaluation-offline-") as tmp:
             suites = (
                 (
-                    "scoring, schemas, in-memory patches, abstention, review, security, inert runner and guards",
+                    "host lifecycle, phase capacity, partial evidence and evaluation contracts",
                     (TEST,),
                 ),
                 (
@@ -152,7 +152,7 @@ def main() -> int:
         print(f"FAIL: {phase}: {error}; later phases NOT RUN")
         return 1
     print(
-        "FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1 HARNESS LOCALLY QUALIFIED; "
+        "FORGEAI-KISSKI-CODING-EVAL-HOST-LIFECYCLE-1 LOCALLY QUALIFIED; "
         "NO MODEL QUALITY QUALIFIED; NO LIVE EXECUTION AUTHORIZED"
     )
     return 0

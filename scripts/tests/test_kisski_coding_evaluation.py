@@ -1,10 +1,12 @@
 """Offline evaluation controls; no credentials, provider requests or code execution."""
 
 import ast
+import asyncio
 import json
 import shutil
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -15,6 +17,11 @@ from legoai.runtime.api import HostError, HostFailure
 from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
 from scripts.kisski_coding_eval import frozen, pack, runner, scoring
+
+
+@dataclass(frozen=True)
+class FakeHostConfig:
+    max_executions: int = 2
 
 
 def proposal(task: pack.Task) -> str:
@@ -237,7 +244,7 @@ def test_live_orchestration_stops_after_first_protocol_failure(
         ),
     )
     monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
-    monkeypatch.setattr(saia, "host_config", lambda *args: object())
+    monkeypatch.setattr(saia, "host_config", lambda *args: FakeHostConfig())
     monkeypatch.setattr(runner, "RemoteModelRuntime", lambda *args: object())
     monkeypatch.setattr(runner, "open_local_host", lambda *args, **kwargs: object())
     answers = iter((pack.OBSERVED[0], "y"))
@@ -323,8 +330,6 @@ def test_wrong_authorization_has_no_custody_or_credential_io(
 def test_optional_diagnostics_do_not_change_quality_outcome(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    import asyncio
-
     from legoai.execution.values import ExecutionState
 
     task = pack.TASKS[0]
@@ -576,7 +581,7 @@ def test_partial_run_preserves_first_record_and_bounds_failure_diagnostics(
     monkeypatch.setattr(runner, "_provision_interactively", lambda *args: object())
     monkeypatch.setattr(legacy, "_discover", lambda *args: listing)
     monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
-    monkeypatch.setattr(saia, "host_config", lambda *args: object())
+    monkeypatch.setattr(saia, "host_config", lambda *args: FakeHostConfig())
     monkeypatch.setattr(runner, "RemoteModelRuntime", lambda *args: object())
     monkeypatch.setattr(runner, "open_local_host", lambda *args, **kwargs: object())
     answers = iter((model, "y"))
@@ -624,3 +629,125 @@ def test_invocation_diagnostic_rejects_arbitrary_identifiers() -> None:
         runner.InvocationFailure("CANARY", "bug", HostFailure.WRONG_EVENT_LOOP)
     with pytest.raises(ValueError, match="invalid diagnostic identity"):
         runner.InvocationFailure(pack.OBSERVED[0], "CANARY", None)
+
+
+@pytest.mark.parametrize("phase", ["A", "B"])
+@pytest.mark.parametrize("failure", ["none", "returned", "unknown"])
+def test_model_lifecycle_owns_one_loop_and_exact_phase_capacity(
+    phase: str,
+    failure: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    models = pack.OBSERVED[:2]
+    tasks = tuple(t for t in pack.TASKS if t.phase == phase)
+    previous = (
+        [
+            completed(task, model)
+            for model in models
+            for task in pack.TASKS
+            if task.phase == "A"
+        ]
+        if phase == "B"
+        else []
+    )
+    source = SimpleNamespace(
+        _source=object(), provision=lambda _: object(), close=lambda: None
+    )
+    monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
+    monkeypatch.setattr(runner, "_provision_interactively", lambda *args: object())
+    monkeypatch.setattr(
+        legacy,
+        "_discover",
+        lambda *args: SimpleNamespace(
+            models=tuple(SimpleNamespace(value=m) for m in models)
+        ),
+    )
+    monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
+    monkeypatch.setattr(saia, "host_config", lambda *args: FakeHostConfig())
+    monkeypatch.setattr(runner, "RemoteModelRuntime", lambda *args: object())
+    monkeypatch.setattr(runner, "prior_report", lambda _: previous)
+    prior_answers = ("synthetic-prior",) if phase == "B" else ()
+    answers = iter(prior_answers + (", ".join(models), "y"))
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    hosts: list[Any] = []
+    calls: list[tuple[str, str]] = []
+
+    def open_host(config: FakeHostConfig, *args: Any, **kwargs: Any) -> Any:
+        assert config.max_executions == len(tasks) == 4
+        # Construction itself must occur on the model's running loop.
+        host = SimpleNamespace(
+            loop=asyncio.get_running_loop(),
+            capacity=config.max_executions,
+            count=0,
+            active=False,
+            model=models[len(hosts)],
+        )
+        if hosts:
+            assert hosts[-1].loop.is_closed()
+            assert hosts[-1].count == 4
+        hosts.append(host)
+        return host
+
+    async def invoke(host: Any, config: Any, task: pack.Task) -> dict[str, Any]:
+        if host.loop is not asyncio.get_running_loop():
+            raise HostError(HostFailure.WRONG_EVENT_LOOP)
+        if host.count >= host.capacity:
+            raise HostError(HostFailure.CAPACITY_EXHAUSTED)
+        assert not host.active
+        host.active = True
+        host.count += 1
+        calls.append((host.model, task.task_id))
+        await asyncio.sleep(0)
+        assert host.active
+        host.active = False
+        if failure == "unknown" and host.count == 2:
+            raise RuntimeError("CANARY")
+        row = completed(task, host.model)
+        if failure == "returned" and host.count == 2:
+            row["invocation_outcome"] = "provider_or_protocol_failure"
+            row["failure_category"] = "unclassified"
+        return row
+
+    monkeypatch.setattr(runner, "open_local_host", open_host)
+    monkeypatch.setattr(runner, "invoke", invoke)
+    if failure == "unknown":
+        with pytest.raises(runner.InvocationFailure):
+            runner.live(phase, tmp_path)
+    else:
+        assert runner.live(phase, tmp_path) is (failure == "none")
+    report = json.loads((tmp_path / "evaluation.json").read_text())
+    current = [r for r in report["records"] if r["phase"] == phase]
+    expected = [(m, t.task_id) for m in models for t in tasks]
+    assert calls == (expected if failure == "none" else expected[:2])
+    assert len(hosts) == (2 if failure == "none" else 1)
+    assert all(h.loop.is_closed() for h in hosts)
+    if failure == "none":
+        assert hosts[0].loop is not hosts[1].loop
+        assert all(h.count == 4 for h in hosts)
+        assert len(current) == 8
+    else:
+        assert len(current) == (1 if failure == "unknown" else 2)
+        assert current[0] == completed(tasks[0], models[0])
+        assert report["result"] == "RESULT_INCONCLUSIVE"
+    if failure == "unknown":
+        assert report["failure_effect"] == "UNKNOWN"
+        assert report["next_task"] == tasks[1].task_id
+        assert report["last_completed_task"] == tasks[0].task_id
+        assert "CANARY" not in json.dumps(report)
+
+
+@pytest.mark.parametrize("count", [0, 3, 5])
+def test_unexpected_phase_capacity_refused_before_io(
+    count: int, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task = next(t for t in pack.TASKS if t.phase == "A")
+    monkeypatch.setattr(runner, "TASKS", (task,) * count)
+
+    def forbidden(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("I/O before frozen task count admission")
+
+    monkeypatch.setattr(runner, "open_credential_source", forbidden)
+    with pytest.raises(ValueError, match="invalid frozen phase task count"):
+        runner.live("A", tmp_path)
+    assert not (tmp_path / "evaluation.json").exists()
