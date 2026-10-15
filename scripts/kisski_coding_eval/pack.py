@@ -111,7 +111,11 @@ TASKS = (
         (
             File("left.py", BUG.before, BUG.reference, BUG.targeted, BUG.regression),
             File(
-                "right.py", CLAMP.before, CLAMP.reference, CLAMP.targeted, CLAMP.regression
+                "right.py",
+                CLAMP.before,
+                CLAMP.reference,
+                CLAMP.targeted,
+                CLAMP.regression,
             ),
         ),
     ),

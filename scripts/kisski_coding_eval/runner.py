@@ -147,18 +147,22 @@ def prior_report(path: Path) -> list[dict[str, Any]]:
                         "CHECK_FAILED",
                     }:
                         raise ValueError("unrecognized prior failure")
-                elif name in {
-                    "patch_applies",
-                    "targeted_tests_pass",
-                    "regression_tests_pass",
-                } and type(row[name]) is bool:
+                elif (
+                    name
+                    in {
+                        "patch_applies",
+                        "targeted_tests_pass",
+                        "regression_tests_pass",
+                    }
+                    and type(row[name]) is bool
+                ):
                     pass
                 else:
                     raise ValueError("invalid nullable score")
-        if (
-            row["invocation_outcome"] != "completed"
-            or row["contract_reason"] not in {"VALIDATED", "OTHER_OR_UNAVAILABLE"}
-        ):
+        if row["invocation_outcome"] != "completed" or row["contract_reason"] not in {
+            "VALIDATED",
+            "OTHER_OR_UNAVAILABLE",
+        }:
             raise ValueError("prior phase contains incomplete invocation")
         for name in ("duration_ms", "output_tokens"):
             if row[name] is not None and (
