@@ -531,7 +531,9 @@ def test_preserved_report_scope_requires_exact_pins(
         if args[0] == "rev-parse":
             return "changed" if state == "index" else validator.PRESERVED_REPORTS[name]
         if args[0] == "hash-object":
-            return "changed" if state == "working" else validator.PRESERVED_REPORTS[name]
+            return (
+                "changed" if state == "working" else validator.PRESERVED_REPORTS[name]
+            )
         raise AssertionError("unexpected Git operation")
 
     monkeypatch.setattr(validator, "git", files)

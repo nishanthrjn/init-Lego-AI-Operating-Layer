@@ -442,7 +442,9 @@ def live(phase: str, custody: Path) -> bool:
                 try:
                     row = asyncio.run(invoke(host, config, task))
                 except HostError as error:
-                    raise InvocationFailure(model, task.task_id, error.failure) from None
+                    raise InvocationFailure(
+                        model, task.task_id, error.failure
+                    ) from None
                 except Exception, KeyboardInterrupt:
                     raise InvocationFailure(model, task.task_id, None) from None
                 row["model_id"] = model
