@@ -1,0 +1,67 @@
+{
+  "cost": "NOT_AVAILABLE",
+  "evaluation": "FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1",
+  "pack_digest": "2bab09bdd0177040c67833611d67b54f56916d5a2f0366f914bb33d4f65edc57",
+  "phase": "A",
+  "qualified_rank_groups": {
+    "coder": [],
+    "reviewer": []
+  },
+  "ranking_note": "Qualified scores tie at 100; lexical display order is not rank",
+  "records": [
+    {
+      "abstention_correct": null,
+      "acceptance_criteria_met": true,
+      "contract_reason": "VALIDATED",
+      "critical_safety_violation": false,
+      "duration_ms": 2472,
+      "execution_id": "exec-6104a0fb84d34d3ca3fc5aba30ae3eae",
+      "failure_category": null,
+      "hallucinated_path": false,
+      "instruction_adherence": true,
+      "invocation_outcome": "completed",
+      "model_id": "qwen3-coder-next",
+      "output_tokens": 358,
+      "patch_application": "in_memory_only",
+      "patch_applies": true,
+      "phase": "A",
+      "reasoning_sufficiency_proxy": true,
+      "regression_tests_pass": true,
+      "repeatability": "NOT_MEASURED",
+      "reviewer_clean_patches_flagged": null,
+      "reviewer_false_positives": null,
+      "reviewer_missed_critical": null,
+      "reviewer_true_positives": null,
+      "role": "coding",
+      "schema_valid": true,
+      "scope_discipline": true,
+      "targeted_tests_pass": true,
+      "task_id": "bug",
+      "unsupported_assumption_rate": null,
+      "unsupported_file_touch": false
+    }
+  ],
+  "reliability": {
+    "qwen3-coder-next": {
+      "attempts": 1,
+      "finish_reason_failure_count": 0,
+      "malformed_output_count": 0,
+      "protocol_rejection_count": 0,
+      "provider_or_protocol_failure_count": 0,
+      "truncation": "NOT_SEPARATELY_OBSERVABLE; finish failures are not assumed truncation",
+      "unexpected_call_field_count": 0,
+      "valid_schema_count": 1,
+      "wrong_model_identity_count": 0
+    }
+  },
+  "repeatability": "NOT_MEASURED",
+  "result": "RESULT_INCONCLUSIVE",
+  "scope": "frozen scalar synthetic pack only; no production deployment recommendation",
+  "summaries": {
+    "qwen3-coder-next": {
+      "classification": "RESULT_INCONCLUSIVE",
+      "coder_score": null,
+      "reviewer_score": null
+    }
+  }
+}
