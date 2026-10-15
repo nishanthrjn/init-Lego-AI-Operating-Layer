@@ -8,6 +8,7 @@ import tempfile
 import time
 from dataclasses import replace
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
@@ -31,6 +32,19 @@ from scripts import kisski_saia_qualification as saia
 from .frozen import verify
 from .pack import OBSERVED, OUTPUT_TOKENS, TASKS, VERSION, Task, digest, prompt
 from .scoring import classify, empty, score
+
+
+class SelectionFailure(Enum):
+    INVALID = "MODEL_SELECTION_INVALID"
+    QUOTED = "MODEL_SELECTION_QUOTED"
+
+
+class SelectionError(ValueError):
+    """Closed local admission diagnostic; never retains operator input."""
+
+    def __init__(self, reason: SelectionFailure) -> None:
+        self.reason = reason
+        super().__init__(reason.value)
 
 
 def authorization(phase: str) -> str:
@@ -62,9 +76,13 @@ def selected(
     models = tuple(item.strip() for item in answer.split(","))
     maximum = 5 if phase == "A" else 2
     if not 1 <= len(models) <= maximum or len(set(models)) != len(models):
-        raise ValueError("invalid model selection")
+        raise SelectionError(SelectionFailure.INVALID)
+    if any(
+        model.startswith(("'", '"')) or model.endswith(("'", '"')) for model in models
+    ):
+        raise SelectionError(SelectionFailure.QUOTED)
     if not set(models) <= set(OBSERVED) & discovered & eligible:
-        raise ValueError("model not observed, discovered or eligible")
+        raise SelectionError(SelectionFailure.INVALID)
     return models
 
 
@@ -234,7 +252,13 @@ async def invoke(host: Any, config: legacy.ProbeConfig, task: Task) -> dict[str,
     return row
 
 
-def save(path: Path, phase: str, records: list[dict[str, Any]], stopped: bool) -> None:
+def save(
+    path: Path,
+    phase: str,
+    records: list[dict[str, Any]],
+    stopped: bool,
+    selection_failure: SelectionFailure | None = None,
+) -> None:
     models = sorted({r["model_id"] for r in records})
     summaries = {
         model: classify([r for r in records if r["model_id"] == model])
@@ -279,6 +303,8 @@ def save(path: Path, phase: str, records: list[dict[str, Any]], stopped: bool) -
         "cost": "NOT_AVAILABLE",
         "repeatability": "NOT_MEASURED",
     }
+    if selection_failure is not None:
+        value["selection_failure"] = selection_failure.value
     temporary = path.with_suffix(".tmp")
     temporary.write_text(
         json.dumps(value, sort_keys=True, indent=2) + "\n", encoding="utf-8"
@@ -329,6 +355,7 @@ def live(phase: str, custody: Path) -> bool:
     source = open_credential_source(legacy._scope())
     records: list[dict[str, Any]] = []
     stopped = True
+    selection_failure: SelectionFailure | None = None
     report = custody / "evaluation.json"
     try:
         owned = cast(Any, source)._source
@@ -345,7 +372,10 @@ def live(phase: str, custody: Path) -> bool:
         available = {m.value for m in discovered.models} & set(OBSERVED) & eligible
         print("Eligible exact IDs: " + json.dumps(sorted(available)))
         models = selected(
-            input("Comma-separated exact model IDs: "), available, phase, eligible
+            input("Comma-separated exact model IDs (no quotation marks): "),
+            available,
+            phase,
+            eligible,
         )
         tasks = tuple(t for t in TASKS if t.phase == phase)
         print(
@@ -386,9 +416,12 @@ def live(phase: str, custody: Path) -> bool:
                     return False
         stopped = False
         return True
+    except SelectionError as error:
+        selection_failure = error.reason
+        raise
     finally:
         source.close()
-        save(report, phase, records, stopped)
+        save(report, phase, records, stopped, selection_failure)
         print("Derived evidence: " + str(report))
 
 
@@ -418,6 +451,10 @@ def main(options: list[str] | None = None) -> int:
         custody = Path(tempfile.mkdtemp(prefix="kisski-coding-eval-"))
         print("Local custody directory: " + str(custody))
         completed = live(args.phase, custody)
+    except SelectionError as error:
+        print("RESULT_INCONCLUSIVE; " + error.reason.value + "; no retry")
+        print("Use comma-separated exact model IDs without quotation marks.")
+        return 2
     except Exception, KeyboardInterrupt:
         print("RESULT_INCONCLUSIVE; inspect custody; no retry; raw error suppressed")
         return 2

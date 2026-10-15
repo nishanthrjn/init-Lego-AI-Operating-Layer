@@ -428,3 +428,110 @@ def test_api_argument_name_is_part_of_contract() -> None:
     assert result["targeted_tests_pass"]
     assert not result["instruction_adherence"]
     assert not result["acceptance_criteria_met"]
+
+
+@pytest.mark.parametrize("quote", ['"', "'"])
+def test_quoted_selection_is_rejected_without_echo(quote: str) -> None:
+    models = (pack.OBSERVED[0], pack.OBSERVED[1], pack.OBSERVED[4], pack.OBSERVED[5])
+    answer = ", ".join(quote + model + quote for model in models)
+    with pytest.raises(runner.SelectionError) as stopped:
+        runner.selected(answer, set(models), "A", set(models))
+    assert stopped.value.reason is runner.SelectionFailure.QUOTED
+    assert str(stopped.value) == "MODEL_SELECTION_QUOTED"
+    unquoted = " , ".join(models)
+    assert runner.selected(unquoted, set(models), "A", set(models)) == models
+
+
+@pytest.mark.parametrize("answer", ["CANARY", "", "5", "qwen3-coder-next,CANARY"])
+def test_invalid_selection_has_closed_diagnostic(answer: str) -> None:
+    with pytest.raises(runner.SelectionError) as stopped:
+        runner.selected(answer, set(pack.OBSERVED), "A", set(pack.OBSERVED))
+    assert str(stopped.value) == "MODEL_SELECTION_INVALID"
+
+
+def test_quoted_selection_stops_before_chat_provision_and_attempts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[str] = []
+
+    def forbidden(*args: object, **kwargs: object) -> None:
+        raise AssertionError("chat boundary reached")
+
+    def provision_discovery(*args: object) -> object:
+        events.append("discovery-provision")
+        return object()
+
+    source = SimpleNamespace(
+        _source=object(), provision=forbidden, close=lambda: events.append("close")
+    )
+    monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
+    monkeypatch.setattr(runner, "_provision_interactively", provision_discovery)
+    listing = SimpleNamespace(models=(SimpleNamespace(value=pack.OBSERVED[0]),))
+    monkeypatch.setattr(
+        legacy,
+        "_discover",
+        lambda *args: listing,
+    )
+    monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
+    monkeypatch.setattr(runner, "open_local_host", forbidden)
+    monkeypatch.setattr(runner, "invoke", forbidden)
+    answers = iter(('"qwen3-coder-next"',))
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    with pytest.raises(runner.SelectionError):
+        runner.live("A", tmp_path)
+    assert events == ["discovery-provision", "close"]
+    report = json.loads((tmp_path / "evaluation.json").read_text())
+    assert report["selection_failure"] == "MODEL_SELECTION_QUOTED"
+    assert report["result"] == "RESULT_INCONCLUSIVE"
+    assert report["records"] == []
+    assert report["reliability"] == report["summaries"] == {}
+    assert list(tmp_path.iterdir()) == [tmp_path / "evaluation.json"]
+
+
+def test_cli_selection_diagnostic_never_prints_raw_input(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def rejected(*args: object) -> bool:
+        runner.selected('"CANARY"', set(), "A", set())
+        raise AssertionError("quoted selection was admitted")
+
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda _: runner.authorization("A"))
+    monkeypatch.setattr(runner, "verify", lambda: "synthetic-digest")
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda **kwargs: str(tmp_path))
+    monkeypatch.setattr(runner, "live", rejected)
+    assert runner.main(["--live"]) == 2
+    output = capsys.readouterr().out
+    assert "MODEL_SELECTION_QUOTED" in output
+    assert "CANARY" not in output
+
+
+@pytest.mark.parametrize(
+    ("staged", "name", "refused"),
+    [
+        (False, "kisski-phase-a-inconclusive-20261015/evaluation.json", False),
+        (True, "kisski-phase-a-inconclusive-20261015/evaluation.json", True),
+        (False, "kisski-phase-a-inconclusive-20261015/other.py", True),
+    ],
+)
+def test_preserved_report_scope_exception_is_untracked_and_exact(
+    staged: bool, name: str, refused: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import validate_forgeai_kisski_coding_model_evaluation_1 as validator
+
+    def files(*args: str) -> str:
+        if staged and "--cached" in args:
+            return name
+        if not staged and args[0] == "ls-files":
+            return name
+        return ""
+
+    monkeypatch.setattr(validator, "git", files)
+    if refused:
+        with pytest.raises(ValueError, match="outside evaluation-only scope"):
+            validator.scope()
+    else:
+        validator.scope()

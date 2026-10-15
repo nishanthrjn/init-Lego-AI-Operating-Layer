@@ -42,7 +42,11 @@ def scope() -> None:
     changed.update(
         git("diff", "--cached", "--name-only", "--no-renames", BASELINE).splitlines()
     )
-    changed.update(git("ls-files", "--others", "--exclude-standard").splitlines())
+    untracked = set(git("ls-files", "--others", "--exclude-standard").splitlines())
+    # Operator-preserved live evidence is not implementation input or a fixture.
+    # Exempt only this untracked report; staging it still fails scope above.
+    untracked.discard("kisski-phase-a-inconclusive-20261015/evaluation.json")
+    changed.update(untracked)
     if changed - ALLOWED:
         raise ValueError("outside evaluation-only scope: " + repr(changed - ALLOWED))
     for name in ALLOWED:

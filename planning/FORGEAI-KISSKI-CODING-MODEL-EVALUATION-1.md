@@ -1,7 +1,7 @@
 # FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1
 
-Status: IMPLEMENTED — MAINTAINER VALIDATION REQUIRED.
-Verification: NOT RUN — Awaiting user execution.
+Status: BASE HARNESS LOCALLY QUALIFIED; SELECTION DIAGNOSTIC VALIDATION PENDING.
+Verification of diagnostic correction: NOT RUN — Awaiting user execution.
 No live evaluation is authorized by this implementation or local validation.
 
 ## Goal and ownership
@@ -306,3 +306,72 @@ general coding quality, semantic review reasoning and deployment remain separate
 qualification work. No security, capacity, cost or universal provider claim follows.
 
 Suggested commit: `feat(eval): add bounded KiSSKI coding model evaluation harness`
+
+## Phase A inconclusive diagnostic — 2026-10-15
+
+The maintainer qualified the base harness with 1,140 passing tests, typing, lint,
+formatting and whitespace checks. Its normalized source manifest digest was
+`41b1ac1ecbfea8ab0f6e3112c8dbc74b2313b4fce2a38627a7f8f068cd6091ab`.
+This remains historical evidence; the diagnostic-only revision awaits validation.
+
+The subsequent Phase A input was reported as four individually quoted IDs.
+`runner.selected()` splits on commas and applies `str.strip()`, which removes
+whitespace, not quotation marks. These quoted strings cannot equal the admitted
+exact IDs. The existing membership check therefore raises before phase approval,
+chat credential provision, `model-N` custody creation, host construction or `invoke()`.
+The `finally` block writes the empty inconclusive report; `main()` previously hid
+the local selection exception behind the generic inconclusive message.
+
+Preserved evidence at `kisski-phase-a-inconclusive-20261015` was inspected without
+modification. The derived report has zero records and empty summaries/reliability.
+An immutable read-only SQLite projection of `remote-attempts.db` returned exactly
+one provider-control `model-discovery` record, state `completed`, observations
+`sent_all` and `response_complete`. The top-level inventory has no `model-N`
+directories. Credential source/evidence databases and the writer sidecar were not
+opened. No tests, validators, provider calls or credentials were used for diagnosis.
+
+| Classification | Evidence / conclusion |
+| --- | --- |
+| FACT | Source preserves surrounding quotes and rejects those exact strings. |
+| FACT | Preserved report contains no model-quality records. |
+| FACT | Inspected root attempt store contains one completed discovery only. |
+| FACT | Preserved inventory has no model-specific custody directories. |
+| INFERENCE | Given the reported literal input and matching runner version, selection rejection explains this run before chat provision/attempt creation. |
+| UNKNOWN | The old report did not persist the input or a selection failure enum; the historical exception itself cannot be independently recovered. |
+
+For this traced input there is no model task invocation and no chat effect: NONE
+by control-flow inference, not a fabricated attempt state. Discovery did occur and
+has known completed transport observations; do not label the whole run no-I/O.
+Empty records alone would not prove no send for a different exception after an
+invocation. In such a case preserve UNKNOWN until the relevant custody is inspected.
+
+Safe custody inspection can project enum-validated `state`, `observations`, record
+`kind`, `control`, and `method`; bounded validated attempt/execution IDs and timestamps
+are also non-content metadata. Prefer named columns and JSON field projections,
+never `SELECT *` or dumping `record`: the latter contains a Secret reference and
+other unnecessary identities. Do not read `discovery-secret-uses/source.db` or
+`evidence.db` for this diagnosis. The `.writer` file is an admission sidecar, not
+proof of a chat send. No custody recovery, reopening as writer, or replay is needed.
+
+Correction: preserve exact admission and reject quotation marks explicitly with
+`MODEL_SELECTION_QUOTED`; other invalid selections use `MODEL_SELECTION_INVALID`.
+These closed enums appear in console output and in the optional `selection_failure`
+field of newly written reports. No input or raw exception text is retained. Other
+failures remain generic; no speculative credential/custody/protocol diagnosis is
+invented. The prompt now says no quotation marks. Required operator syntax is:
+
+```text
+qwen3-coder-next, qwen3.5-397b-a17b, deepseek-v4-flash-0731, glm-5.3-flash
+```
+
+This syntax example is not authorization to retry. Frozen tasks, prompts to the
+model, scoring, call budgets and production behavior remain unchanged. Only the
+runner source pin changes. The existing validator is reused with focused offline
+tests for quote rejection, safe diagnostics, pre-chat ordering and exact scope.
+It ignores only the existing **untracked** preserved `evaluation.json` when checking
+implementation scope; staging it or introducing other untracked implementation
+files remains rejected. It never reads the preserved custody as a test fixture.
+
+Run the existing maintainer validator command above, then return its output.
+No live retry is authorized. Suggested correction commit:
+`fix(eval): diagnose quoted model selection before chat provisioning`.
