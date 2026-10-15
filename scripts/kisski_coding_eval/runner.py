@@ -20,7 +20,13 @@ from legoai.runtime._composition.provider_discovery import (
     discovery_purpose,
 )
 from legoai.runtime._composition.secret import _provision_interactively
-from legoai.runtime.api import ExecutionDisclosure, ModelPurpose, RemoteModelRuntime
+from legoai.runtime.api import (
+    ExecutionDisclosure,
+    HostError,
+    HostFailure,
+    ModelPurpose,
+    RemoteModelRuntime,
+)
 from legoai.runtime.local import (
     _remote_chat_contract_diagnostics,
     open_credential_source,
@@ -45,6 +51,33 @@ class SelectionError(ValueError):
     def __init__(self, reason: SelectionFailure) -> None:
         self.reason = reason
         super().__init__(reason.value)
+
+
+class InvocationFailure(RuntimeError):
+    """Safe task-boundary observation; does not imply an attempt was sent."""
+
+    def __init__(self, model: str, task: str, failure: HostFailure | None) -> None:
+        if model not in OBSERVED or task not in {t.task_id for t in TASKS}:
+            raise ValueError("invalid diagnostic identity")
+        self.model = model
+        self.task = task
+        self.failure = failure
+        super().__init__("bounded invocation diagnostic")
+
+    def fields(self) -> dict[str, str]:
+        return {
+            "phase_failure_stage": "MODEL_INVOCATION",
+            "phase_failure_category": (
+                self.failure.value if self.failure else "UNKNOWN_INVOCATION_FAILURE"
+            ),
+            "next_model": self.model,
+            "next_task": self.task,
+            # Only this inspected host guard proves no dispatch. Arbitrary errors
+            # can occur after send or response receipt; never infer NONE from them.
+            "failure_effect": (
+                "NONE" if self.failure is HostFailure.WRONG_EVENT_LOOP else "UNKNOWN"
+            ),
+        }
 
 
 def authorization(phase: str) -> str:
@@ -258,6 +291,7 @@ def save(
     records: list[dict[str, Any]],
     stopped: bool,
     selection_failure: SelectionFailure | None = None,
+    invocation_failure: InvocationFailure | None = None,
 ) -> None:
     models = sorted({r["model_id"] for r in records})
     summaries = {
@@ -305,6 +339,11 @@ def save(
     }
     if selection_failure is not None:
         value["selection_failure"] = selection_failure.value
+    if invocation_failure is not None:
+        value.update(invocation_failure.fields())
+        completed = [r for r in records if r.get("invocation_outcome") == "completed"]
+        value["last_completed_model"] = completed[-1]["model_id"] if completed else None
+        value["last_completed_task"] = completed[-1]["task_id"] if completed else None
     temporary = path.with_suffix(".tmp")
     temporary.write_text(
         json.dumps(value, sort_keys=True, indent=2) + "\n", encoding="utf-8"
@@ -356,6 +395,7 @@ def live(phase: str, custody: Path) -> bool:
     records: list[dict[str, Any]] = []
     stopped = True
     selection_failure: SelectionFailure | None = None
+    invocation_failure: InvocationFailure | None = None
     report = custody / "evaluation.json"
     try:
         owned = cast(Any, source)._source
@@ -399,7 +439,12 @@ def live(phase: str, custody: Path) -> bool:
                 ),
             )
             for task in tasks:
-                row = asyncio.run(invoke(host, config, task))
+                try:
+                    row = asyncio.run(invoke(host, config, task))
+                except HostError as error:
+                    raise InvocationFailure(model, task.task_id, error.failure) from None
+                except Exception, KeyboardInterrupt:
+                    raise InvocationFailure(model, task.task_id, None) from None
                 row["model_id"] = model
                 records.append(row)
                 save(report, phase, records, True)
@@ -419,9 +464,15 @@ def live(phase: str, custody: Path) -> bool:
     except SelectionError as error:
         selection_failure = error.reason
         raise
+    except InvocationFailure as error:
+        invocation_failure = error
+        # Print before final custody/report cleanup: even a later write failure
+        # must not erase the safe invocation observation from attended output.
+        print(json.dumps(error.fields(), sort_keys=True))
+        raise
     finally:
         source.close()
-        save(report, phase, records, stopped, selection_failure)
+        save(report, phase, records, stopped, selection_failure, invocation_failure)
         print("Derived evidence: " + str(report))
 
 
@@ -454,6 +505,9 @@ def main(options: list[str] | None = None) -> int:
     except SelectionError as error:
         print("RESULT_INCONCLUSIVE; " + error.reason.value + "; no retry")
         print("Use comma-separated exact model IDs without quotation marks.")
+        return 2
+    except InvocationFailure:
+        print("RESULT_INCONCLUSIVE; partial evidence retained; no retry")
         return 2
     except Exception, KeyboardInterrupt:
         print("RESULT_INCONCLUSIVE; inspect custody; no retry; raw error suppressed")

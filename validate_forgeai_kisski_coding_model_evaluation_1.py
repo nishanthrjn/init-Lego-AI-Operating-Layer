@@ -24,6 +24,14 @@ TARGETS = (
     SELF,
 )
 ALLOWED = {*TARGETS, DOCUMENT, f"{DIRECTORY}/manifest.json"}
+PRESERVED_REPORTS = {
+    "kisski-phase-a-inconclusive-20261015/evaluation.json": (
+        "b8521ed721c083db8f795454e4e8030a48661b0b"
+    ),
+    "kisski-phase-a-partial-20261015/evaluation.json": (
+        "a51d4f0a4ef21658b515aa4781498dc5dd3e9f4a"
+    ),
+}
 
 
 def git(*args: str) -> str:
@@ -43,10 +51,20 @@ def scope() -> None:
         git("diff", "--cached", "--name-only", "--no-renames", BASELINE).splitlines()
     )
     untracked = set(git("ls-files", "--others", "--exclude-standard").splitlines())
-    # Operator-preserved live evidence is not implementation input or a fixture.
-    # Exempt only this untracked report; staging it still fails scope above.
-    untracked.discard("kisski-phase-a-inconclusive-20261015/evaluation.json")
     changed.update(untracked)
+    # These reports are now tracked historical evidence, not evaluation fixtures.
+    # Pin both index and working contents; never exempt their parent directories.
+    for name, blob in PRESERVED_REPORTS.items():
+        if name not in changed:
+            continue
+        if (
+            name in untracked
+            or (ROOT / name).is_symlink()
+            or git("rev-parse", ":" + name).strip() != blob
+            or git("hash-object", "--", name).strip() != blob
+        ):
+            raise ValueError("preserved report changed: " + name)
+        changed.remove(name)
     if changed - ALLOWED:
         raise ValueError("outside evaluation-only scope: " + repr(changed - ALLOWED))
     for name in ALLOWED:

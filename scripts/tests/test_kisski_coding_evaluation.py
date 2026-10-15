@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 
+from legoai.runtime.api import HostError, HostFailure
 from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
 from scripts.kisski_coding_eval import frozen, pack, runner, scoring
@@ -510,28 +511,114 @@ def test_cli_selection_diagnostic_never_prints_raw_input(
 
 
 @pytest.mark.parametrize(
-    ("staged", "name", "refused"),
+    "name",
     [
-        (False, "kisski-phase-a-inconclusive-20261015/evaluation.json", False),
-        (True, "kisski-phase-a-inconclusive-20261015/evaluation.json", True),
-        (False, "kisski-phase-a-inconclusive-20261015/other.py", True),
+        "kisski-phase-a-inconclusive-20261015/evaluation.json",
+        "kisski-phase-a-partial-20261015/evaluation.json",
     ],
 )
-def test_preserved_report_scope_exception_is_untracked_and_exact(
-    staged: bool, name: str, refused: bool, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("state", ["preserved", "index", "working", "untracked"])
+def test_preserved_report_scope_requires_exact_pins(
+    name: str, state: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import validate_forgeai_kisski_coding_model_evaluation_1 as validator
 
     def files(*args: str) -> str:
-        if staged and "--cached" in args:
+        if args[0] == "diff":
             return name
-        if not staged and args[0] == "ls-files":
-            return name
-        return ""
+        if args[0] == "ls-files":
+            return name if state == "untracked" else ""
+        if args[0] == "rev-parse":
+            return "changed" if state == "index" else validator.PRESERVED_REPORTS[name]
+        if args[0] == "hash-object":
+            return "changed" if state == "working" else validator.PRESERVED_REPORTS[name]
+        raise AssertionError("unexpected Git operation")
 
     monkeypatch.setattr(validator, "git", files)
-    if refused:
-        with pytest.raises(ValueError, match="outside evaluation-only scope"):
-            validator.scope()
-    else:
+    if state == "preserved":
         validator.scope()
+    else:
+        with pytest.raises(ValueError, match="preserved report changed"):
+            validator.scope()
+
+
+def test_preserved_report_directory_is_not_exempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import validate_forgeai_kisski_coding_model_evaluation_1 as validator
+
+    def files(*args: str) -> str:
+        return "kisski-phase-a-partial-20261015/other.py" if args[0] == "diff" else ""
+
+    monkeypatch.setattr(validator, "git", files)
+    with pytest.raises(ValueError, match="outside evaluation-only scope"):
+        validator.scope()
+
+
+@pytest.mark.parametrize("kind", ["loop", "capacity", "unknown", "cancelled"])
+def test_partial_run_preserves_first_record_and_bounds_failure_diagnostics(
+    kind: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    model = pack.OBSERVED[0]
+    first = completed(pack.TASKS[0], model)
+    original = json.dumps(first, sort_keys=True)
+    calls: list[str] = []
+    source = SimpleNamespace(
+        _source=object(), provision=lambda _: object(), close=lambda: None
+    )
+    listing = SimpleNamespace(models=(SimpleNamespace(value=model),))
+    monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
+    monkeypatch.setattr(runner, "_provision_interactively", lambda *args: object())
+    monkeypatch.setattr(legacy, "_discover", lambda *args: listing)
+    monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
+    monkeypatch.setattr(saia, "host_config", lambda *args: object())
+    monkeypatch.setattr(runner, "RemoteModelRuntime", lambda *args: object())
+    monkeypatch.setattr(runner, "open_local_host", lambda *args, **kwargs: object())
+    answers = iter((model, "y"))
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+
+    async def invoke(host: Any, config: Any, task: pack.Task) -> dict[str, Any]:
+        calls.append(task.task_id)
+        if task.task_id == "bug":
+            return first
+        if kind == "loop":
+            raise HostError(HostFailure.WRONG_EVENT_LOOP)
+        if kind == "capacity":
+            raise HostError(HostFailure.CAPACITY_EXHAUSTED)
+        if kind == "cancelled":
+            raise KeyboardInterrupt("CANARY")
+        raise RuntimeError("CANARY")
+
+    monkeypatch.setattr(runner, "invoke", invoke)
+    with pytest.raises(runner.InvocationFailure):
+        runner.live("A", tmp_path)
+    report_text = (tmp_path / "evaluation.json").read_text()
+    report = json.loads(report_text)
+    assert calls == ["bug", "refactor"]
+    assert json.dumps(report["records"][0], sort_keys=True) == original
+    assert len(report["records"]) == 1
+    assert report["last_completed_model"] == report["next_model"] == model
+    assert report["last_completed_task"] == "bug"
+    assert report["next_task"] == "refactor"
+    assert report["phase_failure_stage"] == "MODEL_INVOCATION"
+    assert report["result"] == "RESULT_INCONCLUSIVE"
+    assert report["failure_effect"] == ("NONE" if kind == "loop" else "UNKNOWN")
+    expected = {
+        "loop": "wrong_event_loop",
+        "capacity": "capacity_exhausted",
+        "unknown": "UNKNOWN_INVOCATION_FAILURE",
+        "cancelled": "UNKNOWN_INVOCATION_FAILURE",
+    }
+    assert report["phase_failure_category"] == expected[kind]
+    assert report["reliability"][model]["attempts"] == 1
+    assert "CANARY" not in report_text + capsys.readouterr().out
+
+
+def test_invocation_diagnostic_rejects_arbitrary_identifiers() -> None:
+    with pytest.raises(ValueError, match="invalid diagnostic identity"):
+        runner.InvocationFailure("CANARY", "bug", HostFailure.WRONG_EVENT_LOOP)
+    with pytest.raises(ValueError, match="invalid diagnostic identity"):
+        runner.InvocationFailure(pack.OBSERVED[0], "CANARY", None)

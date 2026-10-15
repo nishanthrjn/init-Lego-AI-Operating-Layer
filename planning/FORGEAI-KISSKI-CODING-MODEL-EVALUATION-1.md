@@ -375,3 +375,70 @@ files remains rejected. It never reads the preserved custody as a test fixture.
 Run the existing maintainer validator command above, then return its output.
 No live retry is authorized. Suggested correction commit:
 `fix(eval): diagnose quoted model selection before chat provisioning`.
+
+## Phase A partial-run diagnostic — 2026-10-15
+
+The maintainer subsequently validated the selection diagnostic: 1,151 tests,
+typing, lint, format and whitespace passed. This new partial-run diagnostic is
+NOT RUN — Awaiting user execution. No live retry is authorized.
+
+Preserved custody inspected read-only:
+`C:\Users\nisha\AppData\Local\Temp\kisski-coding-eval-1o169lhx`.
+The derived report confirms one successful `qwen3-coder-next` / `bug` record,
+execution `exec-6104a0fb84d34d3ca3fc5aba30ae3eae`, contract VALIDATED, all recorded
+coding checks passing. This evidence remains valid but insufficient for complete
+model qualification. It is not converted to zero model evidence.
+
+Only one model directory (`model-0`) exists. Immutable read-only named SQLite
+projections found one completed root discovery attempt and one completed model
+attempt matching that execution ID. Both have `sent_all` and `response_complete`.
+No second model attempt exists in the preserved store. The writer sidecars and
+credential source/evidence databases were not opened; raw records, prompts,
+responses and headers were not selected. Original custody was not modified.
+
+Authoritative ordering is model-major and task-minor: the loop retains the host
+for `qwen3-coder-next`, then advances from `bug` to `refactor`, followed by `api`
+and `diagnosis`. After `bug`, it saves the report, prints the completed row,
+checks the outcome, and starts `asyncio.run(invoke(...refactor...))`.
+
+Source-level cause: each `asyncio.run` creates a new event loop. The governed
+host's `local._LocalGovernedHost._enter_async` guard binds the first loop and raises
+`HostError(HostFailure.WRONG_EVENT_LOOP)` on a different loop. `governed_chat`
+calls that guard before admission, dispatch or provider work. The refactor context
+may have been minted, but no second durable remote attempt/send is reached.
+This is a boundary-B failure (entering the second host invocation), before the
+second provider invocation; it is not scoring or evidence persistence after a
+second response. The old handler discarded the safe HostFailure category.
+
+| Classification | Finding |
+| --- | --- |
+| FACT | Report and model custody confirm completed `qwen3-coder-next` / `bug`. |
+| FACT | Only one model directory and one model attempt; no second durable attempt. |
+| FACT | Runner creates a fresh event loop per task; host forbids changing loops. |
+| INFERENCE | Under this source/run ordering, second `refactor` invocation hits `wrong_event_loop` before send; second effect NONE. |
+| UNKNOWN | Historical exception/category and second in-memory execution ID were not persisted. No second provider response is evidenced. |
+| INFERENCE | Replaying the whole phase would duplicate the known completed bug call. No uncertain second send is indicated by this guard and custody; retry remains unauthorized. |
+
+Diagnostic-only change: at the invocation boundary retain native HostFailure
+categories, or `UNKNOWN_INVOCATION_FAILURE` for other exceptions/interruption.
+New reports may add `phase_failure_stage=MODEL_INVOCATION`,
+`phase_failure_category`, `last_completed_model`, `last_completed_task`,
+`next_model`, `next_task`, and `failure_effect`. Identifiers are restricted to the
+frozen model/task inventories. Only the inspected `wrong_event_loop` guard maps
+to NONE; all other thrown failures conservatively map to UNKNOWN. Normal returned
+provider failures retain their existing record semantics. Partial records are
+preserved without inventing a second quality score or incrementing response counts.
+Safe failure fields are printed before cleanup so report-write failure cannot
+erase them from attended output. Original exception text is never emitted.
+
+No loop lifecycle repair, capacity change, task reorder, skip, resume or replay is
+implemented here. A separate authorized fix must consider both a single host event
+loop lifetime and the reused qualification host's `max_executions=2` against four
+tasks per phase. Neither is fixed by this diagnostic slice; another live evaluation
+would still encounter the loop guard.
+
+The existing validator covers added synthetic tests for preserving the first row,
+second-task identity, native loop/capacity categories, unknown/cancelled effect
+conservatism, absence of retries, and canary suppression. Only runner source pins
+are refreshed; task and scorer pins stay unchanged. Suggested commit:
+`fix(eval): preserve safe partial-run invocation diagnostics`.
