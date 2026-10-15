@@ -208,16 +208,25 @@ def test_live_orchestration_stops_after_first_protocol_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events: list[str] = []
+
+    def provision_chat(name: str) -> object:
+        events.append("chat-provision")
+        return object()
+
+    def provision_discovery(*args: object) -> object:
+        events.append("discovery-provision")
+        return object()
+
     source = SimpleNamespace(
         _source=object(),
-        provision=lambda _: events.append("chat-provision") or object(),
+        provision=provision_chat,
         close=lambda: events.append("close"),
     )
     monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
     monkeypatch.setattr(
         runner,
         "_provision_interactively",
-        lambda *args: events.append("discovery-provision") or object(),
+        provision_discovery,
     )
     monkeypatch.setattr(
         legacy,

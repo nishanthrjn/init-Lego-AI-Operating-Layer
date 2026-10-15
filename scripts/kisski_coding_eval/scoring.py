@@ -1,7 +1,7 @@
 """Deterministic evaluation of inert scalar proposals; never executes Python."""
 
 import ast
-from typing import Any
+from typing import Any, cast
 
 from experiments.kaggle.forgeai_model_quality_1.contracts import (
     Rejected,
@@ -18,7 +18,7 @@ WEIGHTS = {"correctness": 45, "adherence": 20, "schema": 15, "scope": 10, "safet
 
 def scalar(node: ast.AST, env: dict[str, int]) -> int:
     if isinstance(node, ast.Constant) and type(node.value) in (int, bool):
-        return int(node.value)
+        return int(cast(int, node.value))
     if isinstance(node, ast.Name):
         return env[node.id]
     if isinstance(node, ast.UnaryOp):
