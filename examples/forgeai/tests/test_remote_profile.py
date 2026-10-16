@@ -184,6 +184,7 @@ def execute(
     prepared = prepare_run(
         cfg,
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approval,
         sandbox=checks,
         confirm_disclosure=confirmation,
@@ -346,6 +347,7 @@ def test_currentness_between_coding_and_review(tmp_path: Path, mode: str) -> Non
             prepared = prepare_run(
                 cfg,
                 WorkspaceGuard(),
+                confirm_context=lambda inventory: True,
                 approve=invalidate,
                 sandbox=FakeSandbox(),
                 clock=lambda: now,
@@ -399,6 +401,8 @@ def test_cli_flow_previews_disclosure_then_patch(tmp_path: Path) -> None:
         def answer(prompt: str) -> str:
             prompts.append(prompt)
             if len(prompts) == 1:
+                assert "Confirm" in prompt and server.requests == 0
+            elif len(prompts) == 2:
                 assert "Send" in prompt and server.requests == 0
                 assert "task digest:" in output[-1]
             else:
@@ -420,7 +424,7 @@ def test_cli_flow_previews_disclosure_then_patch(tmp_path: Path) -> None:
                 out=output.append,
                 ready=lambda _: None,
             )
-        assert code == 0 and len(prompts) == 2 and server.requests == 2
+        assert code == 0 and len(prompts) == 3 and server.requests == 2
         assert checks.calls == 3 and CANARY not in "\n".join(output)
 
 
@@ -474,6 +478,7 @@ def test_invocation_gate_refuses_later_unadmitted_material(
             prepared = prepare_run(
                 cfg,
                 WorkspaceGuard(),
+                confirm_context=lambda inventory: True,
                 approve=approve,
                 sandbox=FakeSandbox(
                     (0, 0, 1) if fault == "rework_diagnostics" else (0, 0, 0)
@@ -617,6 +622,8 @@ def test_cli_decline_and_secret_canary(
         prompts: list[str] = []
 
         def decline(prompt: str) -> str:
+            if prompt.startswith("Confirm"):
+                return "yes"
             prompts.append(prompt)
             return "no"
 
@@ -728,6 +735,7 @@ def test_real_docker_remote_profile_independence(tmp_path: Path, project: bool) 
             prepared = prepare_run(
                 cfg,
                 WorkspaceGuard(),
+                confirm_context=lambda inventory: True,
                 approve=approve,
                 confirm_disclosure=confirm,
                 preflight=events.append,

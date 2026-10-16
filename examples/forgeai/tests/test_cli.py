@@ -53,7 +53,11 @@ def test_replay_binding_requires_recorded_output(tmp_path: Path) -> None:
 def test_summary_is_bounded_and_omits_contents(tmp_path: Path) -> None:
     root = repository(tmp_path)
     prepared = prepare_run(
-        config(root, replay()), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, replay()),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     result = asyncio.run(prepared.worker.run(task(), prepared.context))
     text = summarize(result)
@@ -73,6 +77,10 @@ def test_ollama_binding_is_configuration_only(tmp_path: Path) -> None:
         binding="ollama",
     )
     prepared = prepare_run(
-        cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     assert type(prepared.worker).__name__ == "RepositoryTaskWorker"

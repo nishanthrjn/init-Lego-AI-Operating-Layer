@@ -114,7 +114,11 @@ def test_no_review_when_final_git_integrity_fails(tmp_path: Path) -> None:
     log: list[str] = []
     model = LoggedReplay(log, *replay().outputs)
     prepared = prepare_run(
-        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, model),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     real = prepared.worker.git
 

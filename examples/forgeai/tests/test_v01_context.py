@@ -24,6 +24,7 @@ from forgeai_support import (
     LoggedSandbox,
     approve,
     config,
+    confirm_context_then_decline,
     git_executable,
     proposal,
     repository,
@@ -31,7 +32,6 @@ from forgeai_support import (
 )
 from legoai_engineering.agent_output import OutputRejection
 from legoai_engineering.analyst.authorized import AuthorizedRepositoryEvidence
-from legoai_engineering.analyst.values import AcquisitionFailure
 from legoai_engineering.coding.authorized import AuthorizedCodingEvidence
 from legoai_engineering.coding.definition import coding_definition
 from legoai_engineering.coding.values import CodingTarget
@@ -54,6 +54,7 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.repository_context import ContextReason
 
 DOCKER = shutil.which("docker")  # path only, except in the real-Docker test
 needs_docker_path = pytest.mark.skipif(DOCKER is None, reason="Docker CLI path")
@@ -170,7 +171,11 @@ def prepare(
         context=context,
     )
     prepared = prepare_run(
-        cfg, WorkspaceGuard(), approve=approve, sandbox=LoggedSandbox(log, exits)
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=LoggedSandbox(log, exits),
     )
     mutation = LoggedMutation(log, prepared.worker.mutation)
     return replace(prepared, worker=replace(prepared.worker, mutation=mutation)), (
@@ -250,7 +255,9 @@ def test_cli_accepts_context_and_separates_it_from_targets(
     root = repository(tmp_path)
     out: list[str] = []
     extra = [item for path in context for item in ("--context", path)]
-    code = main(cli(root, tmp_path, *extra), ask=lambda prompt: "n", out=out.append)
+    code = main(
+        cli(root, tmp_path, *extra), ask=confirm_context_then_decline, out=out.append
+    )
     assert code == 1  # declined after the proposal was shown
     text = "\n".join(out)
     header = text[: text.index("Nothing is written until you approve")]
@@ -273,7 +280,9 @@ def test_cli_accepts_context_and_separates_it_from_targets(
 def test_cli_without_context_is_backward_compatible(tmp_path: Path) -> None:
     root = repository(tmp_path)
     out: list[str] = []
-    assert main(cli(root, tmp_path), ask=lambda prompt: "n", out=out.append) == 1
+    assert (
+        main(cli(root, tmp_path), ask=confirm_context_then_decline, out=out.append) == 1
+    )
     text = "\n".join(out)
     assert "read-only model context: none" in text
     assert "(read-only)" not in text and "Proposal (attempt 1" in text
@@ -335,9 +344,9 @@ def test_cli_unreadable_context_is_refused_without_model_or_write(
     text = "\n".join(out)
     assert code == 2
     assert "disposition: rejected" in text
-    assert f"reason: {TaskFailure.EVIDENCE_UNAVAILABLE.value}" in text
-    assert "read-only context file could not be read" in text
-    assert "the Coding Agent model was not called for this attempt" in text
+    assert f"reason: {TaskFailure.CONTEXT_INCOMPLETE.value}" in text
+    assert "context reason: UNAVAILABLE" in text
+    assert "attempt count: 0" in text
     assert "Proposal (attempt" not in text and "changed files: none" in text
     assert snapshot(root) == before and git_clean(root)
 
@@ -498,8 +507,9 @@ def test_missing_context_rejects_before_model_without_mutation(tmp_path: Path) -
         root, created(), context=("src/inventory/missing.py",)
     )
     assert result.disposition is TaskDisposition.REJECTED
-    assert result.failure is TaskFailure.EVIDENCE_UNAVAILABLE
-    assert result.evidence.latest.acquisition_failure is AcquisitionFailure.UNAVAILABLE
+    assert result.failure is TaskFailure.CONTEXT_INCOMPLETE
+    assert result.evidence.context_preflight is not None
+    assert result.evidence.context_preflight.reason is ContextReason.UNAVAILABLE
     assert model.calls == 0 and mutation.calls == 0 and log == []
     assert snapshot(root) == before and git_clean(root)
 
@@ -508,7 +518,7 @@ def test_directory_context_rejects_before_model(tmp_path: Path) -> None:
     root = repository(tmp_path)
     result, model, mutation, _ = run(root, created(), context=("src/inventory",))
     assert result.disposition is TaskDisposition.REJECTED
-    assert result.failure is TaskFailure.EVIDENCE_UNAVAILABLE
+    assert result.failure is TaskFailure.CONTEXT_INCOMPLETE
     assert model.calls == 0 and mutation.calls == 0 and git_clean(root)
 
 
@@ -528,8 +538,9 @@ def test_oversized_context_fails_closed_before_model(
     before = snapshot(root)
     result, model, mutation, _ = run(root, created(), context=tuple(files))
     assert result.disposition is TaskDisposition.REJECTED
-    assert result.failure is TaskFailure.EVIDENCE_UNAVAILABLE
-    assert result.evidence.latest.acquisition_failure is AcquisitionFailure.BUDGET
+    assert result.failure is TaskFailure.CONTEXT_INCOMPLETE
+    assert result.evidence.context_preflight is not None
+    assert result.evidence.context_preflight.reason is ContextReason.BUDGET
     assert model.calls == 0 and mutation.calls == 0
     assert snapshot(root) == before and git_clean(root)
 
@@ -543,7 +554,8 @@ def test_denied_disclosure_rejects_before_model(tmp_path: Path) -> None:
     task = TaskRequest(RESTOCK_OBJECTIVE, CREATE, (), paths(("tests/test_stock.py",)))
     result = asyncio.run(prepared.worker.run(task, prepared.context))
     assert result.failure is TaskFailure.EVIDENCE_DENIED
-    assert result.evidence.latest.acquisition_failure is AcquisitionFailure.DENIED
+    assert result.evidence.context_preflight is not None
+    assert result.evidence.context_preflight.reason is ContextReason.DENIED
     assert model.calls == 0 and mutation.calls == 0 and git_clean(root)
 
 
@@ -670,7 +682,13 @@ def test_create_only_task_with_convention_context_in_the_real_sandbox(
         DockerSandboxConfig(cfg.docker_executable, SandboxImage.PYTHON_CHECKS),
         cfg.sandbox_policy,
     )
-    prepared = prepare_run(cfg, WorkspaceGuard(), approve=approve, sandbox=sandbox)
+    prepared = prepare_run(
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=sandbox,
+    )
     task = TaskRequest(RESTOCK_OBJECTIVE, CREATE, (), paths(CONTEXT))
     result = asyncio.run(prepared.worker.run(task, prepared.context))
     assert result.disposition is TaskDisposition.SUCCEEDED, result

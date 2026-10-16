@@ -33,6 +33,9 @@ from legoai_engineering.reviewer.values import (
 from legoai_engineering.sandbox.errors import SandboxFailure
 from legoai_engineering.sandbox.prepared import PreparationFailure
 
+from forgeai.repository_context import ContextPreflight
+
+
 LIMITATIONS = (
     "Checks ran in the qualified sandbox; a pass is an observed contained "
     "outcome, not proof that the change is correct.",
@@ -138,6 +141,9 @@ class TaskFailure(Enum):
     CHECK_ENVIRONMENT_UNAVAILABLE = (
         "check environment preparation failed before model invocation"
     )
+    CONTEXT_INCOMPLETE = "required repository context is incomplete"
+    CONTEXT_DECLINED = "repository context was not confirmed"
+    CONTEXT_PREFLIGHT_FAILED = "repository context acquisition failed"
     EVIDENCE_DENIED = "repository read authorization denied"
     EVIDENCE_UNAVAILABLE = "bounded repository evidence could not be acquired"
     MODEL_FAILED = "the model call did not complete"
@@ -174,6 +180,9 @@ class ReviewInputFailure(Enum):
 
 _REJECTIONS = frozenset(
     {
+        TaskFailure.CONTEXT_INCOMPLETE,
+        TaskFailure.CONTEXT_DECLINED,
+        TaskFailure.CONTEXT_PREFLIGHT_FAILED,
         TaskFailure.WORKSPACE_BUSY,
         TaskFailure.REPOSITORY_UNAVAILABLE,
         TaskFailure.UNSUPPORTED_REPOSITORY,
@@ -385,11 +394,25 @@ class TaskEvidence:
     # The single rework budget: which event consumed it, if any.
     rework_trigger: ReworkTrigger | None = None
     limitations: tuple[str, ...] = LIMITATIONS
+    context_preflight: ContextPreflight | None = None
+    context_confirmed: bool = False
     preparation_failure: PreparationFailure | None = None
     preparation_infrastructure_failure: SandboxFailure | None = None
 
     def __post_init__(self) -> None:
         _text(self.run_id, 256)
+        if (
+            self.context_preflight is not None
+            and type(self.context_preflight) is not ContextPreflight
+        ):
+            raise TypeError("context evidence requires ContextPreflight")
+        if type(self.context_confirmed) is not bool:
+            raise TypeError("context confirmation requires bool")
+        if self.context_confirmed and (
+            self.context_preflight is None or self.context_preflight.reason is not None
+        ):
+            raise ValueError("confirmation requires ready context")
+
         if (
             self.preparation_failure is not None
             and type(self.preparation_failure) is not PreparationFailure

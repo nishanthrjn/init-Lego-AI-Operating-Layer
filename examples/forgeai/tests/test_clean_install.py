@@ -62,6 +62,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
             for m in (
                 "__init__",
                 "domain",
+                "repository_context",
                 "guard",
                 "review",
                 "worker",
@@ -124,8 +125,10 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     assert all(Path(file).is_relative_to(environment) for file in files)
     assert agents == "CodingAgent IndependentReviewer"
     # -I: no checkout, no PYTHONPATH, no user site; only the installed wheels.
-    # The operator approves the one proposal explicitly on stdin.
-    result = run([str(python), "-I", str(application / "demo.py")], application, "y\n")
+    # The operator confirms context, then approves the proposal on stdin.
+    result = run(
+        [str(python), "-I", str(application / "demo.py")], application, "y\ny\n"
+    )
     lines = result.stdout.splitlines()
     assert "disposition: succeeded" in lines, result.stdout
     assert any(line.startswith("Proposal (attempt 1, id ") for line in lines)
@@ -144,7 +147,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     rework = run(
         [str(python), "-I", str(application / "demo.py"), "rework"],
         application,
-        "y\ny\n",  # one explicit approval per proposal
+        "y\ny\ny\n",  # context confirmation, then one approval per proposal
     )
     lines = rework.stdout.splitlines()
     assert "disposition: succeeded" in lines, rework.stdout

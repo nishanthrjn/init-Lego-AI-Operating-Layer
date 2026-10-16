@@ -100,6 +100,7 @@ from forgeai.provider import (
     ReadOnlyApproval,
 )
 from forgeai.remote import BINDING, RemoteProfile, disclosure_preview
+from forgeai.repository_context import ContextPreflight
 from forgeai.worker import RepositoryTaskWorker
 
 
@@ -224,6 +225,7 @@ def prepare_run(
     sandbox: SandboxExecutionPort | None = None,
     preflight: Callable[[str], None] = lambda message: None,
     confirm_disclosure: Callable[[str], bool] | None = None,
+    confirm_context: Callable[[ContextPreflight], bool] | None = None,
 ) -> PreparedRun:
     """Open a host and wire one workspace. `sandbox` replaces Docker only with
     another SandboxExecutionPort backend; there is never a host fallback.
@@ -395,6 +397,7 @@ def prepare_run(
         progress,
         project_checks if config.check_profile is CheckProfile.PROJECT else None,
         admit_model if remote else None,
+        confirm_context,
     )
     return PreparedRun(
         worker,

@@ -20,7 +20,6 @@ from forgeai_support import (
     task,
 )
 from legoai_engineering.analyst.authorized import REPOSITORY_READ_ACTION
-from legoai_engineering.analyst.values import AcquisitionFailure
 from legoai_engineering.authorization import EffectAuthorizationFailure
 from legoai_engineering.checks.authorized import ENGINEERING_CHECK_ACTION
 from legoai_engineering.checks.errors import CheckFailure
@@ -56,6 +55,7 @@ from forgeai.cli import ReplayModel, replay_binding
 from forgeai.composition import ForgeAIConfig, PreparedRun, prepare_run
 from forgeai.domain import TaskDisposition, TaskFailure, TaskResult
 from forgeai.guard import WorkspaceGuard
+from forgeai.repository_context import ContextReason
 from forgeai.worker import RepositoryTaskWorker
 
 
@@ -64,7 +64,13 @@ def prepared(
     sandbox: FakeSandbox,
     guard: WorkspaceGuard | None = None,
 ) -> PreparedRun:
-    return prepare_run(cfg, guard or WorkspaceGuard(), approve=approve, sandbox=sandbox)
+    return prepare_run(
+        cfg,
+        guard or WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=sandbox,
+    )
 
 
 def run(run: PreparedRun, worker: RepositoryTaskWorker | None = None) -> TaskResult:
@@ -189,7 +195,8 @@ def test_read_denial_and_out_of_scope_targets_are_rejected(tmp_path: Path) -> No
         result, model, _ = execute(root, **options)
         assert result.disposition is TaskDisposition.REJECTED
         assert result.failure is TaskFailure.EVIDENCE_DENIED
-        assert result.evidence.acquisition_failure is AcquisitionFailure.DENIED
+        assert result.evidence.context_preflight is not None
+        assert result.evidence.context_preflight.reason is ContextReason.DENIED
         assert model.calls == 0
 
 
@@ -201,8 +208,9 @@ def test_oversized_target_is_evidence_unavailable(tmp_path: Path) -> None:
         GitHead(GitHeadKind.ATTACHED, "main", GitCommitId("ab" * 20)), ()
     )
     result = run(prepared_run, replace(prepared_run.worker, git=StaticGit(start)))
-    assert result.failure is TaskFailure.EVIDENCE_UNAVAILABLE
-    assert result.evidence.acquisition_failure is AcquisitionFailure.BUDGET
+    assert result.failure is TaskFailure.CONTEXT_INCOMPLETE
+    assert result.evidence.context_preflight is not None
+    assert result.evidence.context_preflight.reason is ContextReason.BUDGET
 
 
 # --- E/F/J. Mutation ---------------------------------------------------------

@@ -48,6 +48,7 @@ def test_preparation_failure_has_zero_model_approval_mutation_and_rework(
     prepared = prepare_run(
         config(root, model),
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approve_spy,
         sandbox=sandbox,
     )
@@ -70,7 +71,11 @@ def test_preparation_infrastructure_is_not_a_check_failure(tmp_path: Path) -> No
     root = repository(tmp_path)
     model = replay()
     prepared = prepare_run(
-        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, model),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
 
     def fail():  # type: ignore[no-untyped-def]
@@ -92,12 +97,17 @@ def test_generic_default_and_explicit_project_selection(tmp_path: Path) -> None:
     cfg = config(root, replay())
     assert cfg.check_profile is CheckProfile.GENERIC
     prepared = prepare_run(
-        cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     assert prepared.worker.prepare_checks is None
     project = prepare_run(
         replace(cfg, check_profile=CheckProfile.PROJECT),
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approve,
         sandbox=FakeSandbox(),
     )
@@ -132,7 +142,11 @@ def test_dirty_repository_does_not_start_preparation(tmp_path: Path) -> None:
     root = repository(tmp_path)
     (root / "dirty.txt").write_text("dirty")
     prepared = prepare_run(
-        config(root, replay()), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, replay()),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
 
     def forbidden():  # type: ignore[no-untyped-def]
@@ -155,7 +169,13 @@ def test_project_composition_refuses_missing_lock_without_fallback(
         uv_executable=tmp_path / "uv.exe",
     )
     sandbox = FakeSandbox()
-    prepared = prepare_run(cfg, WorkspaceGuard(), approve=approve, sandbox=sandbox)
+    prepared = prepare_run(
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=sandbox,
+    )
     before = snapshot(root)
     result = asyncio.run(prepared.worker.run(task(), prepared.context))
     assert result.evidence.preparation_failure is PreparationFailure.LOCK_REQUIRED
@@ -169,7 +189,13 @@ def test_successful_preparation_precedes_model_and_keeps_guard(tmp_path: Path) -
     model = replay()
     guard = WorkspaceGuard()
     sandbox = FakeSandbox()
-    prepared = prepare_run(config(root, model), guard, approve=approve, sandbox=sandbox)
+    prepared = prepare_run(
+        config(root, model),
+        guard,
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=sandbox,
+    )
     events: list[str] = []
 
     def ready():  # type: ignore[no-untyped-def]
@@ -194,7 +220,11 @@ def test_model_cannot_change_profile_or_installation_command(tmp_path: Path) -> 
     )
     cfg = config(root, model)
     prepared = prepare_run(
-        cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        cfg,
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     result = asyncio.run(prepared.worker.run(task(), prepared.context))
     assert result.failure is TaskFailure.PROPOSAL_INVALID
@@ -229,7 +259,7 @@ def test_cli_project_preflight_refuses_before_docker_probe_or_approval(
             "--check-profile",
             "project",
         ],
-        ask=forbidden,
+        ask=lambda prompt: "y" if prompt.startswith("Confirm") else forbidden(),
         ready=forbidden,
         out=messages.append,
     )

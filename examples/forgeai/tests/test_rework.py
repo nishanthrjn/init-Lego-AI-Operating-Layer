@@ -213,7 +213,11 @@ def test_second_mutation_failure_is_terminal(tmp_path: Path) -> None:
     log: list[str] = []
     model = LoggedReplay(log, *REWORKED, REVIEW_ACCEPT)
     prepared = prepare_run(
-        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, model),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     inner = prepared.worker.mutation
 
@@ -278,7 +282,11 @@ def test_rework_unexpected_change_stops_before_review_two(tmp_path: Path) -> Non
     log: list[str] = []
     model = LoggedReplay(log, *REWORKED, REVIEW_ACCEPT)
     prepared = prepare_run(
-        config(root, model), WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+        config(root, model),
+        WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     inner = prepared.worker.mutation
 
@@ -420,7 +428,11 @@ def test_workspace_guard_held_through_rework(tmp_path: Path) -> None:
 
     model = Probe(log, *REWORKED, REVIEW_ACCEPT)
     prepared = prepare_run(
-        config(root, model), guard, approve=approve, sandbox=FakeSandbox()
+        config(root, model),
+        guard,
+        confirm_context=lambda inventory: True,
+        approve=approve,
+        sandbox=FakeSandbox(),
     )
     workspace.append(prepared.worker.workspace)
     result = asyncio.run(prepared.worker.run(task(), prepared.context))

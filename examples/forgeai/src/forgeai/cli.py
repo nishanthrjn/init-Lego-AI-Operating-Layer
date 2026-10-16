@@ -83,6 +83,7 @@ from forgeai.domain import (
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.remote import BINDING, RemoteProfile, load_profile
+from forgeai.repository_context import ContextPreflight, context_summary
 
 _MAX_LISTED = 20
 _PATCH_LINES = 800  # the whole patch is shown or approval is refused
@@ -338,6 +339,23 @@ def fits(diff: list[str]) -> bool:
     )
 
 
+def terminal_context_confirmer(
+    ask: Ask | None, out: Out
+) -> Callable[[ContextPreflight], bool]:
+    def confirm(inventory: ContextPreflight) -> bool:
+        out(context_summary(inventory))
+        out("Context confirmation is not disclosure or mutation approval.")
+        if ask is None:
+            return False
+        try:
+            answer = ask("Confirm this required repository context? [y/N] ")
+            return answer.strip().lower() in {"y", "yes"}
+        except (EOFError, KeyboardInterrupt):
+            return False
+
+    return confirm
+
+
 def terminal_approver(
     ask: Ask | None, out: Out
 ) -> Callable[[ProposalReview], OperatorDecision]:
@@ -400,6 +418,9 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
     lines = [f"disposition: {result.disposition.value}"]
     if result.failure is not None:
         lines.append(f"reason: {result.failure.value}")
+    if evidence.context_preflight is not None:
+        lines.append(context_summary(evidence.context_preflight))
+        lines.append(f"context confirmed: {evidence.context_confirmed}")
     if evidence.preparation_failure is not None:
         lines.append("environment preparation: " + evidence.preparation_failure.value)
     if evidence.preparation_infrastructure_failure is not None:
@@ -770,6 +791,7 @@ def _execute(
             progress=reporter(out),
             preflight=preflight,
             confirm_disclosure=remote_confirmer(ask, out),
+            confirm_context=terminal_context_confirmer(ask, out),
         )
     except HostError as error:
         out(f"configuration error: {error.failure.value}")

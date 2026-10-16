@@ -23,6 +23,7 @@ from forgeai_support import (
     LoggedReplay,
     LoggedSandbox,
     config,
+    confirm_context_then_decline,
     git_executable,
     proposal,
     replay,
@@ -84,6 +85,7 @@ def supervised(
     prepared = prepare_run(
         config(root, model),
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approver or terminal_approver(ask, out.append),
         progress=reporter(out.append),
         sandbox=LoggedSandbox(log, exits),
@@ -125,7 +127,7 @@ def test_run_syntax_parses_and_shows_scope_before_any_model_call(
 ) -> None:
     root = repository(tmp_path)
     out: list[str] = []
-    code = main(cli(root, tmp_path), ask=lambda prompt: "n", out=out.append)
+    code = main(cli(root, tmp_path), ask=confirm_context_then_decline, out=out.append)
     text = "\n".join(out)
     assert code == 1
     for line in (
@@ -155,6 +157,8 @@ def test_decline_eof_and_ctrl_c_write_nothing(
     out: list[str] = []
 
     def ask(prompt: str) -> str:
+        if prompt.startswith("Confirm"):
+            return "y"
         if isinstance(answer, BaseException):
             raise answer
         return answer
@@ -172,8 +176,8 @@ def test_non_interactive_never_approves(tmp_path: Path) -> None:
     root = repository(tmp_path)
     before = snapshot(root)
     out: list[str] = []
-    assert main(cli(root, tmp_path), ask=None, out=out.append) == 1
-    assert any("approval is never automatic" in line for line in out)
+    assert main(cli(root, tmp_path), ask=None, out=out.append) == 2
+    assert any("context was not confirmed" in line for line in out)
     assert snapshot(root) == before
 
 
@@ -183,7 +187,7 @@ def test_legacy_syntax_still_requires_approval(tmp_path: Path) -> None:
     arguments = cli(root, tmp_path)[1:]
     arguments[0:4] = [str(root), "--objective", OBJECTIVE]
     out: list[str] = []
-    assert main(arguments, ask=lambda prompt: "n", out=out.append) == 1
+    assert main(arguments, ask=confirm_context_then_decline, out=out.append) == 1
     assert any("operator did not approve" in line for line in out)
 
 
@@ -499,7 +503,10 @@ def test_readiness_runs_before_scope_and_model(
         if line.startswith("ForgeAI v0.1"):
             order.append("scope")
 
-    assert main(cli(root, tmp_path), ask=lambda p: "n", out=out, ready=ready) == 1
+    assert (
+        main(cli(root, tmp_path), ask=confirm_context_then_decline, out=out, ready=ready)
+        == 1
+    )
     assert order == ["ready", "scope", "model"]
 
 

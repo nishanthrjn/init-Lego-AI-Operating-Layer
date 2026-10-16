@@ -165,6 +165,8 @@ def test_evidence_is_bounded_and_ordered() -> None:
 def test_evidence_holds_only_values_not_runtime_objects() -> None:
     allowed = (
         "str",
+        "bool",
+        "ContextPreflight | None",
         "GitRepositoryState | None",
         "GitFailure | None",
         "CodingStatus | None",

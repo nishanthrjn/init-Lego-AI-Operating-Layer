@@ -1071,3 +1071,22 @@ Full mode includes Engineering, clean-install/package checks, historical ForgeAI
 and explicitly enabled real-Docker remote fixtures. Live model tests remain
 unauthorized. The next slice, only after closeout, is research-only
 `KAGGLE-FORGEAI-INTEGRATION-OPTIONS-1`; mutation is not next.
+
+
+## Repository context preflight
+
+Before coding, ForgeAI now inspects the explicit targets and `--context` files
+through their existing authorized reader. Missing, out-of-scope or oversized
+required context stops before coding with bounded preflight evidence. CREATE
+requires verified absence; supporting context is required when declared.
+
+`READY_FOR_CONTEXT_CONFIRMATION` shows relative paths, roles, byte counts and
+digests, not contents. Confirming this inventory is separate from remote model
+disclosure and later proposal approval. Without an explicit confirmation, no
+CodingAgent or IndependentReviewer is called. Programmatic `prepare_run` callers
+must supply `confirm_context`; its default refuses. CodingAgent still re-reads
+and re-authorizes context before invocation. This does not certify semantic
+completeness or qualify a model.
+
+See [the preflight slice](../../planning/FORGEAI-REPOSITORY-CONTEXT-PREFLIGHT-1.md)
+for bounds, limitations and the maintainer-only validator. Validation is pending.

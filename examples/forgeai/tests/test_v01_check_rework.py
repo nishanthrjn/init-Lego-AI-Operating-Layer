@@ -186,6 +186,7 @@ def run(
     prepared = prepare_run(
         config(root, model),
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approve,
         progress=reporter(out.append),
         sandbox=sandbox,

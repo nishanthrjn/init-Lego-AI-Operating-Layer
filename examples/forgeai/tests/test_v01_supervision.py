@@ -82,6 +82,7 @@ def run(
     prepared = prepare_run(
         config(root, model),
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approver or terminal_approver(ask, out.append),
         progress=reporter(out.append),
         sandbox=LoggedSandbox(log, (0, 0, 0)),

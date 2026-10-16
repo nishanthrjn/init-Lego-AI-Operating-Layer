@@ -78,6 +78,12 @@ from forgeai.domain import (
     proposal_identity,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.repository_context import (
+    ContextOutcome,
+    ContextPreflight,
+    ContextReason,
+    preflight_context,
+)
 from forgeai.review import (
     check_rework_constraints,
     checks_material,
@@ -112,6 +118,10 @@ class RepositoryTaskWorker:
         default=None, repr=False
     )
     admit_model: Callable[[TaskRequest], bool] | None = field(default=None, repr=False)
+
+    confirm_context: Callable[[ContextPreflight], bool] | None = field(
+        default=None, repr=False
+    )
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -149,6 +159,8 @@ class RepositoryTaskWorker:
             raise TypeError("worker requires an operator approver and progress")
         if self.prepare_checks is not None and not callable(self.prepare_checks):
             raise TypeError("preparation must be a trusted composition callback")
+        if self.confirm_context is not None and not callable(self.confirm_context):
+            raise TypeError("context confirmation must be a trusted callback")
         if self.admit_model is not None and not callable(self.admit_model):
             raise TypeError("model admission must be a trusted composition callback")
 
@@ -210,6 +222,33 @@ class RepositoryTaskWorker:
         if start.entries:
             return _rejected(task, TaskFailure.DIRTY_START, evidence)
         self.progress(RunStage.REPOSITORY_VERIFIED, 0)
+        request = CodingRequest(
+            task.objective, task.targets, task.constraints, context, task.context
+        )
+        inventory = await preflight_context(self.agent.evidence_reader, request)
+        evidence = replace(evidence, context_preflight=inventory)
+        if inventory.outcome is ContextOutcome.CONTEXT_INCOMPLETE:
+            if inventory.reason is ContextReason.DENIED:
+                failure = TaskFailure.EVIDENCE_DENIED
+            elif inventory.reason in {
+                ContextReason.ACQUISITION_FAILED,
+                ContextReason.EVIDENCE_MISMATCH,
+            }:
+                failure = TaskFailure.CONTEXT_PREFLIGHT_FAILED
+            else:
+                failure = TaskFailure.CONTEXT_INCOMPLETE
+            return _rejected(task, failure, evidence)
+        try:
+            confirmed = (
+                self.confirm_context is not None
+                and self.confirm_context(inventory) is True
+            )
+        except (Exception, KeyboardInterrupt):
+            confirmed = False
+        if not confirmed:
+            return _rejected(task, TaskFailure.CONTEXT_DECLINED, evidence)
+        evidence = replace(evidence, context_confirmed=True)
+
         worker = self
         if self.prepare_checks is not None:
             try:

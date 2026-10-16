@@ -52,6 +52,11 @@ def approve(review: ProposalReview) -> OperatorDecision:
     return OperatorDecision.approve(review)
 
 
+def confirm_context_then_decline(prompt: str) -> str:
+    """Confirm inventory, then exercise the separate mutation-refusal gate."""
+    return "y" if prompt.startswith("Confirm") else "n"
+
+
 def git_executable() -> Path:
     assert GIT_EXECUTABLE is not None, "ForgeAI tests require Git"
     return Path(GIT_EXECUTABLE)
@@ -238,6 +243,7 @@ def logged_run(
     prepared: PreparedRun = prepare_run(
         base,
         WorkspaceGuard(),
+        confirm_context=lambda inventory: True,
         approve=approve,
         sandbox=LoggedSandbox(log, exits),
         clock=clock if clock is not None else utc_now,
