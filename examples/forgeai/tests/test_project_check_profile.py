@@ -3,6 +3,7 @@
 import asyncio
 from dataclasses import replace
 from pathlib import Path
+from typing import Never
 
 import pytest
 from forgeai_support import (
@@ -240,7 +241,7 @@ def test_cli_project_preflight_refuses_before_docker_probe_or_approval(
     output.write_text(proposal())
     messages: list[str] = []
 
-    def forbidden(*args):  # type: ignore[no-untyped-def]
+    def forbidden(*args: object) -> Never:
         pytest.fail("startup must fail on metadata before Docker or approval")
 
     code = main(

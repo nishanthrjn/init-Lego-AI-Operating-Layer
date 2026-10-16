@@ -350,7 +350,7 @@ def terminal_context_confirmer(
         try:
             answer = ask("Confirm this required repository context? [y/N] ")
             return answer.strip().lower() in {"y", "yes"}
-        except (EOFError, KeyboardInterrupt):
+        except EOFError, KeyboardInterrupt:
             return False
 
     return confirm

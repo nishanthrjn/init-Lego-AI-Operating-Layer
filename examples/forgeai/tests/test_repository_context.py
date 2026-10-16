@@ -3,6 +3,7 @@
 import asyncio
 from dataclasses import replace
 from pathlib import Path
+from typing import Never
 
 import pytest
 from forgeai_support import FakeSandbox, approve, config, replay, repository, snapshot
@@ -37,8 +38,12 @@ def test_inventory_is_stable_read_only_and_does_not_invoke(tmp_path: Path) -> No
     )
     task = task_request()
     request = CodingRequest(task.objective, task.targets, (), prepared.context)
-    first = asyncio.run(preflight_context(prepared.worker.agent.evidence_reader, request))
-    second = asyncio.run(preflight_context(prepared.worker.agent.evidence_reader, request))
+    first = asyncio.run(
+        preflight_context(prepared.worker.agent.evidence_reader, request)
+    )
+    second = asyncio.run(
+        preflight_context(prepared.worker.agent.evidence_reader, request)
+    )
     assert first == second
     assert first.outcome is ContextOutcome.READY_FOR_CONTEXT_CONFIRMATION
     assert [item.path.value for item in first.inventory] == sorted(
@@ -65,7 +70,7 @@ def test_missing_or_directory_stops_before_preparation_and_agents(
     cfg = replace(config(root, model), context_paths=(RepositoryPath(required),))
     prepared = prepare_run(cfg, WorkspaceGuard(), approve=approve, sandbox=sandbox)
 
-    def forbidden(*args: object) -> bool:
+    def forbidden(*args: object) -> Never:
         pytest.fail("incomplete context must stop before later steps")
 
     worker = replace(
@@ -168,7 +173,9 @@ def test_confirmation_does_not_grant_disclosure_or_mutation(tmp_path: Path) -> N
         return False
 
     result = asyncio.run(
-        replace(prepared.worker, admit_model=refuse).run(task_request(), prepared.context)
+        replace(prepared.worker, admit_model=refuse).run(
+            task_request(), prepared.context
+        )
     )
     assert order == ["context", "disclosure"]
     assert result.failure is TaskFailure.MODEL_DISCLOSURE_REFUSED
@@ -189,6 +196,7 @@ def test_terminal_confirmation_requires_explicit_yes(tmp_path: Path) -> None:
     )
     output: list[str] = []
     for answer in ("", "n", "maybe"):
+
         def reply(prompt: str, value: str = answer) -> str:
             return value
 
@@ -227,7 +235,9 @@ def test_existing_link_does_not_grant_access(tmp_path: Path) -> None:
         pytest.skip("creating a symlink requires platform permission")
     model = replay()
     cfg = replace(config(root, model), context_paths=(RepositoryPath("linked.py"),))
-    prepared = prepare_run(cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox())
+    prepared = prepare_run(
+        cfg, WorkspaceGuard(), approve=approve, sandbox=FakeSandbox()
+    )
     task = task_request()
     result = asyncio.run(
         preflight_context(

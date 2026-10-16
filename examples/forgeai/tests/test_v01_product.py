@@ -504,7 +504,9 @@ def test_readiness_runs_before_scope_and_model(
             order.append("scope")
 
     assert (
-        main(cli(root, tmp_path), ask=confirm_context_then_decline, out=out, ready=ready)
+        main(
+            cli(root, tmp_path), ask=confirm_context_then_decline, out=out, ready=ready
+        )
         == 1
     )
     assert order == ["ready", "scope", "model"]

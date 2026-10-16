@@ -69,6 +69,7 @@ from forgeai.remote import (
     classes,
     load_profile,
 )
+from forgeai.repository_context import ContextOutcome, ContextReason
 
 CANARY = "forgeai-synthetic-secret-884291-NO-LEAK"
 ROOT = Path(__file__).resolve().parents[3]
@@ -255,9 +256,47 @@ def test_changed_task_scope_never_reuses_approval(tmp_path: Path, change: str) -
     else:
         request = replace(request, context=(RepositoryPath("pyproject.toml"),))
     with TlsServer() as server, configured(tmp_path, server) as (cfg, _):
+        before = snapshot(cfg.repository)
         result, log, checks = execute(cfg, request=request)
-        assert result.failure is TaskFailure.MODEL_DISCLOSURE_REFUSED
-        assert not log and server.connections == checks.calls == 0
+        inventory = result.evidence.context_preflight
+        assert inventory is not None
+        if change == "context":
+            # Undeclared context now fails at the earlier read-authorization gate.
+            assert result.failure is TaskFailure.EVIDENCE_DENIED
+            assert inventory.outcome is ContextOutcome.CONTEXT_INCOMPLETE
+            assert inventory.reason is ContextReason.DENIED
+            assert not result.evidence.context_confirmed
+        else:
+            assert result.failure is TaskFailure.MODEL_DISCLOSURE_REFUSED
+            assert inventory.outcome is ContextOutcome.READY_FOR_CONTEXT_CONFIRMATION
+            assert inventory.reason is None
+            assert result.evidence.context_confirmed
+        assert result.disposition is TaskDisposition.REJECTED
+        assert not result.evidence.attempts
+        assert not log and server.requests == server.connections == checks.calls == 0
+        assert snapshot(cfg.repository) == before
+
+
+def test_changed_configured_context_refused_before_worker(tmp_path: Path) -> None:
+    with TlsServer() as server, configured(tmp_path, server) as (cfg, _):
+        before = snapshot(cfg.repository)
+        changed = replace(cfg, context_paths=(RepositoryPath("pyproject.toml"),))
+        checks = FakeSandbox()
+        # Configured read paths cannot widen the already-bound remote task.
+        # Composition refuses this mismatch before returning a runnable worker.
+        with pytest.raises(
+            ValueError, match="^remote task scope differs from configured scope$"
+        ):
+            prepare_run(
+                changed,
+                WorkspaceGuard(),
+                approve=lambda _: pytest.fail("mutation approval reached"),
+                confirm_context=lambda _: pytest.fail("context confirmation reached"),
+                confirm_disclosure=lambda _: pytest.fail("disclosure reached"),
+                sandbox=checks,
+            )
+        assert server.requests == server.connections == checks.calls == 0
+        assert snapshot(cfg.repository) == before
 
 
 @pytest.mark.parametrize(

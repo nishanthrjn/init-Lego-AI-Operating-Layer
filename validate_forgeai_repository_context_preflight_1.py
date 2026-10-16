@@ -174,7 +174,10 @@ def main() -> int:
             "--no-cache",
             *TARGETS,
         )
-        run("lint validator", [sys.executable, "-m", "ruff", "check", "--no-cache", SELF])
+        run(
+            "lint validator",
+            [sys.executable, "-m", "ruff", "check", "--no-cache", SELF],
+        )
         run(
             "format validator",
             [sys.executable, "-m", "ruff", "format", "--check", "--no-cache", SELF],

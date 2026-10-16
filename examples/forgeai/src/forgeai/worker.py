@@ -243,7 +243,7 @@ class RepositoryTaskWorker:
                 self.confirm_context is not None
                 and self.confirm_context(inventory) is True
             )
-        except (Exception, KeyboardInterrupt):
+        except Exception, KeyboardInterrupt:
             confirmed = False
         if not confirmed:
             return _rejected(task, TaskFailure.CONTEXT_DECLINED, evidence)
