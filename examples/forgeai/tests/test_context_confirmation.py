@@ -135,9 +135,7 @@ def test_binding_covers_real_task_repository_head_and_run(
     reduced_inventory = replace(
         inventory,
         inventory=tuple(
-            item
-            for item in inventory.inventory
-            if item.path == request.targets[0].path
+            item for item in inventory.inventory if item.path == request.targets[0].path
         ),
     )
     reduced = binding(prepared, reduced_request, reduced_inventory)
