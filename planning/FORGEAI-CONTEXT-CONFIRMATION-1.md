@@ -1,7 +1,8 @@
 # FORGEAI-CONTEXT-CONFIRMATION-1
 
-Status: IMPLEMENTED — MAINTAINER VALIDATION REQUIRED.
-Verification: **NOT RUN — Awaiting user execution**.
+Status: LOCALLY QUALIFIED by the maintainer's supplied validator result.
+Verification: maintainer execution passed all phases; the agent ran no checks.
+The separate bounded-task follow-up below remains pending.
 Baseline: `7aeedc6283a5970a498a4c46ceb63c9bc65af22b`.
 
 ## Problem and authority
@@ -180,12 +181,89 @@ Expected only after successful maintainer execution:
 
 `FORGEAI-CONTEXT-CONFIRMATION-1 LOCALLY QUALIFIED; EXACT REPOSITORY CONTEXT REQUIRES EXPLICIT OPERATOR CONFIRMATION; UNCONFIRMED OR STALE CONTEXT STOPS BEFORE MODEL DISCLOSURE; NO MUTATION, MODEL QUALITY, OR DEPLOYMENT AUTHORIZATION CLAIMED`
 
-Risks: execution is pending; no global snapshot guarantee; trusted in-process
+Risks: no global snapshot guarantee; trusted in-process
 callbacks remain trusted; rework now requires an additional explicit prompt.
-No qualification claim is made until the maintainer supplies passing evidence.
-After qualification, recommended next separately scoped work is
+The maintainer subsequently supplied passing evidence: 83 focused tests,
+412 ForgeAI pipeline tests, 213 Engineering tests (one POSIX-only skip),
+524 REMOTE, 274 LOCAL, 103 KiSSKI synthetic and 397 architecture tests passed.
+Typing, lint, formatting and working/staged whitespace phases passed. The
+LF/CRLF warning was non-blocking. This does not qualify live models or deployment.
+The next separately scoped work was
 FORGEAI-V0.2-BOUNDED-TASK-QUALIFICATION-1: deterministic application-level
-qualification of the complete confirmed-context workflow. It is not authorized
-or started here and implies no live provider evaluation.
+qualification of the complete confirmed-context workflow. The maintainer has
+now requested that follow-up, recorded below; no live evaluation is authorized.
 
 Proposed commit: `feat(forgeai): bind operator confirmation to exact context`.
+
+## Follow-up: FORGEAI-V0.2-BOUNDED-TASK-QUALIFICATION-1
+
+Status: IMPLEMENTED — MAINTAINER VALIDATION REQUIRED.
+Verification: **NOT RUN — Awaiting user execution**.
+Baseline: `dca0cb999298b9ccfaea97ff318635fe2b9a4b45`.
+
+The maintainer requested this named next slice after confirming the preceding
+validator passed. Scope is deterministic application lifecycle qualification,
+not a new capability or global v0.2 completion claim. Reuse the existing public
+host, authorized read/mutation adapters, real temporary Git repositories,
+recorded proposal/review fixtures and fake sandbox. No production, Core, provider,
+dependency, ADR, frozen scoring or historical model evaluation changes.
+
+The new test file exercises these combined scenarios:
+
+| Scenario | Required observation |
+| --- | --- |
+| First-pass acceptance | Context, disclosure, coding, approval, apply, three checks, review in order |
+| One accepted rework | Fresh context confirmation and distinct binding; four model calls, two applies, six checks maximum |
+| Context refusal | No disclosure callback, model, mutation or checks |
+| Disclosure refusal | Context confirmation does not supply disclosure authority |
+| Mutation refusal | One proposal, zero applies/checks/reviews and unchanged repository |
+| Insufficient review | Prior applied files remain; no retry or automatic rollback |
+| Rework context refusal | First attempt's effects retained; no second proposal |
+| Rework mutation refusal | Second proposal does not authorize second apply |
+| Terminal changes-required review | No third attempt or fifth model invocation |
+
+Positive controls also assert exact target/reference membership, unchanged HEAD,
+unchanged read-only reference bytes, exact reference payload, bounded evidence,
+distinct confirmation identities and released workspace guard. Negative controls
+assert exact invocation/effect counts and correct REJECTED versus FAILED truth.
+No generated Python is executed by the new tests; fake checks report scripted
+outcomes. Therefore passing proves application handling of those outcomes, not
+the correctness of generated code or real sandbox containment.
+
+The new validator pins this baseline and permits only four files:
+
+- examples/forgeai/tests/test_bounded_task_qualification.py (new)
+- validate_forgeai_v0_2_bounded_task_qualification_1.py (new)
+- examples/forgeai/README.md
+- planning/FORGEAI-CONTEXT-CONFIRMATION-1.md
+
+The exact scope gate excludes all production and frozen evaluation changes.
+Focused lifecycle tests run with confirmation/preflight regressions; then the
+existing ForgeAI pipeline, PROJECT, LOCAL/REMOTE, Engineering, custody, KiSSKI
+synthetic and architecture suites, followed by typing, lint, format and whitespace
+checks. Real Docker/sandbox opt-in cases and build/clean-install suites remain
+excluded. The validator does not invoke earlier slice validators with incompatible
+baseline allowlists. Existing suites may use local synthetic TLS servers; no
+external provider calls or credential access are authorized.
+
+Prerequisites: repository root as working directory, Python 3.14, uv, Git and
+already-provisioned locked root/ForgeAI/Engineering environments. No new environment
+variables, dependencies or credentials are needed. The validator explicitly clears
+live qualification opt-ins and uses locked/offline/no-sync project commands.
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_v0_2_bounded_task_qualification_1.py
+if ($LASTEXITCODE -ne 0) { throw 'ForgeAI v0.2 bounded-task qualification failed' }
+```
+
+Expected only after successful maintainer execution:
+
+`FORGEAI-V0.2-BOUNDED-TASK-QUALIFICATION-1 LOCAL CHECKS PASSED; CONFIRMED-CONTEXT TASK LIFECYCLE LOCALLY QUALIFIED; REPLAY MODELS AND FAKE SANDBOX ONLY; NO LIVE MODEL QUALITY, REAL SANDBOX OR GLOBAL V0.2 QUALIFICATION; NO LIVE EXECUTION OR DEPLOYMENT AUTHORIZED`
+
+No tests, validators, builds, providers or commits were run by the agent for this
+follow-up. Risks/limits: execution pending; this suite intentionally uses one
+existing bounded task fixture and cannot establish broad coding competence;
+fresh-wheel, real sandbox, live provider and deployment qualification remain
+separate. No further implementation milestone starts before maintainer results.
+
+Proposed commit: `test(forgeai): qualify the confirmed-context bounded task lifecycle`.

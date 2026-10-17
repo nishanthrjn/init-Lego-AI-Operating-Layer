@@ -1095,4 +1095,37 @@ or qualify a model.
 See [the preflight slice](../../planning/FORGEAI-REPOSITORY-CONTEXT-PREFLIGHT-1.md)
 for bounds and limitations. The preflight maintainer validation passed.
 The [confirmation slice](../../planning/FORGEAI-CONTEXT-CONFIRMATION-1.md)
-has a separate maintainer-only validator; its validation is pending.
+passed its separate maintainer validator. This qualifies the local confirmation
+boundary, not model quality or deployment.
+
+The follow-up `FORGEAI-V0.2-BOUNDED-TASK-QUALIFICATION-1` combines the confirmed
+context, coding, mutation approval, checks, independent review and bounded rework
+gates in deterministic lifecycle tests. Its validator uses replay models and a
+fake sandbox, alongside existing offline regressions. Real sandbox execution,
+live model quality and global v0.2 qualification are outside that claim.
+The maintainer supplied a successful result for this replay/fake-sandbox validator:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_v0_2_bounded_task_qualification_1.py
+if ($LASTEXITCODE -ne 0) { throw 'ForgeAI v0.2 bounded-task qualification failed' }
+```
+
+Run from the repository root with the existing locked environments. See the
+[qualification record](../../planning/FORGEAI-CONTEXT-CONFIRMATION-1.md#follow-up-forgeai-v02-bounded-task-qualification-1)
+for the exact coverage and limits.
+
+The bounded-task maintainer validator has now passed with replay models and a
+fake sandbox. The separately requested
+[real-sandbox qualification](../../planning/FORGEAI-V0.2-REAL-SANDBOX-QUALIFICATION-1.md)
+is pending. It uses the existing GENERIC PYTHON_CHECKS Docker image and replay
+models, with no provider calls, image acquisition or dependency installation.
+On the qualified Windows Docker Desktop Linux host, from the repository root:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_v0_2_real_sandbox_qualification_1.py
+if ($LASTEXITCODE -ne 0) { throw 'ForgeAI v0.2 real-sandbox qualification failed' }
+```
+
+This command runs real Docker workloads only when executed by the maintainer.
+The pinned qualified image must already be present. Success would qualify the
+bounded replay workflow with real checks, not live model quality or deployment.
