@@ -55,6 +55,7 @@ from legoai.runtime.local import (
     open_credential_source,
     open_local_host,
 )
+
 from scripts import kisski_compatibility_probe as legacy
 
 PROFILE = "kisski-saia"

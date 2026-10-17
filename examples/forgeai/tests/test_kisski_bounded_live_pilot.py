@@ -2,7 +2,11 @@
 
 import asyncio
 import json
+import shutil
+import sys
+import tempfile
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -18,12 +22,14 @@ from forgeai_support import (
     proposal,
     repository,
 )
+from legoai.intelligence.model.ports import ModelResponseUncertainError
 from legoai_engineering.sandbox.errors import SandboxError, SandboxFailure
 from test_remote_profile import CANARY, body, configured
 from tls_server import TlsServer
 
 from forgeai.domain import TaskFailure
 from scripts import forgeai_kisski_bounded_live_pilot as pilot
+from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
 
 
@@ -33,7 +39,9 @@ def forbidden(*args: Any, **kwargs: Any) -> Any:
 
 @pytest.mark.parametrize("options", [[], ["--plan"], ["--token", "secret-canary"]])
 def test_default_and_invalid_options_inert(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], options: list[str]
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    options: list[str],
 ) -> None:
     monkeypatch.setattr(pilot, "run_attended", forbidden)
     monkeypatch.setattr("builtins.input", forbidden)
@@ -45,14 +53,16 @@ def test_default_and_invalid_options_inert(
 def test_exact_authorization_before_work(
     monkeypatch: pytest.MonkeyPatch, terminal: bool, answer: str
 ) -> None:
-    monkeypatch.setattr(pilot.sys.stdin, "isatty", lambda: terminal)
-    monkeypatch.setattr(pilot.sys.stdout, "isatty", lambda: terminal)
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: terminal)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: terminal)
     monkeypatch.setattr("builtins.input", lambda _: answer)
     monkeypatch.setattr(pilot, "run_attended", forbidden)
     assert pilot.main(["--live"]) == 2
 
 
-def test_no_current_admissions_before_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_no_current_admissions_before_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     assert pilot.ADMISSIONS == ()
     for name in ("remote_credentials", "discover_models", "sandbox_readiness"):
         monkeypatch.setattr(pilot, name, forbidden)
@@ -91,7 +101,9 @@ def test_admission_missing_evidence_refused(
 
 
 @pytest.mark.parametrize("selected", ["model-a ", '"model-a"', "MODEL-A", "model-b"])
-def test_exact_selection_no_alias(monkeypatch: pytest.MonkeyPatch, selected: str) -> None:
+def test_exact_selection_no_alias(
+    monkeypatch: pytest.MonkeyPatch, selected: str
+) -> None:
     monkeypatch.setattr(pilot, "ADMISSIONS", (admission(),))
     assert not pilot.admitted(selected, ("model-a", "model-b"))
     assert not pilot.admitted("model-a", ("model-b",))
@@ -106,11 +118,11 @@ def test_outer_guards_precede_repository_and_model_secret(
 
     monkeypatch.setattr(pilot, "ADMISSIONS", (admission(),))
     monkeypatch.setattr(
-        pilot, "load_profile", lambda _: profile(443, pilot.datetime.now(pilot.UTC))
+        pilot, "load_profile", lambda _: profile(8443, datetime.now(UTC))
     )
     monkeypatch.setattr(pilot, "check_profile", lambda *_: None)
-    monkeypatch.setattr(pilot.shutil, "which", lambda _: str(tmp_path / "git.exe"))
-    monkeypatch.setattr(pilot.tempfile, "mkdtemp", lambda **_: str(tmp_path))
+    monkeypatch.setattr(shutil, "which", lambda _: str(tmp_path / "git.exe"))
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda **_: str(tmp_path))
     monkeypatch.setattr(
         pilot,
         "sandbox_readiness",
@@ -161,7 +173,9 @@ def test_replay_complete_lifecycle_and_projection(
     cfg = config(repository(tmp_path), model, context=("pyproject.toml",))
     sandbox = FakeSandbox((1, 0, 0, 0, 0, 0) if scenario == "checks" else (0, 0, 0))
     report = asyncio.run(
-        pilot.execute_task(cfg, ask=lambda _: "y", write=lambda _: None, sandbox=sandbox)
+        pilot.execute_task(
+            cfg, ask=lambda _: "y", write=lambda _: None, sandbox=sandbox
+        )
     )
     assert report["status"] == "PILOT_SUCCEEDED"
     assert model.calls == maximum <= 4
@@ -210,7 +224,7 @@ def test_failures_stop_and_retain_effects(tmp_path: Path, failure: str) -> None:
     if failure == "proposal":
         outputs = ("invalid-secret-canary",)
     elif failure == "model":
-        outputs = (RuntimeError("exception-secret-canary"),)
+        outputs = (ModelResponseUncertainError("exception-secret-canary"),)
     elif failure == "exhausted":
         outputs = (proposal(), REVIEW_CHANGES, REWORK, REVIEW_CHANGES)
     model = LoggedReplay([], *outputs)
@@ -221,12 +235,18 @@ def test_failures_stop_and_retain_effects(tmp_path: Path, failure: str) -> None:
         else None
     )
     report = asyncio.run(
-        pilot.execute_task(cfg, ask=lambda _: "y", write=lambda _: None, sandbox=sandbox)
+        pilot.execute_task(
+            cfg, ask=lambda _: "y", write=lambda _: None, sandbox=sandbox
+        )
     )
     assert report["status"] != "PILOT_SUCCEEDED"
     assert model.calls == (4 if failure == "exhausted" else 1)
     assert report["changes_retained"] is (failure in {"sandbox", "exhausted"})
     assert "secret-canary" not in json.dumps(report)
+    if failure == "model":
+        assert report["task_failure"] == TaskFailure.MODEL_FAILED.name
+        assert report["attempts"][0]["model_effect"] == "UNKNOWN"
+        assert sandbox.calls == 0
 
 
 @pytest.mark.parametrize("fails", [False, True])
@@ -248,8 +268,8 @@ def test_discovery_single_call_closes_source(
         return SimpleNamespace(models=(SimpleNamespace(value="model-a"),))
 
     monkeypatch.setattr(saia, "_provision_interactively", provision)
-    monkeypatch.setattr(saia.legacy, "_discover", discover)
-    monkeypatch.setattr(saia.legacy, "classify_discovery", lambda _: None)
+    monkeypatch.setattr(legacy, "_discover", discover)
+    monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
     monkeypatch.setattr(saia, "chat_stages", forbidden)
     if fails:
         with pytest.raises(ValueError):
@@ -259,15 +279,18 @@ def test_discovery_single_call_closes_source(
     assert events == ["provision", "discovery", "close"]
 
 
+@pytest.mark.parametrize("error_type", [ValueError, RuntimeError])
 def test_outer_error_never_prints_raw(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    error_type: type[Exception],
 ) -> None:
-    monkeypatch.setattr(pilot.sys.stdin, "isatty", lambda: True)
-    monkeypatch.setattr(pilot.sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     monkeypatch.setattr("builtins.input", lambda _: pilot.AUTHORIZATION)
 
     def fail(*args: Any) -> int:
-        raise ValueError("exception-secret-canary")
+        raise error_type("exception-secret-canary")
 
     monkeypatch.setattr(pilot, "run_attended", fail)
     assert pilot.main(["--live"]) == 1

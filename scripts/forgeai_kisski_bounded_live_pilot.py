@@ -13,13 +13,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from demo import FIXTURE, OBJECTIVE, TARGETS, create_repository
 from legoai.runtime.api import OpenAICompatibleSettings, RemoteModelRuntime
 from legoai_engineering.coding.values import CodingTarget
 from legoai_engineering.repository.mutation import FileChangeKind
 from legoai_engineering.repository.workspace import RepositoryPath
 from legoai_engineering.sandbox.ports import SandboxExecutionPort
 
-from examples.forgeai.demo import FIXTURE, OBJECTIVE, TARGETS, create_repository
 from forgeai.cli import (
     remote_confirmer,
     terminal_approver,
@@ -132,7 +132,9 @@ def projection(result: TaskResult) -> dict[str, Any]:
         attempts.append(
             {
                 "number": item.number,
-                "coding_status": item.coding_status.name if item.coding_status else None,
+                "coding_status": item.coding_status.name
+                if item.coding_status
+                else None,
                 "model_attempt": item.agent_status.name if item.agent_status else None,
                 "model_effect": item.model_effect.name if item.model_effect else None,
                 "proposal_valid": item.proposal is not None,

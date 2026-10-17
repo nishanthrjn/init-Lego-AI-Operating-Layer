@@ -201,7 +201,7 @@ For a future separately authorized attended session, the module needs the existi
 ForgeAI environment and source import path. From repository root:
 
 ```powershell
-$env:PYTHONPATH = "$PWD;$PWD\examples\forgeai\src"
+$env:PYTHONPATH = "$PWD;$PWD\examples\forgeai;$PWD\examples\forgeai\src"
 uv run --project examples/forgeai --locked --offline --no-sync python -m scripts.forgeai_kisski_bounded_live_pilot --plan
 ```
 

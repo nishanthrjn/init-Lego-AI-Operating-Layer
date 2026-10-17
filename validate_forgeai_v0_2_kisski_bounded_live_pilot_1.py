@@ -46,7 +46,8 @@ def main() -> int:
         env.pop(name, None)
     env["UV_OFFLINE"] = "1"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    env["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(FORGEAI / "src")))
+    import_paths = (str(ROOT), str(FORGEAI), str(FORGEAI / "src"))
+    env["PYTHONPATH"] = os.pathsep.join(import_paths)
     env["MYPYPATH"] = str(ROOT)
     phase = "exact tooling scope; production and frozen evidence preserved"
 
@@ -154,7 +155,7 @@ def main() -> int:
             'lint.isort.known-first-party = ["forgeai", "scripts", "examples", '
             '"validate_forgeai_remote_model_profile_1"]',
             "--config",
-            'lint.isort.known-third-party = ["legoai", "legoai_engineering"]',
+            'lint.isort.known-third-party = ["demo", "legoai", "legoai_engineering"]',
             *targets,
         )
         project(
