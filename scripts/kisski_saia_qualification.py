@@ -296,6 +296,33 @@ async def chat_stages(
     return Outcome.PASS
 
 
+def discover_models(custody: Path) -> tuple[str, ...] | None:
+    """Trusted attended tooling: one discovery, fresh hidden S1, no chat.
+
+    Caller must gate authorization and supply a fresh custody directory.
+    Keep the existing private discovery bootstrap in its original owner tooling.
+    Never return credentials, provider bodies, or exceptions as diagnostics.
+    """
+    source: CredentialSource = open_credential_source(legacy._scope())
+    try:
+        owned_source = cast(Any, source)._source
+        credential = _provision_interactively(
+            owned_source, "saia-discovery", discovery_purpose(), discovery_consumer()
+        )
+
+        def clock() -> datetime:
+            return datetime.now(UTC)
+
+        discovered = legacy._discover(
+            live_config(custody), owned_source, credential, clock(), clock
+        )
+        if legacy.classify_discovery(discovered) is not None:
+            return None
+        return tuple(model.value for model in discovered.models)
+    finally:
+        source.close()
+
+
 def run(
     config: legacy.ProbeConfig,
     *,
