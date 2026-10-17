@@ -1,11 +1,18 @@
 """Explicit-path preflight observations; never model or mutation authority."""
 
-from dataclasses import dataclass
+import json
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from enum import Enum
 
-from legoai_engineering.analyst.values import EvidenceAcquisitionError
+from legoai.kernel.context import TenantContext
+from legoai_engineering.analyst.values import (
+    AcquisitionFailure,
+    EvidenceAcquisitionError,
+)
 from legoai_engineering.coding.api import CodingEvidencePort
-from legoai_engineering.coding.values import CodingEvidence, CodingRequest
+from legoai_engineering.coding.values import CodingEvidence, CodingRequest, CodingTarget
+from legoai_engineering.git.values import GitHead
 from legoai_engineering.repository.mutation import ContentDigest, digest_text
 from legoai_engineering.repository.workspace import RepositoryPath
 
@@ -108,6 +115,13 @@ async def preflight_context(
             ContextOutcome.CONTEXT_INCOMPLETE,
             reason=ContextReason.ACQUISITION_FAILED,
         )
+    return inventory_from_evidence(evidence, request)
+
+
+def inventory_from_evidence(
+    evidence: CodingEvidence, request: CodingRequest
+) -> ContextPreflight:
+    """One metadata projection for both preflight and the disclosure gate."""
     if (
         type(evidence) is not CodingEvidence
         or {file.target for file in evidence.files} != set(request.targets)
@@ -147,6 +161,8 @@ async def preflight_context(
 def context_summary(result: ContextPreflight) -> str:
     """Metadata only; acquired text and arbitrary error messages never appear."""
     lines = [result.outcome.value]
+    if result.outcome is ContextOutcome.READY_FOR_CONTEXT_CONFIRMATION:
+        lines.append("inventory identity: " + inventory_digest(result).value)
     if result.reason is not None:
         lines.append("context reason: " + result.reason.value)
     for item in result.inventory:
@@ -156,3 +172,193 @@ def context_summary(result: ContextPreflight) -> str:
             f"exists={item.exists}; bytes={item.size_bytes}; digest={digest}"
         )
     return "\n".join(lines)
+
+
+class ConfirmationReason(Enum):
+    REQUIRED = "CONTEXT_CONFIRMATION_REQUIRED"
+    DECLINED = "CONTEXT_CONFIRMATION_DECLINED"
+    INVALID = "CONTEXT_CONFIRMATION_INVALID"
+    INCOMPLETE = "CONTEXT_INCOMPLETE"
+    STALE = "CONTEXT_CONFIRMATION_STALE"
+    REPOSITORY = "CONTEXT_REPOSITORY_MISMATCH"
+    SCOPE = "CONTEXT_SCOPE_MISMATCH"
+    TASK = "CONTEXT_TASK_MISMATCH"
+    INVENTORY = "CONTEXT_INVENTORY_CHANGED"
+
+
+def _digest(value: object) -> ContentDigest:
+    return digest_text(json.dumps(value, ensure_ascii=True, separators=(",", ":")))
+
+
+@dataclass(frozen=True, slots=True)
+class ContextBinding:
+    """Versioned, run-local identity; hashes only, never repository contents."""
+
+    repository: ContentDigest
+    scope: ContentDigest
+    task: ContentDigest
+    lifecycle: ContentDigest
+    inventory: ContentDigest
+
+    def __post_init__(self) -> None:
+        if any(
+            type(value) is not ContentDigest
+            for value in (
+                self.repository,
+                self.scope,
+                self.task,
+                self.lifecycle,
+                self.inventory,
+            )
+        ):
+            raise TypeError("context binding requires digests")
+
+    @property
+    def identity(self) -> ContentDigest:
+        return _digest(
+            (
+                "forgeai-context-confirmation-v1",
+                self.repository.value,
+                self.scope.value,
+                self.task.value,
+                self.lifecycle.value,
+                self.inventory.value,
+            )
+        )
+
+
+def bind_context(
+    workspace: str,
+    head: GitHead,
+    request: CodingRequest,
+    preflight: ContextPreflight,
+) -> ContextBinding:
+    if preflight.outcome is not ContextOutcome.READY_FOR_CONTEXT_CONFIRMATION:
+        raise ValueError("only ready context can be bound")
+    expected = sorted(
+        [(target.path.value, target.operation.value) for target in request.targets]
+        + [(path.value, "reference") for path in request.references]
+    )
+    if expected != [(item.path.value, item.role) for item in preflight.inventory]:
+        raise ValueError("preflight does not match request scope")
+    return ContextBinding(
+        _digest(
+            (
+                workspace,
+                head.kind.value,
+                head.branch,
+                head.commit.value if head.commit else None,
+            )
+        ),
+        _digest(("required-scope-v1", expected)),
+        _digest((request.objective, request.constraints)),
+        _digest(
+            (
+                request.context.execution_id.value,
+                request.context.tenant_context.tenant_id.value,
+            )
+        ),
+        inventory_digest(preflight),
+    )
+
+
+def inventory_digest(preflight: ContextPreflight) -> ContentDigest:
+    return _digest(
+        [
+            (
+                item.path.value,
+                item.role,
+                item.exists,
+                item.size_bytes,
+                item.digest.value if item.digest else None,
+            )
+            for item in preflight.inventory
+        ]
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ContextConfirmation:
+    binding: ContextBinding
+    approved: bool
+    reason: ConfirmationReason | None = None
+
+    def __post_init__(self) -> None:
+        if type(self.binding) is not ContextBinding or type(self.approved) is not bool:
+            raise TypeError("typed confirmation required")
+        if self.reason is not None and type(self.reason) is not ConfirmationReason:
+            raise TypeError("closed confirmation reason required")
+        if not self.approved and self.reason is None:
+            raise ValueError("refusal requires a reason")
+
+    @property
+    def confirmed(self) -> bool:
+        return self.approved and self.reason is None
+
+
+def confirm_inventory(
+    binding: ContextBinding,
+    inventory: ContextPreflight,
+    confirm: Callable[[ContextPreflight], bool] | None,
+) -> ContextConfirmation:
+    """The trusted operator callback approves only this immutable inventory.
+
+    The worker constructs the binding before calling it; no external receipt
+    or persisted approval is accepted. This function performs no I/O itself.
+    """
+    reason = ConfirmationReason.REQUIRED
+    if inventory.outcome is ContextOutcome.CONTEXT_INCOMPLETE:
+        reason = ConfirmationReason.INCOMPLETE
+    elif binding.inventory != inventory_digest(inventory):
+        reason = ConfirmationReason.INVENTORY
+    elif confirm is not None:
+        try:
+            if confirm(inventory) is True:
+                return ContextConfirmation(binding, True)
+            reason = ConfirmationReason.DECLINED
+        except Exception, KeyboardInterrupt:
+            reason = ConfirmationReason.INVALID
+    return ContextConfirmation(binding, False, reason)
+
+
+def confirmation_mismatch(
+    confirmation: ContextConfirmation, current: ContextBinding
+) -> ConfirmationReason | None:
+    if not confirmation.confirmed:
+        return confirmation.reason
+    for name, reason in (
+        ("repository", ConfirmationReason.REPOSITORY),
+        ("scope", ConfirmationReason.SCOPE),
+        ("task", ConfirmationReason.TASK),
+        ("lifecycle", ConfirmationReason.STALE),
+        ("inventory", ConfirmationReason.INVENTORY),
+    ):
+        if getattr(confirmation.binding, name) != getattr(current, name):
+            return reason
+    return None
+
+
+@dataclass(frozen=True, slots=True)
+class ConfirmedEvidence:
+    """Ephemeral exact bundle for one CodingAgent call, never a reusable grant.
+
+    Acquisition and authorization have just completed in the worker. Avoid a
+    third filesystem read between comparison and serialization by CodingAgent.
+    """
+
+    request: CodingRequest = field(repr=False)
+    evidence: CodingEvidence = field(repr=False)
+
+    async def acquire(
+        self,
+        targets: tuple[CodingTarget, ...],
+        tenant: TenantContext,
+        references: tuple[RepositoryPath, ...] = (),
+    ) -> CodingEvidence:
+        if (
+            targets != self.request.targets
+            or tenant != self.request.context.tenant_context
+            or references != self.request.references
+        ):
+            raise EvidenceAcquisitionError(AcquisitionFailure.DENIED)
+        return self.evidence

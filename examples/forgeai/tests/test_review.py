@@ -127,7 +127,7 @@ def test_no_review_when_final_git_integrity_fails(tmp_path: Path) -> None:
 
         def inspect(self) -> GitRepositoryState:
             FailingFinal.calls += 1
-            if FailingFinal.calls == 1:
+            if model.calls == 0:
                 return real.inspect()
             raise GitError(GitFailure.TIMEOUT)
 

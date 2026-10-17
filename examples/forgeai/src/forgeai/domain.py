@@ -33,7 +33,11 @@ from legoai_engineering.reviewer.values import (
 from legoai_engineering.sandbox.errors import SandboxFailure
 from legoai_engineering.sandbox.prepared import PreparationFailure
 
-from forgeai.repository_context import ContextPreflight
+from forgeai.repository_context import (
+    ContextConfirmation,
+    ContextPreflight,
+    inventory_digest,
+)
 
 LIMITATIONS = (
     "Checks ran in the qualified sandbox; a pass is an observed contained "
@@ -145,6 +149,7 @@ class TaskFailure(Enum):
     CONTEXT_PREFLIGHT_FAILED = "repository context acquisition failed"
     EVIDENCE_DENIED = "repository read authorization denied"
     EVIDENCE_UNAVAILABLE = "bounded repository evidence could not be acquired"
+    CONTEXT_STALE = "confirmed repository context no longer matches"
     MODEL_FAILED = "the model call did not complete"
     PROPOSAL_INVALID = "the model output was not a valid proposal"
     # The operator did not approve the validated proposal (or could not be
@@ -190,6 +195,7 @@ _REJECTIONS = frozenset(
         TaskFailure.MODEL_DISCLOSURE_REFUSED,
         TaskFailure.EVIDENCE_DENIED,
         TaskFailure.EVIDENCE_UNAVAILABLE,
+        TaskFailure.CONTEXT_STALE,
     }
 )
 
@@ -395,11 +401,21 @@ class TaskEvidence:
     limitations: tuple[str, ...] = LIMITATIONS
     context_preflight: ContextPreflight | None = None
     context_confirmed: bool = False
+    context_confirmations: tuple[ContextConfirmation, ...] = ()
     preparation_failure: PreparationFailure | None = None
     preparation_infrastructure_failure: SandboxFailure | None = None
 
     def __post_init__(self) -> None:
         _text(self.run_id, 256)
+        if (
+            type(self.context_confirmations) is not tuple
+            or len(self.context_confirmations) > 2
+            or any(
+                type(item) is not ContextConfirmation
+                for item in self.context_confirmations
+            )
+        ):
+            raise ValueError("at most two typed context decisions required")
         if (
             self.context_preflight is not None
             and type(self.context_preflight) is not ContextPreflight
@@ -411,6 +427,14 @@ class TaskEvidence:
             self.context_preflight is None or self.context_preflight.reason is not None
         ):
             raise ValueError("confirmation requires ready context")
+        if self.context_confirmed and (
+            not self.context_confirmations
+            or not self.context_confirmations[-1].confirmed
+            or self.context_preflight is None
+            or self.context_confirmations[-1].binding.inventory
+            != inventory_digest(self.context_preflight)
+        ):
+            raise ValueError("confirmed evidence requires its exact decision")
 
         if (
             self.preparation_failure is not None
@@ -679,7 +703,13 @@ class TaskResult:
         elif self.failure in _REJECTIONS and not (
             evidence.reworked
             and self.failure
-            in {TaskFailure.EVIDENCE_DENIED, TaskFailure.EVIDENCE_UNAVAILABLE}
+            in {
+                TaskFailure.EVIDENCE_DENIED,
+                TaskFailure.EVIDENCE_UNAVAILABLE,
+                TaskFailure.CONTEXT_INCOMPLETE,
+                TaskFailure.CONTEXT_DECLINED,
+                TaskFailure.CONTEXT_STALE,
+            }
         ):
             # Pre-effect refusals are REJECTED, except the rework's own reads.
             raise ValueError("disposition does not match the failure step")

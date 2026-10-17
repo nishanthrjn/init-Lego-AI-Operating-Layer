@@ -31,7 +31,6 @@ from forgeai_support import (
 from legoai.intelligence.model.ports import ModelPreflightError
 from legoai.kernel.effects import EffectExtent
 from legoai_engineering.analyst.authorized import REPOSITORY_READ_ACTION
-from legoai_engineering.coding.values import CodingStatus
 from legoai_engineering.repository.mutation import (
     FileChangeKind,
     RepositoryChangeSet,
@@ -405,7 +404,9 @@ def test_expired_read_grant_denies_rework_evidence(tmp_path: Path) -> None:
     assert result.failure is TaskFailure.EVIDENCE_DENIED
     assert model.calls == 2
     second = result.evidence.attempts[1]
-    assert second.coding_status is CodingStatus.INVALID_REQUEST
+    # Fresh rework preflight now refuses before CodingAgent is entered.
+    assert second.coding_status is None
+    assert not result.evidence.context_confirmed
 
 
 # --- O. The workspace guard is held for the whole run --------------------------

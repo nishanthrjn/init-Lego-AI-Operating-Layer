@@ -37,7 +37,7 @@ FORBIDDEN_EVERYWHERE = (
     "openai",
     "docker",
 )
-STDLIB_INNER = {"collections.abc", "dataclasses", "enum", "threading"}
+STDLIB_INNER = {"collections.abc", "dataclasses", "enum", "json", "threading"}
 WRITES = {
     "write_text",
     "write_bytes",

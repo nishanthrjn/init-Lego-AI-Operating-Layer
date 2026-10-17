@@ -147,7 +147,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
     rework = run(
         [str(python), "-I", str(application / "demo.py"), "rework"],
         application,
-        "y\ny\ny\n",  # context confirmation, then one approval per proposal
+        "y\ny\ny\ny\n",  # fresh context confirmation and approval per proposal
     )
     lines = rework.stdout.splitlines()
     assert "disposition: succeeded" in lines, rework.stdout

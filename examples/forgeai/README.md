@@ -1084,9 +1084,15 @@ requires verified absence; supporting context is required when declared.
 digests, not contents. Confirming this inventory is separate from remote model
 disclosure and later proposal approval. Without an explicit confirmation, no
 CodingAgent or IndependentReviewer is called. Programmatic `prepare_run` callers
-must supply `confirm_context`; its default refuses. CodingAgent still re-reads
-and re-authorizes context before invocation. This does not certify semantic
-completeness or qualify a model.
+must supply `confirm_context`; its default refuses. Each decision is bound to
+the repository root/HEAD, run/tenant, exact task/scope and inventory digests.
+The worker re-acquires authorized evidence immediately before coding, rejects
+stale bindings, and hands that exact immutable bundle to CodingAgent. Rework
+requires fresh preflight and confirmation. Confirmation grants no remote
+disclosure or mutation permission. This does not certify semantic completeness
+or qualify a model.
 
 See [the preflight slice](../../planning/FORGEAI-REPOSITORY-CONTEXT-PREFLIGHT-1.md)
-for bounds, limitations and the maintainer-only validator. Validation is pending.
+for bounds and limitations. The preflight maintainer validation passed.
+The [confirmation slice](../../planning/FORGEAI-CONTEXT-CONFIRMATION-1.md)
+has a separate maintainer-only validator; its validation is pending.

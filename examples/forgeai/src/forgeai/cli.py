@@ -421,6 +421,14 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
     if evidence.context_preflight is not None:
         lines.append(context_summary(evidence.context_preflight))
         lines.append(f"context confirmed: {evidence.context_confirmed}")
+    for decision in evidence.context_confirmations:
+        outcome = "CONTEXT_CONFIRMED"
+        if decision.reason is not None:
+            outcome = decision.reason.value
+        lines.append(
+            f"context confirmation requested: {decision.binding.identity.value}; "
+            f"inventory: {decision.binding.inventory.value}; result: {outcome}"
+        )
     if evidence.preparation_failure is not None:
         lines.append("environment preparation: " + evidence.preparation_failure.value)
     if evidence.preparation_infrastructure_failure is not None:

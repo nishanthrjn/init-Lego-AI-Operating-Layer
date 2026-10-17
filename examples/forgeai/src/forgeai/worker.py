@@ -79,9 +79,15 @@ from forgeai.domain import (
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.repository_context import (
+    ConfirmationReason,
+    ConfirmedEvidence,
     ContextOutcome,
     ContextPreflight,
     ContextReason,
+    bind_context,
+    confirm_inventory,
+    confirmation_mismatch,
+    inventory_from_evidence,
     preflight_context,
 )
 from forgeai.review import (
@@ -238,14 +244,13 @@ class RepositoryTaskWorker:
             else:
                 failure = TaskFailure.CONTEXT_INCOMPLETE
             return _rejected(task, failure, evidence)
-        try:
-            confirmed = (
-                self.confirm_context is not None
-                and self.confirm_context(inventory) is True
-            )
-        except Exception, KeyboardInterrupt:
-            confirmed = False
-        if not confirmed:
+        confirmation = confirm_inventory(
+            bind_context(self.workspace, start.head, request, inventory),
+            inventory,
+            self.confirm_context,
+        )
+        evidence = replace(evidence, context_confirmations=(confirmation,))
+        if not confirmation.confirmed:
             return _rejected(task, TaskFailure.CONTEXT_DECLINED, evidence)
         evidence = replace(evidence, context_confirmed=True)
 
@@ -352,7 +357,90 @@ class RepositoryTaskWorker:
         )
         start = evidence.start
         assert start is not None
-        coding = await self.agent.propose(request)
+        # Rework changes both contents and request identity. It requires a new
+        # preflight/decision; the first decision never authorizes those changes.
+        if number == 2:
+            inventory = await preflight_context(self.agent.evidence_reader, request)
+            if inventory.outcome is ContextOutcome.CONTEXT_INCOMPLETE:
+                evidence = replace(
+                    evidence, context_preflight=inventory, context_confirmed=False
+                )
+                failure = (
+                    TaskFailure.EVIDENCE_DENIED
+                    if inventory.reason is ContextReason.DENIED
+                    else TaskFailure.CONTEXT_INCOMPLETE
+                )
+                return self._stop(task, failure, evidence)
+            confirmation = confirm_inventory(
+                bind_context(self.workspace, start.head, request, inventory),
+                inventory,
+                self.confirm_context,
+            )
+            evidence = replace(
+                evidence,
+                context_preflight=inventory,
+                context_confirmed=confirmation.confirmed,
+                context_confirmations=(*evidence.context_confirmations, confirmation),
+            )
+            if not confirmation.confirmed:
+                return self._stop(task, TaskFailure.CONTEXT_DECLINED, evidence)
+        # Authorization is checked again by the existing reader. The model
+        # receives this exact immutable bundle, not another filesystem read.
+        reason: ConfirmationReason | None
+        try:
+            acquired = await self.agent.evidence_reader.acquire(
+                request.targets, request.context.tenant_context, request.references
+            )
+            inventory = inventory_from_evidence(acquired, request)
+            observed_repository = self._observe()
+            if inventory.outcome is ContextOutcome.CONTEXT_INCOMPLETE:
+                reason = ConfirmationReason.INCOMPLETE
+            elif not isinstance(observed_repository, GitRepositoryState):
+                reason = ConfirmationReason.REPOSITORY
+            else:
+                reason = confirmation_mismatch(
+                    evidence.context_confirmations[-1],
+                    bind_context(
+                        self.workspace, observed_repository.head, request, inventory
+                    ),
+                )
+        except EvidenceAcquisitionError as error:
+            failure = (
+                TaskFailure.EVIDENCE_DENIED
+                if error.reason is AcquisitionFailure.DENIED
+                else TaskFailure.EVIDENCE_UNAVAILABLE
+            )
+            evidence = _set(
+                evidence, replace(evidence.latest, acquisition_failure=error.reason)
+            )
+            refused = replace(
+                evidence.context_confirmations[-1],
+                reason=ConfirmationReason.INCOMPLETE,
+            )
+            evidence = replace(
+                evidence,
+                context_confirmed=False,
+                context_confirmations=(*evidence.context_confirmations[:-1], refused),
+            )
+            if number == 1:
+                return _rejected(task, failure, evidence)
+            return self._stop(task, failure, evidence)
+        except Exception:
+            reason = ConfirmationReason.INVALID
+        if reason is not None:
+            refused = replace(evidence.context_confirmations[-1], reason=reason)
+            evidence = replace(
+                evidence,
+                context_confirmed=False,
+                context_confirmations=(*evidence.context_confirmations[:-1], refused),
+            )
+            if number == 1:
+                return _rejected(task, TaskFailure.CONTEXT_STALE, evidence)
+            return self._stop(task, TaskFailure.CONTEXT_STALE, evidence)
+        agent_for_context = replace(
+            self.agent, evidence_reader=ConfirmedEvidence(request, acquired)
+        )
+        coding = await agent_for_context.propose(request)
         item = replace(
             evidence.latest,
             coding_status=coding.status,

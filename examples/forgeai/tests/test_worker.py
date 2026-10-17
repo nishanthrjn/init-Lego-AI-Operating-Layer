@@ -358,17 +358,16 @@ class StaticGit:
 
 
 class ThenGit:
-    """Real first observation, scripted final observation."""
+    """Real pre-effect observations, scripted post-mutation observation."""
 
     def __init__(self, real: object, final: GitRepositoryState | GitError) -> None:
         self.real = real
         self.final = final
-        self.calls = 0
 
     def inspect(self) -> GitRepositoryState:
-        self.calls += 1
-        if self.calls == 1:
-            return self.real.inspect()  # type: ignore[attr-defined,no-any-return]
+        observed = self.real.inspect()  # type: ignore[attr-defined]
+        if not observed.entries:
+            return observed  # type: ignore[no-any-return]
         if isinstance(self.final, GitError):
             raise self.final
         return self.final

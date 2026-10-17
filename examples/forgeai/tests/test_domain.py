@@ -167,6 +167,7 @@ def test_evidence_holds_only_values_not_runtime_objects() -> None:
         "str",
         "bool",
         "ContextPreflight | None",
+        "tuple[ContextConfirmation, ...]",
         "GitRepositoryState | None",
         "GitFailure | None",
         "CodingStatus | None",
