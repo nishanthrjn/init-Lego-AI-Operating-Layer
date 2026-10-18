@@ -1,7 +1,7 @@
 # FORGEAI-KISSKI-GLM53-PHASE-A-QUALIFICATION-1
 
-Status: MAINTAINER VALIDATION PENDING; PRIOR GLM PROTOCOL FAILURES RECORDED.
-Verification: NOT RUN — Awaiting user execution.
+Status: KEEP_GLM53_NOT_ADMITTED; LENGTH DISPOSITION VALIDATION PENDING.
+Readiness validation: PASSED by maintainer; disposition extension NOT RUN.
 NO LIVE EXECUTION AUTHORIZED; NO PHASE B AUTHORIZED.
 
 ## Baseline and integrity
@@ -87,7 +87,8 @@ The validator includes positive/negative required-statement controls and staged
 document checking when staged. It does not rerun regression suites or claim new
 behavioral qualification. Supply its result before advancing this slice.
 
-Only after successful local validation and a new separate live authorization,
+Historical prospective procedure (superseded by the no-call disposition below):
+only after successful local validation and a new separate live authorization,
 an attended operator may choose to run:
 
 ```powershell
@@ -118,3 +119,61 @@ directory and derived report, including execution IDs and partial records.
 Missing rows do not prove no calls; effect truth requires retained attempt
 evidence. Do not invent NONE/COMPLETED states from score fields. Pre-task
 discovery/provisioning exceptions may remain unclassified in the current report.
+
+## FORGEAI-KISSKI-GLM53-LENGTH-DISPOSITION-1
+
+Decision: KEEP_GLM53_NOT_ADMITTED.
+Next action: STOP; NO LIVE CALL OR AUTOMATIC PHASE A REPEAT.
+Disposition baseline: `3c7273692bd44ccdf0e25beec4abdc80066ba1b5`.
+
+The maintainer successfully ran the readiness validator: exact scope, frozen
+source and canonical pins, documentary controls and whitespace all passed.
+This closes the earlier readiness-validation pending status, not the new
+disposition validation. It did not authorize live execution or qualify GLM.
+
+Both preserved reports were re-read. They identify `glm-5.3-flash`, Phase A,
+and the same semantic pack digest recorded above. The first has zero completed
+model invocations and one protocol-failure row; the second has one completed
+passing bug invocation and one protocol-failure row. Neither has four completed
+tasks. Both remain `RESULT_INCONCLUSIVE`; coding quality is neither qualified
+nor disqualified by these incomplete screenings. No records were merged.
+
+Read-only SQLite inspection of each `model-0/remote-attempts.db` selected only
+attempt ID, execution ID, state and categorical observations. No record payload,
+credential database, token, prompt or response body was accessed.
+
+| Execution | Attempt | Transport custody |
+| --- | --- | --- |
+| `exec-bdb7596dc6e946e8b3cc7069354c40ee` | `attempt-bd1524a07b75db5f07ca80cae3c7dd68` | completed; sent_all; response_complete |
+| `exec-62aa6f76b5b64e5e9a647c7f02ece961` | `attempt-677855a6f2a9775250d0818427f4c9b4` | completed; sent_all; response_complete |
+| `exec-36ca18a226be4bedb088535c788633b4` | `attempt-25b794f2831f9a769230327ec9137ce7` | completed; sent_all; response_complete |
+
+Transport completion is not generation completion or accepted model output.
+The LENGTH rows remain provider_or_protocol_failure / protocol_incompatible /
+FINISH_REASON_INVALID. The accepted bug row remains completed / VALIDATED.
+No no-send claim, task retry or rewriting of historical effects is justified.
+
+Current adapter source rejects any finish_reason other than the exact string
+`stop`. LENGTH is consistent with incomplete generation and cannot establish
+that output satisfies the completion contract. Token exhaustion, hidden token
+accounting and the exact provider cause are not independently established;
+failed rows retain null output-token counts. Complete HTTP responses do not
+resolve that uncertainty. Do not normalize LENGTH to STOP or add model-specific
+acceptance branches. Preserve all budgets, tasks, scoring and historical custody.
+
+A further call has no defined discriminating hypothesis needed for this admission
+decision. A smaller synthetic smoke would not establish completion of the frozen
+tasks, and another unchanged Phase A would repeat prior work without a new basis.
+Therefore no separate bounded live diagnostic is justified by current evidence.
+This is a profile-specific admission decision, not global model-quality judgment.
+
+Smallest evidence action: retain these reports and custody with the existing
+safe metadata linkage; run only the documentary validator below. Reconsider
+live research only in a separate proposal identifying new evidence, a concrete
+question, fixed bounds and explicit authorization. No new call is recommended now.
+
+The existing validator command above is reused for this disposition. Expected
+claim: local document checks passed; KEEP_GLM53_NOT_ADMITTED; no model quality
+qualified; no live execution authorized. Its current-baseline scope permits only
+this document and the validator to change. Disposition verification remains
+NOT RUN — Awaiting user execution.
