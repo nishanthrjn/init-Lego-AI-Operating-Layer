@@ -1,7 +1,7 @@
 {
   "observed_date": "2026-10-18",
   "m1_status": "PARTIAL",
-  "model_evidence": "S6",
+  "model_evidence": "S6_AND_PINNED_STARTER_CELL_8_NOT_PACKAGE_ENFORCEMENT",
   "announced_models": [
     "gemma-4-31b-it-qat-w4a16-ct",
     "gemma-4-12b-it-qat-w4a16-ct",
@@ -9,16 +9,333 @@
     "gemma-4-e2b-it-qat-w4a16-ct"
   ],
   "mixed_variants_supported": false,
-  "official_files": [],
+  "official_files": [
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_code_ryanholbrook_getting_started_gemma_4_developer_agent_20261018_115856.jpg",
+      "size_bytes": 2325670,
+      "sha256": "87d52b86dd7eee275aa79d9322f6bc81e351ea37e5f7c95ae1e1ec63fae2e153",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_code_20261018_111101.png",
+      "size_bytes": 4304072,
+      "sha256": "c6617514224990b09c4696460717979e82b52aacaa85bfd82082f13296dce3a6",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/code",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_data_20261018_111051.png",
+      "size_bytes": 657115,
+      "sha256": "3672f9e7287e3c598f0721e3d0fa59d28904b26d35ac09246648b7fd3d44ca39",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_leaderboard_20261018_111151.png",
+      "size_bytes": 410850,
+      "sha256": "d80e754d40682165b721f77c7d7edeae84484ff375cd6bf5784053d04b166e73",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/leaderboard",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_models_20261018_111141.png",
+      "size_bytes": 299559,
+      "sha256": "93976dd7d03f1382cc1d4a8cf471aaae00064de42d87f5258b2d3d2c637aac8c",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/models",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_overview_20261018_111039.png",
+      "size_bytes": 754599,
+      "sha256": "e3797760a2ca02a03573823ca2d3898980dae632a6d95708c8c54b53ce76583f",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/overview",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_code_20261018_111011.png",
+      "size_bytes": 978342,
+      "sha256": "5607c3b4a093df3aa154d5eafd1884078017811480814c901dacc1542f7fe5d3",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/code",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_overview_20261018_110958.png",
+      "size_bytes": 587469,
+      "sha256": "93c93aac8dbeffdb589e362a2f7c8ad017e902333232ccfe12dfe5d42ce12966",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_rules_20261018_111021.png",
+      "size_bytes": 1728598,
+      "sha256": "8ffad04d22f4ba468cf0a64537c9d9a9fdacfa26876feb8c98cb1bcb39e8fc62",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/rules",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_rules_20261018_111202.png",
+      "size_bytes": 1726037,
+      "sha256": "46c48a7c587fe45c3c5c0f5fe0f723f700232fb981f93c90e2b32759aa9519a7",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/rules",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_datasets_metric_gemma_4_developer_agent_wheelhouse_20261018_115938.jpg",
+      "size_bytes": 379247,
+      "sha256": "a7bd719dd97086b155eda9008bba4efd6868af2c12c454d332f8dfcfa74546df",
+      "kind": "page_capture",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "CAPTURE_URL_ENCODED_IN_FILENAME",
+      "retrieved_at": "2026-10-18T09:59:51+00:00",
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": "2026-10-18"
+    },
+    {
+      "path": "docs/getting-started-gemma-4-developer-agent.ipynb",
+      "size_bytes": 82092,
+      "sha256": "abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f",
+      "kind": "official_starter_copy",
+      "source_url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/PaperSubmissionRequirements.md",
+      "size_bytes": 2372,
+      "sha256": "ae4a8ef00d079e209605b69072f81dae12dbb74d2061630221906931b39c6c80",
+      "kind": "transcribed_official_text",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements",
+      "provenance": "MAINTAINER_SUPPLIED_TRANSCRIPTION",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/adapters/main_lora/adapter_config.json",
+      "size_bytes": 664,
+      "sha256": "75a46da2db7f3c70442e5c728f64059aff52cf64174cee7aeb3a4ec37f6e78fb",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/adapters/main_lora/adapter_model.safetensors",
+      "size_bytes": 217672,
+      "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/adapters/tool_lora/adapter_config.json",
+      "size_bytes": 664,
+      "sha256": "75a46da2db7f3c70442e5c728f64059aff52cf64174cee7aeb3a4ec37f6e78fb",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/adapters/tool_lora/adapter_model.safetensors",
+      "size_bytes": 217672,
+      "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/agent.yaml",
+      "size_bytes": 438,
+      "sha256": "c7fbbbbdc44778419be8e9f53a85800eeb17d0cf151e0846c46e107401b72034",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/configs/sampling.yaml",
+      "size_bytes": 120,
+      "sha256": "3dab0b2506dae34ce92fef7b380d6073729104b23fe2cf66d44ac1d2f213aa6a",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/eval_config.yaml",
+      "size_bytes": 232,
+      "sha256": "adb486b67535fa59b427b79d44dafc131176f1f1964d184e16046ed520ede02d",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/prompts/analyzer.md",
+      "size_bytes": 527,
+      "sha256": "c762b062032cc8463015e589ad8b4f0e17296062e1b0ff1e78712eef9f5e2d43",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/prompts/system.md",
+      "size_bytes": 3888,
+      "sha256": "f1cbf7943ee9687382321b1dfd9cd88581d608c1c8b8e6ea61a763bd1a3234af",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/sample_submission/sub_agents/code_analyzer.yaml",
+      "size_bytes": 361,
+      "sha256": "7a764798e36cc68aa38900256245e4aed969b5439b992c7da4105b6ebcb7e62b",
+      "kind": "official_sample_copy",
+      "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "provenance": "MAINTAINER_SUPPLIED",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    }
+  ],
   "sources": [
-    {"id": "S1", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/overview", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
-    {"id": "S2", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
-    {"id": "S3", "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/input", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
-    {"id": "S4_MAIN", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/rules", "status": "UNVERIFIED", "version": null, "sha256": null},
-    {"id": "S4_PAPER", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/rules", "status": "UNVERIFIED", "version": null, "sha256": null},
-    {"id": "S5_DATA", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data", "status": "UNVERIFIED", "version": null, "sha256": null},
-    {"id": "S5_STARTER", "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent", "status": "UNVERIFIED", "version": null, "sha256": null},
-    {"id": "S6", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287", "status": "INDEXED_STAFF_ANNOUNCEMENT", "version": null, "sha256": null},
-    {"id": "S7_WHEELHOUSE", "url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse", "status": "UNVERIFIED", "version": null, "sha256": null}
+    {
+      "id": "S1",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/overview",
+      "status": "INDEXED_OFFICIAL_PARTIAL",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S2",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements",
+      "status": "INDEXED_OFFICIAL_PARTIAL",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S3",
+      "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/input",
+      "status": "INDEXED_OFFICIAL_PARTIAL",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S4_MAIN",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/rules",
+      "status": "UNVERIFIED",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S4_PAPER",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/rules",
+      "status": "UNVERIFIED",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S5_DATA",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+      "status": "UNVERIFIED",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S5_STARTER",
+      "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+      "status": "UNVERIFIED",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S6",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287",
+      "status": "INDEXED_STAFF_ANNOUNCEMENT",
+      "version": null,
+      "sha256": null
+    },
+    {
+      "id": "S7_WHEELHOUSE",
+      "url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "status": "UNVERIFIED",
+      "version": null,
+      "sha256": null
+    }
+  ],
+  "reconciliation": "FORGEAI-GEMMA4-OFFICIAL-ARTIFACT-RECONCILIATION-1",
+  "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
+  "provenance_policy": "Maintainer-supplied official copies; hashes identify local bytes, not independent authentication. Retrieval date unknown unless explicitly evidenced; capture filenames indicate 2026-10-18. No wheels installed or notebook cells executed.",
+  "missing_artifacts": [
+    "HARNESS_README.md",
+    "harness/compiler/tool/evaluator package bytes and version metadata",
+    "complete extension and submission-limit definitions",
+    "scorer runtime configuration and exact final submission instructions"
   ]
 }

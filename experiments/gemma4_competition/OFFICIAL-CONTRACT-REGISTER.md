@@ -5,13 +5,15 @@ Baseline: 461f01036390d00dcce1069adb6a804937dc4ff9.
 Observed: 2026-10-18. Documentary validation NOT RUN — maintainer required.
 NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
 
+## Historical review (superseded where the reconciliation below adds evidence)
+
 ## Provenance and conflicts
 
 Source IDs and exact URLs are in `source-register.json`. Indexed official text
 is evidence of what the index exposed, not byte-for-byte current artifacts.
 Direct rules/data/starter/wheelhouse page bodies were empty in the web reader;
 a browser fallback failed to initialize. No login or credential access attempted.
-No official local files were obtained. Their versions and SHA256 are UNKNOWN,
+At the previous review, no official local files were obtained. Their versions and SHA256 are UNKNOWN,
 not invented hashes of summaries. The JSON register marks null hashes explicitly.
 
 S1 (overview) still exposes the older single-variant restriction. S6 (Kaggle staff
@@ -155,3 +157,169 @@ clean public/synthetic task completes in official harness. Maintainer runs all
 checks/models. Passing local compile alone is not scoring compatibility.
 Keep provider-neutral product interfaces, explicit operator confirmation, frozen
 evaluation and all model admissions unchanged. No live authorization is conferred.
+
+## FORGEAI-GEMMA4-OFFICIAL-ARTIFACT-RECONCILIATION-1
+
+Decision: M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED.
+Status: M1 PARTIAL; M2 BLOCKED.
+Baseline: e8e14bd9a075ec7b2cc39a1aa3c9a405d452a462.
+Verification: NOT RUN — Awaiting maintainer execution.
+NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+This dated reconciliation supersedes current unknowns above only where identified
+below. The previous official-harness documentary gate passed according to the
+maintainer transcript; that result did not qualify runtime contracts.
+
+### Artifact provenance and inspection
+
+`source-register.json` inventories all 23 supplied files with raw-byte SHA256,
+size, source attribution and date limitations. Originals under `docs/` are
+unchanged. These are maintainer-supplied official copies, not independently
+server-authenticated downloads. Screenshot filenames indicate 2026-10-18;
+non-screenshot retrieval times and release revisions are UNKNOWN. Do not infer
+download time from filesystem modification time. The wheelhouse capture footer
+reports retrieval 2026-10-18T09:59:51+00:00; its displayed Version 31 is a dataset
+version, not a verified installed wheel version. Its visible selected file is
+`adk_eval_core-0.1.0-py3-none-any.whl`; the page reports 41 files. The capture is
+not those wheel bytes or a complete machine-readable file manifest.
+
+Read the notebook's complete 13-cell source, all supplied YAML/JSON/prompt text,
+paper requirements and both rules captures through their final definitions.
+Adapter safetensors were hashed, not loaded. Notebook outputs are historical
+embedded data, not evidence of execution here. Code-listing screenshots include
+participant examples: those listings are not official harness authority, and no
+third-party implementation has been adopted. No complete HARNESS_README or wheel
+is supplied, so neither could be inspected. Absence is a material blocker.
+
+### Verified sample fields, not a complete agent.yaml schema
+
+| Surface | Fields/values actually present | Limits of evidence |
+| --- | --- | --- |
+| agent.yaml | name, model, adapter, instruction, tools, generate_content_config | Requiredness, unknown-key rejection, types/ranges and defaults require compiler source |
+| root | swe_baseline_agent; gemma-4-31b-it-qat-w4a16-ct; main_lora | Sample choices, not mandatory settings |
+| instruction | !include prompts/system.md | Relative include demonstrated; traversal/symlink enforcement unverified |
+| tools | Nine tools in the historical signature table; agent_tool mapping with config_path and skip_summarization: true | Tool registry and error/return schemas unavailable |
+| subagent | name, description, model, adapter, instruction, tools, generate_content_config | Analyzer includes ../prompts/analyzer.md and ../configs/sampling.yaml within sample root; ../ alone is not an escape |
+| sampling | temperature 0.2; top_p 0.95; max_output_tokens 16384; thinking_config: thinking_budget 4096, include_thoughts true | Accepted ranges/effective backend behavior unverified; notebook sets litellm.drop_params=True |
+| eval_config.yaml | evaluation: timeout_seconds 60, max_tool_calls 10, max_time_minutes 1, max_turns 50 | Sample overrides, not scorer maxima |
+| adapters | main_lora and tool_lora: rank 4, alpha 8, layer 0, q_proj/o_proj, 31B base | Dummy starter adapters, no training/quality claim; M2 excludes them |
+
+The nine names and overview signatures above remain the available argument and
+return inventory. A YAML list of names does not establish JSON schemas. Prompt
+instructions mention patch_size and files_changed after submit_patch, forbid
+editing tests and recommend targeted commands. These are starter prompt claims,
+not proof of tool enforcement. Read tools have intended inspection effects;
+edit/write mutate files; run_command may execute arbitrary effects; submit_patch
+captures a patch; get_status observes state; graph tools retrieve graph data.
+Actual error encoding, atomicity, path confinement, command policy, cancellation,
+cleanup and accounting remain UNKNOWN for each tool. No guessed safety contract
+is promoted to verified status.
+
+### Notebook execution and packaging sequence (static inspection only)
+
+Cell numbers are zero-based in the pinned notebook JSON.
+
+1. Cell 2 prepares offline wheel installation from the metric wheelhouse,
+   rewrites cu128 wheel link names, skips cutlass and invokes pip. Not executed.
+2. Cell 4 copies the official sample into /kaggle/working/sample_submission,
+   defaults MODEL_NAME to 12B, rewrites YAML models and removes dummy adapters
+   for non-31B variants; loads tasks.jsonl from the competition data root.
+3. Cell 6 demonstrates graph library functions. Their signatures are NOT the
+   agent tool signatures and do not supply the missing tool contract.
+4. Cell 8 discovers declared models, asserts exactly one model from the four
+   announced variants, configures vLLM and creates the model registry. Model
+   path is /kaggle/input/models/google/gemma-4/other/{declared_model}/2.
+   This verifies notebook allowlisting, NOT hidden scorer/package enforcement.
+   Localhost port 8000; gemma4 tool/reasoning parsers; max_model_len 32768;
+   GPU memory utilization 0.90; startup timeout 1200 seconds; tensor parallelism
+   4/2/1 from GPU count; automatic tool choice. No runtime success inferred.
+5. Cell 10 reads optional eval_config.yaml or .yml (evaluation mapping or root),
+   defaults command and verification timeout to 300 seconds, tools to 100,
+   time to 60 minutes and optional turns to max_turns/max_llm_calls. It calls
+   build_submission_limits; its actual enforced maxima are unavailable.
+   EvalConfig uses sandbox='subprocess', snapshots/results/graph/embedding/wheel
+   directories and tasks[:2]. It evaluates sequentially and displays id/prediction
+   rows, substituting NO_PATCH for empty patches. It does not write a parquet
+   submission file. These sample tasks are not a full leaderboard evaluation.
+6. Cell 12 rejects symlinks, invokes validate_directory with imported limits,
+   creates /kaggle/working/submission.zip with sample contents at archive root,
+   checks uncompressed member total against imported MAX_SUBMISSION_SIZE_BYTES
+   (message says 3 GiB) and extensions against ALLOWED_SUBMISSION_EXTENSIONS.
+   The imported definitions and final Kaggle upload/selection sequence are absent.
+
+Do not equate /kaggle working/input paths with a verified task sandbox root.
+The earlier overview's Docker description and notebook subprocess setting may
+refer to different execution contexts; isolation/scorer parity is unresolved,
+not proof either is wrong. No verified command allowlist is supplied.
+
+### Both rules captures and paper instructions
+
+The captures show competition-specific sections 1–9 and foundational sections
+1–18. Both have maximum team size five, up to two final selections, account,
+age/residence/export-control and employer-consent conditions, no private sharing
+outside teams, no hand-labeling validation/test records, rights/licensing and
+winner reproducibility obligations. Main permits one submission/day; paper five.
+Both identify Apache 2.0 winner licensing and competition/commercial data use,
+while also imposing data security restrictions. Broad external-data/model/tool
+permission is subject to accessibility, cost, rights and competition-specific
+restrictions; it does not authorize a non-Gemma submitted runtime. Foundation
+terms explicitly take precedence on conflict. Eligibility of this maintainer is
+not established by reviewing text. No entry or rules acceptance was performed.
+
+The paper requirements copy specifies unpublished original work, 3000 words,
+non-archival participation, a submitted Kaggle Writeup (saving a draft is not
+submission), optional public code/PDF and November 12, 2026 23:59 UTC. Attached
+private Kaggle resources may become public after the deadline. Do not publish
+restricted task data. Both rules captures contain generic private-leaderboard
+winner language, whereas the paper overview specifies judged research. Preserve
+this discrepancy as C2: obtain organizer clarification of controlling paper
+judging/submission terms before paper submission. No invented resolution.
+Main public/private leaderboard distinction is documented; split sizes unknown.
+
+### R1–R7 reconciled disposition
+
+| Blocker | Current status | Remaining closure evidence |
+| --- | --- | --- |
+| R1 | PARTIAL: both full rules captures inspected and hashed | C2 paper judging conflict and any current amendments; participant eligibility separately confirmed |
+| R2 | PARTIAL: notebook and complete supplied sample tree pinned | Complete HARNESS_README; actual wheels/compiler schema and package metadata |
+| R3 | PARTIAL: sample declarations corroborate nine tools | Exact schemas, serialized results/errors, effects and skill registration source |
+| R4 | PARTIAL: four variants enforced in supplied notebook | Package/scorer model allowlist, corrected wheel identities, model revision/resource parity |
+| R5 | OPEN: notebook subprocess backend observed | Sandbox roots, commands, escape controls, cancellation/cleanup, extraction and enforced budgets |
+| R6 | PARTIAL: ZIP creation and local validation call identified | Imported limits/extensions, scorer output rules, full upload/selection procedure |
+| R7 | PARTIAL: full captured rules plus requirements text | C2 judging reconciliation and exact submitted-form receipt procedure |
+
+C1 older single-variant overview versus staff announcement is corroborated in
+favor of four variants by the notebook, but package enforcement remains unknown.
+C2 is a documented conflict, not silently resolved. Missing runtime artifacts
+alone prevent M1 completion; primary decision remains additional artifacts required.
+
+### Minimal M2 specification (blocked, no implementation)
+
+Use only sample-demonstrated fields: one root name, one exact model, instruction
+include, a tools list and generate_content_config include. Candidate initial
+model is the notebook's 12B choice; this is a resource hypothesis, not admission
+or quality evidence. No adapter, agent_tool, subagent, skill or custom graph code.
+Initial tool list: read_file, edit_file, write_file, run_command, get_status,
+submit_patch. Keep sampling field names from the sample; finalize values only
+after enforced limits are available. Optional evaluation mapping uses the four
+sample keys, with proposed values 60/10/1/50 subject to official validation.
+Do not ship executable YAML in this slice or assume omission of sample adapters
+is compiler-valid solely from this specification.
+
+After M1 closure and separate authorization: create root agent.yaml and prompt/
+sampling files; validate with the pinned official validate_directory API; package
+using the inspected archive sequence; obtain one authorized public/synthetic
+patch receipt before optimizing. Negative controls must reject wrong/mixed model,
+unknown tool, path escape, invalid bounds and unsafe members. Test actual timeout,
+patch handoff and budget behavior. Maintainer runs all checks. No private LegoAI
+imports, ForgeAI production changes, KiSSKI evaluator changes or admissions.
+
+Next acquisition: complete HARNESS_README, versioned wheelhouse manifest and
+actual adk_submission/adk_eval_core/swegemma-containing packages (or complete
+extracted source plus METADATA/RECORD), scorer configuration and final submission
+instructions. Obtain paper conflict clarification. No model weights required.
+
+Manual documentary gate: validate_forgeai_gemma4_official_artifact_reconciliation_1.py.
+It verifies local byte pins and documentary invariants, not official authenticity,
+legal eligibility or runtime compatibility. The older validator is historical and
+expects an empty artifact register; do not use it for this new slice.
