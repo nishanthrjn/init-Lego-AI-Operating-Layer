@@ -102,3 +102,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 competition planning validation failed
 It checks only scope, required documentary controls and whitespace; it
 does not validate Kaggle rules or execute any harness/model. The pre-existing
 GLM validator working edit is pinned and preserved separately from this slice.
+
+## Official-contract follow-up
+
+Maintainer supplied LOCAL DOCUMENT CHECKS PASSED for the readiness slice above.
+Its earlier verification line describes the implementation handoff, not current
+evidence. [Official contract review](../experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md)
+confirms the newer four-variant staff announcement, but M1 remains PARTIAL and
+M2 blocked on package/schema/rules evidence. Current follow-up validation is
+pending; do not use the earlier validator as proof of harness compliance.

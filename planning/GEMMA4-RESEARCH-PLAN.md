@@ -98,3 +98,25 @@ Use the verified Paper Track requirements in the requirements register. Target a
 honest resource/method analysis, including negative results, rather than claiming
 state of the art from a few tasks. Public assets require license/privacy review;
 no raw credentials, hidden competition artifacts or restricted records published.
+
+## Controlled model-variant experiment (after M1 and working harness)
+
+The no-substitution requirement above applies within each retrieval ablation.
+A separate paired experiment compares 31B with 12B; E4B/E2B are optional later
+arms. Each submission uses one staff-announced variant only. No mixed-model
+agent tree. Package compatibility is a prerequisite, not an assumed success.
+
+Hold task split, tools, prompt, sampling policy, per-task wall-time ceiling,
+repair ceiling and scoring constant. Use the same hardware where available;
+report any unavoidable difference as a confound. Record issues resolved/all
+attempted, patch applicability, total wall time including loading/setup, inference
+time if observable, token counts or NOT_OBSERVABLE, tool calls, scope violations,
+model/protocol failures and actual effective limits. Randomize arm order and use
+paired tasks/seeds; include cold-load and warm results separately. Never silently
+retune prompts per variant. A second, separately labeled throughput experiment may
+allocate more turns to smaller models within the same wall-time ceiling.
+
+Hypothesis: lower loading/memory/inference costs may enable more useful work per
+budget. No quality, speed or memory advantage has been measured here. Choose the
+variant on development evidence and freeze before held-out evaluation; report
+paired uncertainty and failures rather than reputational model rankings.

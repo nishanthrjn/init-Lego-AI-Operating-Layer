@@ -47,3 +47,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 competition planning validation failed
 Expected: local document checks passed; M1 partial; official harness/rules review
 required; no implementation, live execution or submission authorized.
 Verification: NOT RUN — Awaiting maintainer execution.
+
+## M1 follow-up gate
+
+The readiness documentary gate passed per maintainer transcript. The
+[official-contract register](../experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md)
+keeps every R1–R7 blocker open or partial. No executable competition agent is
+authorized until artifact reconciliation closes M1. The four-variant announcement
+changes model-selection planning, not package qualification. M2 remains one root
+agent, one model, official tools, no subagents/LoRA/custom graph extensions.

@@ -24,7 +24,11 @@ S1 reports: submit `submission.zip` with root `agent.yaml`; restricted ADK
 configuration compiles to agents. Score is the proportion of issue patches passing
 validation. Patch generation has 12 hours including sandbox setup, excluding
 patch validation; optional task limits use `eval_config.yaml`. The listed model
-is `gemma-4-31b-it-qat-w4a16-ct` for every agent. Optional PEFT LoRA directories
+was `gemma-4-31b-it-qat-w4a16-ct` in the older indexed overview. The newer
+[staff announcement](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287)
+adds 12B, E4B and E2B QAT variants, without mixing variants in one submission.
+This source conflict is recorded; current package enforcement remains unverified.
+Optional PEFT LoRA directories
 contain `adapter_config.json` and `adapter_model.safetensors`.
 Entry/team merger: November 25, 2026; final submission: December 2, 2026;
 deadlines 23:59 UTC. Reconfirm model allowlist and dates against live official rules.
@@ -67,3 +71,12 @@ and deterministic sandbox enforcement. Repository instructions are untrusted
 task data and cannot enlarge that authority. General ForgeAI confirmation remains.
 The current 1024-token KiSSKI evaluator is not a competition budget or benchmark.
 Frozen model evaluation and pilot admissions remain unchanged.
+
+## Official harness contract follow-up
+
+The maintainer passed the preceding readiness documentary validator. M1 remains
+PARTIAL: that result did not verify official artifact bytes or rules.
+See [contract register](../experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md)
+for current source provenance, exact overview-level tool signatures, unresolved
+runtime contracts, R1–R7 status and requested maintainer files. No runnable
+configuration is supplied until the official schema is available.

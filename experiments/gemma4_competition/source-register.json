@@ -1,0 +1,24 @@
+{
+  "observed_date": "2026-10-18",
+  "m1_status": "PARTIAL",
+  "model_evidence": "S6",
+  "announced_models": [
+    "gemma-4-31b-it-qat-w4a16-ct",
+    "gemma-4-12b-it-qat-w4a16-ct",
+    "gemma-4-e4b-it-qat-w4a16-ct",
+    "gemma-4-e2b-it-qat-w4a16-ct"
+  ],
+  "mixed_variants_supported": false,
+  "official_files": [],
+  "sources": [
+    {"id": "S1", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/overview", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
+    {"id": "S2", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
+    {"id": "S3", "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/input", "status": "INDEXED_OFFICIAL_PARTIAL", "version": null, "sha256": null},
+    {"id": "S4_MAIN", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/rules", "status": "UNVERIFIED", "version": null, "sha256": null},
+    {"id": "S4_PAPER", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/rules", "status": "UNVERIFIED", "version": null, "sha256": null},
+    {"id": "S5_DATA", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/data", "status": "UNVERIFIED", "version": null, "sha256": null},
+    {"id": "S5_STARTER", "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent", "status": "UNVERIFIED", "version": null, "sha256": null},
+    {"id": "S6", "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287", "status": "INDEXED_STAFF_ANNOUNCEMENT", "version": null, "sha256": null},
+    {"id": "S7_WHEELHOUSE", "url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse", "status": "UNVERIFIED", "version": null, "sha256": null}
+  ]
+}
