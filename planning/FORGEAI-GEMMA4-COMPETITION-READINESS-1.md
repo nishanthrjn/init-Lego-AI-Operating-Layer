@@ -111,3 +111,32 @@ evidence. [Official contract review](../experiments/gemma4_competition/OFFICIAL-
 confirms the newer four-variant staff announcement, but M1 remains PARTIAL and
 M2 blocked on package/schema/rules evidence. Current follow-up validation is
 pending; do not use the earlier validator as proof of harness compliance.
+
+## Official artifact reconciliation — 2026-10-18
+
+Current decision: M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; M2 BLOCKED.
+The [official contract register](../experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md)
+contains the authoritative reconciliation and conditional minimal M2 specification.
+The source register pins all 23 supplied files by raw SHA256 and byte size.
+Earlier statements that no local artifacts/rules were inspected describe the
+previous review, not the current evidence. Both complete rules captures, notebook
+source and sample configuration have now been inspected without execution.
+HARNESS_README, package/compiler/tool source and scorer limits remain unavailable.
+Notebook model allowlisting is not package enforcement. R1–R7 remain open/partial;
+paper generic leaderboard terms versus judged-Writeup requirements require
+clarification. M1 is not complete; no dependent M2 implementation is authorized.
+The single-root, no-LoRA baseline remains the smallest proposed implementation.
+Graph library demonstrations do not prove graph-tool contract or measured benefit;
+research comparisons remain matched-budget, independent and unexecuted.
+
+The previous official-harness documentary validation passed per maintainer output.
+New reconciliation verification: NOT RUN — Awaiting maintainer execution.
+Run from repository root, existing locked environment, no new environment variables:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_official_artifact_reconciliation_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 official artifact reconciliation failed' }
+```
+
+Expected: local document checks passed; M1 partial; M2 blocked.
+NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
