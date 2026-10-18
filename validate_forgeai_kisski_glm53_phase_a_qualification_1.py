@@ -7,12 +7,14 @@ from scripts.kisski_coding_eval.frozen import verify
 from validate_forgeai_kisski_coding_model_evaluation_1 import git
 
 ROOT = Path(__file__).resolve().parent
-BASELINE = "12de226b1549eedd8f983dd7b96345344b942aea"
+BASELINE = "3c7273692bd44ccdf0e25beec4abdc80066ba1b5"
 MANIFEST = "3cd0e5a14f6ff9d2beba5cb1af9bcc6ac214637a7b3858ad3282bd0e51691ef6"
 SELF = "validate_forgeai_kisski_glm53_phase_a_qualification_1.py"
 DOCUMENT = "planning/FORGEAI-KISSKI-GLM53-PHASE-A-QUALIFICATION-1.md"
 REQUIRED = (
-    "Status: MAINTAINER VALIDATION PENDING; PRIOR GLM PROTOCOL FAILURES RECORDED.",
+    "Status: KEEP_GLM53_NOT_ADMITTED; LENGTH DISPOSITION VALIDATION PENDING.",
+    "Decision: KEEP_GLM53_NOT_ADMITTED.",
+    "Next action: STOP; NO LIVE CALL OR AUTOMATIC PHASE A REPEAT.",
     "Model: `glm-5.3-flash`.",
     "Tasks: `bug`, `refactor`, `api`, `diagnosis`.",
     "Bounds: one discovery; four chats; 1024 output tokens; 60 seconds per chat.",
@@ -67,8 +69,8 @@ def main() -> int:
             except ValueError:
                 continue
             raise ValueError("negative documentary control accepted")
-        indexed = git("ls-files", "--", DOCUMENT).splitlines()
-        if indexed:
+        staged = git("diff", "--cached", "--name-only", BASELINE).splitlines()
+        if DOCUMENT in staged:
             document(git("show", ":" + DOCUMENT))
         phase = "working and staged whitespace"
         print("\n[PHASE] " + phase, flush=True)
@@ -78,8 +80,8 @@ def main() -> int:
         print(f"FAIL: {phase}: {error}; later phases NOT RUN")
         return 1
     print(
-        "FORGEAI-KISSKI-GLM53-PHASE-A-QUALIFICATION-1 LOCAL DOCUMENT CHECKS PASSED; "
-        "FROZEN INTEGRITY VERIFIED; PRIOR GLM PROTOCOL FAILURES PRESERVED; "
+        "FORGEAI-KISSKI-GLM53-LENGTH-DISPOSITION-1 LOCAL DOCUMENT CHECKS PASSED; "
+        "KEEP_GLM53_NOT_ADMITTED; "
         "NO MODEL QUALITY QUALIFIED; NO LIVE EXECUTION AUTHORIZED"
     )
     return 0
