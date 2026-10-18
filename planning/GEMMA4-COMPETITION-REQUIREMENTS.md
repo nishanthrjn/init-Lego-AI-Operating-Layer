@@ -150,3 +150,28 @@ M2 BLOCKED. Supply matching package source/version evidence and resolution of
 those discrepancies; do not reacquire the README. The same manual command above
 now covers the README pin and updated documentary controls. NOT RUN — Awaiting
 maintainer execution. No implementation, live execution or submission authorized.
+
+## Versioned implementation inspection — 2026-10-18
+
+FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1:
+M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; main M2 BLOCKED.
+Prior acquisition documentary gate passed per maintainer transcript. Supplied
+41 wheels bring inventory to 65 artifacts. Compiler 0.2.13, core 0.1.0 and
+swegemma 0.2.11 source were statically inspected; originals preserved. C3–C5 are
+resolved for those bytes in the official register, with release parity still
+unconfirmed. Main blocking evidence is now scripts/inference.py, scripts/metric.py,
+referenced scorer/bootstrap configuration and release/environment provenance.
+Paper discrepancy is separate, not a main-track block. No new agent or runtime
+qualification is claimed; existing isolated minimal M2 spec remains conditional.
+
+Run from repository root in the existing locked environment (Git required;
+no new environment variables, credentials, installs or network):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_official_artifact_reconciliation_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 versioned harness evidence validation failed' }
+```
+
+Expected: FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1 LOCAL DOCUMENT CHECKS PASSED;
+M1 PARTIAL; M2 BLOCKED. Verification: NOT RUN — Awaiting maintainer execution.
+NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.

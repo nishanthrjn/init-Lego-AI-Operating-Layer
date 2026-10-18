@@ -559,3 +559,108 @@ package sources with METADATA/RECORD and wheelhouse listing; README download URL
 and release identity; authoritative resolution of C3–C5 and final submission/
 total-runtime instructions if not included in that release. No need to supply
 README, notebook or sample again. No model weights required.
+
+## FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1
+
+Decision: M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; main M2 BLOCKED.
+Baseline: f14b68aad16329c8b4f4f83e0a03f2e22e1944cb.
+Prior acquisition gate: MAINTAINER_REPORTED_PASS. Current gate: NOT RUN — Awaiting
+maintainer execution. NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+### Package identity and evidence level
+
+The maintainer supplied docs/archive with 41 wheels, bringing the inventory to
+65 artifacts. Every raw wheel is size/SHA256 pinned. METADATA, RECORD and WHEEL
+members are separately pinned inside the unchanged archives; all Python members
+of the three harness wheels are also pinned for reproducible source references.
+No wheel installed/imported; no official code, model, validator or test executed.
+Temporary text copies served only static reading; original bytes remain authority.
+
+Core versions from METADATA: adk-submission 0.2.13 (Python >=3.11), adk-eval-core
+0.1.0, swegemma 0.2.11 (Python >=3.12). The inventory also includes google-adk
+1.36.1, google-genai 2.11.0, vllm 0.19.1 and transformers 5.13.1. All 41 metadata
+records and declared dependencies are recorded, not resolved/installed. Several
+required packages (including pydantic, PyYAML, LiteLLM and Docker SDK) are not
+supplied as wheels here; the official base-image environment may provide them.
+No claim of a complete environment lock or wheel-to-scorer release match is made.
+The wheelhouse URL is maintainer acquisition attribution, not proof of exact
+release version/date. Existing Version 31 screenshot does not authenticate every
+wheel. Full RECORD integrity checks are authored for maintainer execution only.
+
+### Implementation trace (paths are members of the named pinned wheels)
+
+Each observation below is static source evidence, not an executed behavior test.
+
+| Required trace | Exact source path / function | Observed implementation and limitation |
+| --- | --- | --- |
+| 1 YAML schema/compiler | adk_submission/compiler.py compile_submission, _compile_agent; schema.py SandboxedLlmAgentConfig | Directory validation, load_yaml, Pydantic model_validate, registry/builders. extra=forbid; name and instruction required, model optional at schema then registry resolution. tools accepts str or AgentToolEntry, NOT arbitrary inline agent dictionaries claimed by guide. Generation uses typed GenerateContentConfig and compiler constraints. |
+| 2 Root/include | adk_submission/discovery.py find_root_config; yaml_loader.py _resolve_include_path; paths.py validate_sandboxed_path | Conventional root-name priority then sole-root-YAML fallback; not blanket rejection of multiple conventional roots as guide claims. Include containment resolves path within root and rejects symlinks; C3 below. |
+| 3 Model admission | adk_submission/discovery.py discover_declared_models; resolvers/models.py resolve_model | Discovers model strings and resolves aliases through host ModelRegistry. Competition ALLOWED_MODEL_NAMES and validate_single_declared_model enforcement belong to absent scripts/inference.py. Notebook assertion is verified, scorer assertion only documented. |
+| 4 Tools/envelopes | swegemma/tools/__init__.py create_tools; tools/base.py parse_tool_response, budget_gated; tools/execution.py, workspace.py, graph.py make_* wrappers | Exactly nine bound names. Internal helpers return JSON strings; registered wrappers return dict[str,Any], correcting guide's universal string claim. Success status=ok; helper errors error_type/error_message, optional details. Plugin error envelope remains distinct. |
+| 5 File boundaries | swegemma/tools/workspace.py _resolve_workspace_path, read_file, edit_file, write_file | Accept /workspace prefix, reject other absolute paths, resolve relative paths and check containment; does NOT lexically reject every .. segment. Host-side resolve alone cannot prove container-side symlink confinement. Backend copy functions add their own checks. File read/edit/write exceptions become FileReadError/FileEditError/FileWriteError. |
+| 6 Shell/timeout | swegemma/tools/execution.py run_command; sandbox/docker.py ContainerManager.exec; sandbox/subprocess.py SubprocessManager.exec; adk_eval_core/sandbox/subprocess_sandbox.py execute_subprocess_command | No command allowlist. Docker bash uses timeout -k 5s; subprocess starts process group and SIGKILL on timeout. Command timeout min(configured,max(5,int(remaining))); may exceed remaining session time floor. Command timeout does not imply unchanged files. |
+| 7 Workspace/persistence | swegemma/harness/container_setup.py setup_container_workspace, setup_baseline_commit; harness/agent_runner.py run_agent_sandbox | Setup, editable install and baseline/tag before agent; one sandbox/context across calls retains edits. Baseline creates _swegemma_baseline tag. Finally sandbox_stop. Separate verification workspace. No production ForgeAI authorization inferred. |
+| 8 Protected paths | swegemma/harness/verification.py _is_protected_test_or_config_path, strip_protected_files_from_patch | Test naming/directories and runner config paths stripped, plus task test_files. Verification resets protected paths before test patch. C4 below; source filtering is not a global security qualification. |
+| 9 Explicit submission | swegemma/tools/execution.py submit_patch; harness/agent_runner.py run_agent_sandbox | git add -N, binary diff against tag or HEAD, filter, submitted_patch/patch_submitted assignment. Tool returns size/count; loop exits on completion text/turn with submission flag. Not necessarily immediate mid-turn. |
+| 10 Fallback | swegemma/harness/agent_runner.py lines 1048–1120 | When flag absent, captures working diff after stopping/timeout, filters and preserves nonempty patch; fallback errors logged, finally stops sandbox. Explicit empty submission does not trigger fallback. |
+| 11 Sandbox selection | swegemma/evaluate.py Evaluator.__init__; sandbox/docker.py ContainerConfig; sandbox/subprocess.py SubprocessManager | Docker branch vs subprocess branch. Docker defaults network none, 4g, 2 CPUs. Subprocess uses temp workspace/venv, path rewriting and process cleanup; not OS filesystem/network confinement. Scorer backend selection absent. |
+| 12 Budgets | swegemma/context.py check_budget, record_llm_call; config.py EvalConfig/build_submission_limits; harness/agent_runner.py loop | Checks count/turn/cost/token/time and increments charged tool count before action. Free submit/status bypass count/turn/cost/token checks but not time. Context limit 32768 is per-generation constraint, not total task tokens. Loop timeout and retry behavior must not be confused with the frozen KiSSKI policy. Scorer env overrides/total cap unverified. |
+| 13 Size/ZIP | adk_submission/discovery.py validate_directory; swegemma/config.py build_submission_limits; notebook cell 12 | Inclusive 3 GiB directory cap, extension/member counts and symlink checks. Notebook checks ZIP member sizes/extensions after packaging. Final platform ZIP extraction/path validation code is not supplied. |
+| 14 Predictions | swegemma/submission.py generate_standard_submission; evaluate.py evaluate_task; notebook cells 10/12 | Helper writes prediction=agent_dir to submission.parquet, NOT task patches; evaluator returns agent_patch; notebook displays patches then writes ZIP. Missing scripts/inference.py and scripts/metric.py prevent tracing the stage transform and final scoring entry point. |
+
+Tool argument signatures remain the nine rows already documented. The make_*
+wrappers retain those visible arguments, removing internal ctx, and convert
+responses to dictionaries. read_file uses optional start/end ints; edit_file uses
+allow_multiple=False; graph neighbors optional edge_type/max_neighbors=50;
+search k=10; subgraph nodes:list[str]. All other required string arguments and
+no-argument status/submit are unchanged. Do not substitute raw JSON-string
+parsing at the ADK-facing boundary. Generic ADK is not implementation authority.
+
+### C3–C5 resolutions for these exact package bytes
+
+| Conflict | README | Starter | Exact implementation / enforced comparison | Remaining uncertainty and safe M2 decision |
+| --- | --- | --- | --- | --- |
+| C3 includes | Bans all .. components | Analyzer includes ../prompts and ../configs | adk_submission/yaml_loader.py _resolve_include_path joins current_dir and delegates resolved containment to paths.py validate_sandboxed_path; it does NOT call ensure_no_traversal_components. Within-root parent-relative includes allowed. Sub-agent config_path schema separately bans .. lexically. | Resolved for supplied compiler; scorer release match unconfirmed. Root-only includes in M2 avoid unnecessary variation. |
+| C4 protection | Section 8 strips; later text says configs appear in agent_patch | Prompt prohibits test edits | swegemma/tools/execution.py submit_patch filters except test/mock_repo prefix; agent_runner.py filters final/fallback except synthetic mock with base_commit 123456; verification.py implements stripping and verification reset. Tagged baseline generated by setup_baseline_commit. | Resolved for ordinary tasks in supplied wheel. Raw diff may contain configs before filtering; this is not the returned ordinary patch. Avoid protected edits; do not treat mock exceptions as production semantics. |
+| C5 size | Prose <3 GiB | Notebook <= constant | adk_submission/discovery.py validate_directory rejects total_size > limits.max_total_size_bytes; swegemma/config.py sets 3221225472. Equality accepted by these checks. | Resolved for directory/notebook; platform ZIP ingress absent. Keep M2 tiny, comfortably below bound. |
+
+Additional differences must not be hidden: conventional root-name priority versus
+guide's multiple-root error claim; required instruction field and no inline
+agent-dict tool union; filesystem path normalization versus lexical .. ban;
+ADK-facing dict versus helper JSON strings. The guide is not byte-for-byte
+version-matched implementation documentation simply because package names agree.
+No official files have been corrected or altered.
+
+### R1–R7 and the smallest remaining acquisition
+
+R1 main rules unchanged; R2 PARTIAL with compiler/source now inspected but release
+binding missing; R3 source-observed nine tools, host plugin/dependency parity still
+partial; R4 PARTIAL because competition allowlist/scorer setup script absent;
+R5 source-observed backends/lifecycle, actual scorer isolation/setup still partial;
+R6 PARTIAL because ingress, stage transform and final metric scripts absent;
+R7 remains separate paper issue and is NOT the reason main M2 is blocked.
+
+Supply only the official release-matched scripts/inference.py and scripts/metric.py
+and their referenced bootstrap/scorer configuration (including sandbox/setup.py
+if required), plus release/version provenance and the official base-environment
+pin manifest for dependencies not in this archive. Include the final platform
+submission/total-runtime instructions if not in that bundle. No need to resend
+these 41 wheels, README or sample. Do not supply hidden tests/solutions, credentials
+or model weights. Inspection of evaluator code did not access any secret bundle.
+
+### Minimal M2 decision
+
+Retain the existing four-file root-only spec and exact sample-derived values:
+agent.yaml, prompts/system.md, configs/sampling.yaml, optional eval_config.yaml.
+Use one 12B exact model string and six workspace/status/submit tools, no adapters,
+subagents, skills, graph additions or callbacks. Source now supports omitted
+adapters and required instruction; use exactly one conventional root deliberately.
+No implementation before the absent main stage contracts are reconciled and
+maintainer gate passes. Keep tiny archive, explicit final submit after verification,
+protected-file refusal and partial-effect reporting. No changes to ForgeAI,
+LegoAI APIs, confirmation, KiSSKI custody/evaluators or empty pilot admissions.
+
+The extended offline documentary validator checks all 65 raw file pins and the
+three core wheels' recorded members/RECORD integrity without importing package
+code. It is not a runtime test or certification of official provenance. Maintainer
+must run it; this source review ran no tests or validators.

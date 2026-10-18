@@ -154,6 +154,457 @@
       "capture_date_from_filename": null
     },
     {
+      "path": "docs/archive/adk_eval_core-0.1.0-py3-none-any.whl",
+      "size_bytes": 90060,
+      "sha256": "e614e1b2fe8d886a634871e4c57f9887e1cc66e8c27300f8503a43c6e3ca82f3",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/adk_submission-0.2.13-py3-none-any.whl",
+      "size_bytes": 66528,
+      "sha256": "f156f0bd84580ccb9334726d114d7a5481f16d3a6e2887cc4d276ced0ef8d99d",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/anthropic-1.4.0-py3-none-any.whl",
+      "size_bytes": 1300390,
+      "sha256": "590e85bff75b713a123b03f586d68f02266b5fdc49f70dd75f721ced93a4716c",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/apache_tvm_ffi-0.1.13.post3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "size_bytes": 2955490,
+      "sha256": "edaca70656f87831c3b4989169b1d85fe563ccd6d2e2cadc1f4f5880e1295f7a",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/astor-0.8.1-py2.py3-none-any.whl",
+      "size_bytes": 27488,
+      "sha256": "070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/bitsandbytes-0.46.1-py3-none-manylinux_2_24_x86_64.whl",
+      "size_bytes": 72865511,
+      "sha256": "b0ee4a204fb926d4eae02bc2f5468ae3c11c011cfa849a4c771d4c6b201f57ae",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/cbor2-6.1.4-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "size_bytes": 461193,
+      "sha256": "310f3dfb296ba48fe9b63c5cf26e691e3548a1eae6901d2f0c18e941d151f220",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/compressed_tensors-0.15.0.1-py3-none-any.whl",
+      "size_bytes": 194260,
+      "sha256": "e1b1f322e82e475715e242bad46925a304ea8e5c98b5055a15b8eb22fb6bfea9",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/depyf-0.20.0-py3-none-any.whl",
+      "size_bytes": 39381,
+      "sha256": "d31effad4261cebecb58955d832e448ace88f432328f95f82fd99c30fd9308d4",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/diskcache-5.6.3-py3-none-any.whl",
+      "size_bytes": 45550,
+      "sha256": "5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/flashinfer_cubin-0.6.6-py3-none-any.whl",
+      "size_bytes": 267661457,
+      "sha256": "36508dfc792eb5ecfb15d2c140a7702812e1fa1ab0fb03929b2ed55e3e8191f3",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/flashinfer_python-0.6.6-py3-none-any.whl",
+      "size_bytes": 7817047,
+      "sha256": "078f158636969eec1a0d3dea19c3ca90b426b66df89bbf7b7b8276ce2ec08148",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/gguf-0.19.0-py3-none-any.whl",
+      "size_bytes": 118475,
+      "sha256": "70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/google_adk-1.36.1-py3-none-any.whl",
+      "size_bytes": 2877731,
+      "sha256": "1a2f6868c509e3151fb0de3575a7d18b45c338be86f420924dad74e7193631a0",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/google_genai-2.11.0-py3-none-any.whl",
+      "size_bytes": 984162,
+      "sha256": "5bc8186100e1d34d691fbe0cba392b7e04e98d286ca952323a6672d054accf95",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/ijson-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "size_bytes": 149848,
+      "sha256": "e4fcebfe1685bb7ba06a8255a5d428ea6b4b895d7acf979cb637d8bbc9db2f47",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/interegular-0.3.3-py37-none-any.whl",
+      "size_bytes": 23635,
+      "sha256": "b0c07007d48c89d6d19f7204972d369b2a77222722e126b6aa63aa721dc3b19c",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/llguidance-1.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 3033133,
+      "sha256": "bc17e9dd602c3879bf91664a64bf72f54c74dbfbeb24ccfab6a5fe435b12f7aa",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/lm_format_enforcer-0.11.3-py3-none-any.whl",
+      "size_bytes": 45418,
+      "sha256": "cf586350875def1ae7a8fba84fcbbfc8371424b6c9d05c1fcba70aa233fbf06f",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/loguru-0.7.3-py3-none-any.whl",
+      "size_bytes": 61595,
+      "sha256": "31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/mistral_common-1.11.7-py3-none-any.whl",
+      "size_bytes": 6553583,
+      "sha256": "a9511b88eacacbe7dacddd9d3498c1739f56847b7fdddbd5a22e7844fd9def95",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/model_hosting_container_standards-0.1.16-py3-none-any.whl",
+      "size_bytes": 125666,
+      "sha256": "47f4f65713120bc3a69feb022981a38db9e557aedf88dbd72077f20588caa12b",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "size_bytes": 225025,
+      "sha256": "21995e74b5c598c2e004110ad66ec7f1b8c20bf2bcf3b2de8fd9a3094422d3ff",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/nvidia_cudnn_frontend-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "size_bytes": 2159245,
+      "sha256": "6c023539ca6de99234cf5102c3ec0d6af817f5396fc93028a22ba5b834a35b8a",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/openai_harmony-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 2953260,
+      "sha256": "c007d277218a50db8839e599ed78e0fffe5130f614c3f6d93ae257f282071a29",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/opentelemetry_exporter_otlp-1.44.0-py3-none-any.whl",
+      "size_bytes": 6727,
+      "sha256": "4a498fa8d8fd8be9e8e2d175fe5524a3fe581ccffadd8509db86526a5fb97051",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl",
+      "size_bytes": 11250,
+      "sha256": "25aeb22bd261543b4898a73824026d96770e5351209c7d07a0b1314762b1f6e4",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/outlines_core-0.2.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 2287677,
+      "sha256": "86df9740368866295077346440d911df4972da2b3f1f54b8125e6f329e8a8891",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/partial_json_parser-0.2.1.1.post7-py3-none-any.whl",
+      "size_bytes": 10877,
+      "sha256": "145119e5eabcf80cbb13844a6b50a85c68bf99d376f8ed771e2a3c3b03e653ae",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl",
+      "size_bytes": 19649,
+      "sha256": "b9f40b2cff3f7891ca0610b3ae4fc6ec723fd326b04bb659819aaeb821a0fc7d",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/pybase64-1.5.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl",
+      "size_bytes": 94681,
+      "sha256": "1a2b9cf39b4d30f600df8c56cccbc03adfc6e1ae8c04cd6b181105a432d4a515",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/pycountry-26.2.16-py3-none-any.whl",
+      "size_bytes": 8044600,
+      "sha256": "115c4baf7cceaa30f59a4694d79483c9167dbce7a9de4d3d571c5f3ea77c305a",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/pydantic_extra_types-2.11.2-py3-none-any.whl",
+      "size_bytes": 82851,
+      "sha256": "683b8943252543e49760f89733b1519bc62f31d1a287ebbdc5a7b7959fb4acfd",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/quack_kernels-0.6.4-py3-none-any.whl",
+      "size_bytes": 728458,
+      "sha256": "e77c5d1f1299b0b38487fe8737df6c6975daa16bca7f7eb883bd1a74d09e7e78",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 506502,
+      "sha256": "f216afd4ba743e744c86cbd08e7185efa8749e4c905f14e4e977d65576466cb0",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+      "size_bytes": 32932,
+      "sha256": "2906b6c7959cdb75f46159bf0acd8cc9906cf1361c9e1ded0d065fe8f9039629",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/swegemma-0.2.11-py3-none-any.whl",
+      "size_bytes": 119670,
+      "sha256": "9ad876581f3acde8ec3c369858f0834e2b9f41a3cffce3ca42f09cb090aea9d3",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "size_bytes": 3274982,
+      "sha256": "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/transformers-5.13.1-py3-none-any.whl",
+      "size_bytes": 11503977,
+      "sha256": "53f0ea8aa397e29244c2377ba981bcaf0c87adcf44fbdd447ef6306522afcacd",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/vllm-0.19.1-cp38-abi3-manylinux_2_31_x86_64.whl",
+      "size_bytes": 433132704,
+      "sha256": "73c69bafca24fbdad44690c44d6c6446514351e6f3cc9a6057cba05e66051310",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/archive/xgrammar-0.2.5.post1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "size_bytes": 48149933,
+      "sha256": "8df76e57eabf0576023826bd179dd2dddb56c1663dab74fd64086452487b795b",
+      "kind": "maintainer_supplied_wheel",
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
       "path": "docs/getting-started-gemma-4-developer-agent.ipynb",
       "size_bytes": 82092,
       "sha256": "abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f",
@@ -344,9 +795,9 @@
   "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
   "provenance_policy": "Maintainer-supplied official copies; hashes identify local bytes, not independent authentication. Retrieval date unknown unless explicitly evidenced; capture filenames indicate 2026-10-18. No wheels installed or notebook cells executed.",
   "missing_artifacts": [
-    "Versioned packages containing compiler/tool/sandbox/scorer implementations and METADATA/RECORD, or complete extracted source",
-    "README exact source URL/release and resolution of include, patch-protection and size-boundary discrepancies",
-    "Final platform submission instructions and total runtime policy if absent from package documentation"
+    "version-matched scripts/inference.py and scripts/metric.py plus their runtime/bootstrap configuration",
+    "release provenance binding these wheels and README to current official scorer; omitted dependency pins from the official environment manifest",
+    "final submission handoff and total runtime policy not established by supplied package helpers"
   ],
   "acquisition_review": {
     "task": "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1",
@@ -484,6 +935,2292 @@
         "size_bytes": 361,
         "sha256": "7a764798e36cc68aa38900256245e4aed969b5439b992c7da4105b6ebcb7e62b"
       }
+    ]
+  },
+  "implementation_review": {
+    "task": "FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1",
+    "baseline": "f14b68aad16329c8b4f4f83e0a03f2e22e1944cb",
+    "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
+    "prior_acquisition_validation": "MAINTAINER_REPORTED_PASS",
+    "packages": [
+      {
+        "path": "docs/archive/adk_eval_core-0.1.0-py3-none-any.whl",
+        "name": "adk-eval-core",
+        "version": "0.1.0",
+        "requires_python": ">=3.11",
+        "requires_dist": [
+          "pydantic~=2.0",
+          "google-adk>=1.34.0",
+          "docker>=7.0.0",
+          "pyyaml>=6.0",
+          "rich>=13.0",
+          "numpy>=2.0.0",
+          "scikit-learn>=1.3.0; extra == \"scoring\"",
+          "pytest>=9.0.0; extra == \"dev\"",
+          "pytest-asyncio>=0.23.0; extra == \"dev\"",
+          "pytest-cov>=7.0.0; extra == \"dev\"",
+          "ruff>=0.15.0; extra == \"dev\""
+        ],
+        "members": [
+          {
+            "path": "adk_eval_core-0.1.0.dist-info/METADATA",
+            "size_bytes": 2044,
+            "sha256": "740cfce11e88d34fc8d8e42bf8efa69994c37d411744e79a71ecb5ab50bf1819"
+          },
+          {
+            "path": "adk_eval_core-0.1.0.dist-info/RECORD",
+            "size_bytes": 4602,
+            "sha256": "a413498ea646b111ec70a1222d7342c610d7595ca5b6244e2040ea32ffe6a1a7"
+          },
+          {
+            "path": "adk_eval_core-0.1.0.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "61532836a2b3111b7ec23519c09df7c41180c27165fb872a6d8913b566b88ad1"
+          },
+          {
+            "path": "adk_eval_core/__init__.py",
+            "size_bytes": 4122,
+            "sha256": "528e02f35eaef6fa733acc0a026c80cc191d28d4a4192a740f9b7bc8a88c9211"
+          },
+          {
+            "path": "adk_eval_core/errors.py",
+            "size_bytes": 5691,
+            "sha256": "2a8d545695a89c0abbc8984d771df6ae31155998b8e20cb91da02d0a5b900373"
+          },
+          {
+            "path": "adk_eval_core/budget/__init__.py",
+            "size_bytes": 254,
+            "sha256": "4a709384174fb5be5aa22c9a1385ba830d82bf03fab1798280b350311e75588e"
+          },
+          {
+            "path": "adk_eval_core/budget/budget.py",
+            "size_bytes": 15780,
+            "sha256": "16de25ae326f0f8440772672a4bf7198a4ebb5586c7c3f2b31048ca896f04ab6"
+          },
+          {
+            "path": "adk_eval_core/editing/__init__.py",
+            "size_bytes": 266,
+            "sha256": "6e4f2c12837a366147d582b9ccfc4f6c3fd0d117e311767e292abe8b84642397"
+          },
+          {
+            "path": "adk_eval_core/editing/edit.py",
+            "size_bytes": 14676,
+            "sha256": "a78a761d5078df92606c63b3adb61991a2878bcbb80204875d241175cb532a6f"
+          },
+          {
+            "path": "adk_eval_core/models/__init__.py",
+            "size_bytes": 246,
+            "sha256": "1a9e1673840b8be5bcbf93767a1d130c007abf350cfc2c263e389135bba223af"
+          },
+          {
+            "path": "adk_eval_core/models/base.py",
+            "size_bytes": 9724,
+            "sha256": "bdedef267b1022ffac970c7bc18c2d0a53753ce1f120a3c355b91c9b7b666a0d"
+          },
+          {
+            "path": "adk_eval_core/plugins/__init__.py",
+            "size_bytes": 227,
+            "sha256": "dd53fad958a5719da6d6ab6869f59daa7c70060a257dedc77551873557b829f9"
+          },
+          {
+            "path": "adk_eval_core/plugins/display_plugin.py",
+            "size_bytes": 5648,
+            "sha256": "7250793fa30985086c193fc55d5b81f4c4d115b44ad764e546a8cc1b0ac20d69"
+          },
+          {
+            "path": "adk_eval_core/plugins/retry_plugin.py",
+            "size_bytes": 7084,
+            "sha256": "ba61cf201167aaf970c3131a4f24b464515509f3cacd5358de99c5ec0fb07af0"
+          },
+          {
+            "path": "adk_eval_core/runner/__init__.py",
+            "size_bytes": 293,
+            "sha256": "2faaa7d8445299656396987f7b55876025b5dfaab793afa0c11027ab08984b01"
+          },
+          {
+            "path": "adk_eval_core/runner/base.py",
+            "size_bytes": 1198,
+            "sha256": "fa97acbfdf8be95b9b247e525fb4fa682c8b8da156b405f5bc29f684eafb4d5f"
+          },
+          {
+            "path": "adk_eval_core/runner/runner.py",
+            "size_bytes": 3321,
+            "sha256": "0c057f402eb42f0bdc4e84fd88d064287f3929284d8f345813df8dedeb7b9cc3"
+          },
+          {
+            "path": "adk_eval_core/sandbox/__init__.py",
+            "size_bytes": 751,
+            "sha256": "b9f13699e2bc09fa57815bb3c6bf07c4aefb9ab5b74e80ec46625f8421b10d5a"
+          },
+          {
+            "path": "adk_eval_core/sandbox/base.py",
+            "size_bytes": 7694,
+            "sha256": "da53e3bb0dfb7d2490d63195740d94560291c37001c4ebae4d12733cf4856007"
+          },
+          {
+            "path": "adk_eval_core/sandbox/containers.py",
+            "size_bytes": 21219,
+            "sha256": "c36a7077901aafcd8a16ae22441dfe40d8713e36bbc8534ab2bad1cd953bf769"
+          },
+          {
+            "path": "adk_eval_core/sandbox/docker_sandbox.py",
+            "size_bytes": 7011,
+            "sha256": "484b8864c2ff876f10b85f95e69e72b245e8ca5f6f30dc1020baec846212c899"
+          },
+          {
+            "path": "adk_eval_core/sandbox/subprocess_sandbox.py",
+            "size_bytes": 11715,
+            "sha256": "09dc213bd71f4ad33a2a403732271efbc78bd09db2d2999817d55f4e630ac6fc"
+          },
+          {
+            "path": "adk_eval_core/tracing/__init__.py",
+            "size_bytes": 408,
+            "sha256": "d1b4ed94c3c5fa97541f593d62645cc73fe60587da6d2deb742c48ac00f01096"
+          },
+          {
+            "path": "adk_eval_core/tracing/atif.py",
+            "size_bytes": 5302,
+            "sha256": "266324e80f6a4fc23aa3d809f677a6e950a7bc971f8e903ce3f55dc2c0cd8f35"
+          },
+          {
+            "path": "adk_eval_core/tracing/atif_converter.py",
+            "size_bytes": 7430,
+            "sha256": "1d35490d305e1676d09c11a54301488cdecc6aceb03ee3469831d3f8a1cdd992"
+          },
+          {
+            "path": "adk_eval_core/tracing/markdown.py",
+            "size_bytes": 7160,
+            "sha256": "e8e07b6a71926196e09a18f08f0cc3ff6da5820bff95fcc0534fdeab083fbb6d"
+          },
+          {
+            "path": "adk_eval_core/tracing/trace.py",
+            "size_bytes": 23186,
+            "sha256": "b426e17c03b420f38ee4e08c038678ff4ba66d07ea893638f4e22a9fba8a4bc5"
+          },
+          {
+            "path": "adk_eval_core/ui/__init__.py",
+            "size_bytes": 1571,
+            "sha256": "3f39053c2fd360dedca776c611df55b0a4382e910f3681b0f9dbb3f08b0b459d"
+          },
+          {
+            "path": "adk_eval_core/ui/dashboard.py",
+            "size_bytes": 18158,
+            "sha256": "c56edca53fe06efb29151ef140b25ac99f795b08faf0bf0632abae18ce544eec"
+          },
+          {
+            "path": "adk_eval_core/ui/event_display.py",
+            "size_bytes": 23833,
+            "sha256": "4efbb0a55b5cd93cd0d8036c2d3f5f65b67072a0f5dc197e2e7b360a791f4a3e"
+          },
+          {
+            "path": "adk_eval_core/ui/hud.py",
+            "size_bytes": 14051,
+            "sha256": "bfc95127fd9594e5e9269071f3d7241875ab33d026316482cb157111a790757c"
+          },
+          {
+            "path": "adk_eval_core/ui/presenter.py",
+            "size_bytes": 7238,
+            "sha256": "626d70427727c5e0a8ffcf37032323c3516461640694fd9be2968dbabb8a96d4"
+          },
+          {
+            "path": "adk_eval_core/ui/protocol.py",
+            "size_bytes": 4050,
+            "sha256": "84d85f3e5adbc74feb7d4bedaf96131541cad5ac57012abb86f9cf4b046feb8a"
+          },
+          {
+            "path": "adk_eval_core/ui/summary.py",
+            "size_bytes": 592,
+            "sha256": "3bba083cf4d57081c50abb1af49307abe586a39ea1ebf2b9891783331085b2fe"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/__init__.py",
+            "size_bytes": 1170,
+            "sha256": "2502098e77ae11a186177c980cb30560e3cd90703026a0c3dda95e191bbce288"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/command.py",
+            "size_bytes": 4046,
+            "sha256": "50856b977eb86fd21f312a340e6d782101b934564a3527348e869294aa84d960"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/file.py",
+            "size_bytes": 5709,
+            "sha256": "5ba0b3a5e51925431545a0f2f408725d4e2e487b934f821c635fb364b10511bf"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/generic.py",
+            "size_bytes": 3922,
+            "sha256": "f458b8993b7158c3a5a73991c0adb3cb35509cd927a8ab3b14df4a515020b3be"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/models.py",
+            "size_bytes": 5146,
+            "sha256": "5445d681fa4f4dc9847cda9388af8c623fd7e1e73bce15f8c42de9e34a8f84ea"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/python.py",
+            "size_bytes": 2119,
+            "sha256": "3249c42b0b2d73a447913d07076623f3dbd7401b63726d9e3a3a9777ff5906e0"
+          },
+          {
+            "path": "adk_eval_core/ui/formatters/registry.py",
+            "size_bytes": 6171,
+            "sha256": "b63f7260e8219d36a3c3f4ebd1001c7d729d1f106446b9ca50620f79a2e092c6"
+          },
+          {
+            "path": "adk_eval_core/utils/__init__.py",
+            "size_bytes": 437,
+            "sha256": "630451edfc5b0032078ed858d971e8520f2ea776a2231aa5b7dc1a9a1958cd78"
+          },
+          {
+            "path": "adk_eval_core/utils/scoring.py",
+            "size_bytes": 3505,
+            "sha256": "f6c561e79fbfea17be26c526e96d0ed11a6d57edada61ff2cd512f29eceeb69d"
+          },
+          {
+            "path": "adk_eval_core/utils/utils.py",
+            "size_bytes": 4562,
+            "sha256": "df512c616a387afdb69eb5841ad8aa7915f042f9c85ab17594f03bf4a27f2df3"
+          },
+          {
+            "path": "adk_eval_core/viewer/__init__.py",
+            "size_bytes": 159,
+            "sha256": "e477b6d54612929ba547af4d829ece61a74882c7d2d92c29f76f2e97c370bcf9"
+          },
+          {
+            "path": "adk_eval_core/viewer/templates.py",
+            "size_bytes": 9661,
+            "sha256": "d7ec71cf42a84cb1c196ad9e7b4bef95611f6353a7d22182b7b5f147d9581b03"
+          },
+          {
+            "path": "adk_eval_core/viewer/viewer.py",
+            "size_bytes": 27504,
+            "sha256": "16e4eebf920d0de53587c4008d1a0c4b365527940aef2f278c0cfc5fc3c14fc9"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/adk_submission-0.2.13-py3-none-any.whl",
+        "name": "adk-submission",
+        "version": "0.2.13",
+        "requires_python": ">=3.11",
+        "requires_dist": [
+          "google-adk<2.0,>=1.34.0",
+          "pyyaml>=6.0",
+          "pydantic>=2.0",
+          "pytest>=8.0; extra == \"dev\"",
+          "pytest-asyncio>=0.23; extra == \"dev\"",
+          "requests>=2.28.0; extra == \"serving\"",
+          "litellm>=1.0.0; extra == \"serving\""
+        ],
+        "members": [
+          {
+            "path": "adk_submission-0.2.13.dist-info/METADATA",
+            "size_bytes": 18389,
+            "sha256": "7f3d6ea57506a653d1f15e1820039578eb3beab5c3eb49ce3f757afc2ebef3d2"
+          },
+          {
+            "path": "adk_submission-0.2.13.dist-info/RECORD",
+            "size_bytes": 2150,
+            "sha256": "9c5dc8ed9147e9db7fce42dc8d8eacf78e72960d9beafd82f35c7f7db7d6e9c1"
+          },
+          {
+            "path": "adk_submission-0.2.13.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "61532836a2b3111b7ec23519c09df7c41180c27165fb872a6d8913b566b88ad1"
+          },
+          {
+            "path": "adk_submission/__init__.py",
+            "size_bytes": 4369,
+            "sha256": "4b89347769780899d22628508e90e1066e5824e586bd1da60c4f817dc91f1b70"
+          },
+          {
+            "path": "adk_submission/compiler.py",
+            "size_bytes": 10492,
+            "sha256": "39cc4884699faf147ca1b326664e888c1861f750fe36525b840b5f812d593eed"
+          },
+          {
+            "path": "adk_submission/context.py",
+            "size_bytes": 7403,
+            "sha256": "3c77519415b1dd2cc97b42bcbe29d32dd85f8188ca7eba5b5fb8636bce92c908"
+          },
+          {
+            "path": "adk_submission/discovery.py",
+            "size_bytes": 31163,
+            "sha256": "ca19fc75fb3baa42e85438b41248a06c35987cbf26ef652159b302752d0f191c"
+          },
+          {
+            "path": "adk_submission/errors.py",
+            "size_bytes": 13999,
+            "sha256": "7e121e7c6581288788500cd1a8deceb003a74ec150d5477c37f794971a5f4818"
+          },
+          {
+            "path": "adk_submission/limits.py",
+            "size_bytes": 18965,
+            "sha256": "afde5056f2df1fd77b53e0495712d03f60b3e246d4393617dd800d970f7482e2"
+          },
+          {
+            "path": "adk_submission/paths.py",
+            "size_bytes": 9379,
+            "sha256": "7c4b7050141bdb05a9e6849be11f6440f2a18082a364623226c4343649b2f59f"
+          },
+          {
+            "path": "adk_submission/registry.py",
+            "size_bytes": 11173,
+            "sha256": "c17f9770c2f3663309dd61807d2ae4e7d75bbd06b7c674847f655d218e82cf7a"
+          },
+          {
+            "path": "adk_submission/schema.py",
+            "size_bytes": 17404,
+            "sha256": "6554de60cfa208dcb0b095f4236271795b2955adf87f3be3c40dfa3d62521c5d"
+          },
+          {
+            "path": "adk_submission/server.py",
+            "size_bytes": 35447,
+            "sha256": "d60b3fe34dd7f6e359b003db82b68434757c74b1030862bacda5cff6164f91eb"
+          },
+          {
+            "path": "adk_submission/yaml_loader.py",
+            "size_bytes": 12618,
+            "sha256": "01d644ef7f5acc216506245fd7e115e7096641e62e825c6873c83e148b23c69c"
+          },
+          {
+            "path": "adk_submission/builders/__init__.py",
+            "size_bytes": 637,
+            "sha256": "ec6273c54cfb08f22777146c1636be4f13d4d00a67a17d9ae7a19e3a8f18f6c1"
+          },
+          {
+            "path": "adk_submission/builders/llm.py",
+            "size_bytes": 3658,
+            "sha256": "97c27324ce60ac6dc466941bcc19f5482f7693af9fc02fb760a40526c84c10b5"
+          },
+          {
+            "path": "adk_submission/builders/sub_agents.py",
+            "size_bytes": 2801,
+            "sha256": "ba6162832b1ca4e023e2848c6391242c18cbe9dadcfd560a6ebef81108c35b5a"
+          },
+          {
+            "path": "adk_submission/builders/workflows.py",
+            "size_bytes": 5565,
+            "sha256": "d8d7ccf9a51d57daec58c7231e2a62621a3ecca269e71ee64c57062cadadf980"
+          },
+          {
+            "path": "adk_submission/resolvers/__init__.py",
+            "size_bytes": 800,
+            "sha256": "b88fe281c2b927a046e6485c7e0966b1808a5c8d0a0849cd85824ffb04ae53be"
+          },
+          {
+            "path": "adk_submission/resolvers/callbacks.py",
+            "size_bytes": 3643,
+            "sha256": "332ce0732aa3eb1b555630c57683f51e59d5caee3f519371d376210e9ae33e29"
+          },
+          {
+            "path": "adk_submission/resolvers/generation.py",
+            "size_bytes": 18037,
+            "sha256": "ba0d58d1dce4395d656416522855cab07d43b7ed0cd61898234dc35e9b92ecc6"
+          },
+          {
+            "path": "adk_submission/resolvers/models.py",
+            "size_bytes": 3179,
+            "sha256": "39070f6ae52ad8880750b51af373da8762850d3a8ecc65c6f11744afe4cd5066"
+          },
+          {
+            "path": "adk_submission/resolvers/tools.py",
+            "size_bytes": 10593,
+            "sha256": "ae44a5ca815a05edfd763b92283d0444c77755afbd827fc35bcb87eb2633259e"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/anthropic-1.4.0-py3-none-any.whl",
+        "name": "anthropic",
+        "version": "1.4.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "anyio<5,>=3.5.0",
+          "docstring-parser<1,>=0.15",
+          "httpx2<3,>=2.0.0",
+          "jiter<1,>=0.4.0",
+          "pydantic<3,>=1.9.0",
+          "sniffio<2,>=1",
+          "typing-extensions<5,>=4.14",
+          "aiohttp<4,>=3.10.0; extra == 'aiohttp'",
+          "boto3<2,>=1.28.57; extra == 'aws'",
+          "botocore<2,>=1.31.57; extra == 'aws'",
+          "boto3<2,>=1.28.57; extra == 'bedrock'",
+          "botocore<2,>=1.31.57; extra == 'bedrock'",
+          "google-auth[requests]<3,>=2; extra == 'google-cloud'",
+          "mcp<3,>=1.0; (python_version >= '3.10') and extra == 'mcp'",
+          "google-auth[requests]<3,>=2; extra == 'vertex'",
+          "standardwebhooks<2,>=1.0.1; extra == 'webhooks'"
+        ],
+        "members": [
+          {
+            "path": "anthropic-1.4.0.dist-info/METADATA",
+            "size_bytes": 3325,
+            "sha256": "7f3f94f1c62ed7baa69e05a8baa349c2232bd0f3c2d8541c018a914ef021b512"
+          },
+          {
+            "path": "anthropic-1.4.0.dist-info/RECORD",
+            "size_bytes": 156790,
+            "sha256": "8cc8a72b741c56ebcb85c0db7a26d7cf7b3bc3395e69b148ca086b6dcaf1c80c"
+          },
+          {
+            "path": "anthropic-1.4.0.dist-info/WHEEL",
+            "size_bytes": 87,
+            "sha256": "0b615483066088b6f39d1fa4d1bff9937022ff568048e5c3b2cde5cc252c52e8"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/apache_tvm_ffi-0.1.13.post3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+        "name": "apache-tvm-ffi",
+        "version": "0.1.13.post3",
+        "requires_python": ">=3.9",
+        "requires_dist": [
+          "typing-extensions>=4.5",
+          "ninja; extra == \"cpp\""
+        ],
+        "members": [
+          {
+            "path": "apache_tvm_ffi-0.1.13.post3.dist-info/METADATA",
+            "size_bytes": 6171,
+            "sha256": "1ef8fc4cf130cc0daf2f562dc9a7ce7daacf81be3228071df4878ad5edfe0119"
+          },
+          {
+            "path": "apache_tvm_ffi-0.1.13.post3.dist-info/RECORD",
+            "size_bytes": 23148,
+            "sha256": "dbb8495d386e3d1d019b792baf9f0ceccf926cf226874d0a6c34be602a6e286b"
+          },
+          {
+            "path": "apache_tvm_ffi-0.1.13.post3.dist-info/WHEEL",
+            "size_bytes": 156,
+            "sha256": "7d54fd6ae91d00311a090ea2d80888a8610e82960f6fb743e0291ef71e2ff46f"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/astor-0.8.1-py2.py3-none-any.whl",
+        "name": "astor",
+        "version": "0.8.1",
+        "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "astor-0.8.1.dist-info/METADATA",
+            "size_bytes": 4235,
+            "sha256": "d271fff9dcc3d2d3d9501e07b39a3e38e12e21df65b5e5442d03c8e611b4a0aa"
+          },
+          {
+            "path": "astor-0.8.1.dist-info/RECORD",
+            "size_bytes": 1356,
+            "sha256": "174d10d3ddcb92424adaf2d80b849911ee4d7193751592f57ac783369b9152c3"
+          },
+          {
+            "path": "astor-0.8.1.dist-info/WHEEL",
+            "size_bytes": 110,
+            "sha256": "f3335865bc10497a01f487d73a33df78dc2f02c00b0237df824dbb16abc259ba"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/bitsandbytes-0.46.1-py3-none-manylinux_2_24_x86_64.whl",
+        "name": "bitsandbytes",
+        "version": "0.46.1",
+        "requires_python": ">=3.9",
+        "requires_dist": [
+          "torch<3,>=2.2",
+          "numpy>=1.17",
+          "pandas; extra == \"benchmark\"",
+          "matplotlib; extra == \"benchmark\"",
+          "hf-doc-builder==0.5.0; extra == \"docs\"",
+          "bitsandbytes[test]; extra == \"dev\"",
+          "build<2,>=1.0.0; extra == \"dev\"",
+          "ruff==0.11.2; extra == \"dev\"",
+          "pre-commit<4,>=3.5.0; extra == \"dev\"",
+          "wheel<1,>=0.42; extra == \"dev\"",
+          "einops~=0.8.0; extra == \"test\"",
+          "lion-pytorch==0.2.3; extra == \"test\"",
+          "pytest~=8.3; extra == \"test\"",
+          "scipy<2,>=1.11.4; python_version >= \"3.9\" and extra == \"test\"",
+          "transformers<5,>=4.30.1; extra == \"test\""
+        ],
+        "members": [
+          {
+            "path": "bitsandbytes-0.46.1.dist-info/METADATA",
+            "size_bytes": 10683,
+            "sha256": "e92c1b6177ffbb0c672f67c2211c44b6a54ec41d1ad9882ca81af7f844970569"
+          },
+          {
+            "path": "bitsandbytes-0.46.1.dist-info/RECORD",
+            "size_bytes": 6007,
+            "sha256": "08e928edeb3c6cef9ca20b1de13605f32f5361eba4a969b5461ee16c7b1303b0"
+          },
+          {
+            "path": "bitsandbytes-0.46.1.dist-info/WHEEL",
+            "size_bytes": 110,
+            "sha256": "27ee219c20b9e39f43c3e8e2ef625110e5826a937a14f2786a472aae0910e6f9"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/cbor2-6.1.4-cp312-cp312-manylinux_2_28_x86_64.whl",
+        "name": "cbor2",
+        "version": "6.1.4",
+        "requires_python": ">=3.10",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "cbor2-6.1.4.dist-info/METADATA",
+            "size_bytes": 5511,
+            "sha256": "8a339a5550b797909334ca8983b3ab287c57f51d3e4398e72f63449b3945005e"
+          },
+          {
+            "path": "cbor2-6.1.4.dist-info/RECORD",
+            "size_bytes": 884,
+            "sha256": "761f039acc66e2d6980a3d39d20f2dde63f175bff9f43c74d5de633bc3c2e5b8"
+          },
+          {
+            "path": "cbor2-6.1.4.dist-info/WHEEL",
+            "size_bytes": 113,
+            "sha256": "ee2ee0c7d3560958ee28adf0436b96e61839e751c87f18b666a1f6ff47ad4e67"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/compressed_tensors-0.15.0.1-py3-none-any.whl",
+        "name": "compressed-tensors",
+        "version": "0.15.0.1",
+        "requires_python": null,
+        "requires_dist": [
+          "torch>=1.7.0",
+          "transformers>=4.45.0",
+          "pydantic>=2.0",
+          "loguru",
+          "black==22.12.0; extra == \"dev\"",
+          "isort==5.8.0; extra == \"dev\"",
+          "wheel>=0.36.2; extra == \"dev\"",
+          "flake8>=3.8.3; extra == \"dev\"",
+          "pytest>=6.0.0; extra == \"dev\"",
+          "nbconvert>=7.16.3; extra == \"dev\"",
+          "accelerate; extra == \"dev\"",
+          "accelerate; extra == \"accelerate\""
+        ],
+        "members": [
+          {
+            "path": "compressed_tensors-0.15.0.1.dist-info/METADATA",
+            "size_bytes": 4745,
+            "sha256": "fe4c6f9441dbead3ec229dc7a5a590f03728726c445e5ca499a28eede45faf1d"
+          },
+          {
+            "path": "compressed_tensors-0.15.0.1.dist-info/RECORD",
+            "size_bytes": 10946,
+            "sha256": "1ba132e27734d33aa2c0e3b1aed4ba2486dd11111c15c02366f5ae6387ad4a0d"
+          },
+          {
+            "path": "compressed_tensors-0.15.0.1.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "69e6228a0d35958183cc1812f07c565ce837b95eb51bd8a33acba9fa4f68d6c9"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/depyf-0.20.0-py3-none-any.whl",
+        "name": "depyf",
+        "version": "0.20.0",
+        "requires_python": ">=3.7",
+        "requires_dist": [
+          "astor",
+          "dill",
+          "pytest; extra == \"dev\"",
+          "flake8; extra == \"dev\"",
+          "autopep8; extra == \"dev\""
+        ],
+        "members": [
+          {
+            "path": "depyf-0.20.0.dist-info/METADATA",
+            "size_bytes": 7339,
+            "sha256": "fab9d9e7d1e1e1bdb6b10dda24be4038e55ab929335f807c5e350847741e7ca7"
+          },
+          {
+            "path": "depyf-0.20.0.dist-info/RECORD",
+            "size_bytes": 1747,
+            "sha256": "fff26e9524e3e44e4b6923844f3bc98dd7bf608e44444e2b7b45d7f433d5d296"
+          },
+          {
+            "path": "depyf-0.20.0.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "4a63b1614ee9ccd281a804af409ec38d7dd719417dda5ac684c6f747afe28aa2"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/diskcache-5.6.3-py3-none-any.whl",
+        "name": "diskcache",
+        "version": "5.6.3",
+        "requires_python": ">=3",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "diskcache-5.6.3.dist-info/METADATA",
+            "size_bytes": 20458,
+            "sha256": "6fc70cff43a3c6666531e6c268e90059fb93ae58aed708163c0ceecab24dbaef"
+          },
+          {
+            "path": "diskcache-5.6.3.dist-info/RECORD",
+            "size_bytes": 938,
+            "sha256": "fc5a1748556f39ebfa4d0df23f0a82c33d3dd00c59a6edd3be87a9784492c9fe"
+          },
+          {
+            "path": "diskcache-5.6.3.dist-info/WHEEL",
+            "size_bytes": 92,
+            "sha256": "c903798389a0e00c9b4639208bef72cb889010589b1909a5cfbf0f8a4e4eafe0"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/flashinfer_cubin-0.6.6-py3-none-any.whl",
+        "name": "flashinfer-cubin",
+        "version": "0.6.6",
+        "requires_python": ">=3.8",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "flashinfer_cubin-0.6.6.dist-info/METADATA",
+            "size_bytes": 1301,
+            "sha256": "396833ea03d0209479750e82caa3c6b7b36b1b7d6994de7d4764264638e76a15"
+          },
+          {
+            "path": "flashinfer_cubin-0.6.6.dist-info/RECORD",
+            "size_bytes": 2498480,
+            "sha256": "131f88b46c1ce36ace06d00d5bc6d6193dda79f34f3e2660701668f1e5b7a03b"
+          },
+          {
+            "path": "flashinfer_cubin-0.6.6.dist-info/WHEEL",
+            "size_bytes": 90,
+            "sha256": "db6234d80aea3825eb10c9165c4e0921ad556a382966cb23460fca6e948c2231"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/flashinfer_python-0.6.6-py3-none-any.whl",
+        "name": "flashinfer-python",
+        "version": "0.6.6",
+        "requires_python": "<4.0,>=3.10",
+        "requires_dist": [
+          "apache-tvm-ffi!=0.1.8,!=0.1.8.post0,<0.2,>=0.1.6",
+          "click",
+          "einops",
+          "ninja",
+          "numpy",
+          "nvidia-cudnn-frontend>=1.13.0",
+          "nvidia-cutlass-dsl>=4.3.4",
+          "nvidia-ml-py",
+          "packaging>=24.2",
+          "requests",
+          "tabulate",
+          "torch",
+          "tqdm"
+        ],
+        "members": [
+          {
+            "path": "flashinfer_python-0.6.6.dist-info/METADATA",
+            "size_bytes": 11016,
+            "sha256": "b19f7523ce21a141359cb83ab3cdcc2883ba59158ea0a03e3c95eff5a71171f1"
+          },
+          {
+            "path": "flashinfer_python-0.6.6.dist-info/RECORD",
+            "size_bytes": 257476,
+            "sha256": "c549c1315deae7f0965c051d1d62261b3c3dfee35b4f907381420307b8dde042"
+          },
+          {
+            "path": "flashinfer_python-0.6.6.dist-info/WHEEL",
+            "size_bytes": 90,
+            "sha256": "db6234d80aea3825eb10c9165c4e0921ad556a382966cb23460fca6e948c2231"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/gguf-0.19.0-py3-none-any.whl",
+        "name": "gguf",
+        "version": "0.19.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "PySide6 (>=6.9,<7.0) ; (python_version >= \"3.9\" and python_version < \"3.14\") and (extra == \"gui\")",
+          "numpy (>=1.17)",
+          "pyyaml (>=5.1)",
+          "requests (>=2.25)",
+          "tqdm (>=4.27)"
+        ],
+        "members": [
+          {
+            "path": "gguf-0.19.0.dist-info/METADATA",
+            "size_bytes": 4100,
+            "sha256": "c6ed6e4d4dbb4b46f32855b4189599c568d5617a012345aa9249b3acf7204a03"
+          },
+          {
+            "path": "gguf-0.19.0.dist-info/RECORD",
+            "size_bytes": 1793,
+            "sha256": "ea42fee6a926c332d24fa08dd6e0dfb0ec6b30fb25a87234c968b165ed23e816"
+          },
+          {
+            "path": "gguf-0.19.0.dist-info/WHEEL",
+            "size_bytes": 88,
+            "sha256": "10612f4a984562a5cab36dfe91005ec8da093f59eb4fc649290a22e69e4360bf"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/google_adk-1.36.1-py3-none-any.whl",
+        "name": "google-adk",
+        "version": "1.36.1",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "aiosqlite>=0.21",
+          "anyio>=4.9,<5",
+          "authlib>=1.6.6,<2",
+          "click>=8.1.8,<9",
+          "fastapi>=0.124.1,<1",
+          "google-api-python-client>=2.157,<3",
+          "google-auth[pyopenssl]>=2.47",
+          "google-cloud-aiplatform[agent-engines]>=1.148.1,<2",
+          "google-cloud-bigquery>=2.2",
+          "google-cloud-bigquery-storage>=2",
+          "google-cloud-bigtable>=2.32",
+          "google-cloud-dataplex>=1.7,<3",
+          "google-cloud-discoveryengine>=0.13.12,<0.14",
+          "google-cloud-pubsub>=2,<3",
+          "google-cloud-secret-manager>=2.22,<3",
+          "google-cloud-spanner>=3.56,<4",
+          "google-cloud-speech>=2.30,<3",
+          "google-cloud-storage>=2.18,<4",
+          "google-genai>=2.9,<3",
+          "graphviz>=0.20.2,<1",
+          "httpx>=0.27,<1",
+          "jsonschema>=4.23,<5",
+          "mcp>=1.24,<2",
+          "opentelemetry-api>=1.36,<=1.41.1",
+          "opentelemetry-exporter-gcp-logging>=1.9.0a0,<=1.12.0a0",
+          "opentelemetry-exporter-gcp-monitoring>=1.9.0a0,<2",
+          "opentelemetry-exporter-gcp-trace>=1.9,<2",
+          "opentelemetry-exporter-otlp-proto-http>=1.36",
+          "opentelemetry-resourcedetector-gcp>=1.9.0a0,<2",
+          "opentelemetry-sdk>=1.36,<=1.41.1",
+          "pyarrow>=14",
+          "pydantic>=2.12,<3",
+          "python-dateutil>=2.9.0.post0,<3",
+          "python-dotenv>=1,<2",
+          "pyyaml>=6.0.2,<7",
+          "requests>=2.32.4,<3",
+          "sqlalchemy>=2,<3",
+          "sqlalchemy-spanner>=1.14",
+          "starlette>=0.49.1,<1",
+          "tenacity>=9,<10",
+          "typing-extensions>=4.5,<5",
+          "tzlocal>=5.3,<6",
+          "uvicorn>=0.34,<1",
+          "watchdog>=6,<7",
+          "websockets>=15.0.1,<16",
+          "a2a-sdk>=0.3.4,<0.4 ; extra == \"a2a\"",
+          "google-cloud-iamconnectorcredentials>=0.1,<0.2 ; extra == \"agent-identity\"",
+          "google-adk-community ; extra == \"community\"",
+          "flit>=3.10 ; extra == \"dev\"",
+          "isort>=6 ; extra == \"dev\"",
+          "mypy>=1.15 ; extra == \"dev\"",
+          "pre-commit>=4 ; extra == \"dev\"",
+          "pyink>=25.12 ; extra == \"dev\"",
+          "pylint>=2.6 ; extra == \"dev\"",
+          "autodoc-pydantic ; extra == \"docs\"",
+          "furo ; extra == \"docs\"",
+          "myst-parser ; extra == \"docs\"",
+          "sphinx<9 ; extra == \"docs\"",
+          "sphinx-autodoc-typehints ; extra == \"docs\"",
+          "sphinx-click ; extra == \"docs\"",
+          "sphinx-rtd-theme ; extra == \"docs\"",
+          "gepa>=0.1 ; extra == \"eval\"",
+          "google-cloud-aiplatform[evaluation]>=1.148 ; extra == \"eval\"",
+          "jinja2>=3.1.4,<4 ; extra == \"eval\"",
+          "pandas>=2.2.3 ; extra == \"eval\"",
+          "rouge-score>=0.1.2 ; extra == \"eval\"",
+          "tabulate>=0.9 ; extra == \"eval\"",
+          "anthropic>=0.78 ; extra == \"extensions\"",
+          "beautifulsoup4>=3.2.2 ; extra == \"extensions\"",
+          "crewai[tools] ; extra == \"extensions\" and ( python_version>='3.11' and python_version<'3.12')",
+          "docker>=7 ; extra == \"extensions\"",
+          "google-cloud-firestore>=2.11,<3 ; extra == \"extensions\"",
+          "google-cloud-parametermanager>=0.4,<1 ; extra == \"extensions\"",
+          "k8s-agent-sandbox>=0.1.1.post3 ; extra == \"extensions\"",
+          "kubernetes>=29 ; extra == \"extensions\"",
+          "langgraph>=0.2.60,<0.4.8 ; extra == \"extensions\"",
+          "litellm>=1.83.7,<=1.83.14 ; extra == \"extensions\"",
+          "llama-index-embeddings-google-genai>=0.3 ; extra == \"extensions\"",
+          "llama-index-readers-file>=0.4 ; extra == \"extensions\"",
+          "lxml>=5.3 ; extra == \"extensions\"",
+          "pypika>=0.50 ; extra == \"extensions\"",
+          "toolbox-adk>=1,<2 ; extra == \"extensions\"",
+          "opentelemetry-instrumentation-google-genai>=0.6b0,<1 ; extra == \"otel-gcp\"",
+          "slack-bolt>=1.22 ; extra == \"slack\"",
+          "a2a-sdk>=0.3,<0.4 ; extra == \"test\"",
+          "anthropic>=0.78 ; extra == \"test\"",
+          "crewai[tools] ; extra == \"test\" and ( python_version>='3.11' and python_version<'3.12')",
+          "google-cloud-firestore>=2.11,<3 ; extra == \"test\"",
+          "google-cloud-iamconnectorcredentials>=0.1,<0.2 ; extra == \"test\"",
+          "google-cloud-parametermanager>=0.4,<1 ; extra == \"test\"",
+          "kubernetes>=29 ; extra == \"test\"",
+          "langchain-community>=0.3.17 ; extra == \"test\"",
+          "langgraph>=0.2.60,<0.4.8 ; extra == \"test\"",
+          "litellm>=1.83.7,<=1.83.14 ; extra == \"test\"",
+          "llama-index-readers-file>=0.4 ; extra == \"test\"",
+          "openai>=1.100.2 ; extra == \"test\"",
+          "opentelemetry-instrumentation-google-genai>=0.3b0,<1 ; extra == \"test\"",
+          "pypika>=0.50 ; extra == \"test\"",
+          "pytest>=9,<10 ; extra == \"test\"",
+          "pytest-asyncio>=0.25 ; extra == \"test\"",
+          "pytest-mock>=3.14 ; extra == \"test\"",
+          "pytest-xdist>=3.6.1 ; extra == \"test\"",
+          "python-multipart>=0.0.9 ; extra == \"test\"",
+          "rouge-score>=0.1.2 ; extra == \"test\"",
+          "slack-bolt>=1.22 ; extra == \"test\"",
+          "tabulate>=0.9 ; extra == \"test\"",
+          "toolbox-adk>=1,<2 ; extra == \"toolbox\""
+        ],
+        "members": [
+          {
+            "path": "google_adk-1.36.1.dist-info/METADATA",
+            "size_bytes": 15286,
+            "sha256": "28751f5a13bb6dcfa9a89a3d2dc44be6231bb1a4dfc4ef8de5aefb687b85d032"
+          },
+          {
+            "path": "google_adk-1.36.1.dist-info/RECORD",
+            "size_bytes": 59513,
+            "sha256": "63387b97afc903a5a58ed90362e906211254bf24f1ba182fe15f910fcd641901"
+          },
+          {
+            "path": "google_adk-1.36.1.dist-info/WHEEL",
+            "size_bytes": 82,
+            "sha256": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/google_genai-2.11.0-py3-none-any.whl",
+        "name": "google-genai",
+        "version": "2.11.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "anyio<5.0.0,>=4.8.0",
+          "google-auth[requests]<3.0.0,>=2.48.1",
+          "httpx<1.0.0,>=0.28.1",
+          "pydantic<3.0.0,>=2.12.5",
+          "requests<3.0.0,>=2.28.1",
+          "tenacity<9.2.0,>=8.2.3",
+          "websockets<17.0,>=13.0.0",
+          "typing-extensions<5.0.0,>=4.14.0",
+          "distro<2,>=1.7.0",
+          "sniffio",
+          "aiohttp<4.0.0,>=3.10.11; extra == \"aiohttp\"",
+          "sentencepiece>=0.2.0; extra == \"local-tokenizer\"",
+          "protobuf; extra == \"local-tokenizer\"",
+          "pillow; extra == \"local-tokenizer\"",
+          "torch; extra == \"local-tokenizer\"",
+          "torchvision; extra == \"local-tokenizer\"",
+          "transformers; extra == \"local-tokenizer\"",
+          "pyopenssl; extra == \"pyopenssl\""
+        ],
+        "members": [
+          {
+            "path": "google_genai-2.11.0.dist-info/METADATA",
+            "size_bytes": 55816,
+            "sha256": "9de895e2435678d1d64ca617b33b5dbc24c8dce779dc3082bbbebca43f5f7660"
+          },
+          {
+            "path": "google_genai-2.11.0.dist-info/RECORD",
+            "size_bytes": 51543,
+            "sha256": "7ae420a2f08a4adbcd489d1162dbc4545d1329202caba6d1b37871712ad9eeec"
+          },
+          {
+            "path": "google_genai-2.11.0.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "2b6eb4118ce7cd7b09601406aa623c553c4476265836f0d9c16f5c061f7efcc0"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/ijson-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+        "name": "ijson",
+        "version": "3.5.1",
+        "requires_python": ">=3.9",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "ijson-3.5.1.dist-info/METADATA",
+            "size_bytes": 23654,
+            "sha256": "b8f132757abd398dcdb4a7ba657f030f11bd347bee5fcf632854884d1b154086"
+          },
+          {
+            "path": "ijson-3.5.1.dist-info/RECORD",
+            "size_bytes": 1857,
+            "sha256": "9f9a43e3539d3067fb712860e7cb66b4b0b9ee2e1e39d59e4d09a4918bbdc2d4"
+          },
+          {
+            "path": "ijson-3.5.1.dist-info/WHEEL",
+            "size_bytes": 190,
+            "sha256": "90f7c11d409710c77dff16b3a84f9b5abae99c64ee3fcdf2795742de2d1e87a5"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/interegular-0.3.3-py37-none-any.whl",
+        "name": "interegular",
+        "version": "0.3.3",
+        "requires_python": ">=3.7",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "interegular-0.3.3.dist-info/METADATA",
+            "size_bytes": 3049,
+            "sha256": "c7598668f970b37c6d21612cc2abc9253156bf8b5c3905524793ed9af309acb3"
+          },
+          {
+            "path": "interegular-0.3.3.dist-info/RECORD",
+            "size_bytes": 979,
+            "sha256": "d3d6efc859a21234c3c06073a97e4cb3b3d751d9f3854bf71c2b0a298aa3207b"
+          },
+          {
+            "path": "interegular-0.3.3.dist-info/WHEEL",
+            "size_bytes": 93,
+            "sha256": "f455185120ade62a35b5504e55afb74b4ce370ccc63b59ce230f7d896a339b7a"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/llguidance-1.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "name": "llguidance",
+        "version": "1.3.0",
+        "requires_python": ">=3.9",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "llguidance-1.3.0.dist-info/METADATA",
+            "size_bytes": 10300,
+            "sha256": "4115a1ac21f8ec0e24e997661ad9b67c0adb69f15a367e7175488db26009ebcd"
+          },
+          {
+            "path": "llguidance-1.3.0.dist-info/RECORD",
+            "size_bytes": 1565,
+            "sha256": "baffd7863f6aabda52634657c04e089930308a3805e998f6ddc0c32a6a997fd6"
+          },
+          {
+            "path": "llguidance-1.3.0.dist-info/WHEEL",
+            "size_bytes": 127,
+            "sha256": "650fc52924634b55de11360dae766b313617936edd02dd748437dbf702739693"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/lm_format_enforcer-0.11.3-py3-none-any.whl",
+        "name": "lm-format-enforcer",
+        "version": "0.11.3",
+        "requires_python": ">=3.8,<4.0",
+        "requires_dist": [
+          "interegular (>=0.3.2)",
+          "packaging",
+          "pydantic (>=1.10.8)",
+          "pyyaml"
+        ],
+        "members": [
+          {
+            "path": "lm_format_enforcer-0.11.3.dist-info/METADATA",
+            "size_bytes": 17530,
+            "sha256": "e1079fb57a9f23d3d4f3f8ea2385d7166e650d788203faf19d95c19f69a46a49"
+          },
+          {
+            "path": "lm_format_enforcer-0.11.3.dist-info/RECORD",
+            "size_bytes": 2317,
+            "sha256": "da9d156fb1a93f03a0ed039907fd96ade1152fb763e7e9263e2f452e080836cb"
+          },
+          {
+            "path": "lm_format_enforcer-0.11.3.dist-info/WHEEL",
+            "size_bytes": 88,
+            "sha256": "6f82bf85e95ffa3950a170411137f09dfe01d38602ebb2ce7afd23a387d7e66f"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/loguru-0.7.3-py3-none-any.whl",
+        "name": "loguru",
+        "version": "0.7.3",
+        "requires_python": ">=3.5,<4.0",
+        "requires_dist": [
+          "colorama>=0.3.4 ; sys_platform=='win32'",
+          "aiocontextvars>=0.2.0 ; python_version<'3.7'",
+          "win32-setctime>=1.0.0 ; sys_platform=='win32'",
+          "pre-commit==4.0.1  ; extra == \"dev\" and ( python_version>='3.9')",
+          "tox==3.27.1  ; extra == \"dev\" and ( python_version<'3.8')",
+          "tox==4.23.2  ; extra == \"dev\" and ( python_version>='3.8')",
+          "pytest==6.1.2  ; extra == \"dev\" and ( python_version<'3.8')",
+          "pytest==8.3.2  ; extra == \"dev\" and ( python_version>='3.8')",
+          "pytest-cov==2.12.1  ; extra == \"dev\" and ( python_version<'3.8')",
+          "pytest-cov==5.0.0  ; extra == \"dev\" and ( python_version>='3.8' and python_version<'3.9')",
+          "pytest-cov==6.0.0  ; extra == \"dev\" and ( python_version>='3.9')",
+          "pytest-mypy-plugins==1.9.3  ; extra == \"dev\" and ( python_version>='3.6' and python_version<'3.8')",
+          "pytest-mypy-plugins==3.1.0  ; extra == \"dev\" and ( python_version>='3.8')",
+          "colorama==0.4.5  ; extra == \"dev\" and ( python_version<'3.8')",
+          "colorama==0.4.6  ; extra == \"dev\" and ( python_version>='3.8')",
+          "freezegun==1.1.0  ; extra == \"dev\" and ( python_version<'3.8')",
+          "freezegun==1.5.0  ; extra == \"dev\" and ( python_version>='3.8')",
+          "exceptiongroup==1.1.3  ; extra == \"dev\" and ( python_version>='3.7' and python_version<'3.11')",
+          "mypy==v0.910  ; extra == \"dev\" and ( python_version<'3.6')",
+          "mypy==v0.971  ; extra == \"dev\" and ( python_version>='3.6' and python_version<'3.7')",
+          "mypy==v1.4.1  ; extra == \"dev\" and ( python_version>='3.7' and python_version<'3.8')",
+          "mypy==v1.13.0  ; extra == \"dev\" and ( python_version>='3.8')",
+          "Sphinx==8.1.3  ; extra == \"dev\" and ( python_version>='3.11')",
+          "sphinx-rtd-theme==3.0.2  ; extra == \"dev\" and ( python_version>='3.11')",
+          "myst-parser==4.0.0  ; extra == \"dev\" and ( python_version>='3.11')",
+          "build==1.2.2  ; extra == \"dev\" and ( python_version>='3.11')",
+          "twine==6.0.1  ; extra == \"dev\" and ( python_version>='3.11')"
+        ],
+        "members": [
+          {
+            "path": "loguru-0.7.3.dist-info/METADATA",
+            "size_bytes": 22596,
+            "sha256": "3a371f8b089014fdaee055edc440d448242847926ad67613621af402f9975fd9"
+          },
+          {
+            "path": "loguru-0.7.3.dist-info/RECORD",
+            "size_bytes": 1841,
+            "sha256": "af8d04df636e994a766aa581b8ce278c9a939ff0e156aad9db6882c3c7bbbc84"
+          },
+          {
+            "path": "loguru-0.7.3.dist-info/WHEEL",
+            "size_bytes": 82,
+            "sha256": "0a950253178741b44de54191407611268acee407fe432fdf1cc72d710f034862"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/mistral_common-1.11.7-py3-none-any.whl",
+        "name": "mistral_common",
+        "version": "1.11.7",
+        "requires_python": "<3.15,>=3.10.0",
+        "requires_dist": [
+          "pydantic<3.0,>=2.7; python_version <= \"3.13\"",
+          "pydantic<3.0,>=2.12; python_version >= \"3.14\"",
+          "jsonschema>=4.21.1",
+          "typing-extensions>=4.11.0",
+          "tiktoken>=0.7.0; python_version <= \"3.13\"",
+          "tiktoken>=0.12.0; python_version >= \"3.14\"",
+          "pillow>=10.3.0",
+          "requests>=2.0.0",
+          "numpy<2.4,>=1.25; python_version <= \"3.12\"",
+          "numpy>=1.25; python_version > \"3.12\"",
+          "pydantic-extra-types[pycountry]>=2.10.5",
+          "opencv-python-headless>=4.0.0; extra == \"opencv\"",
+          "sentencepiece>=0.2.0; extra == \"sentencepiece\"",
+          "soundfile>=0.12.1; extra == \"soundfile\"",
+          "soxr>=0.5.0; extra == \"soxr\"",
+          "mistral_common[soundfile]; extra == \"audio\"",
+          "mistral_common[soxr]; extra == \"audio\"",
+          "mistral_common[opencv]; extra == \"image\"",
+          "llguidance<1.4.0,>=1.3.0; extra == \"guidance\"",
+          "jinja2>=3.1.0; extra == \"guidance\"",
+          "huggingface-hub>=1.0; extra == \"hf-hub\"",
+          "fastapi[standard]>=0.118.3; extra == \"server\"",
+          "pydantic-settings>=2.9.1; extra == \"server\"",
+          "click>=8.1.0; extra == \"server\"",
+          "uvloop>=0.22.1; python_version >= \"3.14\" and extra == \"server\"",
+          "mistral_common[audio,guidance,hf-hub,image,opencv,sentencepiece,server]; extra == \"all\""
+        ],
+        "members": [
+          {
+            "path": "mistral_common-1.11.7.dist-info/METADATA",
+            "size_bytes": 5905,
+            "sha256": "9c9886729153d009074d2d343e7cca354ab92ce746994dcd8c09070a5f97a552"
+          },
+          {
+            "path": "mistral_common-1.11.7.dist-info/RECORD",
+            "size_bytes": 6719,
+            "sha256": "b879c482b56b30cc03c6c287691c393e155652bb1c51111bacdc608b5cbee8eb"
+          },
+          {
+            "path": "mistral_common-1.11.7.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "2b6eb4118ce7cd7b09601406aa623c553c4476265836f0d9c16f5c061f7efcc0"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/model_hosting_container_standards-0.1.16-py3-none-any.whl",
+        "name": "model-hosting-container-standards",
+        "version": "0.1.16",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "fastapi",
+          "httpx",
+          "jmespath",
+          "pydantic",
+          "setuptools",
+          "starlette (>=0.49.1)",
+          "supervisor (>=4.2.0)"
+        ],
+        "members": [
+          {
+            "path": "model_hosting_container_standards-0.1.16.dist-info/METADATA",
+            "size_bytes": 24519,
+            "sha256": "8c71368adf5bc551edbcb18e612b103a6ed756d6bb87f785a396b3547c214ff2"
+          },
+          {
+            "path": "model_hosting_container_standards-0.1.16.dist-info/RECORD",
+            "size_bytes": 9079,
+            "sha256": "acdb51411ef24917a9391499fde1504a4055c49a4694d0233c15867782a23eca"
+          },
+          {
+            "path": "model_hosting_container_standards-0.1.16.dist-info/WHEEL",
+            "size_bytes": 88,
+            "sha256": "10612f4a984562a5cab36dfe91005ec8da093f59eb4fc649290a22e69e4360bf"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+        "name": "msgspec",
+        "version": "0.21.1",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "tomli; python_version < \"3.11\" and extra == \"toml\"",
+          "tomli_w; extra == \"toml\"",
+          "pyyaml; extra == \"yaml\""
+        ],
+        "members": [
+          {
+            "path": "msgspec-0.21.1.dist-info/METADATA",
+            "size_bytes": 5790,
+            "sha256": "1af055cfd85d7d0ab1505abdba5eaf8c1306ed143e7b2c2113fc0affebaf426d"
+          },
+          {
+            "path": "msgspec-0.21.1.dist-info/RECORD",
+            "size_bytes": 1805,
+            "sha256": "e8e540bd1af580c3b271f2d03793c00a4a9bd988ef3c4f97dc132531aa1d823e"
+          },
+          {
+            "path": "msgspec-0.21.1.dist-info/WHEEL",
+            "size_bytes": 190,
+            "sha256": "4dcddf17aeb29fd2a1fa191452c74a432b81f4bc34083a1e00d9c46d255cddfe"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/nvidia_cudnn_frontend-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "name": "nvidia-cudnn-frontend",
+        "version": "1.18.0",
+        "requires_python": ">=3.9",
+        "requires_dist": [
+          "nvidia-cutlass-dsl==4.3.5; extra == \"cutedsl\"",
+          "cuda-python; extra == \"cutedsl\"",
+          "torch; extra == \"cutedsl\""
+        ],
+        "members": [
+          {
+            "path": "nvidia_cudnn_frontend-1.18.0.dist-info/METADATA",
+            "size_bytes": 4359,
+            "sha256": "19d45ced9e34f82de13d38f0c58816e181ac52bc28cb7216b7976aedb5773935"
+          },
+          {
+            "path": "nvidia_cudnn_frontend-1.18.0.dist-info/RECORD",
+            "size_bytes": 11149,
+            "sha256": "cfbd81600a0427799dd8facddcff59d26ce36a0cf8995d194be6c0c6c984ed97"
+          },
+          {
+            "path": "nvidia_cudnn_frontend-1.18.0.dist-info/WHEEL",
+            "size_bytes": 153,
+            "sha256": "ef9002d3c99a91cb669eb5d0557ff8f4abb82a2322cfca707a6016e7e69f518f"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/openai_harmony-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "name": "openai-harmony",
+        "version": "0.0.8",
+        "requires_python": ">=3.8",
+        "requires_dist": [
+          "pydantic>=2.11.7",
+          "uvicorn ; extra == 'demo'",
+          "fastapi ; extra == 'demo'"
+        ],
+        "members": [
+          {
+            "path": "openai_harmony-0.0.8.dist-info/METADATA",
+            "size_bytes": 8027,
+            "sha256": "e72ad275f15de2b08167dee35a971f688793712cd81520a1ceb27c4d3a6af2c0"
+          },
+          {
+            "path": "openai_harmony-0.0.8.dist-info/RECORD",
+            "size_bytes": 514,
+            "sha256": "547620bb3e25aba54b8c4f39bd5d41cdd7e2181676ca243a962cac4a15e4e982"
+          },
+          {
+            "path": "openai_harmony-0.0.8.dist-info/WHEEL",
+            "size_bytes": 127,
+            "sha256": "b3c3719836d81dd760e685736784192d2c81bace2797ff773a2b911b37f831b5"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/opentelemetry_exporter_otlp-1.44.0-py3-none-any.whl",
+        "name": "opentelemetry-exporter-otlp",
+        "version": "1.44.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+          "opentelemetry-exporter-otlp-proto-http==1.44.0"
+        ],
+        "members": [
+          {
+            "path": "opentelemetry_exporter_otlp-1.44.0.dist-info/METADATA",
+            "size_bytes": 2370,
+            "sha256": "93748fe64ef0fd9aad15ee059433b0addf0bdfffc18ff07d78e8d91345bd36c9"
+          },
+          {
+            "path": "opentelemetry_exporter_otlp-1.44.0.dist-info/RECORD",
+            "size_bytes": 698,
+            "sha256": "379811f505b38c83a54a3292aa48a2884f72b685efefc80e2f2145a697892c10"
+          },
+          {
+            "path": "opentelemetry_exporter_otlp-1.44.0.dist-info/WHEEL",
+            "size_bytes": 87,
+            "sha256": "942926c567d0b1273d09f20295879abd37507845f6b683eab9f87d808df91100"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl",
+        "name": "opentelemetry-semantic-conventions-ai",
+        "version": "0.5.1",
+        "requires_python": "<4,>=3.9",
+        "requires_dist": [
+          "opentelemetry-sdk<2,>=1.38.0",
+          "opentelemetry-semantic-conventions>=0.59b0"
+        ],
+        "members": [
+          {
+            "path": "opentelemetry_semantic_conventions_ai-0.5.1.dist-info/METADATA",
+            "size_bytes": 997,
+            "sha256": "125e09adb4a4604cf63caad2da020c76524cde0ec39baec32d3a4eabb5b871da"
+          },
+          {
+            "path": "opentelemetry_semantic_conventions_ai-0.5.1.dist-info/RECORD",
+            "size_bytes": 662,
+            "sha256": "9b2ab01bd1fab9d6d1b4012e93dac0dea79673652496ee524fdf209ab104db16"
+          },
+          {
+            "path": "opentelemetry_semantic_conventions_ai-0.5.1.dist-info/WHEEL",
+            "size_bytes": 87,
+            "sha256": "41c708c5adba6e097513ab8ccb9f1d7865a2fb469e22491a9e01dcc64da459fc"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/outlines_core-0.2.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "name": "outlines_core",
+        "version": "0.2.11",
+        "requires_python": ">=3.8",
+        "requires_dist": [
+          "pre-commit ; extra == 'test'",
+          "pydantic ; extra == 'test'",
+          "pytest ; extra == 'test'",
+          "pytest-benchmark ; extra == 'test'",
+          "pytest-cov ; extra == 'test'",
+          "pytest-mock ; extra == 'test'",
+          "coverage[toml]>=5.1 ; extra == 'test'",
+          "diff-cover ; extra == 'test'",
+          "numpy ; extra == 'test'",
+          "torch ; extra == 'test'",
+          "numba ; extra == 'test'",
+          "scipy ; extra == 'test'",
+          "asv ; extra == 'test'",
+          "psutil ; extra == 'test'",
+          "maturin[patchelf] ; extra == 'test'"
+        ],
+        "members": [
+          {
+            "path": "outlines_core-0.2.11.dist-info/METADATA",
+            "size_bytes": 5806,
+            "sha256": "5b43f4a16781e5f3dbcc9cb5cf4b4848538a307fe5f07288cc700926c156cfb8"
+          },
+          {
+            "path": "outlines_core-0.2.11.dist-info/RECORD",
+            "size_bytes": 963,
+            "sha256": "fae7551435f93d99422f1e8fa5e1484ae13bdfdbc80fdb524750e0fd96ef7962"
+          },
+          {
+            "path": "outlines_core-0.2.11.dist-info/WHEEL",
+            "size_bytes": 129,
+            "sha256": "f5cf5da6880707b5cac0093df9ff02cf5e0a3660f8c9cecb326152086ed92465"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/partial_json_parser-0.2.1.1.post7-py3-none-any.whl",
+        "name": "partial-json-parser",
+        "version": "0.2.1.1.post7",
+        "requires_python": ">=3.6",
+        "requires_dist": [
+          "rich; extra == \"playground\""
+        ],
+        "members": [
+          {
+            "path": "partial_json_parser-0.2.1.1.post7.dist-info/METADATA",
+            "size_bytes": 6129,
+            "sha256": "138cea9c54eacf4ab2b6cfcdd017a5de60a9b73df5c7412dcf77e58e19a76448"
+          },
+          {
+            "path": "partial_json_parser-0.2.1.1.post7.dist-info/RECORD",
+            "size_bytes": 1300,
+            "sha256": "332d9028108e81fe4fc0a720469069323b8f36fc69b7f9fc84a0dd2af9317fa0"
+          },
+          {
+            "path": "partial_json_parser-0.2.1.1.post7.dist-info/WHEEL",
+            "size_bytes": 90,
+            "sha256": "b6c52ffedec10de25e447692adccdb19eb8af93b43a46b168bf25fa730f6e792"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl",
+        "name": "prometheus-fastapi-instrumentator",
+        "version": "8.1.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "prometheus-client (>=0.8.0,<1.0.0)",
+          "starlette (>=1.0.0,<2.0.0)"
+        ],
+        "members": [
+          {
+            "path": "prometheus_fastapi_instrumentator-8.1.0.dist-info/METADATA",
+            "size_bytes": 13323,
+            "sha256": "b862db98656f73054bc87f0df8087808b3c95c52b003ad14870d2c8b72ee895d"
+          },
+          {
+            "path": "prometheus_fastapi_instrumentator-8.1.0.dist-info/RECORD",
+            "size_bytes": 1021,
+            "sha256": "e85dfcd67cb93b23945efc953df5ccf9c27627e2800ff9755e562d1dc08a96bc"
+          },
+          {
+            "path": "prometheus_fastapi_instrumentator-8.1.0.dist-info/WHEEL",
+            "size_bytes": 88,
+            "sha256": "10612f4a984562a5cab36dfe91005ec8da093f59eb4fc649290a22e69e4360bf"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/pybase64-1.5.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl",
+        "name": "pybase64",
+        "version": "1.5.0",
+        "requires_python": ">=3.9",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "pybase64-1.5.0.dist-info/METADATA",
+            "size_bytes": 11452,
+            "sha256": "bb6af428c6e97db231fae560df0ad2e97136b5855cabebfd003c01786a4d42ed"
+          },
+          {
+            "path": "pybase64-1.5.0.dist-info/RECORD",
+            "size_bytes": 1602,
+            "sha256": "d094239fae26dd6ce81a97c145f8a644a317026a1644a44109030ee3f11e223d"
+          },
+          {
+            "path": "pybase64-1.5.0.dist-info/WHEEL",
+            "size_bytes": 224,
+            "sha256": "a8ab7e207ead39dbf0639d24e011d5286af59ddf50ee3f0b7a7e4f9c4e05155c"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/pycountry-26.2.16-py3-none-any.whl",
+        "name": "pycountry",
+        "version": "26.2.16",
+        "requires_python": ">=3.10",
+        "requires_dist": [],
+        "members": [
+          {
+            "path": "pycountry-26.2.16.dist-info/METADATA",
+            "size_bytes": 12203,
+            "sha256": "2e1290b19e66b7b1c4805214bdc22d84e8aa4ff28bd048059554e2432a791fad"
+          },
+          {
+            "path": "pycountry-26.2.16.dist-info/RECORD",
+            "size_bytes": 64124,
+            "sha256": "7b0d949828de29d507e89fa949ebf6253bdcfb9c9b943c75fd0013036a72c146"
+          },
+          {
+            "path": "pycountry-26.2.16.dist-info/WHEEL",
+            "size_bytes": 88,
+            "sha256": "909091253fe0d1a75f009cd3c761943264bcd2b4c92151d109f1b40d080bab7a"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/pydantic_extra_types-2.11.2-py3-none-any.whl",
+        "name": "pydantic-extra-types",
+        "version": "2.11.2",
+        "requires_python": ">=3.9",
+        "requires_dist": [
+          "pydantic>=2.5.2",
+          "typing-extensions",
+          "cron-converter>=1.2.2; extra == 'all'",
+          "jsonschema>=4.0.0; extra == 'all'",
+          "pendulum<4.0.0,>=3.0.0; extra == 'all'",
+          "phonenumbers<10,>=8; extra == 'all'",
+          "pycountry>=23; extra == 'all'",
+          "pymongo<5.0.0,>=4.0.0; extra == 'all'",
+          "python-ulid<2,>=1; (python_version < '3.9') and extra == 'all'",
+          "python-ulid<4,>=1; (python_version >= '3.9') and extra == 'all'",
+          "pytz>=2024.1; extra == 'all'",
+          "semver>=3.0.2; extra == 'all'",
+          "semver~=3.0.2; extra == 'all'",
+          "tzdata>=2024.1; extra == 'all'",
+          "uuid-utils>=0.6.0; (python_version < '3.14') and extra == 'all'",
+          "cron-converter>=1.2.2; extra == 'cron'",
+          "jsonschema>=4.0.0; extra == 'jsonschema'",
+          "pendulum<4.0.0,>=3.0.0; extra == 'pendulum'",
+          "phonenumbers<10,>=8; extra == 'phonenumbers'",
+          "pycountry>=23; extra == 'pycountry'",
+          "python-ulid<2,>=1; (python_version < '3.9') and extra == 'python-ulid'",
+          "python-ulid<4,>=1; (python_version >= '3.9') and extra == 'python-ulid'",
+          "semver>=3.0.2; extra == 'semver'",
+          "uuid-utils>=0.6.0; (python_version < '3.14') and extra == 'uuid-utils'"
+        ],
+        "members": [
+          {
+            "path": "pydantic_extra_types-2.11.2.dist-info/METADATA",
+            "size_bytes": 4315,
+            "sha256": "8fc2d654e9297a72da6f567f1bca471fd10be3888bb096d705981efee19d09ee"
+          },
+          {
+            "path": "pydantic_extra_types-2.11.2.dist-info/RECORD",
+            "size_bytes": 3038,
+            "sha256": "618498fc3359f82b9e3fe8d31196bb9ea415ec8b63e744f1203cff5189cc0254"
+          },
+          {
+            "path": "pydantic_extra_types-2.11.2.dist-info/WHEEL",
+            "size_bytes": 87,
+            "sha256": "41c708c5adba6e097513ab8ccb9f1d7865a2fb469e22491a9e01dcc64da459fc"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/quack_kernels-0.6.4-py3-none-any.whl",
+        "name": "quack-kernels",
+        "version": "0.6.4",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "nvidia-cutlass-dsl==4.6.2",
+          "torch",
+          "apache-tvm-ffi<0.2,>=0.1.6",
+          "torch-c-dlpack-ext",
+          "einops",
+          "nvidia-cutlass-dsl[cu13]==4.6.2; extra == \"cu13\"",
+          "nvidia-matmul-heuristics; extra == \"heuristics\"",
+          "jax; extra == \"jax\"",
+          "jax-tvm-ffi; extra == \"jax\"",
+          "pandas; extra == \"bench\"",
+          "tyro; extra == \"bench\"",
+          "pre-commit; extra == \"dev\"",
+          "pytest; extra == \"dev\"",
+          "pytest-xdist; extra == \"dev\"",
+          "ruff; extra == \"dev\""
+        ],
+        "members": [
+          {
+            "path": "quack_kernels-0.6.4.dist-info/METADATA",
+            "size_bytes": 838,
+            "sha256": "eaabd9cf98c8747d22a0dbc0330587561210440e9504e7bf594c78ea8a08af1c"
+          },
+          {
+            "path": "quack_kernels-0.6.4.dist-info/RECORD",
+            "size_bytes": 9619,
+            "sha256": "555299f95f4f968ba0798f9e991809c2cc1327ba060cca62c3a75392b2f06290"
+          },
+          {
+            "path": "quack_kernels-0.6.4.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "69e6228a0d35958183cc1812f07c565ce837b95eb51bd8a33acba9fa4f68d6c9"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "name": "safetensors",
+        "version": "0.8.0",
+        "requires_python": ">=3.10",
+        "requires_dist": [
+          "safetensors[torch] ; extra == 'all'",
+          "safetensors[numpy] ; extra == 'all'",
+          "safetensors[jax] ; extra == 'all'",
+          "safetensors[paddlepaddle] ; extra == 'all'",
+          "safetensors[convert] ; extra == 'all'",
+          "safetensors[quality] ; extra == 'all'",
+          "safetensors[testing] ; extra == 'all'",
+          "safetensors[torch] ; extra == 'convert'",
+          "huggingface-hub>=1.4 ; extra == 'convert'",
+          "safetensors[all] ; extra == 'dev'",
+          "safetensors[pinned-tf] ; extra == 'dev'",
+          "safetensors[numpy] ; extra == 'jax'",
+          "flax>=0.6.3 ; extra == 'jax'",
+          "jax>=0.3.25 ; extra == 'jax'",
+          "jaxlib>=0.3.25 ; extra == 'jax'",
+          "mlx>=0.0.9 ; extra == 'mlx'",
+          "numpy>=1.24.6 ; extra == 'numpy'",
+          "safetensors[numpy] ; extra == 'paddlepaddle'",
+          "paddlepaddle>=2.4.1 ; extra == 'paddlepaddle'",
+          "safetensors[numpy] ; extra == 'pinned-tf'",
+          "tensorflow==2.18.0 ; extra == 'pinned-tf'",
+          "ruff ; extra == 'quality'",
+          "safetensors[numpy] ; extra == 'tensorflow'",
+          "tensorflow>=2.11.0 ; extra == 'tensorflow'",
+          "safetensors[numpy] ; extra == 'testing'",
+          "h5py>=3.7.0 ; extra == 'testing'",
+          "setuptools-rust>=1.12.0 ; extra == 'testing'",
+          "pytest>=9.0 ; extra == 'testing'",
+          "pytest-benchmark>=5.2 ; extra == 'testing'",
+          "hypothesis>=6.70.2 ; extra == 'testing'",
+          "fsspec>=2024.6.0 ; extra == 'testing'",
+          "s3fs>=2024.6.0 ; extra == 'testing'",
+          "safetensors[numpy] ; extra == 'tf-nightly'",
+          "tf-nightly ; extra == 'tf-nightly'",
+          "safetensors[numpy] ; extra == 'torch'",
+          "torch>=2.4 ; extra == 'torch'"
+        ],
+        "members": [
+          {
+            "path": "safetensors-0.8.0.dist-info/METADATA",
+            "size_bytes": 4189,
+            "sha256": "645be7b8d55e91534f991d144dc9e279581ea8dbea1a8c5b0be14e529d01e345"
+          },
+          {
+            "path": "safetensors-0.8.0.dist-info/RECORD",
+            "size_bytes": 1243,
+            "sha256": "2f41a506621a74a1f710f06927dc323bf561a9ea4cf6daae449324fbda2cfe1c"
+          },
+          {
+            "path": "safetensors-0.8.0.dist-info/WHEEL",
+            "size_bytes": 145,
+            "sha256": "0108d27000a21a91432d8b723df31075a0a1eb1cd65256e8b4b6766c66dde5de"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+        "name": "setproctitle",
+        "version": "1.3.7",
+        "requires_python": ">=3.8",
+        "requires_dist": [
+          "pytest; extra == \"test\""
+        ],
+        "members": [
+          {
+            "path": "setproctitle-1.3.7.dist-info/METADATA",
+            "size_bytes": 10721,
+            "sha256": "f3aae6f59f0e0c2ae3378189d4399d7a4a25de58c774cdb423fbfa02a534d0aa"
+          },
+          {
+            "path": "setproctitle-1.3.7.dist-info/RECORD",
+            "size_bytes": 702,
+            "sha256": "a6bd56e469c15d07f9be4118d57321ca39d340e614eebccb3b45fd5cc60f5f4f"
+          },
+          {
+            "path": "setproctitle-1.3.7.dist-info/WHEEL",
+            "size_bytes": 186,
+            "sha256": "997e14e2875feb0e3b6958f065499361dd4c17d05bae154b2a56964af6701c49"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/swegemma-0.2.11-py3-none-any.whl",
+        "name": "swegemma",
+        "version": "0.2.11",
+        "requires_python": ">=3.12",
+        "requires_dist": [
+          "adk-submission",
+          "cachetools>=5.0.0",
+          "docker>=7.0.0",
+          "google-adk>=1.34.0",
+          "google-genai>=1.0.0",
+          "networkx>=3.0",
+          "numpy>=1.26.0",
+          "pydantic>=2.0.0",
+          "python-dotenv>=1.0.0",
+          "pyyaml>=6.0.0",
+          "rich>=13.0.0",
+          "adk-eval-core",
+          "litellm>=1.0.0",
+          "pandas>=2.0.0",
+          "tokenizers>=0.20.0",
+          "torchvision",
+          "transformers>=4.40.0",
+          "safetensors",
+          "accelerate"
+        ],
+        "members": [
+          {
+            "path": "swegemma-0.2.11.dist-info/METADATA",
+            "size_bytes": 713,
+            "sha256": "84c8c8f3e7178ea6a1c2628151b2c490ab554b77a10ab14e0e99bc63cfd65d63"
+          },
+          {
+            "path": "swegemma-0.2.11.dist-info/RECORD",
+            "size_bytes": 3266,
+            "sha256": "9dc3aadcfdcaf5c42dd3c7374e1811f713e09c9297761971ea931c2fb3309bda"
+          },
+          {
+            "path": "swegemma-0.2.11.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "61532836a2b3111b7ec23519c09df7c41180c27165fb872a6d8913b566b88ad1"
+          },
+          {
+            "path": "swegemma/__init__.py",
+            "size_bytes": 3858,
+            "sha256": "408f88b0b7a4c2124d6642d017c044edacd20b1380797d59b497fe6105662e34"
+          },
+          {
+            "path": "swegemma/__main__.py",
+            "size_bytes": 145,
+            "sha256": "5cd5c92ee1a230e24c17d693c3093edf0e3e78b96c08815351ba82432a1aa4f4"
+          },
+          {
+            "path": "swegemma/budget.py",
+            "size_bytes": 1399,
+            "sha256": "5e520b3019c13b2420e6998119128f9c45b58820530ec942b5b40cab67d2336f"
+          },
+          {
+            "path": "swegemma/cli.py",
+            "size_bytes": 9091,
+            "sha256": "6b1082907ab7e64cc130b0dc2702612b51314ba7112cd39fe7edd1d0d6baf5af"
+          },
+          {
+            "path": "swegemma/config.py",
+            "size_bytes": 7750,
+            "sha256": "0cf65965d713a883eaf779652979e281f1fbd3d24707f1bd7e91e054c5069f0b"
+          },
+          {
+            "path": "swegemma/context.py",
+            "size_bytes": 23794,
+            "sha256": "272168834495f424dac54cfcc3d470c1b8e42b75a1125e7501586eb5f4fb73c0"
+          },
+          {
+            "path": "swegemma/deduplication.py",
+            "size_bytes": 49745,
+            "sha256": "f8353a8da887fc45823b9174f4578cd816b341d52c3a074964c1c2310af1573e"
+          },
+          {
+            "path": "swegemma/difficulty.py",
+            "size_bytes": 16760,
+            "sha256": "0b97e060fa6a3b437024a45c42cb131526d5a48b74dd858e4fc0259301f7a6ba"
+          },
+          {
+            "path": "swegemma/display.py",
+            "size_bytes": 3976,
+            "sha256": "d2dfff4ebe0ff655a240b5c1f073e85702869f618c0aa5c95cc6b54b20be47c8"
+          },
+          {
+            "path": "swegemma/edit.py",
+            "size_bytes": 2573,
+            "sha256": "d34acdff4530ed211325117395cf7fa9d085f7ee84250d02acf9c8533657a956"
+          },
+          {
+            "path": "swegemma/evaluate.py",
+            "size_bytes": 25197,
+            "sha256": "96a46f49267ffcf861f7f90b98efbe828d03f27553ceefce745819028589de1e"
+          },
+          {
+            "path": "swegemma/results.py",
+            "size_bytes": 5200,
+            "sha256": "4705de95a05ae5f01f743cbb97046fb0f47f1407f4cd1db249489b2253a7f72f"
+          },
+          {
+            "path": "swegemma/submission.py",
+            "size_bytes": 3577,
+            "sha256": "d387b402223300d06eb6f4f960faf82e997098050f5317961c64e6b95365974a"
+          },
+          {
+            "path": "swegemma/warnings.py",
+            "size_bytes": 1084,
+            "sha256": "f24d5cf69977bd88a5bb82639767ba41c12fed3bd8692969cb7c80051fbb1945"
+          },
+          {
+            "path": "swegemma/graph/__init__.py",
+            "size_bytes": 1420,
+            "sha256": "992e9fec50fabd65a003769fc4289dad787b22ca7b6045ce95bf61d3b5e35d0d"
+          },
+          {
+            "path": "swegemma/graph/embedding_utils.py",
+            "size_bytes": 16080,
+            "sha256": "c0970058b7e069bd4493bd86beb68d29047eb0e51d38814a1a146c428e243bf0"
+          },
+          {
+            "path": "swegemma/graph/graph_utils.py",
+            "size_bytes": 19051,
+            "sha256": "ab2fc0349207baf0c37423f9a28a550923a0ac553c4de2cf0e58447e96ad3050"
+          },
+          {
+            "path": "swegemma/graph/retrieval_utils.py",
+            "size_bytes": 34709,
+            "sha256": "65fbdddccef339ee74b6434f254e6a94a5d878aab1cc16a432906944e9dcb8e7"
+          },
+          {
+            "path": "swegemma/harness/__init__.py",
+            "size_bytes": 1079,
+            "sha256": "ca5053d64fc35f7d457974879656e63fa7980a7b36d37a28bbe7391f1fa90fe5"
+          },
+          {
+            "path": "swegemma/harness/agent_runner.py",
+            "size_bytes": 46695,
+            "sha256": "4d7eccabd203c26f7c39e882684d2fd851f383f6a5c76c4a75b0e559cd5d6a18"
+          },
+          {
+            "path": "swegemma/harness/container_setup.py",
+            "size_bytes": 40661,
+            "sha256": "3192acdce35f2d0bd0b191186851b46c251390af16b7f139a1640e16fb1d862c"
+          },
+          {
+            "path": "swegemma/harness/sample_verification.py",
+            "size_bytes": 20399,
+            "sha256": "0bbd4322534442420a4f782ffb76a5467d6a9d9bd7c32fe212269f304e05fa41"
+          },
+          {
+            "path": "swegemma/harness/verification.py",
+            "size_bytes": 27196,
+            "sha256": "99e2a5fdab2be2b5e0388de29080da9d6e7003cf8b53299cda790464f4ecd2aa"
+          },
+          {
+            "path": "swegemma/models/__init__.py",
+            "size_bytes": 305,
+            "sha256": "605c7dc1e516d69d41993e8b8da7f7c7cff11ac8d24ccc6fb8dbbc71ac3935fc"
+          },
+          {
+            "path": "swegemma/models/task.py",
+            "size_bytes": 7693,
+            "sha256": "0b9d705ce759645bd1ee59bb28662a25a951990c024bfeb1e00a41f08350812a"
+          },
+          {
+            "path": "swegemma/sandbox/__init__.py",
+            "size_bytes": 829,
+            "sha256": "ba3725efee8f6d0fba2321851d66d4497ae3cda5863edc0d4a8ef232f1fdb775"
+          },
+          {
+            "path": "swegemma/sandbox/base.py",
+            "size_bytes": 10113,
+            "sha256": "aab491aabc84105963bead16dab4d3d5745e31727ba248fd5a568d8f4e0c7dc1"
+          },
+          {
+            "path": "swegemma/sandbox/docker.py",
+            "size_bytes": 34531,
+            "sha256": "cc10c287acf7c9326f622e91b98207bb9cdcf4fadf5d4aa5f5658e854051d09d"
+          },
+          {
+            "path": "swegemma/sandbox/subprocess.py",
+            "size_bytes": 21429,
+            "sha256": "a26e9265d93f0387dd0a820ea451d1c530884bebca41583738f3ab2cc31df1f2"
+          },
+          {
+            "path": "swegemma/tools/__init__.py",
+            "size_bytes": 1632,
+            "sha256": "e19d1e81d90976fda93f346104d7f34f74018747ac81838a363de2e357358c31"
+          },
+          {
+            "path": "swegemma/tools/base.py",
+            "size_bytes": 3768,
+            "sha256": "535a0e6d121549b41906685d0e440e8709c4b8b434bc31dcc82fa7740ec66281"
+          },
+          {
+            "path": "swegemma/tools/execution.py",
+            "size_bytes": 6573,
+            "sha256": "ff4df981ae1070334665ce8ab726c231e139ac5cf34bb5ebc4660eada28a7b2d"
+          },
+          {
+            "path": "swegemma/tools/graph.py",
+            "size_bytes": 16816,
+            "sha256": "74b74d151925f99ffa37fd68513c234e25b74136369c3a3b072519d36af577cd"
+          },
+          {
+            "path": "swegemma/tools/workspace.py",
+            "size_bytes": 12316,
+            "sha256": "d38ba2f68636c5e33c9f607bd9e5401dbf81d77125b966ef87c799a1615b05c6"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "name": "tokenizers",
+        "version": "0.22.2",
+        "requires_python": ">=3.9",
+        "requires_dist": [
+          "huggingface-hub>=0.16.4,<2.0",
+          "pytest ; extra == 'testing'",
+          "pytest-asyncio ; extra == 'testing'",
+          "requests ; extra == 'testing'",
+          "numpy ; extra == 'testing'",
+          "datasets ; extra == 'testing'",
+          "ruff ; extra == 'testing'",
+          "ty ; extra == 'testing'",
+          "sphinx ; extra == 'docs'",
+          "sphinx-rtd-theme ; extra == 'docs'",
+          "setuptools-rust ; extra == 'docs'",
+          "tokenizers[testing] ; extra == 'dev'"
+        ],
+        "members": [
+          {
+            "path": "tokenizers-0.22.2.dist-info/METADATA",
+            "size_bytes": 7254,
+            "sha256": "15a5ddaf489f592b77e0a934c0eeb46b51130a94064ca129232afdb0a3868efc"
+          },
+          {
+            "path": "tokenizers-0.22.2.dist-info/RECORD",
+            "size_bytes": 2607,
+            "sha256": "d12cab93031dc452a44cf753277eef6405d645d9adc48b6b59e4432fa721e421"
+          },
+          {
+            "path": "tokenizers-0.22.2.dist-info/WHEEL",
+            "size_bytes": 143,
+            "sha256": "e66c20e670afa7762b2f18a452b1391341c10ca7ab30ea0105bef43630a770c1"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/transformers-5.13.1-py3-none-any.whl",
+        "name": "transformers",
+        "version": "5.13.1",
+        "requires_python": ">=3.10.0",
+        "requires_dist": [
+          "huggingface-hub<2.0,>=1.5.0",
+          "numpy>=1.17",
+          "packaging>=20.0",
+          "pyyaml>=5.1",
+          "regex>=2025.10.22",
+          "tokenizers<=0.23.0,>=0.22.0",
+          "typer",
+          "safetensors>=0.8.0",
+          "tqdm>=4.60",
+          "torch>=2.4; extra == \"torch\"",
+          "accelerate>=1.1.0; extra == \"torch\"",
+          "torchvision; extra == \"vision\"",
+          "Pillow<=15.0,>=10.0.1; extra == \"vision\"",
+          "torchaudio; extra == \"audio\"",
+          "librosa; extra == \"audio\"",
+          "pyctcdecode>=0.4.0; extra == \"audio\"",
+          "phonemizer; extra == \"audio\"",
+          "av; extra == \"video\"",
+          "timm>=1.0.23; extra == \"timm\"",
+          "datasets>=2.15.0; extra == \"quality\"",
+          "ruff==0.14.10; extra == \"quality\"",
+          "GitPython<3.1.19; extra == \"quality\"",
+          "urllib3<2.0.0; extra == \"quality\"",
+          "libcst; extra == \"quality\"",
+          "rich; extra == \"quality\"",
+          "ty==0.0.20; extra == \"quality\"",
+          "tomli; extra == \"quality\"",
+          "transformers-mlinter==0.1.1; extra == \"quality\"",
+          "hf-doc-builder; extra == \"docs\"",
+          "kernels<0.16,>=0.15.2; extra == \"kernels\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"sentencepiece\"",
+          "protobuf; extra == \"sentencepiece\"",
+          "tiktoken; extra == \"tiktoken\"",
+          "blobfile; extra == \"tiktoken\"",
+          "mistral-common[image]>=1.10.0; extra == \"mistral-common\"",
+          "jinja2>=3.1.0; extra == \"chat-template\"",
+          "scikit-learn; extra == \"sklearn\"",
+          "accelerate>=1.1.0; extra == \"accelerate\"",
+          "faiss-cpu; extra == \"retrieval\"",
+          "datasets>=2.15.0; extra == \"retrieval\"",
+          "sagemaker>=2.31.0; extra == \"sagemaker\"",
+          "deepspeed>=0.9.3; extra == \"deepspeed\"",
+          "accelerate>=1.1.0; extra == \"deepspeed\"",
+          "optuna; extra == \"optuna\"",
+          "kernels<0.16,>=0.15.2; extra == \"integrations\"",
+          "optuna; extra == \"integrations\"",
+          "codecarbon>=2.8.1; extra == \"integrations\"",
+          "ray[tune]>=2.7.0; extra == \"integrations\"",
+          "ray[tune]>=2.7.0; extra == \"ray\"",
+          "codecarbon>=2.8.1; extra == \"codecarbon\"",
+          "openai>=1.98.0; extra == \"serving\"",
+          "pydantic>=2; extra == \"serving\"",
+          "uvicorn; extra == \"serving\"",
+          "fastapi; extra == \"serving\"",
+          "starlette; extra == \"serving\"",
+          "rich; extra == \"serving\"",
+          "torch>=2.4; extra == \"serving\"",
+          "accelerate>=1.1.0; extra == \"serving\"",
+          "num2words; extra == \"num2words\"",
+          "optimum-benchmark>=0.3.0; extra == \"benchmark\"",
+          "fugashi>=1.0; extra == \"ja\"",
+          "ipadic<2.0,>=1.0.0; extra == \"ja\"",
+          "unidic_lite>=1.0.7; extra == \"ja\"",
+          "unidic>=1.0.2; extra == \"ja\"",
+          "rhoknp<1.3.1,>=1.1.0; extra == \"ja\"",
+          "sudachipy>=0.6.6; extra == \"ja\"",
+          "sudachidict_core>=20220729; extra == \"ja\"",
+          "pytest<9.0.0,>=7.2.0; extra == \"testing\"",
+          "pytest-asyncio>=1.2.0; extra == \"testing\"",
+          "pytest-random-order; extra == \"testing\"",
+          "pytest-rich; extra == \"testing\"",
+          "pytest-xdist; extra == \"testing\"",
+          "pytest-order; extra == \"testing\"",
+          "pytest-rerunfailures<16.0; extra == \"testing\"",
+          "pytest-timeout; extra == \"testing\"",
+          "pytest-env; extra == \"testing\"",
+          "timeout-decorator; extra == \"testing\"",
+          "parameterized>=0.9; extra == \"testing\"",
+          "psutil; extra == \"testing\"",
+          "dill<0.3.5; extra == \"testing\"",
+          "evaluate>=0.4.6; extra == \"testing\"",
+          "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"testing\"",
+          "nltk<=3.8.1; extra == \"testing\"",
+          "sacremoses; extra == \"testing\"",
+          "rjieba; extra == \"testing\"",
+          "beautifulsoup4; extra == \"testing\"",
+          "tensorboard; extra == \"testing\"",
+          "sacrebleu<2.0.0,>=1.4.12; extra == \"testing\"",
+          "filelock; extra == \"testing\"",
+          "hf-doc-builder; extra == \"testing\"",
+          "datasets>=2.15.0; extra == \"testing\"",
+          "ruff==0.14.10; extra == \"testing\"",
+          "GitPython<3.1.19; extra == \"testing\"",
+          "urllib3<2.0.0; extra == \"testing\"",
+          "libcst; extra == \"testing\"",
+          "rich; extra == \"testing\"",
+          "ty==0.0.20; extra == \"testing\"",
+          "tomli; extra == \"testing\"",
+          "transformers-mlinter==0.1.1; extra == \"testing\"",
+          "faiss-cpu; extra == \"testing\"",
+          "datasets>=2.15.0; extra == \"testing\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"testing\"",
+          "protobuf; extra == \"testing\"",
+          "openai>=1.98.0; extra == \"testing\"",
+          "pydantic>=2; extra == \"testing\"",
+          "uvicorn; extra == \"testing\"",
+          "fastapi; extra == \"testing\"",
+          "starlette; extra == \"testing\"",
+          "rich; extra == \"testing\"",
+          "torch>=2.4; extra == \"testing\"",
+          "accelerate>=1.1.0; extra == \"testing\"",
+          "mistral-common[image]>=1.10.0; extra == \"testing\"",
+          "deepspeed>=0.9.3; extra == \"deepspeed-testing\"",
+          "accelerate>=1.1.0; extra == \"deepspeed-testing\"",
+          "pytest<9.0.0,>=7.2.0; extra == \"deepspeed-testing\"",
+          "pytest-asyncio>=1.2.0; extra == \"deepspeed-testing\"",
+          "pytest-random-order; extra == \"deepspeed-testing\"",
+          "pytest-rich; extra == \"deepspeed-testing\"",
+          "pytest-xdist; extra == \"deepspeed-testing\"",
+          "pytest-order; extra == \"deepspeed-testing\"",
+          "pytest-rerunfailures<16.0; extra == \"deepspeed-testing\"",
+          "pytest-timeout; extra == \"deepspeed-testing\"",
+          "pytest-env; extra == \"deepspeed-testing\"",
+          "timeout-decorator; extra == \"deepspeed-testing\"",
+          "parameterized>=0.9; extra == \"deepspeed-testing\"",
+          "psutil; extra == \"deepspeed-testing\"",
+          "dill<0.3.5; extra == \"deepspeed-testing\"",
+          "evaluate>=0.4.6; extra == \"deepspeed-testing\"",
+          "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"deepspeed-testing\"",
+          "nltk<=3.8.1; extra == \"deepspeed-testing\"",
+          "sacremoses; extra == \"deepspeed-testing\"",
+          "rjieba; extra == \"deepspeed-testing\"",
+          "beautifulsoup4; extra == \"deepspeed-testing\"",
+          "tensorboard; extra == \"deepspeed-testing\"",
+          "sacrebleu<2.0.0,>=1.4.12; extra == \"deepspeed-testing\"",
+          "filelock; extra == \"deepspeed-testing\"",
+          "hf-doc-builder; extra == \"deepspeed-testing\"",
+          "datasets>=2.15.0; extra == \"deepspeed-testing\"",
+          "ruff==0.14.10; extra == \"deepspeed-testing\"",
+          "GitPython<3.1.19; extra == \"deepspeed-testing\"",
+          "urllib3<2.0.0; extra == \"deepspeed-testing\"",
+          "libcst; extra == \"deepspeed-testing\"",
+          "rich; extra == \"deepspeed-testing\"",
+          "ty==0.0.20; extra == \"deepspeed-testing\"",
+          "tomli; extra == \"deepspeed-testing\"",
+          "transformers-mlinter==0.1.1; extra == \"deepspeed-testing\"",
+          "faiss-cpu; extra == \"deepspeed-testing\"",
+          "datasets>=2.15.0; extra == \"deepspeed-testing\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"deepspeed-testing\"",
+          "protobuf; extra == \"deepspeed-testing\"",
+          "openai>=1.98.0; extra == \"deepspeed-testing\"",
+          "pydantic>=2; extra == \"deepspeed-testing\"",
+          "uvicorn; extra == \"deepspeed-testing\"",
+          "fastapi; extra == \"deepspeed-testing\"",
+          "starlette; extra == \"deepspeed-testing\"",
+          "rich; extra == \"deepspeed-testing\"",
+          "torch>=2.4; extra == \"deepspeed-testing\"",
+          "accelerate>=1.1.0; extra == \"deepspeed-testing\"",
+          "mistral-common[image]>=1.10.0; extra == \"deepspeed-testing\"",
+          "optuna; extra == \"deepspeed-testing\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"deepspeed-testing\"",
+          "protobuf; extra == \"deepspeed-testing\"",
+          "torch>=2.4; extra == \"all\"",
+          "accelerate>=1.1.0; extra == \"all\"",
+          "torchvision; extra == \"all\"",
+          "Pillow<=15.0,>=10.0.1; extra == \"all\"",
+          "torchaudio; extra == \"all\"",
+          "librosa; extra == \"all\"",
+          "pyctcdecode>=0.4.0; extra == \"all\"",
+          "phonemizer; extra == \"all\"",
+          "av; extra == \"all\"",
+          "kernels<0.16,>=0.15.2; extra == \"all\"",
+          "timm>=1.0.23; extra == \"all\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"all\"",
+          "protobuf; extra == \"all\"",
+          "tiktoken; extra == \"all\"",
+          "blobfile; extra == \"all\"",
+          "jinja2>=3.1.0; extra == \"all\"",
+          "num2words; extra == \"all\"",
+          "mistral-common[image]>=1.10.0; extra == \"all\"",
+          "torch>=2.4; extra == \"dev\"",
+          "accelerate>=1.1.0; extra == \"dev\"",
+          "torchvision; extra == \"dev\"",
+          "Pillow<=15.0,>=10.0.1; extra == \"dev\"",
+          "torchaudio; extra == \"dev\"",
+          "librosa; extra == \"dev\"",
+          "pyctcdecode>=0.4.0; extra == \"dev\"",
+          "phonemizer; extra == \"dev\"",
+          "av; extra == \"dev\"",
+          "kernels<0.16,>=0.15.2; extra == \"dev\"",
+          "timm>=1.0.23; extra == \"dev\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"dev\"",
+          "protobuf; extra == \"dev\"",
+          "tiktoken; extra == \"dev\"",
+          "blobfile; extra == \"dev\"",
+          "jinja2>=3.1.0; extra == \"dev\"",
+          "num2words; extra == \"dev\"",
+          "mistral-common[image]>=1.10.0; extra == \"dev\"",
+          "pytest<9.0.0,>=7.2.0; extra == \"dev\"",
+          "pytest-asyncio>=1.2.0; extra == \"dev\"",
+          "pytest-random-order; extra == \"dev\"",
+          "pytest-rich; extra == \"dev\"",
+          "pytest-xdist; extra == \"dev\"",
+          "pytest-order; extra == \"dev\"",
+          "pytest-rerunfailures<16.0; extra == \"dev\"",
+          "pytest-timeout; extra == \"dev\"",
+          "pytest-env; extra == \"dev\"",
+          "timeout-decorator; extra == \"dev\"",
+          "parameterized>=0.9; extra == \"dev\"",
+          "psutil; extra == \"dev\"",
+          "dill<0.3.5; extra == \"dev\"",
+          "evaluate>=0.4.6; extra == \"dev\"",
+          "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"dev\"",
+          "nltk<=3.8.1; extra == \"dev\"",
+          "sacremoses; extra == \"dev\"",
+          "rjieba; extra == \"dev\"",
+          "beautifulsoup4; extra == \"dev\"",
+          "tensorboard; extra == \"dev\"",
+          "sacrebleu<2.0.0,>=1.4.12; extra == \"dev\"",
+          "filelock; extra == \"dev\"",
+          "hf-doc-builder; extra == \"dev\"",
+          "datasets>=2.15.0; extra == \"dev\"",
+          "ruff==0.14.10; extra == \"dev\"",
+          "GitPython<3.1.19; extra == \"dev\"",
+          "urllib3<2.0.0; extra == \"dev\"",
+          "libcst; extra == \"dev\"",
+          "rich; extra == \"dev\"",
+          "ty==0.0.20; extra == \"dev\"",
+          "tomli; extra == \"dev\"",
+          "transformers-mlinter==0.1.1; extra == \"dev\"",
+          "faiss-cpu; extra == \"dev\"",
+          "datasets>=2.15.0; extra == \"dev\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"dev\"",
+          "protobuf; extra == \"dev\"",
+          "openai>=1.98.0; extra == \"dev\"",
+          "pydantic>=2; extra == \"dev\"",
+          "uvicorn; extra == \"dev\"",
+          "fastapi; extra == \"dev\"",
+          "starlette; extra == \"dev\"",
+          "rich; extra == \"dev\"",
+          "torch>=2.4; extra == \"dev\"",
+          "accelerate>=1.1.0; extra == \"dev\"",
+          "mistral-common[image]>=1.10.0; extra == \"dev\"",
+          "fugashi>=1.0; extra == \"dev\"",
+          "ipadic<2.0,>=1.0.0; extra == \"dev\"",
+          "unidic_lite>=1.0.7; extra == \"dev\"",
+          "unidic>=1.0.2; extra == \"dev\"",
+          "rhoknp<1.3.1,>=1.1.0; extra == \"dev\"",
+          "sudachipy>=0.6.6; extra == \"dev\"",
+          "sudachidict_core>=20220729; extra == \"dev\"",
+          "scikit-learn; extra == \"dev\""
+        ],
+        "members": [
+          {
+            "path": "transformers-5.13.1.dist-info/METADATA",
+            "size_bytes": 32989,
+            "sha256": "c3c8d11e913b70d1c2b591fa2962978680ee93e9cd21e3ee4f529dabfae43c0b"
+          },
+          {
+            "path": "transformers-5.13.1.dist-info/RECORD",
+            "size_bytes": 272116,
+            "sha256": "beb1f7deae34b66f4519902de7d68d123f1b27a4e2eeb20f2ee99fb2aa89001b"
+          },
+          {
+            "path": "transformers-5.13.1.dist-info/WHEEL",
+            "size_bytes": 91,
+            "sha256": "2b6eb4118ce7cd7b09601406aa623c553c4476265836f0d9c16f5c061f7efcc0"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/vllm-0.19.1-cp38-abi3-manylinux_2_31_x86_64.whl",
+        "name": "vllm",
+        "version": "0.19.1",
+        "requires_python": "<3.14,>=3.10",
+        "requires_dist": [
+          "regex",
+          "cachetools",
+          "psutil",
+          "sentencepiece",
+          "numpy",
+          "requests>=2.26.0",
+          "tqdm",
+          "blake3",
+          "py-cpuinfo",
+          "transformers!=5.0.*,!=5.1.*,!=5.2.*,!=5.3.*,!=5.4.*,!=5.5.0,>=4.56.0",
+          "tokenizers>=0.21.1",
+          "protobuf!=6.30.*,!=6.31.*,!=6.32.*,!=6.33.0.*,!=6.33.1.*,!=6.33.2.*,!=6.33.3.*,!=6.33.4.*,>=5.29.6",
+          "fastapi[standard]>=0.115.0",
+          "aiohttp>=3.13.3",
+          "openai>=2.0.0",
+          "pydantic>=2.12.0",
+          "prometheus_client>=0.18.0",
+          "pillow",
+          "prometheus-fastapi-instrumentator>=7.0.0",
+          "tiktoken>=0.6.0",
+          "lm-format-enforcer==0.11.3",
+          "llguidance<1.4.0,>=1.3.0; platform_machine == \"x86_64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\" or platform_machine == \"s390x\" or platform_machine == \"ppc64le\"",
+          "outlines_core==0.2.11",
+          "diskcache==5.6.3",
+          "lark==1.2.2",
+          "xgrammar<1.0.0,>=0.1.32; platform_machine == \"x86_64\" or platform_machine == \"aarch64\" or platform_machine == \"arm64\" or platform_machine == \"s390x\" or platform_machine == \"ppc64le\"",
+          "typing_extensions>=4.10",
+          "filelock>=3.16.1",
+          "partial-json-parser",
+          "pyzmq>=25.0.0",
+          "msgspec",
+          "gguf>=0.17.0",
+          "mistral_common[image]>=1.10.0",
+          "opencv-python-headless>=4.13.0",
+          "pyyaml",
+          "six>=1.16.0; python_version > \"3.11\"",
+          "setuptools<81.0.0,>=77.0.3; python_version > \"3.11\"",
+          "einops",
+          "compressed-tensors==0.15.0.1",
+          "depyf==0.20.0",
+          "cloudpickle",
+          "watchfiles",
+          "python-json-logger",
+          "ninja",
+          "pybase64",
+          "cbor2",
+          "ijson",
+          "setproctitle",
+          "openai-harmony>=0.0.3",
+          "anthropic>=0.71.0",
+          "model-hosting-container-standards<1.0.0,>=0.1.13",
+          "mcp",
+          "opentelemetry-sdk>=1.27.0",
+          "opentelemetry-api>=1.27.0",
+          "opentelemetry-exporter-otlp>=1.27.0",
+          "opentelemetry-semantic-conventions-ai>=0.4.1",
+          "numba==0.61.2",
+          "torch==2.10.0",
+          "torchaudio==2.10.0",
+          "torchvision==0.25.0",
+          "flashinfer-python==0.6.6",
+          "flashinfer-cubin==0.6.6",
+          "nvidia-cudnn-frontend<1.19.0,>=1.13.0",
+          "nvidia-cutlass-dsl>=4.4.0.dev1",
+          "quack-kernels>=0.2.7",
+          "zentorch; extra == \"zen\"",
+          "pandas; extra == \"bench\"",
+          "matplotlib; extra == \"bench\"",
+          "seaborn; extra == \"bench\"",
+          "datasets; extra == \"bench\"",
+          "scipy; extra == \"bench\"",
+          "plotly; extra == \"bench\"",
+          "tensorizer==2.10.1; extra == \"tensorizer\"",
+          "fastsafetensors>=0.2.2; extra == \"fastsafetensors\"",
+          "instanttensor>=0.1.5; extra == \"instanttensor\"",
+          "runai-model-streamer[azure,gcs,s3]>=0.15.7; extra == \"runai\"",
+          "av; extra == \"audio\"",
+          "resampy; extra == \"audio\"",
+          "scipy; extra == \"audio\"",
+          "soundfile; extra == \"audio\"",
+          "mistral_common[audio]; extra == \"audio\"",
+          "petit-kernel; extra == \"petit-kernel\"",
+          "helion==0.3.2; extra == \"helion\"",
+          "smg-grpc-servicer[vllm]>=0.5.0; extra == \"grpc\"",
+          "opentelemetry-sdk>=1.26.0; extra == \"otel\"",
+          "opentelemetry-api>=1.26.0; extra == \"otel\"",
+          "opentelemetry-exporter-otlp>=1.26.0; extra == \"otel\"",
+          "opentelemetry-semantic-conventions-ai>=0.4.1; extra == \"otel\""
+        ],
+        "members": [
+          {
+            "path": "vllm-0.19.1.dist-info/METADATA",
+            "size_bytes": 10013,
+            "sha256": "f76ea566acba199ef8dd91bde6bb162795c7f8876c206a865cbb3b94fbcf7bc2"
+          },
+          {
+            "path": "vllm-0.19.1.dist-info/RECORD",
+            "size_bytes": 251036,
+            "sha256": "8bf8c7d1bd2481944a13829243c81bc4e93cf522bea4f9fc002f20a0ebe67cfc"
+          },
+          {
+            "path": "vllm-0.19.1.dist-info/WHEEL",
+            "size_bytes": 103,
+            "sha256": "3195b844c385a39b126f4c647a4bee9c534d9bc9d95a3025edc887ed33933941"
+          }
+        ]
+      },
+      {
+        "path": "docs/archive/xgrammar-0.2.5.post1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "name": "xgrammar",
+        "version": "0.2.5.post1",
+        "requires_python": "<4,>=3.8",
+        "requires_dist": [
+          "apache-tvm-ffi>=0.1.9",
+          "pydantic",
+          "torch>=1.10.0",
+          "transformers<5,>=4.38.0",
+          "triton; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+          "numpy",
+          "typing-extensions>=4.9.0",
+          "huggingface-hub[cli]; extra == \"test\"",
+          "protobuf; extra == \"test\"",
+          "pytest; extra == \"test\"",
+          "sentencepiece; extra == \"test\"",
+          "tiktoken; extra == \"test\"",
+          "mlx-lm; platform_system == \"Darwin\" and platform_machine == \"arm64\" and extra == \"metal\"",
+          "transformers<5.13; platform_system == \"Darwin\" and platform_machine == \"arm64\" and extra == \"metal\""
+        ],
+        "members": [
+          {
+            "path": "xgrammar-0.2.5.post1.dist-info/METADATA",
+            "size_bytes": 8530,
+            "sha256": "1ed024a0bb9718c87a0b137aeeb8790dc994d0d6ffa2e2d7aff0ebcc0b6e5257"
+          },
+          {
+            "path": "xgrammar-0.2.5.post1.dist-info/RECORD",
+            "size_bytes": 4721,
+            "sha256": "77800ea3a65db835238f47bdf30e8c23122a3d3a8271e1460f278f8b84fbc777"
+          },
+          {
+            "path": "xgrammar-0.2.5.post1.dist-info/WHEEL",
+            "size_bytes": 156,
+            "sha256": "ff085f3d715a4e97dea2901f950f986c870ef1816434b1bceeaa2d6a27a95924"
+          }
+        ]
+      }
+    ],
+    "inspection": "STATIC_SOURCE_ONLY; NO PACKAGE IMPORTS; RECORD bytes pinned, full RECORD verification pending maintainer validator",
+    "missing": [
+      "version-matched scripts/inference.py and scripts/metric.py plus their runtime/bootstrap configuration",
+      "release provenance binding these wheels and README to current official scorer; omitted dependency pins from the official environment manifest",
+      "final submission handoff and total runtime policy not established by supplied package helpers"
     ]
   }
 }
