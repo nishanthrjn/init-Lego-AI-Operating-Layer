@@ -175,3 +175,143 @@ if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 scorer entry-point reconciliation fail
 Expected: scorer reconciliation local document checks pass; conditional baseline
 unblocking only. NOT RUN — Awaiting maintainer execution. M2 implementation awaits
 this result and a separate request; live execution and submission are not authorized.
+
+## M2 minimal baseline authoring — 2026-10-18
+
+FORGEAI-GEMMA4-M2-MINIMAL-BASELINE-1: M2_BASELINE_SOURCE_PREPARED.
+Verification: **NOT RUN — Awaiting maintainer execution.** The preceding
+documentary gate passed per the maintainer's supplied output. This separately
+requested slice authors a candidate and offline controls; it does not establish
+official compilation, runtime isolation, task success or Kaggle acceptance.
+M1 remains partial. No live model execution or submission is authorized.
+
+Baseline Git commit: `a4cfd4282c3d0ea885554cb9a5159cdb115b44bc`.
+Scope is four new candidate files, one root validator, one focused standard-library
+test module and this milestone update. Existing registers, official samples and
+wheels, production ForgeAI/LegoAI, KiSSKI custody, frozen evaluation and empty
+pilot admissions are preserved. No dependency or lock changes.
+
+Candidate (also the exact ZIP member layout, without `baseline/` prefix):
+
+```text
+experiments/gemma4_competition/baseline/
+  agent.yaml
+  prompts/system.md
+  configs/sampling.yaml
+  eval_config.yaml
+```
+
+One `LlmAgent`, `forgeai_gemma4_baseline`, uses
+`gemma-4-31b-it-qat-w4a16-ct` and exactly run_command, read_file, edit_file,
+write_file, get_status, submit_patch. Root instruction and generation config use
+the verified `!include` syntax. Sampling stays temperature 0.2, top_p 0.95,
+max_output_tokens 16384, thinking_budget 4096, include_thoughts true. Evaluation
+stays timeout_seconds 60, max_tool_calls 10, max_time_minutes 1, max_turns 50.
+The instruction is copied exactly from the latest official contract register;
+the validator derives its expected text from that preserved record. Prompt
+policy does not itself enforce security, protected-file handling or tool effects.
+
+### Static source basis and validation design
+
+Pinned adk-submission 0.2.13 `schema.py`, `yaml_loader.py`, `registry.py`,
+`compiler.py`, `context.py` and `builders/llm.py` supply the actual field,
+include, registry and constructor contracts. Its `resolvers/generation.py`
+constructs Google generation types and applies the library's LiteLLM reasoning
+patch; it is not bypassed. swegemma 0.2.11 `config.build_submission_limits`
+supplies actual limits/constraints; importing it also imports package runtime
+dependencies, even though no evaluator or sandbox is constructed. adk-eval-core
+0.1.0 remains a pinned dependency. Raw wheel hashes are checked against the
+unchanged source register; installed Python sources and METADATA of these three
+packages must exactly match the supplied wheels before imports.
+
+The official gate calls `validate_directory` and full `compile_submission` with
+closed registries and the real generation types. Its injected agent constructor
+captures resolved values and its inert model/tool objects refuse invocation.
+This validates compilation with offline factories, not a live ADK agent or the
+hidden scoring factory. The child receives an empty home and a minimal environment;
+Python audit hooks refuse network/process effects and common credential-file
+reads. These guards are defense in depth for trusted pinned packages, not a
+general OS sandbox against arbitrary native code. No external output or raw
+exception is printed; failures expose bounded categories. Import-time effects
+or unavailable imports stop validation, never trigger installation or fallback.
+
+Positive controls: exact canonical files (LF/CRLF equivalent), include resolution,
+compiled identity/prompt/model/tools/sampling, stable ZIP bytes independent of
+dictionary order, archive reinspection and SHA256 manifest. Package bytes use LF,
+ZIP_STORED, lexical member order, 1980 timestamp, Unix regular-file 0644 modes,
+no extra members, and a local cap below 1 MiB (well below the official 3 GiB).
+Artifacts are written exclusively into a newly created temporary directory after
+compiler success. Historical custody is never an output destination.
+
+Official compiler negative controls use isolated copies: unknown field, unknown
+tool, unregistered model, output 32769 and parent-directory include escape.
+Separate baseline-policy controls cover those plus missing agent.yaml, links,
+disallowed/extra files, adapters/subagent declarations, budget drift, mixed-model
+extra roots, unsafe ZIP paths and an enclosing archive directory. No claim that
+the official compiler rejects every configuration excluded by this narrower
+baseline. The symlink test requires host permission to create a temporary symlink;
+it fails rather than silently skips when unavailable. No source fixture is edited.
+All controls remain unexecuted by the coding agent.
+
+### Maintainer execution and environment gate
+
+Working directory: repository root. Prerequisites: Git on PATH, Python >=3.12,
+readable preserved wheel bytes, temporary-directory write access and permission
+to create a temporary file symlink (Windows Developer Mode or equivalent existing
+host policy). No credentials or additional environment variables are required.
+The existing project Python 3.14 environment has no declared Kaggle dependencies;
+an environment-blocked result is expected if they are absent.
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 M2 baseline validation failed or environment blocked' }
+```
+
+This runs the focused standard-library tests, then the guarded official compiler
+in the same interpreter, then packages only after success. To run only the focused
+policy tests separately (this does not qualify the compiler or package):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p test_m2_minimal_baseline.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 M2 offline policy controls failed' }
+```
+
+If a separate environment is needed, its provisioning is a later explicit
+maintainer decision; this validator installs nothing. It must contain the exact
+supplied adk-submission 0.2.13, adk-eval-core 0.1.0 and swegemma 0.2.11 bytes,
+google-adk 1.36.1, google-genai 2.11.0, packaging, and their compatible non-extra
+dependency closure. The validator checks installed distribution metadata,
+Requires-Python and Requires-Dist recursively before official imports and records
+resolved versions on success. Core dependencies include PyYAML, pydantic,
+docker (library only), rich, numpy, cachetools, networkx, python-dotenv, litellm,
+pandas, tokenizers, torchvision, transformers, safetensors and accelerate. The
+full authoritative constraints are the preserved wheel METADATA, not this list.
+No serving extras, vLLM startup, model weights, Docker engine or GPU are needed
+for this compile-only gate. All transitive dependency compatibility must still
+be satisfied; the 41-wheel collection is not claimed to be a complete environment.
+
+For an already provisioned compatible environment, set the path to its existing
+interpreter (no activation/install performed by this command):
+
+```powershell
+$gemmaCompilerPython = Read-Host 'Absolute path to the existing compatible Python executable'
+& $gemmaCompilerPython -B .\validate_forgeai_gemma4_m2_minimal_baseline_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 M2 baseline validation failed or environment blocked' }
+```
+
+Expected states are sequential: M2_BASELINE_LOCAL_STATIC_CHECKS_PASSED,
+M2_BASELINE_OFFICIAL_COMPILER_VALIDATED, then M2_BASELINE_PACKAGE_VALIDATED with
+artifact directory/hash/manifest. Missing/incompatible dependencies produce
+OFFICIAL_COMPILER_VALIDATION_BLOCKED_BY_ENVIRONMENT and
+M2_BASELINE_INCONCLUSIVE_ENVIRONMENT_BLOCKED, exit 2; no package qualification.
+Other failed controls exit 1. Staged versions must match working versions if
+staged; the validator never stages files. Paste results before further work.
+
+After a complete offline pass, the smallest next separately authorized slice is
+a public-task smoke readiness review of the exact candidate/environment and public
+task setup. Model execution and Kaggle submission require their own authorization.
+Hidden scorer parity, leaderboard correctness, quality, and the Paper Track
+discrepancy remain unresolved. M3 benchmark/research work does not begin on the
+strength of compiler validation alone.
+
+Proposed commit: `feat(gemma4): prepare minimal M2 baseline and offline compiler gate`.
