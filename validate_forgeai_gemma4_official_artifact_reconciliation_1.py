@@ -88,12 +88,12 @@ def documents(values: dict[str, bytes]) -> None:
         raise ValueError("conditional baseline boundary changed")
     contract = values[CONTRACT].decode("utf-8")
     for required in (
-        DECISION, "single-root", "HARNESS_README", "C2", "NOT RUN",
+        DECISION, "Root fields only:", "HARNESS_README", "C2", "NOT RUN",
         "NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.",
         *("| R" + str(i) + " |" for i in range(1, 8)),
     ):
         if required not in contract:
-            raise ValueError("missing documentary boundary")
+            raise ValueError(f"missing documentary boundary: {required!r}")
 
 
 def artifact(data: bytes, entry: dict) -> None:
