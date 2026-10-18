@@ -792,12 +792,12 @@
     }
   ],
   "reconciliation": "FORGEAI-GEMMA4-OFFICIAL-ARTIFACT-RECONCILIATION-1",
-  "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
+  "decision": "M1_PARTIAL_M2_BASELINE_CONDITIONALLY_UNBLOCKED",
   "provenance_policy": "Maintainer-supplied official copies; hashes identify local bytes, not independent authentication. Retrieval date unknown unless explicitly evidenced; capture filenames indicate 2026-10-18. No wheels installed or notebook cells executed.",
   "missing_artifacts": [
-    "version-matched scripts/inference.py and scripts/metric.py plus their runtime/bootstrap configuration",
-    "release provenance binding these wheels and README to current official scorer; omitted dependency pins from the official environment manifest",
-    "final submission handoff and total runtime policy not established by supplied package helpers"
+    "Optional public scorer release/parity evidence if organizers publish it; not a prerequisite for the limited M2 baseline",
+    "Public sandbox/setup.py and compatible participant environment required before local evaluator smoke, not before config construction",
+    "Final organizer receipt needed for any future submission acceptance claim; no submission authorized"
   ],
   "acquisition_review": {
     "task": "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1",
@@ -3221,6 +3221,42 @@
       "version-matched scripts/inference.py and scripts/metric.py plus their runtime/bootstrap configuration",
       "release provenance binding these wheels and README to current official scorer; omitted dependency pins from the official environment manifest",
       "final submission handoff and total runtime policy not established by supplied package helpers"
+    ]
+  },
+  "scorer_entrypoint_review": {
+    "task": "FORGEAI-GEMMA4-SCORER-ENTRYPOINT-RECONCILIATION-1",
+    "baseline": "52b09fb84e72dde5a5855822fb674772817976c9",
+    "decision": "M1_PARTIAL_M2_BASELINE_CONDITIONALLY_UNBLOCKED",
+    "prior_implementation_validation": "MAINTAINER_REPORTED_PASS",
+    "observed_date": "2026-10-18",
+    "entrypoint_distribution": "NOT_FOUND_IN_SUPPLIED_WHEELS_OR_ACCESSIBLE_PUBLIC_LISTING; NOT_PROVEN_PRIVATE",
+    "baseline_model": "gemma-4-31b-it-qat-w4a16-ct",
+    "scope": "BASELINE_CONSTRUCTION_AND_OFFLINE_VALIDATION_ONLY; NO LIVE_EXECUTION_OR_SUBMISSION",
+    "public_sources": [
+      {
+        "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent",
+        "evidence": "Indexed official overview requires submission.zip with root agent.yaml; optional adapters/subagents.",
+        "sha256": null,
+        "access": "SEARCH_INDEX_OFFICIAL_PARTIAL"
+      },
+      {
+        "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/input",
+        "evidence": "Public input listing includes sandbox/setup.py and training resources; scripts/inference.py and scripts/metric.py not listed in visible inventory. Describes automated ZIP-to-patch prediction output.",
+        "sha256": null,
+        "access": "SEARCH_INDEX_OFFICIAL_PARTIAL; DIRECT_BODY_EMPTY"
+      },
+      {
+        "url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/output",
+        "evidence": "Official starter output lists submission.zip and Version 3 of 3; not a source version pin for the supplied notebook.",
+        "sha256": null,
+        "access": "SEARCH_INDEX_OFFICIAL_PARTIAL"
+      },
+      {
+        "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743683",
+        "evidence": "Kaggle staff Ryan Holbrook states notebook must generate submission.zip before scoring. Participant claims excluded from authority.",
+        "sha256": null,
+        "access": "SEARCH_INDEX_OFFICIAL_STAFF_PARTIAL"
+      }
     ]
   }
 }

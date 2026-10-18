@@ -10,19 +10,20 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-BASELINE = "f14b68aad16329c8b4f4f83e0a03f2e22e1944cb"
+BASELINE = "52b09fb84e72dde5a5855822fb674772817976c9"
 SELF = "validate_forgeai_gemma4_official_artifact_reconciliation_1.py"
 DIRECTORY = "experiments/gemma4_competition/"
 REGISTER = DIRECTORY + "source-register.json"
 CONTRACT = DIRECTORY + "OFFICIAL-CONTRACT-REGISTER.md"
-DECISION = "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED"
+DECISION = "M1_PARTIAL_M2_BASELINE_CONDITIONALLY_UNBLOCKED"
+HISTORICAL_DECISION = "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED"
 PINS = {
-    "experiments/gemma4_competition/source-register.json": "6a77af7ca4c251826b924c76caeb00c6c87735c55c0f2b64e040993c1bf9ba04",
-    "experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md": "2992dd3432327c093539ccdc07422a4ac3ee6f4d50f94eaa5a39bd1744021463",
+    "experiments/gemma4_competition/source-register.json": "5672f8742ce26f1169b874fa3398fca3f80accc5f514eda06c62c4fe9e2b4caf",
+    "experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md": "37faae477bc39915db1b23c3a3c4c36e0cd7708560dcbae4785a0da89166e72a",
     "planning/FORGEAI-GEMMA4-COMPETITION-READINESS-1.md": "283c75ba8e9e0577865e48b364b5b8a46e0918418d04c80ed8396c6609468b39",
-    "planning/GEMMA4-COMPETITION-REQUIREMENTS.md": "e63a2195ca6f8bdc65e58087c502365481e0addb303afa30576b247de65169b9",
+    "planning/GEMMA4-COMPETITION-REQUIREMENTS.md": "18edabe76bc58c0075b1dc200192c49cc7e5665691a332ac5694d7e132de906d",
     "planning/GEMMA4-RESEARCH-PLAN.md": "e25d3d5ff24725c439dfe101ee5e370e16b066d04279dda22276a5399c1a5044",
-    "planning/GEMMA4-IMPLEMENTATION-MILESTONES.md": "70be0362bc410c612e30dedacf13695b467d18581b454f055bb460c4c1fd8117"
+    "planning/GEMMA4-IMPLEMENTATION-MILESTONES.md": "d709be02106704e77c3a2a3ad063c87c0fefef930d46b8ffe3a4471ab32fcfbf"
 }
 
 
@@ -58,7 +59,7 @@ def documents(values: dict[str, bytes]) -> None:
     acquisition = register["acquisition_review"]
     if (
         acquisition["task"] != "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1"
-        or acquisition["decision"] != DECISION
+        or acquisition["decision"] != HISTORICAL_DECISION
         or acquisition["new_artifacts_supplied"] is not True
         or acquisition["prior_reconciliation_validation"] != "MAINTAINER_REPORTED_PASS"
     ):
@@ -73,13 +74,21 @@ def documents(values: dict[str, bytes]) -> None:
     review = register["implementation_review"]
     if (
         review["task"] != "FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1"
-        or review["decision"] != DECISION
+        or review["decision"] != HISTORICAL_DECISION
         or len(review["packages"]) != 41
     ):
         raise ValueError("implementation review boundary changed")
+    entrypoint = register["scorer_entrypoint_review"]
+    if (
+        entrypoint["decision"] != DECISION
+        or entrypoint["baseline_model"] != "gemma-4-31b-it-qat-w4a16-ct"
+        or entrypoint["prior_implementation_validation"] != "MAINTAINER_REPORTED_PASS"
+        or entrypoint["scope"] != "BASELINE_CONSTRUCTION_AND_OFFLINE_VALIDATION_ONLY; NO LIVE_EXECUTION_OR_SUBMISSION"
+    ):
+        raise ValueError("conditional baseline boundary changed")
     contract = values[CONTRACT].decode("utf-8")
     for required in (
-        DECISION, "M2 BLOCKED", "HARNESS_README", "C2", "NOT RUN",
+        DECISION, "single-root", "HARNESS_README", "C2", "NOT RUN",
         "NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.",
         *("| R" + str(i) + " |" for i in range(1, 8)),
     ):
@@ -142,7 +151,6 @@ def main() -> int:
             "planning/GEMMA4-COMPETITION-REQUIREMENTS.md",
             "planning/GEMMA4-IMPLEMENTATION-MILESTONES.md",
         }
-        allowed |= {name for name in artifacts if "/docs/archive/" in name}
         changed = set(git("diff", "--name-only", "--no-renames", BASELINE).decode().splitlines())
         staged = set(git("diff", "--cached", "--name-only", "--no-renames", BASELINE).decode().splitlines())
         changed |= staged
@@ -197,9 +205,9 @@ def main() -> int:
         print(f"FAIL: {phase}: {error}; later phases NOT RUN")
         return 1
     print(
-        "FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1 LOCAL DOCUMENT CHECKS PASSED; "
-        "M1 PARTIAL; M2 BLOCKED; M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; "
-        "NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED"
+        "FORGEAI-GEMMA4-SCORER-ENTRYPOINT-RECONCILIATION-1 LOCAL DOCUMENT CHECKS PASSED; "
+        "M1_PARTIAL_M2_BASELINE_CONDITIONALLY_UNBLOCKED; "
+        "BASELINE CONSTRUCTION AND OFFLINE VALIDATION ONLY; NO LIVE EXECUTION OR SUBMISSION AUTHORIZED"
     )
     return 0
 

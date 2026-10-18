@@ -151,3 +151,27 @@ if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 versioned harness evidence validation 
 Expected: FORGEAI-GEMMA4-VERSIONED-HARNESS-IMPLEMENTATION-1 LOCAL DOCUMENT CHECKS PASSED;
 M1 PARTIAL; M2 BLOCKED. Verification: NOT RUN — Awaiting maintainer execution.
 NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+## Scorer entry-point decision — 2026-10-18
+
+M1_PARTIAL_M2_BASELINE_CONDITIONALLY_UNBLOCKED.
+The current official register supersedes the earlier blanket M2 block for
+single-root candidate construction and offline official validation only.
+Use the exact 31B baseline, six tools and four-file configuration specified there.
+Public ZIP handoff and pinned compiler suffice for that limited scope; hidden
+scorer source availability is unestablished and is not a required acquisition.
+No hidden parity, leaderboard correctness, quality or runtime isolation claim.
+M1 remains partial; later smoke needs public setup/environment evidence and
+separate authorization. No agent is implemented in this documentary slice.
+
+Maintainer command (repository root, existing locked environment and Git;
+no new environment variables or credentials):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_official_artifact_reconciliation_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 scorer entry-point reconciliation failed' }
+```
+
+Expected: scorer reconciliation local document checks pass; conditional baseline
+unblocking only. NOT RUN — Awaiting maintainer execution. M2 implementation awaits
+this result and a separate request; live execution and submission are not authorized.
