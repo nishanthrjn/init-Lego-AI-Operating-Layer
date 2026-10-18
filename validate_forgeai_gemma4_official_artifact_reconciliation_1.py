@@ -6,13 +6,20 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-BASELINE = "e8e14bd9a075ec7b2cc39a1aa3c9a405d452a462"
+BASELINE = "c859f316bb4eff6a7a0cb86a5aabefe557e972c9"
 SELF = "validate_forgeai_gemma4_official_artifact_reconciliation_1.py"
 DIRECTORY = "experiments/gemma4_competition/"
 REGISTER = DIRECTORY + "source-register.json"
 CONTRACT = DIRECTORY + "OFFICIAL-CONTRACT-REGISTER.md"
 DECISION = "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED"
-PINS = {'experiments/gemma4_competition/source-register.json': '18eb722e5cbf0361f498bd1d31be4fb5d3ddb447293f3690ad9c9129b22bca75', 'experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md': '3bb399fa300deaf7b3d728b47a278d8347c198771b6a59f197957954984d960e', 'planning/FORGEAI-GEMMA4-COMPETITION-READINESS-1.md': '283c75ba8e9e0577865e48b364b5b8a46e0918418d04c80ed8396c6609468b39', 'planning/GEMMA4-COMPETITION-REQUIREMENTS.md': 'c8c78dd7bfa0962d1d6c4cfdc1e014af392757f2b5a8c8d402423a03824c23eb', 'planning/GEMMA4-RESEARCH-PLAN.md': 'e25d3d5ff24725c439dfe101ee5e370e16b066d04279dda22276a5399c1a5044', 'planning/GEMMA4-IMPLEMENTATION-MILESTONES.md': '26d4c8d392005aaaaef70fb72322fa6a4e3486e964580abcdc9970189e1fa68f'}
+PINS = {
+    "experiments/gemma4_competition/source-register.json": "ef497200ff713028586a6d9c68ac1760a0b6ee1ade3680dc82f1e0fe6ad5d118",
+    "experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md": "372371668414bfdbaa7bc19b058db603ce1b331858ee3185036c9f8e6525e822",
+    "planning/FORGEAI-GEMMA4-COMPETITION-READINESS-1.md": "283c75ba8e9e0577865e48b364b5b8a46e0918418d04c80ed8396c6609468b39",
+    "planning/GEMMA4-COMPETITION-REQUIREMENTS.md": "7b3d0088f7042ada96d1c9a5a9e14f0f76b38e866434c810ff5d4fcf8f5f979e",
+    "planning/GEMMA4-RESEARCH-PLAN.md": "e25d3d5ff24725c439dfe101ee5e370e16b066d04279dda22276a5399c1a5044",
+    "planning/GEMMA4-IMPLEMENTATION-MILESTONES.md": "26e302fb1106055d7b263e1141c8f4e1dd02a33ff4c577309320421fbe099a9a"
+}
 
 
 def digest(data: bytes) -> str:
@@ -42,8 +49,22 @@ def documents(values: dict[str, bytes]) -> None:
     register = json.loads(values[REGISTER])
     if register["decision"] != DECISION or register["m1_status"] != "PARTIAL":
         raise ValueError("unsupported M1 closure")
-    if len(register["official_files"]) != 23:
+    if len(register["official_files"]) != 24:
         raise ValueError("artifact inventory changed")
+    acquisition = register["acquisition_review"]
+    if (
+        acquisition["task"] != "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1"
+        or acquisition["decision"] != DECISION
+        or acquisition["new_artifacts_supplied"] is not True
+        or acquisition["prior_reconciliation_validation"] != "MAINTAINER_REPORTED_PASS"
+    ):
+        raise ValueError("acquisition boundary changed")
+    expected_inventory = [
+        {key: entry[key] for key in ("path", "size_bytes", "sha256")}
+        for entry in register["official_files"]
+    ]
+    if acquisition["observed_artifacts"] != expected_inventory:
+        raise ValueError("observed inventory differs from preserved pins")
     contract = values[CONTRACT].decode("utf-8")
     for required in (
         DECISION, "M2 BLOCKED", "HARNESS_README", "C2", "NOT RUN",
@@ -67,14 +88,19 @@ def main() -> int:
         documents(values)
         entries = json.loads(values[REGISTER])["official_files"]
         artifacts = {DIRECTORY + entry["path"]: entry for entry in entries}
-        allowed = set(PINS) | set(artifacts) | {SELF}
+        allowed = {
+            REGISTER, CONTRACT, SELF,
+            DIRECTORY + "docs/HARNESS_README.md",
+            "planning/GEMMA4-COMPETITION-REQUIREMENTS.md",
+            "planning/GEMMA4-IMPLEMENTATION-MILESTONES.md",
+        }
         changed = set(git("diff", "--name-only", "--no-renames", BASELINE).decode().splitlines())
         staged = set(git("diff", "--cached", "--name-only", "--no-renames", BASELINE).decode().splitlines())
         changed |= staged
         changed |= set(git("ls-files", "--others", "--exclude-standard").decode().splitlines())
         if changed - allowed:
             raise ValueError("outside reconciliation scope: " + repr(changed - allowed))
-        for name in allowed:
+        for name in set(PINS) | set(artifacts) | {SELF}:
             path = ROOT / name
             if not path.is_file() or any(part.is_symlink() for part in (path, *path.parents)):
                 raise ValueError("missing or symlinked file: " + name)
@@ -121,7 +147,7 @@ def main() -> int:
         print(f"FAIL: {phase}: {error}; later phases NOT RUN")
         return 1
     print(
-        "FORGEAI-GEMMA4-OFFICIAL-ARTIFACT-RECONCILIATION-1 LOCAL DOCUMENT CHECKS PASSED; "
+        "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1 LOCAL DOCUMENT CHECKS PASSED; "
         "M1 PARTIAL; M2 BLOCKED; M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; "
         "NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED"
     )

@@ -132,12 +132,12 @@
       "capture_date_from_filename": "2026-10-18"
     },
     {
-      "path": "docs/getting-started-gemma-4-developer-agent.ipynb",
-      "size_bytes": 82092,
-      "sha256": "abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f",
-      "kind": "official_starter_copy",
-      "source_url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
-      "provenance": "MAINTAINER_SUPPLIED",
+      "path": "docs/HARNESS_README.md",
+      "size_bytes": 55940,
+      "sha256": "445000219b803942c469391ec8b69791a31e9cec2f934738c767e34b5ca0aa1f",
+      "kind": "maintainer_supplied_official_guide",
+      "source_url": null,
+      "provenance": "MAINTAINER_IDENTIFIED_AS_OFFICIAL; exact download URL and release revision not supplied",
       "retrieved_at": null,
       "observed_date": "2026-10-18",
       "capture_date_from_filename": null
@@ -149,6 +149,17 @@
       "kind": "transcribed_official_text",
       "source_url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper/overview/submission-requirements",
       "provenance": "MAINTAINER_SUPPLIED_TRANSCRIPTION",
+      "retrieved_at": null,
+      "observed_date": "2026-10-18",
+      "capture_date_from_filename": null
+    },
+    {
+      "path": "docs/getting-started-gemma-4-developer-agent.ipynb",
+      "size_bytes": 82092,
+      "sha256": "abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f",
+      "kind": "official_starter_copy",
+      "source_url": "https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+      "provenance": "MAINTAINER_SUPPLIED",
       "retrieved_at": null,
       "observed_date": "2026-10-18",
       "capture_date_from_filename": null
@@ -333,9 +344,146 @@
   "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
   "provenance_policy": "Maintainer-supplied official copies; hashes identify local bytes, not independent authentication. Retrieval date unknown unless explicitly evidenced; capture filenames indicate 2026-10-18. No wheels installed or notebook cells executed.",
   "missing_artifacts": [
-    "HARNESS_README.md",
-    "harness/compiler/tool/evaluator package bytes and version metadata",
-    "complete extension and submission-limit definitions",
-    "scorer runtime configuration and exact final submission instructions"
-  ]
+    "Versioned packages containing compiler/tool/sandbox/scorer implementations and METADATA/RECORD, or complete extracted source",
+    "README exact source URL/release and resolution of include, patch-protection and size-boundary discrepancies",
+    "Final platform submission instructions and total runtime policy if absent from package documentation"
+  ],
+  "acquisition_review": {
+    "task": "FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1",
+    "baseline": "c859f316bb4eff6a7a0cb86a5aabefe557e972c9",
+    "observed_date": "2026-10-18",
+    "decision": "M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED",
+    "new_artifacts_supplied": true,
+    "searched_directory": "experiments/gemma4_competition/docs",
+    "prior_reconciliation_validation": "MAINTAINER_REPORTED_PASS",
+    "main_runtime_contract": "DOCUMENTED_IN_README; IMPLEMENTATION_PARITY_UNVERIFIED",
+    "paper_issue": "SEPARATE_TRACK_NOT_A_MAIN_RUNTIME_BLOCKER",
+    "missing_minimum": [
+      "Versioned packages containing compiler/tool/sandbox/scorer implementations and METADATA/RECORD, or complete extracted source",
+      "README exact source URL/release and resolution of include, patch-protection and size-boundary discrepancies",
+      "Final platform submission instructions and total runtime policy if absent from package documentation"
+    ],
+    "observed_artifacts": [
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_code_ryanholbrook_getting_started_gemma_4_developer_agent_20261018_115856.jpg",
+        "size_bytes": 2325670,
+        "sha256": "87d52b86dd7eee275aa79d9322f6bc81e351ea37e5f7c95ae1e1ec63fae2e153"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_code_20261018_111101.png",
+        "size_bytes": 4304072,
+        "sha256": "c6617514224990b09c4696460717979e82b52aacaa85bfd82082f13296dce3a6"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_data_20261018_111051.png",
+        "size_bytes": 657115,
+        "sha256": "3672f9e7287e3c598f0721e3d0fa59d28904b26d35ac09246648b7fd3d44ca39"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_leaderboard_20261018_111151.png",
+        "size_bytes": 410850,
+        "sha256": "d80e754d40682165b721f77c7d7edeae84484ff375cd6bf5784053d04b166e73"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_models_20261018_111141.png",
+        "size_bytes": 299559,
+        "sha256": "93976dd7d03f1382cc1d4a8cf471aaae00064de42d87f5258b2d3d2c637aac8c"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_overview_20261018_111039.png",
+        "size_bytes": 754599,
+        "sha256": "e3797760a2ca02a03573823ca2d3898980dae632a6d95708c8c54b53ce76583f"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_code_20261018_111011.png",
+        "size_bytes": 978342,
+        "sha256": "5607c3b4a093df3aa154d5eafd1884078017811480814c901dacc1542f7fe5d3"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_overview_20261018_110958.png",
+        "size_bytes": 587469,
+        "sha256": "93c93aac8dbeffdb589e362a2f7c8ad017e902333232ccfe12dfe5d42ce12966"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_paper_rules_20261018_111021.png",
+        "size_bytes": 1728598,
+        "sha256": "8ffad04d22f4ba468cf0a64537c9d9a9fdacfa26876feb8c98cb1bcb39e8fc62"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_competitions_gemma_4_developer_agent_rules_20261018_111202.png",
+        "size_bytes": 1726037,
+        "sha256": "46c48a7c587fe45c3c5c0f5fe0f723f700232fb981f93c90e2b32759aa9519a7"
+      },
+      {
+        "path": "docs/CompetitionWebPages-Screenshots/kaggle_com_datasets_metric_gemma_4_developer_agent_wheelhouse_20261018_115938.jpg",
+        "size_bytes": 379247,
+        "sha256": "a7bd719dd97086b155eda9008bba4efd6868af2c12c454d332f8dfcfa74546df"
+      },
+      {
+        "path": "docs/HARNESS_README.md",
+        "size_bytes": 55940,
+        "sha256": "445000219b803942c469391ec8b69791a31e9cec2f934738c767e34b5ca0aa1f"
+      },
+      {
+        "path": "docs/PaperSubmissionRequirements.md",
+        "size_bytes": 2372,
+        "sha256": "ae4a8ef00d079e209605b69072f81dae12dbb74d2061630221906931b39c6c80"
+      },
+      {
+        "path": "docs/getting-started-gemma-4-developer-agent.ipynb",
+        "size_bytes": 82092,
+        "sha256": "abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f"
+      },
+      {
+        "path": "docs/sample_submission/adapters/main_lora/adapter_config.json",
+        "size_bytes": 664,
+        "sha256": "75a46da2db7f3c70442e5c728f64059aff52cf64174cee7aeb3a4ec37f6e78fb"
+      },
+      {
+        "path": "docs/sample_submission/adapters/main_lora/adapter_model.safetensors",
+        "size_bytes": 217672,
+        "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9"
+      },
+      {
+        "path": "docs/sample_submission/adapters/tool_lora/adapter_config.json",
+        "size_bytes": 664,
+        "sha256": "75a46da2db7f3c70442e5c728f64059aff52cf64174cee7aeb3a4ec37f6e78fb"
+      },
+      {
+        "path": "docs/sample_submission/adapters/tool_lora/adapter_model.safetensors",
+        "size_bytes": 217672,
+        "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9"
+      },
+      {
+        "path": "docs/sample_submission/agent.yaml",
+        "size_bytes": 438,
+        "sha256": "c7fbbbbdc44778419be8e9f53a85800eeb17d0cf151e0846c46e107401b72034"
+      },
+      {
+        "path": "docs/sample_submission/configs/sampling.yaml",
+        "size_bytes": 120,
+        "sha256": "3dab0b2506dae34ce92fef7b380d6073729104b23fe2cf66d44ac1d2f213aa6a"
+      },
+      {
+        "path": "docs/sample_submission/eval_config.yaml",
+        "size_bytes": 232,
+        "sha256": "adb486b67535fa59b427b79d44dafc131176f1f1964d184e16046ed520ede02d"
+      },
+      {
+        "path": "docs/sample_submission/prompts/analyzer.md",
+        "size_bytes": 527,
+        "sha256": "c762b062032cc8463015e589ad8b4f0e17296062e1b0ff1e78712eef9f5e2d43"
+      },
+      {
+        "path": "docs/sample_submission/prompts/system.md",
+        "size_bytes": 3888,
+        "sha256": "f1cbf7943ee9687382321b1dfd9cd88581d608c1c8b8e6ea61a763bd1a3234af"
+      },
+      {
+        "path": "docs/sample_submission/sub_agents/code_analyzer.yaml",
+        "size_bytes": 361,
+        "sha256": "7a764798e36cc68aa38900256245e4aed969b5439b992c7da4105b6ebcb7e62b"
+      }
+    ]
+  }
 }

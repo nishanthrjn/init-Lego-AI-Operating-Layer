@@ -85,3 +85,44 @@ if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 official artifact reconciliation faile
 
 Expected: local document checks passed; M1 partial; M2 blocked.
 NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+## Harness artifact acquisition gate — 2026-10-18
+
+FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1:
+M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; main-competition M2 BLOCKED.
+The maintainer's preceding 23-artifact reconciliation passed. No new README,
+compiler/tool package or lifecycle evidence was found in the supplied docs tree.
+See the acquisition matrix, R1–R7 dispositions, exact conditional M2 file plan
+and minimal three-item acquisition request in
+[OFFICIAL-CONTRACT-REGISTER.md](../experiments/gemma4_competition/OFFICIAL-CONTRACT-REGISTER.md).
+Sample shapes/defaults and notebook observations are not package guarantees.
+Persistence and submit_patch termination remain UNKNOWN; do not implement them
+from generic ADK behavior. Paper C2 remains separate; main R2–R6 independently
+block M2. Product interfaces, KiSSKI custody, evaluator and admissions are unchanged.
+
+Next step is static official-artifact acquisition/review, not an agent/model run.
+Existing offline validator extended; no separate harness or tests duplicated.
+Working directory: repository root; existing locked uv environment and Git;
+no new dependencies, environment variables or credentials required.
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_official_artifact_reconciliation_1.py
+if ($LASTEXITCODE -ne 0) { throw 'Gemma 4 harness artifact acquisition validation failed' }
+```
+
+Expected: FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1 LOCAL DOCUMENT CHECKS PASSED;
+M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; M2 BLOCKED.
+Verification: NOT RUN — Awaiting maintainer execution.
+NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+### README supplied after initial acquisition inventory
+
+HARNESS_README.md is now inspected and pinned: 24 artifacts total. Its documented
+schema, tools, lifecycle, persistence, patch capture and budgets are reconciled
+in the official register. Earlier statements of README absence are historical.
+Package source parity remains unverified; C3 include traversal, C4 protected patch
+handling and C5 size-boundary discrepancies are recorded. M1 remains PARTIAL;
+M2 BLOCKED. Supply matching package source/version evidence and resolution of
+those discrepancies; do not reacquire the README. The same manual command above
+now covers the README pin and updated documentary controls. NOT RUN — Awaiting
+maintainer execution. No implementation, live execution or submission authorized.

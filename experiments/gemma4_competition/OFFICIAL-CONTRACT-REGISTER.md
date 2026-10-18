@@ -323,3 +323,239 @@ Manual documentary gate: validate_forgeai_gemma4_official_artifact_reconciliatio
 It verifies local byte pins and documentary invariants, not official authenticity,
 legal eligibility or runtime compatibility. The older validator is historical and
 expects an empty artifact register; do not use it for this new slice.
+
+## FORGEAI-GEMMA4-HARNESS-ARTIFACT-ACQUISITION-1
+
+Decision: M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED.
+Main competition: M1 PARTIAL; M2 BLOCKED on runtime evidence independently of paper.
+Baseline: c859f316bb4eff6a7a0cb86a5aabefe557e972c9.
+Prior 23-artifact reconciliation: MAINTAINER_REPORTED_PASS (supplied transcript).
+This acquisition review: NOT RUN — Awaiting maintainer execution of documentary gate.
+NO IMPLEMENTATION, LIVE EXECUTION OR SUBMISSION AUTHORIZED.
+
+No additional harness files were found in the supplied docs tree. A repository
+filename search also found no HARNESS_README or wheel. This is a bounded local
+inventory finding, not a claim that no official files exist elsewhere. The source
+register records a fresh raw-byte inventory alongside the unchanged provenance
+records. No new retrieval date, release identity or authenticity is inferred.
+The requested README/compiler/tool inspection cannot be completed without bytes.
+All earlier verified notebook/sample observations remain evidence at that level.
+
+### Main-contract acquisition matrix
+
+| Requested fact | Current evidence | What is still unknown |
+| --- | --- | --- |
+| README versus sample | Sample root and all includes available | README absent: cannot compare requirements/defaults against it |
+| Exact agent fields/types | name/model/adapter strings; instruction include; tools sequence of strings plus agent_tool mapping; generate_content_config include in sample | Compiler-supported field set, requiredness, rejection rules and coercions; observed YAML value shapes are not normative types |
+| Model enforcement | Notebook cell 8 asserts one model in four-name allowlist | Compiler/discovery/scorer allowlists and model revision enforcement |
+| Tool contracts | Nine names and earlier overview signatures; prompts describe intended effects | Tool implementations, complete arguments, serialized return/error envelopes and failed-action effects |
+| Filesystem | Notebook input/working paths; subprocess backend | Repository root, allowed commands, path/symlink confinement, escape controls and cleanup |
+| Persistence | Same Evaluator is used by notebook | Whether edits persist across calls, reset per task or survive errors; UNKNOWN |
+| submit_patch | Prompt calls it before a final summary; evaluator reads result.agent_patch | Whether it terminates agent, captures immediately or later, includes untracked files, or captures on timeout; UNKNOWN |
+| Budgets | Sample 60 seconds / 10 tools / 1 minute / 50 turns; sampling 16384 output tokens | Enforced maxima, total model/tool/time accounting, retries and setup inclusion in scorer |
+| Validation/output | Cell 12 validate_directory then ZIP; cell 10 displays id/prediction | Imported limits/extension list, final platform handoff and scoring patch lifecycle |
+
+Cell 10 explicitly converts timeout_seconds/verification_timeout_seconds and
+max_tool_calls to int, max_time_minutes to float, and max_turns (or max_llm_calls)
+to optional int. Those notebook conversions do not prove compiler validation or
+safe ranges. Sample thinking_budget is integer and include_thoughts boolean;
+actual serving support cannot be inferred because litellm.drop_params=True.
+Tool return type str in the earlier overview does not establish JSON contents.
+No assumption of persistent edits or submit_patch termination is admissible yet.
+
+### R1–R7 at this acquisition gate
+
+| Blocker | Main-track disposition | Remaining evidence |
+| --- | --- | --- |
+| R1 | Captured main rules inspected; current amendments/entry checks remain external | Do not treat documentary pass as personal eligibility or rules acceptance |
+| R2 | PARTIAL | Complete README and versioned compiler/package bytes |
+| R3 | PARTIAL | Tool registry and implementations with return/error/effect contracts |
+| R4 | PARTIAL | Enforced model allowlist, scorer inference/resource configuration |
+| R5 | OPEN | Filesystem/lifecycle, persistence, cancellation, patch capture and budget enforcement |
+| R6 | PARTIAL | Submission limits, final handoff and patch-output instructions |
+| R7 | Paper only, PARTIAL | Preserve C2 judged-paper versus generic leaderboard discrepancy; separate clarification before paper submission |
+
+The paper issue alone is not a main-runtime M2 blocker. Even setting R7 aside,
+R2–R6 are material unresolved main-competition contracts. Neither track is
+silently declared complete. No need for another model run to resolve these gaps.
+
+### Exact minimal M2 file specification, conditional only
+
+Proposed competition-owned output tree after M1 and separate implementation
+approval: agent.yaml, prompts/system.md, configs/sampling.yaml and optional
+eval_config.yaml, packaged at ZIP root. No ForgeAI runtime imports or new Ports.
+Root field plan uses only observed names: name (one stable string), model (exact
+12B notebook ID), instruction (!include prompts/system.md), tools (read_file,
+edit_file, write_file, run_command, get_status, submit_patch), and
+ generate_content_config (!include configs/sampling.yaml).
+Sampling proposal retains 0.2 temperature, 0.95 top_p, 16384 max_output_tokens,
+and thinking_config with 4096 thinking_budget / true include_thoughts until
+compiler limits can be inspected. Optional evaluation proposal retains the
+sample's timeout_seconds=60, max_tool_calls=10, max_time_minutes=1, max_turns=50.
+These are exact candidate values, NOT validated runnable configuration.
+No adapter, subagent, graph extensions or skills. Removing sample-only fields
+must be checked against the official compiler; no default is invented.
+
+Future acceptance requires official package validation of this minimal config,
+known-bad model/tool/path/budget controls, and separately authorized patch handoff
+and timeout tests after documented contracts are reconciled. Full task duration,
+patch extraction and successful scoring cannot be inferred from ZIP creation.
+This slice authors none of the proposed agent files and executes no checks.
+
+### Minimal maintainer acquisition request
+
+Supply under docs (or identify another local location):
+
+1. Complete official HARNESS_README.md for the starter release, not a screenshot
+   of its filename or a third-party replacement.
+2. Versioned wheelhouse file listing plus the actual wheels providing
+   adk_submission and swegemma (including adk_eval_core if it provides referenced
+   behavior), and any referenced compiler/tool/sandbox dependency source needed
+   to follow those contracts. Complete extracted sources with dist-info
+   METADATA/RECORD are an alternative. No installation or model weights needed.
+3. Official scorer inference/resource and final submission/patch-output
+   instructions, only to the extent not already included in items 1–2.
+
+For each acquisition retain source URL, version and actual retrieval timestamp.
+The existing notebook/sample/screenshots do not need to be acquired again.
+The exact wheel filenames beyond the visible listing cannot safely be guessed.
+Do not supply credentials, account exports or provider responses.
+
+The existing offline reconciliation validator is extended for this acquisition
+slice, not duplicated. It pins the four changed documents and unchanged supporting
+plans/artifacts, rejects out-of-scope changes and checks staged consistency.
+It cannot qualify missing contracts. Use the command in the current milestones
+section. Historical gate output remains recorded above.
+
+### Supplied HARNESS_README reconciliation (supersedes initial acquisition finding)
+
+The maintainer identified docs/HARNESS_README.md after the initial inventory.
+All ten sections have now been read as text; the inventory now contains 24 files.
+Its raw size/SHA256 are recorded in source-register.json. Exact source URL,
+download timestamp and matching package release remain unknown. Official origin
+is maintainer-attested; source filenames/line references inside prose are not
+inspection of the referenced implementation. Earlier absence/UNKNOWN statements
+are historical; the following upgrades them to DOCUMENTED, not source-verified.
+Decision remains M1_PARTIAL_ADDITIONAL_ARTIFACTS_REQUIRED; M2 BLOCKED.
+
+#### Schema documented by guide sections 2–3
+
+Exactly one agent.yaml/agent.yml/root_agent.yaml/root_agent.yml is documented.
+Missing/multiple roots raise MissingRootConfigError/MultipleRootConfigsError.
+Default agent_class is LlmAgent. Documented LlmAgent fields: name (required str),
+model (str, required unless host default), adapter (str or None), description and
+instruction (str, up to 1,000,000 chars), tools (list of names/agent_tool references/
+inline agents), skills (list[str] or None), sub_agents (list of config_path refs),
+output_key (str or None), include_contents (default or none), transfer-disallow
+flags (bool or None), generate_content_config (dict or None). SequentialAgent and
+ParallelAgent use name/description/sub_agents/callbacks; LoopAgent max_iterations
+is int 1–500, default 500. Callbacks' full schema is not supplied; excluded from M2.
+
+Includes load md/txt as UTF-8 text and yaml/yml recursively, depth 10 with cycle
+checks. Documented limits: 10,000 files, 1,000 YAML files, 50 MiB YAML/expansion,
+50 MiB per skill, 500 agents, depth 50, 1,000 skills, 10,000,000 total instruction
+chars. Extensions: yaml/yml/md/txt/py/json/safetensors; no pickle weights.
+Generation fields: temperature, top_p, top_k, max_output_tokens, presence_penalty,
+frequency_penalty, stop_sequences, response_mime_type, seed, thinking_config.
+Output 1–32768 (default 16384); thinking budget 0–32768 (default 4096);
+include_thoughts bool; thinking_level MINIMAL/LOW/MEDIUM/HIGH/NONE. Temperature
+>=0, top_p 0–1, top_k >=1. Generation-level tools/system_instruction/http_options/
+safety_settings/response_schema are documented rejected. No generic ADK fields
+are inferred. Section 3 documents scorer validation of one of the four exact
+quantized variants, with ParticipantVisibleError for invalid selections; the
+notebook corroborates the four strings, not package implementation parity.
+
+#### All nine built-in tools: documented responses/effects (section 6)
+
+Arguments remain the exact signatures in the earlier tool table. Each returns a
+JSON string. Budget-gated errors have status/error_type/error_message/details;
+the separate ToolErrorPlugin instead documents status/error_type/error. Preserve
+these different envelopes. No universal error-normalization contract is inferred.
+
+| Tool | Documented result and effect |
+| --- | --- |
+| run_command(command) | bash -c in /workspace; success stdout/stderr/exit_code; nonzero CommandError with output in details; TimeoutExceeded does not itself end session; stdout/stderr each capped 5000 chars |
+| submit_patch() | patch_size/files_changed; captures diff in submitted_patch, sets patch_submitted; ends loop after current turn/final response, not necessarily mid-tool sequence; no tool-count charge but wall-clock gate remains |
+| get_status() | used/remaining tools, patch flag/size, remaining time, max turns and command timeout; no tool-count charge |
+| read_file(filepath,start_line=None,end_line=None) | filepath/content/start_line/end_line/total_lines/is_truncated; 1-based inclusive slices; 150 lines and 10000 chars; tool-count charged |
+| edit_file(filepath,old_string,new_string,allow_multiple=False) | filepath/occurrences/strategy/diff/is_truncated; exact then whitespace then regex matching; FileEditError for ambiguous matches without allow_multiple, missing/empty file or empty old string; charged; documented ambiguity refusal has no write |
+| write_file(filepath,content) | filepath/size; creates parents and creates/overwrites file; charged |
+| get_code_neighbors(node,edge_type=None,max_neighbors=50) | node/neighbors/count/is_truncated; name resolution exact/suffix/case-insensitive/substring; charged |
+| search_similar_code(query,k=10) | query/results(node_name,code,similarity)/count/is_truncated; offline stored-node similarity or lexical fallback; charged |
+| get_code_subgraph(nodes:list[str]) | nodes/edges(from,to,type)/node_count/edge_count/is_truncated; charged |
+
+Graph outputs and edit diffs use 5000-char caps. File tools strip leading /
+or /workspace/ and reject .. traversal; string numeric/bool coercions documented.
+This does not prove symlink handling in implementation. No shell command allowlist
+is described: run_command is shell execution subject to environment, not a
+verified list of safe commands. Skill tools are excluded from M2; full skill
+argument contracts remain absent. Generic error descriptions do not prove write
+atomicity for every failure.
+
+#### Lifecycle, budgets and patch output (sections 4–9)
+
+Guide documents one persistent Container A /workspace across task tool calls,
+then a separate fresh Container B for verification. This persistence is a
+lifecycle inference from shared context and final working-tree diff, not an
+executed observation. Docker default: no network, 4 GiB, 2 vCPUs, fresh phases;
+optional pooling wipes workspace and temporary artifacts. Subprocess rewrites
+workspace/tmp/wheels/usr-local-bin references to temporary directories and kills
+the process group on command timeout. Such rewriting alone is not proof of
+host filesystem isolation. Notebook subprocess versus guide Docker default is
+now documented as supported backend variation, not necessarily a contradiction.
+
+Agent timer starts after setup. Defaults: 60 minutes/task, 100 tools in inference
+(None CLI), 500 turns; total-token/cost budgets None. Sample overrides stay
+1 minute/10 tools/50 turns. Phase-1 command timeout defaults 300s and is bounded
+by min(command_timeout,max(5,int(remaining_time))); verification 300s on scorer.
+Scorer environment overrides are listed in section 7, not read here. 32768 is
+combined context, not an overall task token allowance. Prior 12-hour total
+patch-generation statement is not independently reconciled by per-task limits.
+ModelRetryPlugin documents up to five transient retries with bounded exponential
+backoff; this is official harness behavior, not a change to ForgeAI/KiSSKI retry
+policy. Runtime accounting of all nested retries still requires source review.
+
+submit_patch and fallback use git add -N plus binary diff against
+_swegemma_baseline (fallback HEAD), including new nonexcluded files. Section 8
+says protected tests/configs are stripped. If no explicit submission, stopping,
+exhaustion or timeout may recover nonempty edits before teardown; timeout does
+not imply no effect. Fresh verification strips/resets protected paths, applies
+agent/test patches and requires exit 0 plus valid JUnit with required tests passed
+and none skipped. Stage 1 scripts/inference.py produces submission.parquet with
+id/prediction; notebook cell 10 only displays those columns. Cell 12 validates
+and creates submission.zip; the package scorer transforms it later. These are
+documented stages, not an instruction to fabricate a parquet in the notebook.
+
+#### Conflicts and remaining evidence
+
+C3: section 2.2 bans .. include components, but official sample analyzer uses
+../prompts/analyzer.md and ../configs/sampling.yaml. Need version-matched compiler
+source or organizer correction. Proposed M2 root-only includes avoid this case.
+C4: section 8 strips protected files; section 10 says config edits appear in
+agent_patch; baseline descriptions alternate tagged baseline and HEAD. Need exact
+extraction/filtering source. M2 must not edit protected tests/configs regardless.
+C5: prose requires size <3 GiB, notebook accepts <= imported bound; exact boundary
+requires definition. Proposed M2 stays far below either. These discrepancies do
+not justify guessing other contracts or claiming packages have been inspected.
+Guide's simplified exit-code sequence diagram is qualified by section 8's stricter
+JUnit criterion; use the latter for planning, subject to source corroboration.
+
+R1 unchanged captured main rules; R2 PARTIAL (README now supplied, source absent);
+R3 PARTIAL (nine documented contracts, implementation absent); R4 PARTIAL
+(documented scorer allowlist/resources, package absent); R5 PARTIAL (documented
+lifecycle/persistence/cleanup, implementation and isolation parity absent);
+R6 PARTIAL (ZIP-to-parquet documented, limits conflict/final handoff outstanding);
+R7 unchanged separate paper issue. No main contract is held open solely by R7.
+
+Conditional M2 file/field/value proposal above remains valid as a documentary
+specification. No subagent/adapter/skill/graph extension; root-only includes avoid
+C3. Add prompt requirements: targeted verification before final submit_patch;
+no protected test/config edits; remove scratch files before capture; account for
+partial-patch fallback. Do not equate tool success with resolved test outcome.
+Do not execute the guide's installation, CLI, shell or model examples here.
+
+Minimal remaining request: version-matched compiler/tool/sandbox/inference/metric
+package sources with METADATA/RECORD and wheelhouse listing; README download URL
+and release identity; authoritative resolution of C3–C5 and final submission/
+total-runtime instructions if not included in that release. No need to supply
+README, notebook or sample again. No model weights required.
