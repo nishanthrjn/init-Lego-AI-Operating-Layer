@@ -1,124 +1,105 @@
-# FORGEAI-GEMMA4-M2-KAGGLE-COMPILER-VALIDATION-READINESS-1
+# FORGEAI-GEMMA4-M2-KAGGLE-SCOPED-COMPILER-INSTALL-1
 
-Decision: **KAGGLE_COMPILER_ENVIRONMENT_PREPARATION_REQUIRED**.
-Date: 2026-10-19. Authoring baseline: `fa4706e75acba058e648f6d31f88ebe4b8670ee4`.
-Verification: **NOT RUN — Awaiting maintainer execution and notebook approval**.
+Verification: **NOT RUN — AWAITING MAINTAINER EXECUTION**.
 
-The shortest supported path is to use an existing compatible Kaggle CPython 3.12
-Linux image, not construct a Windows inference dependency stack. Its actual
-installed versions/bytes have not been observed. No installation is necessarily
-needed if that image already satisfies the gate; otherwise preparation requires
-separate authorization. Static tests previously passed 10/10 and environment
-preflight tests 7/7, but those results do not qualify this newly factored tooling.
+The maintainer's previous local-only run passed 12 controls. This slice adds a
+single, explicitly approved installation of five pinned wheels in a disposable
+Kaggle CPU session. It does not qualify a package or authorize model execution.
+The earlier receipt `593a9042a90d1f48d46a99f6ee5319d67ea2e9233f2c9fdb3b71e83e89d87537`
+remains historical evidence. Generate a new transfer bundle and receipt because
+the notebook, shared tooling, tests and root wrapper are receipt-bound.
 
-## Official starter and environment findings
+## Inputs and platform settings
 
-Sources are the preserved `docs/getting-started-gemma-4-developer-agent.ipynb`
-(code cells 2 and 10, zero-based), `docs/HARNESS_README.md` sections 2/7.1 and
-`docs/sample_submission/eval_config.yaml`, plus the previously pinned wheel source.
-No new public web assumption or hidden scorer source is used.
+Use Python 3.12 Linux, **Accelerator: None**, **Internet: Off**. Do not inherit
+GPU settings from the starter. No model weights are needed. Attach both inputs:
 
-The official installation cell uses the attached
-`/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`, creates
-`/tmp/wheelhouse` symlinks/copies, restores `+cu128` filenames, excludes cutlass,
-removes matching cutlass `.pth` files, then invokes:
+- The fresh receipt-bound transfer bundle. Set BUNDLE to its mounted root
+  (default `/kaggle/input/forgeai-gemma4-m2/bundle`). Preserve its internal paths.
+- The official wheelhouse dataset at the starter's exact path:
+  `/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`.
 
-```text
-python -m pip install -q --no-deps --force-reinstall <all selected local wheel paths>
-```
+The bundle contains the four unchanged candidate files, shared portable entry
+point, root validator, focused tests, notebook, contract/source registers, three
+core wheels and local-receipt.json. The other two install wheels come from the
+attached official wheelhouse, checked against the bundled source register. Do
+not transfer credentials, custody, the full repository or model weights.
 
-The supplied notebook metadata records Python 3.12.13 and
-`kaggle.isInternetEnabled: false`. **Internet: Off** is sufficient for this local-file `--no-deps` installation;
-turning it on is neither required nor authorized. The cell assumes the notebook
-image supplies dependencies omitted from the wheelhouse. It is not a full offline
-dependency resolution, and pip's lack of `--no-index` is not evidence that remote
-dependencies are required when explicit files and `--no-deps` are used.
+The notebook checks both mounts and a fresh output/log location before proceeding.
+It imports only the transferred stdlib-based preparation module at this point.
+The official compiler remains behind its existing dependency, installed-byte and
+no-external-effects checks. Transfer disclosure is limited to the named bundle.
 
-Do not execute that broad cell for this slice. It mutates installed packages and
-`.pth` hooks, sets serving-related variables, and includes serving packages that
-are unnecessary here. No installation cell is included in `compiler_only.ipynb`.
-Missing/mismatched packages cause a stop for a separately approved preparation
-plan, not permission to execute the official starter wholesale or install all
-41 wheels. Do not copy its credential-variable setup. No model weights are needed.
+## Single approval and bounded effects
 
-Settings must be **Accelerator: None**, **Internet: Off** before starting the
-notebook. These are operator-visible Kaggle settings, not asserted by notebook
-metadata. An empty CUDA_VISIBLE_DEVICES in child processes is defense in depth;
-it does not replace selecting None and does not allocate a GPU. No GPU quota
-may be used. Notebook CPU/runtime/storage usage and private input/output storage
-are the anticipated platform effects. No submission API is used.
-The starter metadata also names an nvidiaL4 accelerator despite isGpuEnabled false;
-do not inherit that ambiguous configuration. Explicitly select None in a fresh notebook.
+After reviewing the notebook and settings, the operator sets AUTHORIZATION to:
 
-## Shared implementation and preserved checks
+`AUTHORIZE FORGEAI GEMMA4 M2 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY`
 
-The former validator's official functions now live in `portable_m2.py` and are
-used by both paths: `validate_directory`, full `compile_submission`, the closed
-tool/model registries, inert agent/model factories, actual generation types,
-`swegemma.config.build_submission_limits`, positive/negative compiler controls,
-installed-source comparison, dependency preflight, network/process audit guards,
-and deterministic ZIP construction/inspection. There is no alternate mocked
-compiler and no syntax-only success fallback. Official imports may pull broad
-runtime dependencies; failure remains environment-blocked, not a reason to relax
-checks. Python 3.12 Linux supports the authored path in principle; actual import
-compatibility and the installed dependency closure still require execution.
+The only install cell selects exactly these filenames (unique match required):
 
-The local wrapper retains exact Git mutation scope and working whitespace checks.
-Its new exact baseline is the recorded pre-task commit above, thereby preserving
-all previously committed candidate, artifact, environment-plan and product files.
-Only this six-file factoring slice is permitted: root validator, shared module,
-focused tests, notebook, this README and `.gitattributes`. No candidate edits are
-authorized. The attribute enforces LF for `baseline/**`. Static checks now reject
-CRLF candidate bytes rather than silently normalizing them; raw hashes must agree
-across machines. The previous CRLF-equivalence test was changed accordingly.
+- `adk_submission-0.2.13-py3-none-any.whl`
+- `adk_eval_core-0.1.0-py3-none-any.whl`
+- `swegemma-0.2.11-py3-none-any.whl`
+- `google_adk-1.36.1-py3-none-any.whl`
+- `google_genai-2.11.0-py3-none-any.whl`
 
-`--local-only` runs local scope/static checks and focused tests and exports a
-fresh external transfer directory plus `local-receipt.json`. The receipt binds
-raw bytes of every input. Kaggle checks those bytes before compilation, prints
-each candidate SHA256, rechecks inputs afterward and emits a portable-only pass.
-The local wrapper must reconcile the returned manifest, compiler result and exact
-deterministic ZIP against the original receipt and current repository. Only then
-are M2_BASELINE_OFFICIAL_COMPILER_VALIDATED and M2_BASELINE_PACKAGE_VALIDATED emitted.
-This is maintainer-reviewed evidence, not cryptographic remote attestation: retain
-the notebook execution output and review it with the report. Do not manufacture
-receipts or copy historical success fields into new evidence.
-
-Staged-content consistency is a distinct `--pre-commit` phase after functional
-validation/reconciliation. It still checks exact staged scope, content equality,
-candidate index bytes and staged whitespace. Functional validation does not fail
-merely because a newly edited validator has not yet been staged. No staging or
-committing is performed by any script.
-
-## Exact transfer inputs
-
-Upload only the exported bundle, preserving directory layout. It contains:
+All sizes and SHA256 values must match source-register.json before any pip call.
+The three core wheels must also equal the bundled bytes. Missing pins, ambiguous
+filenames and hash mismatches stop before installation. No version substitution.
+The exact subprocess action uses the current notebook Python:
 
 ```text
-local-receipt.json
-validate_forgeai_gemma4_m2_minimal_baseline_1.py
-experiments/gemma4_competition/
-  portable_m2.py
-  OFFICIAL-CONTRACT-REGISTER.md
-  source-register.json
-  baseline/agent.yaml
-  baseline/prompts/system.md
-  baseline/configs/sampling.yaml
-  baseline/eval_config.yaml
-  tests/test_m2_minimal_baseline.py
-  kaggle_compiler/compiler_only.ipynb
-  docs/archive/adk_submission-0.2.13-py3-none-any.whl
-  docs/archive/adk_eval_core-0.1.0-py3-none-any.whl
-  docs/archive/swegemma-0.2.11-py3-none-any.whl
+python -m pip install --no-deps --no-index --force-reinstall <five explicit verified wheel paths>
 ```
 
-The three wheels are for the unchanged raw pin and installed-source checks, not
-automatic installation. The preserved source register remains complete; other
-artifact bytes are not required by this portable gate. Installed google-adk
-1.36.1 and google-genai 2.11.0 are also mandatory, with compatible installed
-dependencies. The full repository, Git history, credentials, custody databases,
-model weights, public evaluation tasks and all 41 wheels are not transfer inputs.
-The transferred root wrapper/tests are receipt-bound provenance and can be used
-locally; Kaggle invokes only the Git-free portable entry point.
+Do not run the official starter installation cell. That broad cell installs other
+packages and modifies cutlass .pth hooks; neither action is included here. This
+slice performs no explicit .pth edits, cutlass cleanup, serving-package installs,
+Internet enablement, inference, evaluator calls or submission. Pip may replace
+only the five named distributions; their dependencies must already be compatible.
+Normal installer changes to those distributions in the disposable session are
+expected. CPU/runtime and input/output storage are the remaining platform effects.
+
+Pre/post versions are retained. The post-install equality gate requires all five
+exact versions. `python -m pip check` inspects the environment; only findings
+owned by those five distributions or their declared direct requirement names
+(including optional declarations) are retained. Unrelated findings are counted,
+not printed. Relevant unmet requirements, unrecognized pip failures or stderr
+produce ENVIRONMENT_BLOCKED. No dependency repair or second install is permitted.
+A clean scoped pip check is not proof that the whole image is consistent; the
+unchanged recursive compiler dependency and source-byte preflight still applies.
+
+Every pip/compiler child inherits os.environ after case-insensitive removal of
+KAGGLE_*, *TOKEN*, *KEY*, *SECRET*, *PASSWORD*, HF_* and GOOGLE_*CRED* names.
+Only removed names are logged. PATH and LD_LIBRARY_PATH are preserved. Temporary
+HOME/TMPDIR and related paths, disabled CUDA visibility and OTEL/LITELLM overrides
+are then applied. Pip config-file loading and version checks are disabled. Name
+filtering cannot certify that arbitrary differently named variables are secret-free;
+use a fresh notebook with no credentials configured. Do not attach secrets.
+
+## Evidence and qualification boundary
+
+Installation writes `install-evidence.json` into the fresh downloadable output
+directory, including wheel names/hashes/sizes, pre/post versions, Python/platform,
+removed variable names, return codes and the scoped pip-check excerpt. Raw installer
+stdout/stderr is suppressed. A failure after installation starts preserves bounded
+failure evidence; failures before pip leave the environment unchanged and stop.
+
+Compilation accepts an output directory containing only the successful install
+evidence. It prints each candidate SHA256 before compilation and retains the
+unchanged official directory validation, full compilation, closed registries,
+negative controls and deterministic archive checks. It never executes model/tools.
+Download the complete output directory and compiler log. On success the directory
+contains install-evidence.json, compiler-output.json, manifest.json and submission.zip.
+The manifest includes install evidence and its hash, package/Python versions,
+sorted ZIP members and ZIP SHA256. Local reconciliation requires the install
+artifact, its manifest binding and the same new receipt/candidate bytes.
+
+Portable PASS alone never emits M2 qualification. Both local scope/static PASS
+and portable compile/package PASS are required. The package is not a Kaggle
+submission authorization, hidden-scorer parity claim or model-quality result.
+Downloaded evidence is operator-provided evidence, not remote attestation.
 
 ## Separate eval_config finding — candidate unchanged
 
@@ -145,71 +126,53 @@ overrides. The sample values are not global scorer limits. README separately
 describes Phase 2 verification timeout as 300 seconds; our timeout_seconds is not
 proof of controlling that hidden verification budget. No budget change is made.
 
-## Maintainer steps and approval gates
+## Maintainer commands and notebook sequence
 
-1. Run the local preparation from the repository root, with the existing locked
-   environment and temporary symlink permission. It runs offline tests but no
-   official compiler, models, installs or network. Output is a fresh temporary
-   bundle; record its printed directory and receipt hash.
+From the repository root in the existing locked environment:
 
-   ```powershell
-   uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --local-only
-   if ($LASTEXITCODE -ne 0) { throw 'M2 portable local preparation failed' }
-   ```
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --local-only
+if ($LASTEXITCODE -ne 0) { throw 'M2 scoped-install local preparation failed' }
+```
 
-   Expected: 12 focused tests pass and LOCAL_SCOPE_AND_STATIC_PASS. These updated
-   checks are NOT RUN. If candidate line endings fail, inspect the LF attribute
-   and checkout bytes; do not bypass the raw-byte comparison.
+Expected: all focused controls pass, M2_BASELINE_LOCAL_STATIC_CHECKS_PASSED,
+LOCAL_SCOPE_AND_STATIC_PASS, and a fresh bundle directory/receipt SHA256. No
+installation or official compiler runs locally. Preserve the prior bundle.
 
-2. Return the local result. Separately approve uploading exactly this bundle to
-   a private Kaggle input and executing this compiler-only notebook. Uploading
-   these repository-derived files is external disclosure and is not performed
-   by the coding agent. No other repository content is needed.
+After reviewing that result, upload only the new bundle as a private input;
+attach the official wheelhouse. Import the updated compiler_only.ipynb from that
+bundle, select Accelerator None / Internet Off, set BUNDLE to the actual mount,
+and enter the combined approval above. Run cells in order once. The install cell
+must emit SCOPED_INSTALL_PASS before compilation proceeds. On ENVIRONMENT_BLOCKED,
+download evidence and stop; do not install dependencies or rerun the cell.
 
-3. In a fresh CPU notebook set Accelerator None, Internet Off. Attach the approved
-   input, import the authored notebook without running it, and set BUNDLE to its
-   actual mounted root. After approval only, set AUTHORIZATION to:
-   `AUTHORIZE FORGEAI GEMMA4 M2 KAGGLE CPU COMPILER ONLY`.
-   First code cell reads Python/package metadata without importing the compiler.
-   It stops on non-3.12/non-Linux or mismatched/missing root distributions. No
-   further cell or package preparation is authorized if that check fails.
+On success expect PORTABLE_COMPILE_AND_PACKAGE_PASS. Download
+`/kaggle/working/gemma4-m2-compiler.log` and the entire
+`/kaggle/working/gemma4-m2-compiler/` directory. Keep these outside the repository
+pending evidence review. Do not submit submission.zip.
 
-4. If metadata matches, the approved second code cell invokes the portable gate
-   with fresh output/log paths. The gate retains its complete dependency/source
-   checks and actual offline compilation. It may still stop on an import/native
-   mismatch. Do not install, enable Internet, start serving or retry with loosened
-   checks. Preserve the safe failure output for review.
+```powershell
+$gemmaReceipt = Read-Host 'Absolute path to the NEW local-receipt.json'
+$gemmaResults = Read-Host 'Absolute path to the downloaded gemma4-m2-compiler directory'
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --receipt $gemmaReceipt --reconcile $gemmaResults
+if ($LASTEXITCODE -ne 0) { throw 'M2 local/Kaggle evidence reconciliation failed' }
+```
 
-5. Download `/kaggle/working/gemma4-m2-compiler.log` and the complete
-   `gemma4-m2-compiler/` folder: compiler-output.json, manifest.json and submission.zip.
-   On success these expose compiler output, Python/package versions, sorted member
-   manifest and ZIP SHA256. Save outside the repository until evidence review;
-   no evidence commit is performed in this slice. Never submit the ZIP to Kaggle.
+Expected: M2_BASELINE_OFFICIAL_COMPILER_VALIDATED and
+M2_BASELINE_PACKAGE_VALIDATED. Reconciliation runs the local offline controls but
+no compiler/install/model. After functional success, review and stage the intended
+changes yourself, then run the separate pre-commit phase:
 
-6. Reconcile locally against the original receipt (no model/compiler execution
-   occurs during reconciliation; local offline tests do run):
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --pre-commit --receipt $gemmaReceipt --reconcile $gemmaResults
+if ($LASTEXITCODE -ne 0) { throw 'M2 pre-commit staged consistency failed' }
+```
 
-   ```powershell
-   $gemmaReceipt = Read-Host 'Absolute path to the original local-receipt.json'
-   $gemmaResults = Read-Host 'Absolute path to the downloaded compiler-results directory'
-   uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --receipt $gemmaReceipt --reconcile $gemmaResults
-   if ($LASTEXITCODE -ne 0) { throw 'Local/Kaggle M2 evidence reconciliation failed' }
-   ```
+Expected: M2_PRE_COMMIT_STAGED_CONSISTENCY_PASSED. This does not stage or commit.
+The default combined local/compiler mode cannot provision Kaggle; use the explicit
+local-only, notebook, reconcile sequence above. No automatic installation path was
+added to the repository validator.
 
-   Both local scope/static PASS and portable compile/package PASS on identical
-   inputs are required. No model quality, hidden-scorer parity or Kaggle acceptance
-   claim follows. Review the downloaded log alongside the structured evidence.
+Proposed commit: `feat(gemma4): gate five-wheel Kaggle compiler install with pinned evidence`.
 
-7. After functional checks pass and the maintainer stages the reviewed changes,
-   perform the separate pre-commit check (it does not stage or commit):
-
-   ```powershell
-   uv run --locked --offline --no-sync python .\validate_forgeai_gemma4_m2_minimal_baseline_1.py --pre-commit --receipt $gemmaReceipt --reconcile $gemmaResults
-   if ($LASTEXITCODE -ne 0) { throw 'M2 pre-commit staged consistency failed' }
-   ```
-
-Later acquisition/installation, public-task smoke, model execution and submission
-each need their own explicit authorization. This notebook has no installation,
-evaluator, vLLM, inference or submission cells. Stop for maintainer review now.
-
-Proposed commit: `refactor(gemma4): prepare byte-bound Kaggle compiler-only validation`.
+STOP and paste maintainer results before further work.

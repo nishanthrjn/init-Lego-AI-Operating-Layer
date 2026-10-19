@@ -1,4 +1,4 @@
-"""Portable maintainer-only compiler gate. No Git, evaluation or installer.
+"""Portable maintainer-only compiler gate and explicitly gated Kaggle preparation.
 
 The normal project environment may stop at the explicit environment gate. Run
 with an already provisioned compatible interpreter to exercise the official APIs.
@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+from email.parser import BytesParser
+import fnmatch
 import hashlib
 import importlib.metadata as metadata
 import io
@@ -30,6 +32,8 @@ MODEL = "gemma-4-31b-it-qat-w4a16-ct"
 TOOLS = ("run_command", "read_file", "edit_file", "write_file", "get_status", "submit_patch")
 MEMBERS = ("agent.yaml", "configs/sampling.yaml", "eval_config.yaml", "prompts/system.md")
 PACKAGES = {"adk-submission": "0.2.13", "adk-eval-core": "0.1.0", "swegemma": "0.2.11"}
+INSTALL_PACKAGES = {**PACKAGES, "google-adk": "1.36.1", "google-genai": "2.11.0"}
+INSTALL_AUTHORIZATION = "AUTHORIZE FORGEAI GEMMA4 M2 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY"
 SAMPLING = """temperature: 0.2
 top_p: 0.95
 max_output_tokens: 16384
@@ -100,6 +104,142 @@ def wheel_pins() -> dict[str, Path]:
         require(sha(path.read_bytes()) == entry["sha256"], "wheel pin changed")
         result[name] = path
     return result
+
+
+def child_environment(source: dict[str, str], home: str) -> tuple[dict[str, str], list[str]]:
+    patterns = ("KAGGLE_*", "*TOKEN*", "*KEY*", "*SECRET*", "*PASSWORD*", "HF_*", "GOOGLE_*CRED*")
+    removed = sorted(key for key in source if any(fnmatch.fnmatchcase(key.upper(), p) for p in patterns))
+    env = {key: value for key, value in source.items() if key not in removed}
+    env.update({"HOME": home, "USERPROFILE": home, "APPDATA": home, "LOCALAPPDATA": home,
+                "TMPDIR": home, "TMP": home, "TEMP": home, "CUDA_VISIBLE_DEVICES": "",
+                "OTEL_SDK_DISABLED": "true", "LITELLM_LOCAL_MODEL_COST_MAP": "True",
+                "LITELLM_TELEMETRY": "False", "PIP_CONFIG_FILE": os.devnull,
+                "PIP_DISABLE_PIP_VERSION_CHECK": "1"})
+    return env, removed
+
+
+def install_pins() -> dict[str, dict]:
+    register = json.loads((AREA / "source-register.json").read_text(encoding="utf-8"))
+    result = {}
+    for name, version in INSTALL_PACKAGES.items():
+        filename = f"{name.replace('-', '_')}-{version}-py3-none-any.whl"
+        entries = [item for item in register["official_files"] if item["path"] == "docs/archive/" + filename]
+        require(len(entries) == 1, "missing/ambiguous install pin: " + filename)
+        entry = entries[0]
+        require(isinstance(entry.get("sha256"), str) and len(entry["sha256"]) == 64,
+                "missing install SHA256")
+        result[name] = {"filename": filename, "sha256": entry["sha256"], "size": entry["size_bytes"]}
+    return result
+
+
+def select_install_wheels(wheelhouse: Path) -> dict[str, Path]:
+    require(wheelhouse.is_dir(), "official wheelhouse input missing")
+    duplicates = wheel_pins()
+    result = {}
+    for name, pin in install_pins().items():
+        matches = list(wheelhouse.rglob(pin["filename"]))
+        require(len(matches) == 1 and matches[0].is_file(), "missing/ambiguous exact wheel")
+        path = matches[0]
+        data = path.read_bytes()
+        require(len(data) == pin["size"] and sha(data) == pin["sha256"], "install wheel pin mismatch")
+        if name in duplicates:
+            require(data == duplicates[name].read_bytes(), "bundled wheel mismatch")
+        result[name] = path
+    require(set(result) == set(INSTALL_PACKAGES), "exact five install wheels required")
+    return result
+
+
+def installed_versions() -> dict[str, str]:
+    result = {}
+    for name in INSTALL_PACKAGES:
+        try:
+            result[name] = metadata.version(name)
+        except metadata.PackageNotFoundError:
+            result[name] = "MISSING"
+    return result
+
+
+def direct_requirement_scope(wheels: dict[str, Path]) -> list[str]:
+    # Metadata only; no official package imports. Include all declared direct names,
+    # even optional ones, when filtering pip's actual environment findings.
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+    names = set(INSTALL_PACKAGES)
+    for path in wheels.values():
+        with zipfile.ZipFile(path) as archive:
+            members = [n for n in archive.namelist() if n.endswith(".dist-info/METADATA")]
+            require(len(members) == 1, "wheel METADATA missing/ambiguous")
+            message = BytesParser().parsebytes(archive.read(members[0]))
+            names.update(canonicalize_name(Requirement(value).name) for value in message.get_all("Requires-Dist", []))
+    return sorted(names)
+
+
+def scoped_pip_check(process: subprocess.CompletedProcess, scope: list[str]) -> dict:
+    from packaging.utils import canonicalize_name
+    lines = [line.strip() for line in process.stdout.splitlines() if line.strip()]
+    excerpt = [line for line in lines if canonicalize_name(line.split()[0]) in scope]
+    # A nonstandard failure/stderr cannot silently count as a clean environment.
+    recognizable = all(" requires " in line or " has requirement " in line for line in lines)
+    ok = not process.stderr.strip() and (process.returncode == 0 or (
+        process.returncode == 1 and bool(lines) and recognizable and not excerpt))
+    return {"returncode": process.returncode, "scope": scope, "excerpt": excerpt,
+            "omitted_lines": len(lines) - len(excerpt), "acceptable": ok and not excerpt}
+
+
+def scoped_install(authorization: str, receipt: Path, wheelhouse: Path, output: Path) -> dict:
+    require(authorization == INSTALL_AUTHORIZATION, "scoped install authorization missing")
+    require(sys.platform == "linux" and sys.version_info[:2] == (3, 12), "Python 3.12 Linux required")
+    verify_local_receipt(receipt)
+    wheels = select_install_wheels(wheelhouse)  # Every pin checked before any subprocess.
+    scope = direct_requirement_scope(wheels)
+    evidence = {"schema": 1, "state": "ENVIRONMENT_BLOCKED",
+                "local_receipt_sha256": sha(receipt.read_bytes()), "selected_wheels": install_pins(),
+                "pre_versions": installed_versions(), "post_versions": {},
+                "python": sys.version, "platform": sys.platform, "pip_check": None}
+    output.mkdir(parents=True, exist_ok=False)
+    try:
+        with tempfile.TemporaryDirectory(prefix="gemma-install-home-") as home:
+            env, removed = child_environment(dict(os.environ), home)
+            evidence["removed_environment_names"] = removed
+            print(json.dumps({"removed_environment_names": removed}))
+            installed = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--no-deps", "--no-index", "--force-reinstall",
+                 *(str(wheels[name]) for name in INSTALL_PACKAGES)],
+                cwd=home, env=env, capture_output=True, text=True, timeout=300,
+            )
+            evidence["install_returncode"] = installed.returncode
+            evidence["post_versions"] = installed_versions()
+            checked = subprocess.run([sys.executable, "-m", "pip", "check"], cwd=home, env=env,
+                                     capture_output=True, text=True, timeout=120)
+            evidence["pip_check"] = scoped_pip_check(checked, scope)
+            if (installed.returncode == 0 and evidence["post_versions"] == INSTALL_PACKAGES
+                    and evidence["pip_check"]["acceptable"]):
+                evidence["state"] = "SCOPED_INSTALL_PASS"
+    except Exception as error:
+        evidence["failure_category"] = type(error).__name__
+        evidence["post_versions"] = installed_versions()
+    finally:
+        with (output / "install-evidence.json").open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
+    print(json.dumps(evidence, indent=2, sort_keys=True))
+    return evidence
+
+
+def verify_install_evidence(path: Path, receipt_hash: str) -> dict:
+    evidence = json.loads(path.read_text(encoding="utf-8"))
+    require(evidence.get("schema") == 1 and evidence.get("state") == "SCOPED_INSTALL_PASS",
+            "scoped install pass missing")
+    require(evidence.get("local_receipt_sha256") == receipt_hash, "install receipt mismatch")
+    require(evidence.get("selected_wheels") == install_pins(), "install wheel evidence mismatch")
+    require(evidence.get("install_returncode") == 0 and evidence.get("post_versions") == INSTALL_PACKAGES,
+            "installed versions mismatch")
+    require(set(evidence.get("pre_versions", {})) == set(INSTALL_PACKAGES), "pre-install versions missing")
+    check = evidence.get("pip_check") or {}
+    require(check.get("acceptable") is True and check.get("excerpt") == []
+            and check.get("returncode") in (0, 1) and set(INSTALL_PACKAGES) <= set(check.get("scope", [])),
+            "scoped dependency check missing/blocked")
+    require(isinstance(evidence.get("removed_environment_names"), list), "environment evidence missing")
+    return evidence
 
 
 def environment_preflight(wheels: dict[str, Path]) -> dict[str, str]:
@@ -333,13 +473,14 @@ def run_portable(receipt_path: Path, output: Path) -> int:
     for name in sorted(data):
         print("CANDIDATE_SHA256 " + sha(data[name]) + " " + name, flush=True)
     wheel_pins()
-    output.mkdir(parents=True, exist_ok=False)
+    require(output.is_dir() and {p.name for p in output.iterdir()} == {"install-evidence.json"},
+            "fresh output containing only install evidence required")
+    install_path = output / "install-evidence.json"
+    install = verify_install_evidence(install_path, receipt_hash)
+    install_hash = sha(install_path.read_bytes())
     with tempfile.TemporaryDirectory(prefix="gemma-m2-home-") as temporary:
-        env = {key: os.environ[key] for key in ("SystemRoot", "WINDIR") if key in os.environ}
-        env.update({"HOME": temporary, "USERPROFILE": temporary, "APPDATA": temporary,
-                    "LOCALAPPDATA": temporary, "TMP": temporary, "TEMP": temporary,
-                    "LITELLM_LOCAL_MODEL_COST_MAP": "True", "CUDA_VISIBLE_DEVICES": "",
-                    "OTEL_SDK_DISABLED": "true", "LITELLM_TELEMETRY": "False"})
+        env, removed = child_environment(dict(os.environ), temporary)
+        print(json.dumps({"removed_environment_names": removed}), flush=True)
         try:
             process = subprocess.run(
                 [sys.executable, "-I", "-B", str(Path(__file__).resolve()), "--compiler-worker"],
@@ -360,6 +501,7 @@ def run_portable(receipt_path: Path, output: Path) -> int:
     verify_local_receipt(receipt_path)
     require(sha(receipt_path.read_bytes()) == receipt_hash, "receipt changed")
     require(static_candidate(CANDIDATE) == data, "candidate changed")
+    require(sha(install_path.read_bytes()) == install_hash, "install evidence changed")
     blob = zip_bytes(data)
     require(blob == zip_bytes(data), "non-deterministic archive")
     inspect_zip(blob, data)
@@ -368,6 +510,7 @@ def run_portable(receipt_path: Path, output: Path) -> int:
     inspect_zip((output / "submission.zip").read_bytes(), data)
     manifest = {
         "schema": 1, "state": "PORTABLE_COMPILE_AND_PACKAGE_PASS",
+        "install_evidence": install, "install_evidence_sha256": install_hash,
         "local_receipt_sha256": receipt_hash, "inputs": input_manifest(),
         "python": sys.version, "platform": sys.platform, "environment": report["versions"],
         "zip_sha256": sha(blob), "zip_size": len(blob),

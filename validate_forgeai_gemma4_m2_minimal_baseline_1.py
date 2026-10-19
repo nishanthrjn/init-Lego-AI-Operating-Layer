@@ -92,7 +92,12 @@ def export_bundle(output: Path, receipt: dict) -> Path:
 
 def reconcile(receipt: Path, remote: Path) -> None:
     shared.verify_local_receipt(receipt)
+    install_path = remote / "install-evidence.json"
+    install = shared.verify_install_evidence(install_path, sha(receipt.read_bytes()))
     manifest = json.loads((remote / "manifest.json").read_text(encoding="utf-8"))
+    require(manifest.get("install_evidence") == install
+            and manifest.get("install_evidence_sha256") == sha(install_path.read_bytes()),
+            "install evidence manifest mismatch")
     compiler = json.loads((remote / "compiler-output.json").read_text(encoding="utf-8"))
     require(manifest.get("state") == "PORTABLE_COMPILE_AND_PACKAGE_PASS"
             and compiler.get("state") == "compiler_validated", "portable pass missing")

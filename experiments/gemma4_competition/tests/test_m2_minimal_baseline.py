@@ -138,5 +138,133 @@ class BaselinePolicyTests(unittest.TestCase):
             self.assertEqual(entries[key], {"sha256": gate.sha(raw), "size": len(raw)})
 
 
+class ScopedInstallTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="gemma-install-test-")
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.pins = {}
+        for name, version in portable.INSTALL_PACKAGES.items():
+            filename = f"{name.replace('-', '_')}-{version}-py3-none-any.whl"
+            data = name.encode()
+            (self.root / filename).write_bytes(data)
+            self.pins[name] = {"filename": filename, "sha256": portable.sha(data), "size": len(data)}
+        self.bundle = self.root / "bundled"
+        self.bundle.mkdir()
+        self.duplicates = {}
+        for name in portable.PACKAGES:
+            path = self.bundle / (name + ".fixture")
+            path.write_bytes(name.encode())
+            self.duplicates[name] = path
+        self.enterContext(patch.object(portable, "install_pins", return_value=self.pins))
+        self.enterContext(patch.object(portable, "wheel_pins", return_value=self.duplicates))
+
+    def test_exactly_five_names_ignore_other_wheels(self):
+        (self.root / "torch-99-py3-none-any.whl").write_bytes(b"never select")
+        selected = portable.select_install_wheels(self.root)
+        self.assertEqual(set(selected), set(portable.INSTALL_PACKAGES))
+        self.assertEqual({p.name for p in selected.values()}, {
+            "adk_submission-0.2.13-py3-none-any.whl", "adk_eval_core-0.1.0-py3-none-any.whl",
+            "swegemma-0.2.11-py3-none-any.whl", "google_adk-1.36.1-py3-none-any.whl",
+            "google_genai-2.11.0-py3-none-any.whl",
+        })
+
+    def test_wrong_version_does_not_substitute_for_missing_wheel(self):
+        (self.root / self.pins["google-adk"]["filename"]).rename(self.root / "google_adk-1.36.2-py3-none-any.whl")
+        with self.assertRaises(ValueError):
+            portable.select_install_wheels(self.root)
+
+    def test_hash_mismatch_stops_before_pip(self):
+        (self.root / self.pins["google-genai"]["filename"]).write_bytes(b"changed")
+        with patch.object(portable.sys, "platform", "linux"), patch.object(
+            portable.sys, "version_info", (3, 12)
+        ), patch.object(portable, "verify_local_receipt"), patch.object(portable.subprocess, "run") as run:
+            with self.assertRaises(ValueError):
+                portable.scoped_install(portable.INSTALL_AUTHORIZATION, self.root / "receipt",
+                                        self.root, self.root / "output")
+            run.assert_not_called()
+
+    def test_bundled_duplicate_mismatch_rejected(self):
+        self.duplicates["swegemma"].write_bytes(b"changed")
+        with self.assertRaises(ValueError):
+            portable.select_install_wheels(self.root)
+
+    def test_install_runs_only_five_paths_then_pip_check(self):
+        receipt = self.root / "receipt.json"
+        receipt.write_text("{}", encoding="utf-8")
+        output = self.root / "output"
+        with patch.object(portable.sys, "platform", "linux"), patch.object(
+            portable.sys, "version_info", (3, 12)
+        ), patch.object(portable, "verify_local_receipt"), patch.object(
+            portable, "direct_requirement_scope", return_value=list(portable.INSTALL_PACKAGES)
+        ), patch.object(portable, "installed_versions", side_effect=[
+            dict.fromkeys(portable.INSTALL_PACKAGES, "MISSING"), portable.INSTALL_PACKAGES
+        ]), patch.object(portable.subprocess, "run", side_effect=[
+            portable.subprocess.CompletedProcess([], 0, "", ""),
+            portable.subprocess.CompletedProcess([], 0, "No broken requirements found.\n", ""),
+        ]) as run, patch("builtins.print"):
+            evidence = portable.scoped_install(portable.INSTALL_AUTHORIZATION, receipt, self.root, output)
+        self.assertEqual(evidence["state"], "SCOPED_INSTALL_PASS")
+        self.assertTrue((output / "install-evidence.json").is_file())
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[0].args[0], [
+            portable.sys.executable, "-m", "pip", "install", "--no-deps", "--no-index", "--force-reinstall",
+            *(str(self.root / self.pins[name]["filename"]) for name in portable.INSTALL_PACKAGES),
+        ])
+        self.assertEqual(run.call_args_list[1].args[0], [portable.sys.executable, "-m", "pip", "check"])
+
+    def test_credential_names_removed_path_preserved(self):
+        secrets = {name: "synthetic-value" for name in (
+            "KAGGLE_USERNAME", "access_token", "API_KEY", "MY_SECRET", "PASSWORD",
+            "HF_HOME", "GOOGLE_APPLICATION_CREDENTIALS",
+        )}
+        source = {**secrets, "PATH": "/bin", "LD_LIBRARY_PATH": "/lib", "HOME": "/old"}
+        env, removed = portable.child_environment(source, "/temporary")
+        self.assertEqual(removed, sorted(secrets))
+        self.assertTrue(set(secrets).isdisjoint(env))
+        self.assertEqual(env["PATH"], "/bin")
+        self.assertEqual(env["LD_LIBRARY_PATH"], "/lib")
+        self.assertEqual(env["HOME"], "/temporary")
+        self.assertEqual(env["TMPDIR"], "/temporary")
+        self.assertEqual(env["CUDA_VISIBLE_DEVICES"], "")
+        self.assertEqual(source["HOME"], "/old")
+
+    def test_scoped_pip_check_blocks_direct_requirement_failure(self):
+        process = portable.subprocess.CompletedProcess([], 1,
+            "google-adk 1.36.1 requires missing-dep, which is not installed.\n"
+            "unrelated 1 requires other, which is not installed.\n", "")
+        result = portable.scoped_pip_check(process, ["google-adk"])
+        self.assertFalse(result["acceptable"])
+        self.assertEqual(len(result["excerpt"]), 1)
+        self.assertNotIn("unrelated", result["excerpt"][0])
+        result = portable.scoped_pip_check(process, ["swegemma"])
+        self.assertTrue(result["acceptable"])
+        self.assertEqual(result["excerpt"], [])
+
+    def test_reconcile_requires_install_evidence_before_pass(self):
+        receipt = self.root / "receipt.json"
+        receipt.write_text("{}", encoding="utf-8")
+        with patch.object(portable, "verify_local_receipt"), patch("builtins.print") as printed:
+            with self.assertRaises(FileNotFoundError):
+                gate.reconcile(receipt, self.root)
+            printed.assert_not_called()
+
+    def test_install_evidence_rejects_blocked_or_other_receipt(self):
+        evidence = {"schema": 1, "state": "SCOPED_INSTALL_PASS", "local_receipt_sha256": "receipt",
+                    "selected_wheels": self.pins, "install_returncode": 0,
+                    "pre_versions": dict.fromkeys(portable.INSTALL_PACKAGES, "MISSING"),
+                    "post_versions": portable.INSTALL_PACKAGES, "removed_environment_names": [],
+                    "pip_check": {"acceptable": True, "excerpt": [], "returncode": 0,
+                                  "scope": list(portable.INSTALL_PACKAGES)}}
+        path = self.root / "install-evidence.json"
+        path.write_text(json.dumps(evidence), encoding="utf-8")
+        self.assertEqual(portable.verify_install_evidence(path, "receipt"), evidence)
+        for changes in ({"state": "ENVIRONMENT_BLOCKED"}, {"local_receipt_sha256": "other"},
+                        {"post_versions": {}}, {"selected_wheels": {}}, {"pip_check": None}):
+            path.write_text(json.dumps(dict(evidence, **changes)), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                portable.verify_install_evidence(path, "receipt")
+
+
 if __name__ == "__main__":
     unittest.main()
