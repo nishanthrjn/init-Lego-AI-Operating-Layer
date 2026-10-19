@@ -5,6 +5,7 @@ Symlink creation requires the host's permission; failure is not silently skipped
 """
 
 import io
+import json
 from pathlib import Path
 import shutil
 import tempfile
@@ -13,6 +14,7 @@ from unittest.mock import patch
 import zipfile
 
 import validate_forgeai_gemma4_m2_minimal_baseline_1 as gate
+from experiments.gemma4_competition import portable_m2 as portable
 
 
 class BaselinePolicyTests(unittest.TestCase):
@@ -23,11 +25,12 @@ class BaselinePolicyTests(unittest.TestCase):
         self.candidate = self.root / "candidate"
         shutil.copytree(gate.CANDIDATE, self.candidate)
 
-    def test_exact_positive_and_crlf_equivalence(self):
+    def test_exact_positive_and_crlf_refusal_for_byte_identity(self):
         original = gate.static_candidate(self.candidate)
         for name in gate.MEMBERS:
             (self.candidate / name).write_bytes(original[name].replace(b"\n", b"\r\n"))
-        self.assertEqual(original, gate.static_candidate(self.candidate))
+        with self.assertRaises(ValueError):
+            gate.static_candidate(self.candidate)
 
     def test_policy_rejects_configuration_mutations(self):
         mutations = [
@@ -112,6 +115,27 @@ class BaselinePolicyTests(unittest.TestCase):
         for event in ("socket.connect", "socket.getaddrinfo", "subprocess.Popen", "os.system"):
             with self.subTest(event=event), self.assertRaises(gate.OfflineViolation):
                 gate.deny_effects(event, ())
+
+    def test_receipt_rejects_changed_input_and_missing_local_pass(self):
+        receipt = self.root / "local-receipt.json"
+        expected = {"fixture": {"sha256": "expected", "size": 1}}
+        with patch.object(portable, "input_manifest", return_value=expected), patch.object(
+            portable, "static_candidate", return_value={}
+        ):
+            valid = {"schema": 1, "state": "LOCAL_SCOPE_AND_STATIC_PASS", "inputs": expected}
+            receipt.write_text(json.dumps(valid), encoding="utf-8")
+            self.assertEqual(portable.verify_local_receipt(receipt), valid)
+            for changed in (dict(valid, inputs={}), dict(valid, state="NOT_RUN")):
+                receipt.write_text(json.dumps(changed), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    portable.verify_local_receipt(receipt)
+
+    def test_manifest_contains_raw_candidate_hashes(self):
+        entries = portable.input_manifest()
+        for name in gate.MEMBERS:
+            key = "experiments/gemma4_competition/baseline/" + name
+            raw = (gate.CANDIDATE / name).read_bytes()
+            self.assertEqual(entries[key], {"sha256": gate.sha(raw), "size": len(raw)})
 
 
 if __name__ == "__main__":
