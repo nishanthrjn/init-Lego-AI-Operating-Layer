@@ -1441,3 +1441,4 @@ __pycache__/
 
 # ForgeAI LQ13 test-generated temporary workspace
 examples/forgeai/.lq13-test-temp/
+experiments/gemma4_competition/docs/archive
