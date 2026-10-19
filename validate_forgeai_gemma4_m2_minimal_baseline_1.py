@@ -20,7 +20,9 @@ from experiments.gemma4_competition.portable_m2 import (
 )
 
 ROOT = Path(__file__).resolve().parent
-BASE = "fa4706e75acba058e648f6d31f88ebe4b8670ee4"
+# Parent of the scoped-install slice; preserves the maintainer's committed
+# wheel-untracking, ignore policy and historical transfer evidence.
+BASE = "0bfa26c9d6f6678f6b1b6048a596a5f130273599"
 SCOPE = {
     ".gitattributes",
     "validate_forgeai_gemma4_m2_minimal_baseline_1.py",
@@ -63,12 +65,16 @@ def staged_checks() -> None:
 
 
 def local_checks() -> dict:
+    print("[PHASE] exact local scope and working whitespace", flush=True)
     scope_checks()
+    print("[PHASE] preserved wheel pins and exact candidate bytes", flush=True)
     shared.wheel_pins()
     static_candidate(CANDIDATE)
+    print("[PHASE] offline policy, scoped-install and packaging controls", flush=True)
     subprocess.run([sys.executable, "-B", "-m", "unittest", "discover", "-s",
                     "experiments/gemma4_competition/tests", "-p", "test_m2_minimal_baseline.py"],
                    cwd=ROOT, check=True)
+    print("[PHASE] post-control scope preservation", flush=True)
     scope_checks()
     print("M2_BASELINE_LOCAL_STATIC_CHECKS_PASSED")
     return {"schema": 1, "state": "LOCAL_SCOPE_AND_STATIC_PASS", "baseline": BASE,
