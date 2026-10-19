@@ -1,0 +1,1823 @@
+{
+  "task": "FORGEAI-GEMMA4-M2-ISOLATED-COMPILER-ENVIRONMENT-1",
+  "observed_date": "2026-10-19",
+  "git_baseline": "2731ec799db4694061d0c48cd57ce7219188d3f4",
+  "status": "AUTHORING_METADATA_ANALYSIS_NOT_EXECUTED_PREFLIGHT",
+  "target": "CPython 3.12 / Windows AMD64",
+  "roots": [
+    "adk-submission==0.2.13",
+    "adk-eval-core==0.1.0",
+    "swegemma==0.2.11",
+    "google-adk==1.36.1",
+    "google-genai==2.11.0",
+    "packaging"
+  ],
+  "closure_complete": false,
+  "closure_limitation": "Missing wheel METADATA means additional transitive dependencies, versions and compatibility remain unknown. This is not an install lock.",
+  "root_extras": [],
+  "selected_archive_metadata": [
+    {
+      "name": "adk-eval-core",
+      "version": "0.1.0",
+      "file": "adk_eval_core-0.1.0-py3-none-any.whl",
+      "source_register_path": "docs/archive/adk_eval_core-0.1.0-py3-none-any.whl",
+      "sha256_from_source_register": "e614e1b2fe8d886a634871e4c57f9887e1cc66e8c27300f8503a43c6e3ca82f3",
+      "size_bytes": 90060,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.11",
+      "requires_dist": [
+        "pydantic~=2.0",
+        "google-adk>=1.34.0",
+        "docker>=7.0.0",
+        "pyyaml>=6.0",
+        "rich>=13.0",
+        "numpy>=2.0.0",
+        "scikit-learn>=1.3.0; extra == \"scoring\"",
+        "pytest>=9.0.0; extra == \"dev\"",
+        "pytest-asyncio>=0.23.0; extra == \"dev\"",
+        "pytest-cov>=7.0.0; extra == \"dev\"",
+        "ruff>=0.15.0; extra == \"dev\""
+      ],
+      "metadata_sha256": "740cfce11e88d34fc8d8e42bf8efa69994c37d411744e79a71ecb5ab50bf1819",
+      "record_sha256": "a413498ea646b111ec70a1222d7342c610d7595ca5b6244e2040ea32ffe6a1a7",
+      "record_entries": 52,
+      "incoming_constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "adk-eval-core==0.1.0"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "adk-eval-core"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    },
+    {
+      "name": "adk-submission",
+      "version": "0.2.13",
+      "file": "adk_submission-0.2.13-py3-none-any.whl",
+      "source_register_path": "docs/archive/adk_submission-0.2.13-py3-none-any.whl",
+      "sha256_from_source_register": "f156f0bd84580ccb9334726d114d7a5481f16d3a6e2887cc4d276ced0ef8d99d",
+      "size_bytes": 66528,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.11",
+      "requires_dist": [
+        "google-adk<2.0,>=1.34.0",
+        "pyyaml>=6.0",
+        "pydantic>=2.0",
+        "pytest>=8.0; extra == \"dev\"",
+        "pytest-asyncio>=0.23; extra == \"dev\"",
+        "requests>=2.28.0; extra == \"serving\"",
+        "litellm>=1.0.0; extra == \"serving\""
+      ],
+      "metadata_sha256": "7f3d6ea57506a653d1f15e1820039578eb3beab5c3eb49ce3f757afc2ebef3d2",
+      "record_sha256": "9c5dc8ed9147e9db7fce42dc8d8eacf78e72960d9beafd82f35c7f7db7d6e9c1",
+      "record_entries": 25,
+      "incoming_constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "adk-submission==0.2.13"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "adk-submission"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    },
+    {
+      "name": "google-adk",
+      "version": "1.36.1",
+      "file": "google_adk-1.36.1-py3-none-any.whl",
+      "source_register_path": "docs/archive/google_adk-1.36.1-py3-none-any.whl",
+      "sha256_from_source_register": "1a2f6868c509e3151fb0de3575a7d18b45c338be86f420924dad74e7193631a0",
+      "size_bytes": 2877731,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "aiosqlite>=0.21",
+        "anyio>=4.9,<5",
+        "authlib>=1.6.6,<2",
+        "click>=8.1.8,<9",
+        "fastapi>=0.124.1,<1",
+        "google-api-python-client>=2.157,<3",
+        "google-auth[pyopenssl]>=2.47",
+        "google-cloud-aiplatform[agent-engines]>=1.148.1,<2",
+        "google-cloud-bigquery>=2.2",
+        "google-cloud-bigquery-storage>=2",
+        "google-cloud-bigtable>=2.32",
+        "google-cloud-dataplex>=1.7,<3",
+        "google-cloud-discoveryengine>=0.13.12,<0.14",
+        "google-cloud-pubsub>=2,<3",
+        "google-cloud-secret-manager>=2.22,<3",
+        "google-cloud-spanner>=3.56,<4",
+        "google-cloud-speech>=2.30,<3",
+        "google-cloud-storage>=2.18,<4",
+        "google-genai>=2.9,<3",
+        "graphviz>=0.20.2,<1",
+        "httpx>=0.27,<1",
+        "jsonschema>=4.23,<5",
+        "mcp>=1.24,<2",
+        "opentelemetry-api>=1.36,<=1.41.1",
+        "opentelemetry-exporter-gcp-logging>=1.9.0a0,<=1.12.0a0",
+        "opentelemetry-exporter-gcp-monitoring>=1.9.0a0,<2",
+        "opentelemetry-exporter-gcp-trace>=1.9,<2",
+        "opentelemetry-exporter-otlp-proto-http>=1.36",
+        "opentelemetry-resourcedetector-gcp>=1.9.0a0,<2",
+        "opentelemetry-sdk>=1.36,<=1.41.1",
+        "pyarrow>=14",
+        "pydantic>=2.12,<3",
+        "python-dateutil>=2.9.0.post0,<3",
+        "python-dotenv>=1,<2",
+        "pyyaml>=6.0.2,<7",
+        "requests>=2.32.4,<3",
+        "sqlalchemy>=2,<3",
+        "sqlalchemy-spanner>=1.14",
+        "starlette>=0.49.1,<1",
+        "tenacity>=9,<10",
+        "typing-extensions>=4.5,<5",
+        "tzlocal>=5.3,<6",
+        "uvicorn>=0.34,<1",
+        "watchdog>=6,<7",
+        "websockets>=15.0.1,<16",
+        "a2a-sdk>=0.3.4,<0.4 ; extra == \"a2a\"",
+        "google-cloud-iamconnectorcredentials>=0.1,<0.2 ; extra == \"agent-identity\"",
+        "google-adk-community ; extra == \"community\"",
+        "flit>=3.10 ; extra == \"dev\"",
+        "isort>=6 ; extra == \"dev\"",
+        "mypy>=1.15 ; extra == \"dev\"",
+        "pre-commit>=4 ; extra == \"dev\"",
+        "pyink>=25.12 ; extra == \"dev\"",
+        "pylint>=2.6 ; extra == \"dev\"",
+        "autodoc-pydantic ; extra == \"docs\"",
+        "furo ; extra == \"docs\"",
+        "myst-parser ; extra == \"docs\"",
+        "sphinx<9 ; extra == \"docs\"",
+        "sphinx-autodoc-typehints ; extra == \"docs\"",
+        "sphinx-click ; extra == \"docs\"",
+        "sphinx-rtd-theme ; extra == \"docs\"",
+        "gepa>=0.1 ; extra == \"eval\"",
+        "google-cloud-aiplatform[evaluation]>=1.148 ; extra == \"eval\"",
+        "jinja2>=3.1.4,<4 ; extra == \"eval\"",
+        "pandas>=2.2.3 ; extra == \"eval\"",
+        "rouge-score>=0.1.2 ; extra == \"eval\"",
+        "tabulate>=0.9 ; extra == \"eval\"",
+        "anthropic>=0.78 ; extra == \"extensions\"",
+        "beautifulsoup4>=3.2.2 ; extra == \"extensions\"",
+        "crewai[tools] ; extra == \"extensions\" and ( python_version>='3.11' and python_version<'3.12')",
+        "docker>=7 ; extra == \"extensions\"",
+        "google-cloud-firestore>=2.11,<3 ; extra == \"extensions\"",
+        "google-cloud-parametermanager>=0.4,<1 ; extra == \"extensions\"",
+        "k8s-agent-sandbox>=0.1.1.post3 ; extra == \"extensions\"",
+        "kubernetes>=29 ; extra == \"extensions\"",
+        "langgraph>=0.2.60,<0.4.8 ; extra == \"extensions\"",
+        "litellm>=1.83.7,<=1.83.14 ; extra == \"extensions\"",
+        "llama-index-embeddings-google-genai>=0.3 ; extra == \"extensions\"",
+        "llama-index-readers-file>=0.4 ; extra == \"extensions\"",
+        "lxml>=5.3 ; extra == \"extensions\"",
+        "pypika>=0.50 ; extra == \"extensions\"",
+        "toolbox-adk>=1,<2 ; extra == \"extensions\"",
+        "opentelemetry-instrumentation-google-genai>=0.6b0,<1 ; extra == \"otel-gcp\"",
+        "slack-bolt>=1.22 ; extra == \"slack\"",
+        "a2a-sdk>=0.3,<0.4 ; extra == \"test\"",
+        "anthropic>=0.78 ; extra == \"test\"",
+        "crewai[tools] ; extra == \"test\" and ( python_version>='3.11' and python_version<'3.12')",
+        "google-cloud-firestore>=2.11,<3 ; extra == \"test\"",
+        "google-cloud-iamconnectorcredentials>=0.1,<0.2 ; extra == \"test\"",
+        "google-cloud-parametermanager>=0.4,<1 ; extra == \"test\"",
+        "kubernetes>=29 ; extra == \"test\"",
+        "langchain-community>=0.3.17 ; extra == \"test\"",
+        "langgraph>=0.2.60,<0.4.8 ; extra == \"test\"",
+        "litellm>=1.83.7,<=1.83.14 ; extra == \"test\"",
+        "llama-index-readers-file>=0.4 ; extra == \"test\"",
+        "openai>=1.100.2 ; extra == \"test\"",
+        "opentelemetry-instrumentation-google-genai>=0.3b0,<1 ; extra == \"test\"",
+        "pypika>=0.50 ; extra == \"test\"",
+        "pytest>=9,<10 ; extra == \"test\"",
+        "pytest-asyncio>=0.25 ; extra == \"test\"",
+        "pytest-mock>=3.14 ; extra == \"test\"",
+        "pytest-xdist>=3.6.1 ; extra == \"test\"",
+        "python-multipart>=0.0.9 ; extra == \"test\"",
+        "rouge-score>=0.1.2 ; extra == \"test\"",
+        "slack-bolt>=1.22 ; extra == \"test\"",
+        "tabulate>=0.9 ; extra == \"test\"",
+        "toolbox-adk>=1,<2 ; extra == \"toolbox\""
+      ],
+      "metadata_sha256": "28751f5a13bb6dcfa9a89a3d2dc44be6231bb1a4dfc4ef8de5aefb687b85d032",
+      "record_sha256": "63387b97afc903a5a58ed90362e906211254bf24f1ba182fe15f910fcd641901",
+      "record_entries": 590,
+      "incoming_constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "google-adk==1.36.1"
+        },
+        {
+          "parent": "adk-eval-core",
+          "requirement": "google-adk>=1.34.0"
+        },
+        {
+          "parent": "adk-submission",
+          "requirement": "google-adk<2.0,>=1.34.0"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "google-adk>=1.34.0"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    },
+    {
+      "name": "google-genai",
+      "version": "2.11.0",
+      "file": "google_genai-2.11.0-py3-none-any.whl",
+      "source_register_path": "docs/archive/google_genai-2.11.0-py3-none-any.whl",
+      "sha256_from_source_register": "5bc8186100e1d34d691fbe0cba392b7e04e98d286ca952323a6672d054accf95",
+      "size_bytes": 984162,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "anyio<5.0.0,>=4.8.0",
+        "google-auth[requests]<3.0.0,>=2.48.1",
+        "httpx<1.0.0,>=0.28.1",
+        "pydantic<3.0.0,>=2.12.5",
+        "requests<3.0.0,>=2.28.1",
+        "tenacity<9.2.0,>=8.2.3",
+        "websockets<17.0,>=13.0.0",
+        "typing-extensions<5.0.0,>=4.14.0",
+        "distro<2,>=1.7.0",
+        "sniffio",
+        "aiohttp<4.0.0,>=3.10.11; extra == \"aiohttp\"",
+        "sentencepiece>=0.2.0; extra == \"local-tokenizer\"",
+        "protobuf; extra == \"local-tokenizer\"",
+        "pillow; extra == \"local-tokenizer\"",
+        "torch; extra == \"local-tokenizer\"",
+        "torchvision; extra == \"local-tokenizer\"",
+        "transformers; extra == \"local-tokenizer\"",
+        "pyopenssl; extra == \"pyopenssl\""
+      ],
+      "metadata_sha256": "9de895e2435678d1d64ca617b33b5dbc24c8dce779dc3082bbbebca43f5f7660",
+      "record_sha256": "7ae420a2f08a4adbcd489d1162dbc4545d1329202caba6d1b37871712ad9eeec",
+      "record_entries": 488,
+      "incoming_constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "google-genai==2.11.0"
+        },
+        {
+          "parent": "google-adk",
+          "requirement": "google-genai>=2.9,<3"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "google-genai>=1.0.0"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "file": "safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "source_register_path": "docs/archive/safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256_from_source_register": "f216afd4ba743e744c86cbd08e7185efa8749e4c905f14e4e977d65576466cb0",
+      "size_bytes": 506502,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "safetensors[torch] ; extra == 'all'",
+        "safetensors[numpy] ; extra == 'all'",
+        "safetensors[jax] ; extra == 'all'",
+        "safetensors[paddlepaddle] ; extra == 'all'",
+        "safetensors[convert] ; extra == 'all'",
+        "safetensors[quality] ; extra == 'all'",
+        "safetensors[testing] ; extra == 'all'",
+        "safetensors[torch] ; extra == 'convert'",
+        "huggingface-hub>=1.4 ; extra == 'convert'",
+        "safetensors[all] ; extra == 'dev'",
+        "safetensors[pinned-tf] ; extra == 'dev'",
+        "safetensors[numpy] ; extra == 'jax'",
+        "flax>=0.6.3 ; extra == 'jax'",
+        "jax>=0.3.25 ; extra == 'jax'",
+        "jaxlib>=0.3.25 ; extra == 'jax'",
+        "mlx>=0.0.9 ; extra == 'mlx'",
+        "numpy>=1.24.6 ; extra == 'numpy'",
+        "safetensors[numpy] ; extra == 'paddlepaddle'",
+        "paddlepaddle>=2.4.1 ; extra == 'paddlepaddle'",
+        "safetensors[numpy] ; extra == 'pinned-tf'",
+        "tensorflow==2.18.0 ; extra == 'pinned-tf'",
+        "ruff ; extra == 'quality'",
+        "safetensors[numpy] ; extra == 'tensorflow'",
+        "tensorflow>=2.11.0 ; extra == 'tensorflow'",
+        "safetensors[numpy] ; extra == 'testing'",
+        "h5py>=3.7.0 ; extra == 'testing'",
+        "setuptools-rust>=1.12.0 ; extra == 'testing'",
+        "pytest>=9.0 ; extra == 'testing'",
+        "pytest-benchmark>=5.2 ; extra == 'testing'",
+        "hypothesis>=6.70.2 ; extra == 'testing'",
+        "fsspec>=2024.6.0 ; extra == 'testing'",
+        "s3fs>=2024.6.0 ; extra == 'testing'",
+        "safetensors[numpy] ; extra == 'tf-nightly'",
+        "tf-nightly ; extra == 'tf-nightly'",
+        "safetensors[numpy] ; extra == 'torch'",
+        "torch>=2.4 ; extra == 'torch'"
+      ],
+      "metadata_sha256": "645be7b8d55e91534f991d144dc9e279581ea8dbea1a8c5b0be14e529d01e345",
+      "record_sha256": "2f41a506621a74a1f710f06927dc323bf561a9ea4cf6daae449324fbda2cfe1c",
+      "record_entries": 15,
+      "incoming_constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "safetensors"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "safetensors>=0.8.0"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "INCOMPATIBLE_LINUX_WHEEL"
+    },
+    {
+      "name": "swegemma",
+      "version": "0.2.11",
+      "file": "swegemma-0.2.11-py3-none-any.whl",
+      "source_register_path": "docs/archive/swegemma-0.2.11-py3-none-any.whl",
+      "sha256_from_source_register": "9ad876581f3acde8ec3c369858f0834e2b9f41a3cffce3ca42f09cb090aea9d3",
+      "size_bytes": 119670,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.12",
+      "requires_dist": [
+        "adk-submission",
+        "cachetools>=5.0.0",
+        "docker>=7.0.0",
+        "google-adk>=1.34.0",
+        "google-genai>=1.0.0",
+        "networkx>=3.0",
+        "numpy>=1.26.0",
+        "pydantic>=2.0.0",
+        "python-dotenv>=1.0.0",
+        "pyyaml>=6.0.0",
+        "rich>=13.0.0",
+        "adk-eval-core",
+        "litellm>=1.0.0",
+        "pandas>=2.0.0",
+        "tokenizers>=0.20.0",
+        "torchvision",
+        "transformers>=4.40.0",
+        "safetensors",
+        "accelerate"
+      ],
+      "metadata_sha256": "84c8c8f3e7178ea6a1c2628151b2c490ab554b77a10ab14e0e99bc63cfd65d63",
+      "record_sha256": "9dc3aadcfdcaf5c42dd3c7374e1811f713e09c9297761971ea931c2fb3309bda",
+      "record_entries": 40,
+      "incoming_constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "swegemma==0.2.11"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "file": "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "source_register_path": "docs/archive/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256_from_source_register": "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67",
+      "size_bytes": 3274982,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "huggingface-hub>=0.16.4,<2.0",
+        "pytest ; extra == 'testing'",
+        "pytest-asyncio ; extra == 'testing'",
+        "requests ; extra == 'testing'",
+        "numpy ; extra == 'testing'",
+        "datasets ; extra == 'testing'",
+        "ruff ; extra == 'testing'",
+        "ty ; extra == 'testing'",
+        "sphinx ; extra == 'docs'",
+        "sphinx-rtd-theme ; extra == 'docs'",
+        "setuptools-rust ; extra == 'docs'",
+        "tokenizers[testing] ; extra == 'dev'"
+      ],
+      "metadata_sha256": "15a5ddaf489f592b77e0a934c0eeb46b51130a94064ca129232afdb0a3868efc",
+      "record_sha256": "d12cab93031dc452a44cf753277eef6405d645d9adc48b6b59e4432fa721e421",
+      "record_entries": 29,
+      "incoming_constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "tokenizers>=0.20.0"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "tokenizers<=0.23.0,>=0.22.0"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "INCOMPATIBLE_LINUX_WHEEL"
+    },
+    {
+      "name": "transformers",
+      "version": "5.13.1",
+      "file": "transformers-5.13.1-py3-none-any.whl",
+      "source_register_path": "docs/archive/transformers-5.13.1-py3-none-any.whl",
+      "sha256_from_source_register": "53f0ea8aa397e29244c2377ba981bcaf0c87adcf44fbdd447ef6306522afcacd",
+      "size_bytes": 11503977,
+      "source_url": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+      "provenance": "MAINTAINER_SUPPLIED; exact release/download identity unconfirmed",
+      "requires_python": ">=3.10.0",
+      "requires_dist": [
+        "huggingface-hub<2.0,>=1.5.0",
+        "numpy>=1.17",
+        "packaging>=20.0",
+        "pyyaml>=5.1",
+        "regex>=2025.10.22",
+        "tokenizers<=0.23.0,>=0.22.0",
+        "typer",
+        "safetensors>=0.8.0",
+        "tqdm>=4.60",
+        "torch>=2.4; extra == \"torch\"",
+        "accelerate>=1.1.0; extra == \"torch\"",
+        "torchvision; extra == \"vision\"",
+        "Pillow<=15.0,>=10.0.1; extra == \"vision\"",
+        "torchaudio; extra == \"audio\"",
+        "librosa; extra == \"audio\"",
+        "pyctcdecode>=0.4.0; extra == \"audio\"",
+        "phonemizer; extra == \"audio\"",
+        "av; extra == \"video\"",
+        "timm>=1.0.23; extra == \"timm\"",
+        "datasets>=2.15.0; extra == \"quality\"",
+        "ruff==0.14.10; extra == \"quality\"",
+        "GitPython<3.1.19; extra == \"quality\"",
+        "urllib3<2.0.0; extra == \"quality\"",
+        "libcst; extra == \"quality\"",
+        "rich; extra == \"quality\"",
+        "ty==0.0.20; extra == \"quality\"",
+        "tomli; extra == \"quality\"",
+        "transformers-mlinter==0.1.1; extra == \"quality\"",
+        "hf-doc-builder; extra == \"docs\"",
+        "kernels<0.16,>=0.15.2; extra == \"kernels\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"sentencepiece\"",
+        "protobuf; extra == \"sentencepiece\"",
+        "tiktoken; extra == \"tiktoken\"",
+        "blobfile; extra == \"tiktoken\"",
+        "mistral-common[image]>=1.10.0; extra == \"mistral-common\"",
+        "jinja2>=3.1.0; extra == \"chat-template\"",
+        "scikit-learn; extra == \"sklearn\"",
+        "accelerate>=1.1.0; extra == \"accelerate\"",
+        "faiss-cpu; extra == \"retrieval\"",
+        "datasets>=2.15.0; extra == \"retrieval\"",
+        "sagemaker>=2.31.0; extra == \"sagemaker\"",
+        "deepspeed>=0.9.3; extra == \"deepspeed\"",
+        "accelerate>=1.1.0; extra == \"deepspeed\"",
+        "optuna; extra == \"optuna\"",
+        "kernels<0.16,>=0.15.2; extra == \"integrations\"",
+        "optuna; extra == \"integrations\"",
+        "codecarbon>=2.8.1; extra == \"integrations\"",
+        "ray[tune]>=2.7.0; extra == \"integrations\"",
+        "ray[tune]>=2.7.0; extra == \"ray\"",
+        "codecarbon>=2.8.1; extra == \"codecarbon\"",
+        "openai>=1.98.0; extra == \"serving\"",
+        "pydantic>=2; extra == \"serving\"",
+        "uvicorn; extra == \"serving\"",
+        "fastapi; extra == \"serving\"",
+        "starlette; extra == \"serving\"",
+        "rich; extra == \"serving\"",
+        "torch>=2.4; extra == \"serving\"",
+        "accelerate>=1.1.0; extra == \"serving\"",
+        "num2words; extra == \"num2words\"",
+        "optimum-benchmark>=0.3.0; extra == \"benchmark\"",
+        "fugashi>=1.0; extra == \"ja\"",
+        "ipadic<2.0,>=1.0.0; extra == \"ja\"",
+        "unidic_lite>=1.0.7; extra == \"ja\"",
+        "unidic>=1.0.2; extra == \"ja\"",
+        "rhoknp<1.3.1,>=1.1.0; extra == \"ja\"",
+        "sudachipy>=0.6.6; extra == \"ja\"",
+        "sudachidict_core>=20220729; extra == \"ja\"",
+        "pytest<9.0.0,>=7.2.0; extra == \"testing\"",
+        "pytest-asyncio>=1.2.0; extra == \"testing\"",
+        "pytest-random-order; extra == \"testing\"",
+        "pytest-rich; extra == \"testing\"",
+        "pytest-xdist; extra == \"testing\"",
+        "pytest-order; extra == \"testing\"",
+        "pytest-rerunfailures<16.0; extra == \"testing\"",
+        "pytest-timeout; extra == \"testing\"",
+        "pytest-env; extra == \"testing\"",
+        "timeout-decorator; extra == \"testing\"",
+        "parameterized>=0.9; extra == \"testing\"",
+        "psutil; extra == \"testing\"",
+        "dill<0.3.5; extra == \"testing\"",
+        "evaluate>=0.4.6; extra == \"testing\"",
+        "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"testing\"",
+        "nltk<=3.8.1; extra == \"testing\"",
+        "sacremoses; extra == \"testing\"",
+        "rjieba; extra == \"testing\"",
+        "beautifulsoup4; extra == \"testing\"",
+        "tensorboard; extra == \"testing\"",
+        "sacrebleu<2.0.0,>=1.4.12; extra == \"testing\"",
+        "filelock; extra == \"testing\"",
+        "hf-doc-builder; extra == \"testing\"",
+        "datasets>=2.15.0; extra == \"testing\"",
+        "ruff==0.14.10; extra == \"testing\"",
+        "GitPython<3.1.19; extra == \"testing\"",
+        "urllib3<2.0.0; extra == \"testing\"",
+        "libcst; extra == \"testing\"",
+        "rich; extra == \"testing\"",
+        "ty==0.0.20; extra == \"testing\"",
+        "tomli; extra == \"testing\"",
+        "transformers-mlinter==0.1.1; extra == \"testing\"",
+        "faiss-cpu; extra == \"testing\"",
+        "datasets>=2.15.0; extra == \"testing\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"testing\"",
+        "protobuf; extra == \"testing\"",
+        "openai>=1.98.0; extra == \"testing\"",
+        "pydantic>=2; extra == \"testing\"",
+        "uvicorn; extra == \"testing\"",
+        "fastapi; extra == \"testing\"",
+        "starlette; extra == \"testing\"",
+        "rich; extra == \"testing\"",
+        "torch>=2.4; extra == \"testing\"",
+        "accelerate>=1.1.0; extra == \"testing\"",
+        "mistral-common[image]>=1.10.0; extra == \"testing\"",
+        "deepspeed>=0.9.3; extra == \"deepspeed-testing\"",
+        "accelerate>=1.1.0; extra == \"deepspeed-testing\"",
+        "pytest<9.0.0,>=7.2.0; extra == \"deepspeed-testing\"",
+        "pytest-asyncio>=1.2.0; extra == \"deepspeed-testing\"",
+        "pytest-random-order; extra == \"deepspeed-testing\"",
+        "pytest-rich; extra == \"deepspeed-testing\"",
+        "pytest-xdist; extra == \"deepspeed-testing\"",
+        "pytest-order; extra == \"deepspeed-testing\"",
+        "pytest-rerunfailures<16.0; extra == \"deepspeed-testing\"",
+        "pytest-timeout; extra == \"deepspeed-testing\"",
+        "pytest-env; extra == \"deepspeed-testing\"",
+        "timeout-decorator; extra == \"deepspeed-testing\"",
+        "parameterized>=0.9; extra == \"deepspeed-testing\"",
+        "psutil; extra == \"deepspeed-testing\"",
+        "dill<0.3.5; extra == \"deepspeed-testing\"",
+        "evaluate>=0.4.6; extra == \"deepspeed-testing\"",
+        "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"deepspeed-testing\"",
+        "nltk<=3.8.1; extra == \"deepspeed-testing\"",
+        "sacremoses; extra == \"deepspeed-testing\"",
+        "rjieba; extra == \"deepspeed-testing\"",
+        "beautifulsoup4; extra == \"deepspeed-testing\"",
+        "tensorboard; extra == \"deepspeed-testing\"",
+        "sacrebleu<2.0.0,>=1.4.12; extra == \"deepspeed-testing\"",
+        "filelock; extra == \"deepspeed-testing\"",
+        "hf-doc-builder; extra == \"deepspeed-testing\"",
+        "datasets>=2.15.0; extra == \"deepspeed-testing\"",
+        "ruff==0.14.10; extra == \"deepspeed-testing\"",
+        "GitPython<3.1.19; extra == \"deepspeed-testing\"",
+        "urllib3<2.0.0; extra == \"deepspeed-testing\"",
+        "libcst; extra == \"deepspeed-testing\"",
+        "rich; extra == \"deepspeed-testing\"",
+        "ty==0.0.20; extra == \"deepspeed-testing\"",
+        "tomli; extra == \"deepspeed-testing\"",
+        "transformers-mlinter==0.1.1; extra == \"deepspeed-testing\"",
+        "faiss-cpu; extra == \"deepspeed-testing\"",
+        "datasets>=2.15.0; extra == \"deepspeed-testing\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"deepspeed-testing\"",
+        "protobuf; extra == \"deepspeed-testing\"",
+        "openai>=1.98.0; extra == \"deepspeed-testing\"",
+        "pydantic>=2; extra == \"deepspeed-testing\"",
+        "uvicorn; extra == \"deepspeed-testing\"",
+        "fastapi; extra == \"deepspeed-testing\"",
+        "starlette; extra == \"deepspeed-testing\"",
+        "rich; extra == \"deepspeed-testing\"",
+        "torch>=2.4; extra == \"deepspeed-testing\"",
+        "accelerate>=1.1.0; extra == \"deepspeed-testing\"",
+        "mistral-common[image]>=1.10.0; extra == \"deepspeed-testing\"",
+        "optuna; extra == \"deepspeed-testing\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"deepspeed-testing\"",
+        "protobuf; extra == \"deepspeed-testing\"",
+        "torch>=2.4; extra == \"all\"",
+        "accelerate>=1.1.0; extra == \"all\"",
+        "torchvision; extra == \"all\"",
+        "Pillow<=15.0,>=10.0.1; extra == \"all\"",
+        "torchaudio; extra == \"all\"",
+        "librosa; extra == \"all\"",
+        "pyctcdecode>=0.4.0; extra == \"all\"",
+        "phonemizer; extra == \"all\"",
+        "av; extra == \"all\"",
+        "kernels<0.16,>=0.15.2; extra == \"all\"",
+        "timm>=1.0.23; extra == \"all\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"all\"",
+        "protobuf; extra == \"all\"",
+        "tiktoken; extra == \"all\"",
+        "blobfile; extra == \"all\"",
+        "jinja2>=3.1.0; extra == \"all\"",
+        "num2words; extra == \"all\"",
+        "mistral-common[image]>=1.10.0; extra == \"all\"",
+        "torch>=2.4; extra == \"dev\"",
+        "accelerate>=1.1.0; extra == \"dev\"",
+        "torchvision; extra == \"dev\"",
+        "Pillow<=15.0,>=10.0.1; extra == \"dev\"",
+        "torchaudio; extra == \"dev\"",
+        "librosa; extra == \"dev\"",
+        "pyctcdecode>=0.4.0; extra == \"dev\"",
+        "phonemizer; extra == \"dev\"",
+        "av; extra == \"dev\"",
+        "kernels<0.16,>=0.15.2; extra == \"dev\"",
+        "timm>=1.0.23; extra == \"dev\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"dev\"",
+        "protobuf; extra == \"dev\"",
+        "tiktoken; extra == \"dev\"",
+        "blobfile; extra == \"dev\"",
+        "jinja2>=3.1.0; extra == \"dev\"",
+        "num2words; extra == \"dev\"",
+        "mistral-common[image]>=1.10.0; extra == \"dev\"",
+        "pytest<9.0.0,>=7.2.0; extra == \"dev\"",
+        "pytest-asyncio>=1.2.0; extra == \"dev\"",
+        "pytest-random-order; extra == \"dev\"",
+        "pytest-rich; extra == \"dev\"",
+        "pytest-xdist; extra == \"dev\"",
+        "pytest-order; extra == \"dev\"",
+        "pytest-rerunfailures<16.0; extra == \"dev\"",
+        "pytest-timeout; extra == \"dev\"",
+        "pytest-env; extra == \"dev\"",
+        "timeout-decorator; extra == \"dev\"",
+        "parameterized>=0.9; extra == \"dev\"",
+        "psutil; extra == \"dev\"",
+        "dill<0.3.5; extra == \"dev\"",
+        "evaluate>=0.4.6; extra == \"dev\"",
+        "rouge-score!=0.0.7,!=0.0.8,!=0.1,!=0.1.1; extra == \"dev\"",
+        "nltk<=3.8.1; extra == \"dev\"",
+        "sacremoses; extra == \"dev\"",
+        "rjieba; extra == \"dev\"",
+        "beautifulsoup4; extra == \"dev\"",
+        "tensorboard; extra == \"dev\"",
+        "sacrebleu<2.0.0,>=1.4.12; extra == \"dev\"",
+        "filelock; extra == \"dev\"",
+        "hf-doc-builder; extra == \"dev\"",
+        "datasets>=2.15.0; extra == \"dev\"",
+        "ruff==0.14.10; extra == \"dev\"",
+        "GitPython<3.1.19; extra == \"dev\"",
+        "urllib3<2.0.0; extra == \"dev\"",
+        "libcst; extra == \"dev\"",
+        "rich; extra == \"dev\"",
+        "ty==0.0.20; extra == \"dev\"",
+        "tomli; extra == \"dev\"",
+        "transformers-mlinter==0.1.1; extra == \"dev\"",
+        "faiss-cpu; extra == \"dev\"",
+        "datasets>=2.15.0; extra == \"dev\"",
+        "sentencepiece!=0.1.92,>=0.1.91; extra == \"dev\"",
+        "protobuf; extra == \"dev\"",
+        "openai>=1.98.0; extra == \"dev\"",
+        "pydantic>=2; extra == \"dev\"",
+        "uvicorn; extra == \"dev\"",
+        "fastapi; extra == \"dev\"",
+        "starlette; extra == \"dev\"",
+        "rich; extra == \"dev\"",
+        "torch>=2.4; extra == \"dev\"",
+        "accelerate>=1.1.0; extra == \"dev\"",
+        "mistral-common[image]>=1.10.0; extra == \"dev\"",
+        "fugashi>=1.0; extra == \"dev\"",
+        "ipadic<2.0,>=1.0.0; extra == \"dev\"",
+        "unidic_lite>=1.0.7; extra == \"dev\"",
+        "unidic>=1.0.2; extra == \"dev\"",
+        "rhoknp<1.3.1,>=1.1.0; extra == \"dev\"",
+        "sudachipy>=0.6.6; extra == \"dev\"",
+        "sudachidict_core>=20220729; extra == \"dev\"",
+        "scikit-learn; extra == \"dev\""
+      ],
+      "metadata_sha256": "c3c8d11e913b70d1c2b591fa2962978680ee93e9cd21e3ee4f529dabfae43c0b",
+      "record_sha256": "beb1f7deae34b66f4519902de7d68d123f1b27a4e2eeb20f2ee99fb2aa89001b",
+      "record_entries": 2540,
+      "incoming_constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "transformers>=4.40.0"
+        }
+      ],
+      "required_extras": [],
+      "windows_status": "PURE_PYTHON_WHEEL"
+    }
+  ],
+  "missing_distributions": [
+    {
+      "distribution": "accelerate",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "accelerate"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "aiosqlite",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "aiosqlite>=0.21"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "anyio",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "anyio>=4.9,<5"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "anyio<5.0.0,>=4.8.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "authlib",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "authlib>=1.6.6,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "cachetools",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "cachetools>=5.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "click",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "click>=8.1.8,<9"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "distro",
+      "constraints": [
+        {
+          "parent": "google-genai",
+          "requirement": "distro<2,>=1.7.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "docker",
+      "constraints": [
+        {
+          "parent": "adk-eval-core",
+          "requirement": "docker>=7.0.0"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "docker>=7.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "fastapi",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "fastapi>=0.124.1,<1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-api-python-client",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-api-python-client>=2.157,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-auth",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-auth[pyopenssl]>=2.47"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "google-auth[requests]<3.0.0,>=2.48.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-aiplatform",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-aiplatform[agent-engines]>=1.148.1,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-bigquery",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-bigquery>=2.2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-bigquery-storage",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-bigquery-storage>=2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-bigtable",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-bigtable>=2.32"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-dataplex",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-dataplex>=1.7,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-discoveryengine",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-discoveryengine>=0.13.12,<0.14"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-pubsub",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-pubsub>=2,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-secret-manager",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-secret-manager>=2.22,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-spanner",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-spanner>=3.56,<4"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-speech",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-speech>=2.30,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "google-cloud-storage",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "google-cloud-storage>=2.18,<4"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "graphviz",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "graphviz>=0.20.2,<1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "httpx",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "httpx>=0.27,<1"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "httpx<1.0.0,>=0.28.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "huggingface-hub",
+      "constraints": [
+        {
+          "parent": "tokenizers",
+          "requirement": "huggingface-hub>=0.16.4,<2.0"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "huggingface-hub<2.0,>=1.5.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "jsonschema",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "jsonschema>=4.23,<5"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "litellm",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "litellm>=1.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "mcp",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "mcp>=1.24,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "networkx",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "networkx>=3.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "numpy",
+      "constraints": [
+        {
+          "parent": "adk-eval-core",
+          "requirement": "numpy>=2.0.0"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "numpy>=1.26.0"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "numpy>=1.17"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-api",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-api>=1.36,<=1.41.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-exporter-gcp-logging",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-exporter-gcp-logging>=1.9.0a0,<=1.12.0a0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-exporter-gcp-monitoring",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-exporter-gcp-monitoring>=1.9.0a0,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-exporter-gcp-trace",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-exporter-gcp-trace>=1.9,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-exporter-otlp-proto-http",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-exporter-otlp-proto-http>=1.36"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-resourcedetector-gcp",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-resourcedetector-gcp>=1.9.0a0,<2"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "opentelemetry-sdk",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "opentelemetry-sdk>=1.36,<=1.41.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "packaging",
+      "constraints": [
+        {
+          "parent": "ROOT",
+          "requirement": "packaging"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "packaging>=20.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "pandas",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "pandas>=2.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "pyarrow",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "pyarrow>=14"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "pydantic",
+      "constraints": [
+        {
+          "parent": "adk-eval-core",
+          "requirement": "pydantic~=2.0"
+        },
+        {
+          "parent": "adk-submission",
+          "requirement": "pydantic>=2.0"
+        },
+        {
+          "parent": "google-adk",
+          "requirement": "pydantic>=2.12,<3"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "pydantic<3.0.0,>=2.12.5"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "pydantic>=2.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "python-dateutil",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "python-dateutil>=2.9.0.post0,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "python-dotenv",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "python-dotenv>=1,<2"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "python-dotenv>=1.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "pyyaml",
+      "constraints": [
+        {
+          "parent": "adk-eval-core",
+          "requirement": "pyyaml>=6.0"
+        },
+        {
+          "parent": "adk-submission",
+          "requirement": "pyyaml>=6.0"
+        },
+        {
+          "parent": "google-adk",
+          "requirement": "pyyaml>=6.0.2,<7"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "pyyaml>=6.0.0"
+        },
+        {
+          "parent": "transformers",
+          "requirement": "pyyaml>=5.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "regex",
+      "constraints": [
+        {
+          "parent": "transformers",
+          "requirement": "regex>=2025.10.22"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "requests",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "requests>=2.32.4,<3"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "requests<3.0.0,>=2.28.1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "rich",
+      "constraints": [
+        {
+          "parent": "adk-eval-core",
+          "requirement": "rich>=13.0"
+        },
+        {
+          "parent": "swegemma",
+          "requirement": "rich>=13.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "sniffio",
+      "constraints": [
+        {
+          "parent": "google-genai",
+          "requirement": "sniffio"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "sqlalchemy",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "sqlalchemy>=2,<3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "sqlalchemy-spanner",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "sqlalchemy-spanner>=1.14"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "starlette",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "starlette>=0.49.1,<1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "tenacity",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "tenacity>=9,<10"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "tenacity<9.2.0,>=8.2.3"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "torchvision",
+      "constraints": [
+        {
+          "parent": "swegemma",
+          "requirement": "torchvision"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "tqdm",
+      "constraints": [
+        {
+          "parent": "transformers",
+          "requirement": "tqdm>=4.60"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "typer",
+      "constraints": [
+        {
+          "parent": "transformers",
+          "requirement": "typer"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "typing-extensions",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "typing-extensions>=4.5,<5"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "typing-extensions<5.0.0,>=4.14.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "tzlocal",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "tzlocal>=5.3,<6"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "uvicorn",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "uvicorn>=0.34,<1"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "watchdog",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "watchdog>=6,<7"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    },
+    {
+      "distribution": "websockets",
+      "constraints": [
+        {
+          "parent": "google-adk",
+          "requirement": "websockets>=15.0.1,<16"
+        },
+        {
+          "parent": "google-genai",
+          "requirement": "websockets<17.0,>=13.0.0"
+        }
+      ],
+      "selected_version": null,
+      "wheel": null,
+      "sha256": null,
+      "origin": null,
+      "action": "Acquire approved wheel metadata and compatible wheel; expand closure before selecting a version."
+    }
+  ],
+  "other_archive_wheels": [
+    {
+      "file": "anthropic-1.4.0-py3-none-any.whl",
+      "version": "1.4.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "apache_tvm_ffi-0.1.13.post3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "0.1.13.post3",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "astor-0.8.1-py2.py3-none-any.whl",
+      "version": "0.8.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "bitsandbytes-0.46.1-py3-none-manylinux_2_24_x86_64.whl",
+      "version": "0.46.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "cbor2-6.1.4-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "version": "6.1.4",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "compressed_tensors-0.15.0.1-py3-none-any.whl",
+      "version": "0.15.0.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "depyf-0.20.0-py3-none-any.whl",
+      "version": "0.20.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "diskcache-5.6.3-py3-none-any.whl",
+      "version": "5.6.3",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "flashinfer_cubin-0.6.6-py3-none-any.whl",
+      "version": "0.6.6",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "flashinfer_python-0.6.6-py3-none-any.whl",
+      "version": "0.6.6",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "gguf-0.19.0-py3-none-any.whl",
+      "version": "0.19.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "ijson-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "3.5.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "interegular-0.3.3-py37-none-any.whl",
+      "version": "0.3.3",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "llguidance-1.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "version": "1.3.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "lm_format_enforcer-0.11.3-py3-none-any.whl",
+      "version": "0.11.3",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "loguru-0.7.3-py3-none-any.whl",
+      "version": "0.7.3",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "mistral_common-1.11.7-py3-none-any.whl",
+      "version": "1.11.7",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "model_hosting_container_standards-0.1.16-py3-none-any.whl",
+      "version": "0.1.16",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "0.21.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "nvidia_cudnn_frontend-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "1.18.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "openai_harmony-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "version": "0.0.8",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "opentelemetry_exporter_otlp-1.44.0-py3-none-any.whl",
+      "version": "1.44.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl",
+      "version": "0.5.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "outlines_core-0.2.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "version": "0.2.11",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "partial_json_parser-0.2.1.1.post7-py3-none-any.whl",
+      "version": "0.2.1.1.post7",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl",
+      "version": "8.1.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "pybase64-1.5.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl",
+      "version": "1.5.0",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "pycountry-26.2.16-py3-none-any.whl",
+      "version": "26.2.16",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "pydantic_extra_types-2.11.2-py3-none-any.whl",
+      "version": "2.11.2",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "quack_kernels-0.6.4-py3-none-any.whl",
+      "version": "0.6.4",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+      "version": "1.3.7",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "vllm-0.19.1-cp38-abi3-manylinux_2_31_x86_64.whl",
+      "version": "0.19.1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    },
+    {
+      "file": "xgrammar-0.2.5.post1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "0.2.5.post1",
+      "reason": "Not reachable from current compiler dependency graph; do not bulk install."
+    }
+  ],
+  "acquisition_policy": {
+    "network_authorized": false,
+    "install_authorized": false,
+    "allowed_artifacts": "Reviewed binary wheels only; no source builds.",
+    "required_new_evidence": [
+      "Exact version and filename",
+      "Official package release URL and retrieval date",
+      "SHA256 and size",
+      "METADATA and RECORD",
+      "Target wheel tags and Requires-Python",
+      "Expanded dependency closure and resolution evidence"
+    ],
+    "unsupported_required_wheels": [
+      "safetensors 0.8.0: acquire a separately approved Windows-compatible wheel or reviewed compatible version",
+      "tokenizers 0.22.2: acquire a separately approved Windows-compatible wheel satisfying >=0.22.0,<=0.23.0"
+    ]
+  }
+}
