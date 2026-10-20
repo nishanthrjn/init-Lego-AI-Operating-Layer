@@ -32,6 +32,12 @@ SCOPE = {
     "experiments/gemma4_competition/kaggle_compiler/compiler_only.ipynb",
 }
 
+# Existing maintainer evidence is immutable and is not part of this edit scope.
+PRESERVED_EVIDENCE = {
+    "experiments/gemma4_competition/evidence/gemma-m2-transfer-parent-4eyj8s5t/bundle.zip": "446620fd4d75bfb8388f134cc0501850ea5fa0e39f7568a4a6387fc15d2a5fd2",
+    "experiments/gemma4_competition/evidence/m2-bundle-a7956ced/bundle.zip": "660a64ffb4a14595136eefb01ba75da03732b9ef520ab3165c6f108e23de9a17"
+}
+
 
 def git(*args: str) -> bytes:
     return subprocess.check_output(["git", *args], cwd=ROOT, stderr=subprocess.DEVNULL)
@@ -40,7 +46,9 @@ def git(*args: str) -> bytes:
 def scope_checks() -> None:
     changed = set(git("diff", "--name-only", BASE).decode().splitlines())
     changed.update(git("ls-files", "--others", "--exclude-standard").decode().splitlines())
-    require(changed <= SCOPE, "outside approved portable factoring scope: " + str(sorted(changed - SCOPE)))
+    for name, digest in PRESERVED_EVIDENCE.items():
+        require(sha((ROOT / name).read_bytes()) == digest, "preserved evidence changed: " + name)
+    require(changed - PRESERVED_EVIDENCE.keys() <= SCOPE, "outside approved portable factoring scope: " + str(sorted(changed - SCOPE)))
     git("diff", "--check", BASE, "--", *sorted(SCOPE))
     for name in SCOPE:
         data = normalized((ROOT / name).read_bytes())
@@ -53,8 +61,10 @@ def scope_checks() -> None:
 
 def staged_checks() -> None:
     staged = set(git("diff", "--cached", "--name-only", BASE).decode().splitlines())
-    require(staged <= SCOPE, "outside staged scope")
-    for name in staged:
+    require(staged - PRESERVED_EVIDENCE.keys() <= SCOPE, "outside staged scope")
+    for name in staged & PRESERVED_EVIDENCE.keys():
+        require(sha(git("show", ":" + name)) == PRESERVED_EVIDENCE[name], "staged preserved evidence changed")
+    for name in staged & SCOPE:
         require(normalized(git("show", ":" + name)) == normalized((ROOT / name).read_bytes()),
                 "staged content differs: " + name)
     for name in MEMBERS:
@@ -104,6 +114,8 @@ def reconcile(receipt: Path, remote: Path) -> None:
     require(manifest.get("install_evidence") == install
             and manifest.get("install_evidence_sha256") == sha(install_path.read_bytes()),
             "install evidence manifest mismatch")
+    require(manifest.get("official_environment_deviations") == install["pip_check"]["findings"],
+            "manifest deviations differ from re-derived findings")
     compiler = json.loads((remote / "compiler-output.json").read_text(encoding="utf-8"))
     require(manifest.get("state") == "PORTABLE_COMPILE_AND_PACKAGE_PASS"
             and compiler.get("state") == "compiler_validated", "portable pass missing")

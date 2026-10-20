@@ -1,13 +1,34 @@
-# FORGEAI-GEMMA4-M2-KAGGLE-SCOPED-COMPILER-INSTALL-1
+# FORGEAI-GEMMA4-M2-OFFICIAL-ENVIRONMENT-DEVIATION-GATE-1
 
 Verification: **NOT RUN — AWAITING MAINTAINER EXECUTION**.
 
-The maintainer's previous local-only run passed 12 controls. This slice adds a
-single, explicitly approved installation of five pinned wheels in a disposable
-Kaggle CPU session. It does not qualify a package or authorize model execution.
-The earlier receipt `593a9042a90d1f48d46a99f6ee5319d67ea2e9233f2c9fdb3b71e83e89d87537`
-remains historical evidence. Generate a new transfer bundle and receipt because
-the notebook, shared tooling, tests and root wrapper are receipt-bound.
+The previous local-only run passed 21 controls. The maintainer's Python 3.12.13
+Linux CPU/Internet-Off Kaggle run installed the five pinned wheels successfully,
+but correctly stopped at ENVIRONMENT_BLOCKED before compilation. Its receipt is
+`a7956cedbb9734a25dd4bb4b32d52c6f385a890b36e81430e679fa76d4d65def`.
+Preserve that blocked install evidence and every old receipt unchanged. This
+slice requires a new bundle/receipt; historical reports cannot be upgraded.
+
+Reported initial versions: google-adk 1.29.0, google-genai 1.68.0; the three
+competition distributions were missing. Reported post-install versions matched
+all five pins. pip check exited 1 without stderr and reported these scoped lines:
+
+```text
+google-adk 1.36.1 requires google-cloud-bigquery-storage, which is not installed.
+google-genai 2.11.0 has requirement google-auth[requests]<3.0.0,>=2.48.1, but you have google-auth 2.47.0.
+google-genai 2.11.0 has requirement pydantic<3.0.0,>=2.12.5, but you have pydantic 2.12.3.
+google-cloud-aiplatform 1.148.1 has requirement google-genai<2.0.0,>=1.66.0; python_version >= "3.10", but you have google-genai 2.11.0.
+```
+
+Five other reported findings involved bigframes, google-colab (two), dopamine-rl
+and moviepy. Their exact lines were not supplied here and are not reconstructed.
+The new gate retains all actual pip-check stdout and parsed findings.
+
+These observations establish deviations in the reported participant session.
+The official starter's no-deps wheelhouse installation supports the requested
+classification rule, but does not independently establish the hidden scoring
+image/version or identical runtime behavior. OFFICIAL_ENVIRONMENT_DEVIATION is
+a rule-derived label, not proof of harmlessness or hidden-scorer parity.
 
 ## Inputs and platform settings
 
@@ -18,6 +39,9 @@ GPU settings from the starter. No model weights are needed. Attach both inputs:
   (default `/kaggle/input/forgeai-gemma4-m2/bundle`). Preserve its internal paths.
 - The official wheelhouse dataset at the starter's exact path:
   `/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`.
+
+The two existing untracked historical bundle ZIPs are pinned by raw SHA256 in
+the local scope guard. They are preserved, not transferred as new compiler input.
 
 The bundle contains the four unchanged candidate files, shared portable entry
 point, root validator, focused tests, notebook, contract/source registers, three
@@ -61,28 +85,61 @@ only the five named distributions; their dependencies must already be compatible
 Normal installer changes to those distributions in the disposable session are
 expected. CPU/runtime and input/output storage are the remaining platform effects.
 
-Pre/post versions are retained. The post-install equality gate requires all five
-exact versions. `python -m pip check` inspects the environment; only findings
-owned by those five distributions or their declared direct requirement names
-(including optional declarations) are retained. Unrelated findings are counted,
-not printed. Relevant unmet requirements, unrecognized pip failures or stderr
-produce ENVIRONMENT_BLOCKED. No dependency repair or second install is permitted.
-A clean scoped pip check is not proof that the whole image is consistent; the
-unchanged recursive compiler dependency and source-byte preflight still applies.
+Before pip, the entire mounted wheelhouse is inventoried with sorted filenames,
+streamed SHA256 and sizes. It must equal all 41 source-register wheel pins;
+extra/missing/modified wheels block without installation. All five selected
+wheel and three duplicate checks remain. The observed image also has
+`/usr/local/bin/uv`; this slice keeps `python -m pip install --no-deps --no-index`
+for the requested organizer-starter parity and never invokes uv in Kaggle.
+
+Every pip-check dependency line must parse into dependent/version, required name,
+missing/version-conflict kind, installed version (or null), requirement and raw
+line. The successful `No broken requirements found.` sentinel is explicitly
+recognized. Unparseable lines, inconsistent return codes or any stderr block.
+Scope is re-derived from pinned package requirements, not the returned report.
+Out-of-scope lines are retained and counted but receive no classification.
+
+For each in-scope finding, canonical required distribution names are compared
+with the verified wheelhouse metadata:
+
+- No wheel for that distribution: OFFICIAL_ENVIRONMENT_DEVIATION.
+- A wheel exists and the reported installed version equals its pin:
+  OFFICIAL_ENVIRONMENT_DEVIATION.
+- A wheel exists but the installed version differs or is missing:
+  DIVERGENT_FROM_OFFICIAL, which blocks.
+
+With install returncode 0, exact five post-versions, exact inventory and valid
+pip-check evidence, no scoped findings gives SCOPED_INSTALL_PASS; exclusively
+official-deviation findings gives SCOPED_INSTALL_PASS_WITH_OFFICIAL_DEVIATIONS.
+Anything else is ENVIRONMENT_BLOCKED. Reconciliation re-parses the raw report and
+rejects stored records, classifications or state that disagree. No dependency
+repair, additional package installation or normalization of findings is allowed.
+
+The maintainer separately approved deferring only the exact evidenced metadata
+failures to compilation. The worker re-verifies the receipt and install evidence;
+it matches the dependent/version, required name, failure kind and observed
+installed version before deferring an edge. Version conflicts also require the
+reported specifier/extras to match; pip omits those in missing-package lines, so
+missing edges require the identical package identity and confirmed absence. Unobserved/transitive failures
+still block; installed byte checks and Python compatibility checks remain.
+Explicit google.adk/google.genai imports precede the unchanged official directory
+validation, full compilation and negative controls. Their failures remain
+ENVIRONMENT_BLOCKED, with the failure stage/category recorded; no compiler pass
+is emitted. Deviation acceptance is not compiler success.
 
 Every pip/compiler child inherits os.environ after case-insensitive removal of
-KAGGLE_*, *TOKEN*, *KEY*, *SECRET*, *PASSWORD*, HF_* and GOOGLE_*CRED* names.
-Only removed names are logged. PATH and LD_LIBRARY_PATH are preserved. Temporary
-HOME/TMPDIR and related paths, disabled CUDA visibility and OTEL/LITELLM overrides
-are then applied. Pip config-file loading and version checks are disabled. Name
-filtering cannot certify that arbitrary differently named variables are secret-free;
-use a fresh notebook with no credentials configured. Do not attach secrets.
+*TOKEN*, *KEY*, *SECRET*, *PASSWORD*, *CRED*, KAGGLE_*PROXY* and HF_* names.
+Other Kaggle flags, including KAGGLE_DISABLE_GOOGLE_GENERATIVE_AI_INTEGRATION,
+are preserved. Only removed names are logged. PATH/LD_LIBRARY_PATH remain.
+Temporary HOME/TMPDIR and existing CUDA/OTEL/LITELLM/pip overrides still apply.
+Use a fresh session without attached credentials; name matching alone cannot
+prove that arbitrary differently named variables contain no secrets.
 
 ## Evidence and qualification boundary
 
-Installation writes `install-evidence.json` into the fresh downloadable output
+Installation writes schema-2 `install-evidence.json` into the fresh downloadable output
 directory, including wheel names/hashes/sizes, pre/post versions, Python/platform,
-removed variable names, return codes and the scoped pip-check excerpt. Raw installer
+removed variable names, return codes, full pip-check stdout/stderr, parsed records and classified scoped findings. Raw installer
 stdout/stderr is suppressed. A failure after installation starts preserves bounded
 failure evidence; failures before pip leave the environment unchanged and stop.
 
@@ -92,7 +149,8 @@ unchanged official directory validation, full compilation, closed registries,
 negative controls and deterministic archive checks. It never executes model/tools.
 Download the complete output directory and compiler log. On success the directory
 contains install-evidence.json, compiler-output.json, manifest.json and submission.zip.
-The manifest includes install evidence and its hash, package/Python versions,
+The manifest includes install evidence and its hash, verbatim classified deviation
+records, package/Python versions,
 sorted ZIP members and ZIP SHA256. Local reconciliation requires the install
 artifact, its manifest binding and the same new receipt/candidate bytes.
 
@@ -142,8 +200,10 @@ installation or official compiler runs locally. Preserve the prior bundle.
 After reviewing that result, upload only the new bundle as a private input;
 attach the official wheelhouse. Import the updated compiler_only.ipynb from that
 bundle, select Accelerator None / Internet Off, set BUNDLE to the actual mount,
-and enter the combined approval above. Run cells in order once. The install cell
-must emit SCOPED_INSTALL_PASS before compilation proceeds. On ENVIRONMENT_BLOCKED,
+and enter the combined approval above. Before every new run, download prior evidence and use **Factory reset / a fresh
+session**; restarting cells does not undo installs or clear /kaggle/working.
+Run cells in order once. The install cell must emit SCOPED_INSTALL_PASS or
+SCOPED_INSTALL_PASS_WITH_OFFICIAL_DEVIATIONS before compilation proceeds. On ENVIRONMENT_BLOCKED,
 download evidence and stop; do not install dependencies or rerun the cell.
 
 On success expect PORTABLE_COMPILE_AND_PACKAGE_PASS. Download
@@ -173,6 +233,6 @@ The default combined local/compiler mode cannot provision Kaggle; use the explic
 local-only, notebook, reconcile sequence above. No automatic installation path was
 added to the repository validator.
 
-Proposed commit: `feat(gemma4): gate five-wheel Kaggle compiler install with pinned evidence`.
+Proposed commit: `feat(gemma4): reconcile pinned official environment deviations before compilation`.
 
 STOP and paste maintainer results before further work.

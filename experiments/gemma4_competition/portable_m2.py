@@ -15,6 +15,7 @@ import importlib.metadata as metadata
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import stat
@@ -107,7 +108,7 @@ def wheel_pins() -> dict[str, Path]:
 
 
 def child_environment(source: dict[str, str], home: str) -> tuple[dict[str, str], list[str]]:
-    patterns = ("KAGGLE_*", "*TOKEN*", "*KEY*", "*SECRET*", "*PASSWORD*", "HF_*", "GOOGLE_*CRED*")
+    patterns = ("*TOKEN*", "*KEY*", "*SECRET*", "*PASSWORD*", "*CRED*", "KAGGLE_*PROXY*", "HF_*")
     removed = sorted(key for key in source if any(fnmatch.fnmatchcase(key.upper(), p) for p in patterns))
     env = {key: value for key, value in source.items() if key not in removed}
     env.update({"HOME": home, "USERPROFILE": home, "APPDATA": home, "LOCALAPPDATA": home,
@@ -174,30 +175,121 @@ def direct_requirement_scope(wheels: dict[str, Path]) -> list[str]:
     return sorted(names)
 
 
-def scoped_pip_check(process: subprocess.CompletedProcess, scope: list[str]) -> dict:
+INSTALL_PASS_STATES = {"SCOPED_INSTALL_PASS", "SCOPED_INSTALL_PASS_WITH_OFFICIAL_DEVIATIONS"}
+
+
+def wheelhouse_contract() -> tuple[list[dict], dict, list[str]]:
+    from packaging.requirements import Requirement
     from packaging.utils import canonicalize_name
-    lines = [line.strip() for line in process.stdout.splitlines() if line.strip()]
-    excerpt = [line for line in lines if canonicalize_name(line.split()[0]) in scope]
-    # A nonstandard failure/stderr cannot silently count as a clean environment.
-    recognizable = all(" requires " in line or " has requirement " in line for line in lines)
-    ok = not process.stderr.strip() and (process.returncode == 0 or (
-        process.returncode == 1 and bool(lines) and recognizable and not excerpt))
-    return {"returncode": process.returncode, "scope": scope, "excerpt": excerpt,
-            "omitted_lines": len(lines) - len(excerpt), "acceptable": ok and not excerpt}
+    register = json.loads((AREA / "source-register.json").read_text(encoding="utf-8"))
+    pins = sorted([{"filename": Path(item["path"]).name, "sha256": item["sha256"],
+                    "size": item["size_bytes"]} for item in register["official_files"]
+                   if item["path"].startswith("docs/archive/") and item["path"].endswith(".whl")],
+                  key=lambda item: item["filename"])
+    require(len(pins) == 41 and len({p["filename"] for p in pins}) == 41, "41 unique wheel pins required")
+    packages = register["implementation_review"]["packages"]
+    by_file = {Path(item["path"]).name: item for item in packages}
+    versions = {}
+    scope = set(INSTALL_PACKAGES)
+    for pin in pins:
+        package = by_file[pin["filename"]]
+        name = canonicalize_name(package["name"])
+        require(name not in versions, "ambiguous wheelhouse distribution")
+        versions[name] = package["version"]
+        if name in INSTALL_PACKAGES:
+            require(package["version"] == INSTALL_PACKAGES[name], "install metadata version mismatch")
+            scope.update(canonicalize_name(Requirement(r).name) for r in package["requires_dist"])
+    return pins, versions, sorted(scope)
+
+
+def mounted_inventory(directory: Path) -> list[dict]:
+    require(directory.is_dir(), "official wheelhouse input missing")
+    result = []
+    for path in sorted(directory.rglob("*.whl"), key=lambda p: p.name):
+        digest = hashlib.sha256()
+        size = 0
+        with path.open("rb") as stream:
+            while block := stream.read(1024 * 1024):
+                digest.update(block)
+                size += len(block)
+        result.append({"filename": path.name, "sha256": digest.hexdigest(), "size": size})
+    return result
+
+
+def parse_pip_line(raw: str) -> dict:
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+    missing = re.fullmatch(r"(\S+) (\S+) requires (.+), which is not installed\.", raw)
+    conflict = re.fullmatch(r"(\S+) (\S+) has requirement (.+), but you have (\S+) (\S+)\.", raw)
+    match = missing or conflict
+    require(match is not None, "unparseable pip-check line")
+    dependent, version, requirement_text = match.group(1, 2, 3)
+    requirement = Requirement(requirement_text)
+    required = canonicalize_name(requirement.name)
+    installed = None
+    if conflict:
+        require(canonicalize_name(conflict.group(4)) == required, "pip-check requirement identity mismatch")
+        installed = conflict.group(5)
+    return {"dependent": canonicalize_name(dependent), "dependent_version": version,
+            "required_name": required, "kind": "missing" if missing else "version_conflict",
+            "installed_version": installed, "requirement": requirement_text, "raw": raw}
+
+
+def scoped_pip_check(process: subprocess.CompletedProcess, inventory: list[dict], post_versions: dict) -> dict:
+    expected, wheel_versions, scope = wheelhouse_contract()
+    records, findings, errors = [], [], []
+    lines = process.stdout.splitlines()
+    # pip's successful sentinel is a status line, not a dependency finding.
+    clean = lines == ["No broken requirements found."] and process.returncode == 0
+    for raw in ([] if clean else lines):
+        try:
+            record = parse_pip_line(raw)
+        except (ValueError, TypeError):
+            errors.append("UNPARSEABLE_LINE")
+            continue
+        records.append(record)
+        if record["dependent"] not in scope:
+            continue
+        required = record["required_name"]
+        pinned = wheel_versions.get(required)
+        classification = ("OFFICIAL_ENVIRONMENT_DEVIATION" if pinned is None or
+                          record["installed_version"] == pinned else "DIVERGENT_FROM_OFFICIAL")
+        if (record["dependent"] in post_versions and
+                post_versions[record["dependent"]] != record["dependent_version"]):
+            errors.append("DEPENDENT_VERSION_EVIDENCE_MISMATCH")
+        if required in post_versions and post_versions[required] != record["installed_version"]:
+            errors.append("REQUIRED_VERSION_EVIDENCE_MISMATCH")
+        findings.append({**record, "classification": classification})
+    acceptable = (inventory == expected and not process.stderr and not errors and
+                  ((clean and not records) or (process.returncode == 1 and bool(records))) and
+                  all(r["classification"] == "OFFICIAL_ENVIRONMENT_DEVIATION" for r in findings))
+    return {"returncode": process.returncode, "stdout": process.stdout, "stderr": process.stderr,
+            "scope": scope, "records": records, "findings": findings, "errors": errors,
+            "out_of_scope_count": len(records) - len(findings), "acceptable": acceptable}
+
+
+def install_state(evidence: dict) -> str:
+    if (evidence.get("install_returncode") != 0 or evidence.get("post_versions") != INSTALL_PACKAGES
+            or not (evidence.get("pip_check") or {}).get("acceptable")):
+        return "ENVIRONMENT_BLOCKED"
+    return ("SCOPED_INSTALL_PASS_WITH_OFFICIAL_DEVIATIONS" if evidence["pip_check"]["findings"]
+            else "SCOPED_INSTALL_PASS")
 
 
 def scoped_install(authorization: str, receipt: Path, wheelhouse: Path, output: Path) -> dict:
     require(authorization == INSTALL_AUTHORIZATION, "scoped install authorization missing")
     require(sys.platform == "linux" and sys.version_info[:2] == (3, 12), "Python 3.12 Linux required")
     verify_local_receipt(receipt)
-    wheels = select_install_wheels(wheelhouse)  # Every pin checked before any subprocess.
-    scope = direct_requirement_scope(wheels)
-    evidence = {"schema": 1, "state": "ENVIRONMENT_BLOCKED",
+    evidence = {"schema": 2, "state": "ENVIRONMENT_BLOCKED",
                 "local_receipt_sha256": sha(receipt.read_bytes()), "selected_wheels": install_pins(),
-                "pre_versions": installed_versions(), "post_versions": {},
+                "pre_versions": installed_versions(), "post_versions": {}, "inventory": [],
                 "python": sys.version, "platform": sys.platform, "pip_check": None}
     output.mkdir(parents=True, exist_ok=False)
     try:
+        evidence["inventory"] = mounted_inventory(wheelhouse)
+        require(evidence["inventory"] == wheelhouse_contract()[0], "wheelhouse inventory mismatch")
+        wheels = select_install_wheels(wheelhouse)
+        require(direct_requirement_scope(wheels) == wheelhouse_contract()[2], "requirement metadata mismatch")
         with tempfile.TemporaryDirectory(prefix="gemma-install-home-") as home:
             env, removed = child_environment(dict(os.environ), home)
             evidence["removed_environment_names"] = removed
@@ -211,10 +303,8 @@ def scoped_install(authorization: str, receipt: Path, wheelhouse: Path, output: 
             evidence["post_versions"] = installed_versions()
             checked = subprocess.run([sys.executable, "-m", "pip", "check"], cwd=home, env=env,
                                      capture_output=True, text=True, timeout=120)
-            evidence["pip_check"] = scoped_pip_check(checked, scope)
-            if (installed.returncode == 0 and evidence["post_versions"] == INSTALL_PACKAGES
-                    and evidence["pip_check"]["acceptable"]):
-                evidence["state"] = "SCOPED_INSTALL_PASS"
+            evidence["pip_check"] = scoped_pip_check(checked, evidence["inventory"], evidence["post_versions"])
+            evidence["state"] = install_state(evidence)
     except Exception as error:
         evidence["failure_category"] = type(error).__name__
         evidence["post_versions"] = installed_versions()
@@ -227,22 +317,43 @@ def scoped_install(authorization: str, receipt: Path, wheelhouse: Path, output: 
 
 def verify_install_evidence(path: Path, receipt_hash: str) -> dict:
     evidence = json.loads(path.read_text(encoding="utf-8"))
-    require(evidence.get("schema") == 1 and evidence.get("state") == "SCOPED_INSTALL_PASS",
-            "scoped install pass missing")
+    require(evidence.get("schema") == 2, "new environment-deviation evidence required")
     require(evidence.get("local_receipt_sha256") == receipt_hash, "install receipt mismatch")
     require(evidence.get("selected_wheels") == install_pins(), "install wheel evidence mismatch")
-    require(evidence.get("install_returncode") == 0 and evidence.get("post_versions") == INSTALL_PACKAGES,
-            "installed versions mismatch")
-    require(set(evidence.get("pre_versions", {})) == set(INSTALL_PACKAGES), "pre-install versions missing")
+    require(evidence.get("inventory") == wheelhouse_contract()[0], "wheelhouse inventory mismatch")
     check = evidence.get("pip_check") or {}
-    require(check.get("acceptable") is True and check.get("excerpt") == []
-            and check.get("returncode") in (0, 1) and set(INSTALL_PACKAGES) <= set(check.get("scope", [])),
-            "scoped dependency check missing/blocked")
+    process = subprocess.CompletedProcess([], check.get("returncode"), check.get("stdout", ""), check.get("stderr", ""))
+    derived = scoped_pip_check(process, evidence["inventory"], evidence.get("post_versions", {}))
+    require(check == derived, "pip-check classification evidence mismatch")
+    require(evidence.get("state") == install_state({**evidence, "pip_check": derived})
+            and evidence["state"] in INSTALL_PASS_STATES, "scoped install pass missing/mismatched")
+    require(set(evidence.get("pre_versions", {})) == set(INSTALL_PACKAGES), "pre-install versions missing")
     require(isinstance(evidence.get("removed_environment_names"), list), "environment evidence missing")
     return evidence
 
 
-def environment_preflight(wheels: dict[str, Path]) -> dict[str, str]:
+def evidenced_deviation(findings: list[dict], name: str, version: str, requirement,
+                       installed: str | None) -> bool:
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+    for record in findings:
+        recorded = Requirement(record["requirement"])
+        if (record["classification"] == "OFFICIAL_ENVIRONMENT_DEVIATION"
+                and record["dependent"] == canonicalize_name(name)
+                and record["dependent_version"] == version
+                and record["required_name"] == canonicalize_name(requirement.name)
+                and record["installed_version"] == installed
+                and record["kind"] == ("missing" if installed is None else "version_conflict")
+                # pip omits requirement constraints/extras for missing packages.
+                # Missing identity + dependent version + actual absence is exact;
+                # version conflicts must also match the reported requirement.
+                and (installed is None or (recorded.specifier == requirement.specifier
+                                           and recorded.extras == requirement.extras))):
+            return True
+    return False
+
+
+def environment_preflight(wheels: dict[str, Path], findings: list[dict] | None = None) -> dict[str, str]:
     """Inspect metadata before importing any official package; never install."""
     versions = {}
     for name, version in {**PACKAGES, "google-adk": "1.36.1", "google-genai": "2.11.0"}.items():
@@ -276,10 +387,17 @@ def environment_preflight(wheels: dict[str, Path]) -> dict[str, str]:
             requirement = Requirement(text)
             if requirement.marker and not requirement.marker.evaluate({"extra": ""}):
                 continue
-            dependency = metadata.distribution(requirement.name)
             require(not requirement.url, "direct URL dependency needs separate review")
-            require(requirement.specifier.contains(dependency.version),
-                    "dependency version mismatch: " + requirement.name)
+            try:
+                dependency = metadata.distribution(requirement.name)
+            except metadata.PackageNotFoundError:
+                if evidenced_deviation(findings or [], name, distribution.version, requirement, None):
+                    continue
+                raise
+            if not requirement.specifier.contains(dependency.version):
+                require(evidenced_deviation(findings or [], name, distribution.version,
+                                           requirement, dependency.version),
+                        "dependency version mismatch: " + requirement.name)
             pending.append(requirement.name)
     return versions
 
@@ -373,12 +491,15 @@ def official_controls() -> None:
                 raise ValueError("official negative control accepted: " + label)
 
 
-def worker() -> int:
+def worker(receipt: Path | None = None, install_path: Path | None = None) -> int:
     # This child receives a credential-free environment and an empty HOME.
     sys.dont_write_bytecode = True
     sys.addaudithook(deny_effects)
     try:
-        versions = environment_preflight(wheel_pins())
+        require(receipt is not None and install_path is not None, "worker install evidence required")
+        verify_local_receipt(receipt)
+        install = verify_install_evidence(install_path, sha(receipt.read_bytes()))
+        versions = environment_preflight(wheel_pins(), install["pip_check"]["findings"])
     except Exception as error:
         missing = error.name if isinstance(error, metadata.PackageNotFoundError) else None
         print(json.dumps({"state": "environment_blocked", "category": type(error).__name__,
@@ -387,6 +508,8 @@ def worker() -> int:
     try:
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             # Import failures are environment failures, not candidate rejections.
+            import google.adk  # noqa: F401
+            import google.genai  # noqa: F401
             import adk_submission  # noqa: F401
             from swegemma.config import build_submission_limits  # noqa: F401
     except Exception as error:
@@ -400,8 +523,9 @@ def worker() -> int:
         print(json.dumps({"state": "environment_blocked", "category": type(error).__name__}))
         return 2
     except Exception as error:
-        print(json.dumps({"state": "compiler_failed", "category": type(error).__name__}))
-        return 1
+        print(json.dumps({"state": "environment_blocked", "stage": "official_compilation",
+                          "category": type(error).__name__}))
+        return 2
     print(json.dumps({"state": "compiler_validated", "versions": versions}))
     return 0
 
@@ -483,7 +607,8 @@ def run_portable(receipt_path: Path, output: Path) -> int:
         print(json.dumps({"removed_environment_names": removed}), flush=True)
         try:
             process = subprocess.run(
-                [sys.executable, "-I", "-B", str(Path(__file__).resolve()), "--compiler-worker"],
+                [sys.executable, "-I", "-B", str(Path(__file__).resolve()), "--compiler-worker",
+                 "--receipt", str(receipt_path.resolve()), "--install-evidence", str(install_path.resolve())],
                 cwd=temporary, env=env, capture_output=True, text=True, timeout=180,
             )
             report = json.loads(process.stdout)
@@ -511,6 +636,7 @@ def run_portable(receipt_path: Path, output: Path) -> int:
     manifest = {
         "schema": 1, "state": "PORTABLE_COMPILE_AND_PACKAGE_PASS",
         "install_evidence": install, "install_evidence_sha256": install_hash,
+        "official_environment_deviations": install["pip_check"]["findings"],
         "local_receipt_sha256": receipt_hash, "inputs": input_manifest(),
         "python": sys.version, "platform": sys.platform, "environment": report["versions"],
         "zip_sha256": sha(blob), "zip_size": len(blob),
@@ -529,9 +655,10 @@ def main() -> int:
     parser.add_argument("--compiler-worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--install-evidence", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.compiler_worker:
-        return worker()
+        return worker(args.receipt, args.install_evidence)
     require(args.receipt is not None and args.output is not None, "receipt and fresh output required")
     return run_portable(args.receipt, args.output)
 
