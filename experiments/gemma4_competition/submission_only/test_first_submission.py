@@ -22,18 +22,37 @@ class SubmissionCopyTests(unittest.TestCase):
         self.evidence = self.root / "m2-evidence"
         shutil.copytree(AREA.parent / "evidence/m2-ca6a05b4/kaggle-results",
                         self.evidence / "kaggle-results")
+        self.manifest = self.evidence / "kaggle-results/manifest.json"
+        self.package = self.evidence / "kaggle-results/submission.zip"
         self.output = self.root / "submission.zip"
 
     def copy(self, authorization=None):
         with contextlib.redirect_stdout(io.StringIO()):
             return self.namespace["prepare_submission"](
-                self.evidence, self.output,
+                self.manifest, self.package, self.output,
                 self.namespace["AUTHORIZATION_REQUIRED"] if authorization is None else authorization)
 
     def test_exact_archive_copied_without_repacking(self):
         report = self.copy()
         self.assertEqual(report["state"], "M2_PACKAGE_COPIED_UNCHANGED")
         self.assertEqual(self.output.read_bytes(), (self.evidence / "kaggle-results/submission.zip").read_bytes())
+
+    def test_renamed_bin_input_preserves_exact_bytes(self):
+        renamed = self.root / "submission.zip.bin"
+        self.package.rename(renamed)
+        self.package = renamed
+        self.copy()
+        self.assertEqual(self.output.read_bytes(), renamed.read_bytes())
+
+    def test_wrong_bin_bytes_of_correct_size_are_rejected(self):
+        renamed = self.root / "submission.zip.bin"
+        data = bytearray(self.package.read_bytes())
+        data[0] ^= 1
+        renamed.write_bytes(data)
+        self.package = renamed
+        with self.assertRaises(ValueError):
+            self.copy()
+        self.assertFalse(self.output.exists())
 
     def test_wrong_authorization_writes_nothing(self):
         with self.assertRaises(ValueError):

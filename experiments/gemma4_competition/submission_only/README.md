@@ -128,15 +128,32 @@ B2/B3 until task timing/coverage evidence can support the global-cap decision.
    if ($LASTEXITCODE -ne 0) { throw 'M3 submission-only controls failed' }
    ```
 
-   Expected: six tests pass. They copy fixtures into temporary directories only;
+   Expected: eight tests pass. They copy fixtures into temporary directories only;
    no compilation, installs, models, Kaggle calls or M2 evidence mutation.
    Do not rerun the closed M2 slice validator to validate these new M3 files.
 
-2. After local success and explicit notebook-execution approval, attach the
-   committed M2 evidence directory as a private input. Preserve manifest bytes,
-   including line endings. Set M2_EVIDENCE to the mounted directory containing
-   `kaggle-results/`. Set Accelerator None, Internet Off before execution.
-   This note does not authorize publishing the input dataset.
+2. After local success and explicit notebook-execution approval, prepare two
+   private input files: the unchanged committed `manifest.json`, and a copy of
+   the M2 ZIP named **submission.zip.bin**. Kaggle auto-extracts uploaded `.zip`
+   files in the maintainer's observed dataset workflow; the `.bin` suffix keeps
+   the package available as bytes. Do not repack the ZIP or rename/edit original
+   M2 evidence. Preserve the manifest bytes, including line endings.
+
+   To prepare a fresh staging directory outside the repository:
+
+   ```powershell
+   $m3Upload = Join-Path $env:TEMP ('gemma4-m3-upload-' + [guid]::NewGuid().ToString('N'))
+   New-Item -ItemType Directory -Path $m3Upload | Out-Null
+   Copy-Item -LiteralPath '.\experiments\gemma4_competition\evidence\m2-ca6a05b4\kaggle-results\manifest.json' -Destination (Join-Path $m3Upload 'manifest.json')
+   Copy-Item -LiteralPath '.\experiments\gemma4_competition\evidence\m2-ca6a05b4\kaggle-results\submission.zip' -Destination (Join-Path $m3Upload 'submission.zip.bin')
+   Write-Output $m3Upload
+   ```
+
+   Upload those two files directly as a private Kaggle input. Set MANIFEST_PATH
+   and PACKAGE_PATH to their actual mounted file paths. Set Accelerator None,
+   Internet Off before execution. This note does not authorize publishing the
+   dataset. Output remains `/kaggle/working/submission.zip`; all original hash,
+   size, receipt, authorization and overwrite checks remain enforced.
 
 3. Import the new submission-only notebook (not the starter or compiler notebook).
    Set AUTHORIZATION to:
