@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "record_schema": {
+    "candidate": "string",
+    "receipt": "SHA256 or null",
+    "zip_sha256": "SHA256 or null",
+    "budget_values": "object with four integer keys",
+    "notebook_name": "string or null",
+    "notebook_version": "string or null",
+    "submission_time_utc": "ISO8601 timestamp or null; never infer from date alone",
+    "submission_id": "string or null",
+    "status": "SCORING | COMPLETE | ERROR | NOT_SUBMITTED",
+    "public_score": "number or PENDING or null",
+    "error_text": "string or null",
+    "notes": "array of strings"
+  },
+  "runs": [
+    {
+      "candidate": "m2",
+      "receipt": "ca6a05b46844c86369c7aaef3d989b542c5f3c5f63fcc91c7fce5997742893d9",
+      "zip_sha256": "78051300426d369e83a788f57bc6284c56c85d07cc32d6de87fbdc49c9da7e2d",
+      "budget_values": {
+        "timeout_seconds": 60,
+        "max_tool_calls": 10,
+        "max_time_minutes": 1,
+        "max_turns": 50
+      },
+      "notebook_name": "first_submission",
+      "notebook_version": "1",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SCORING",
+      "public_score": "PENDING",
+      "error_text": null,
+      "notes": [
+        "Maintainer reports submission on 2026-10-20; exact UTC timestamp and submission ID not supplied.",
+        "Status is maintainer-reported historical observation, not live Kaggle state."
+      ]
+    },
+    {
+      "candidate": "b2",
+      "receipt": null,
+      "zip_sha256": null,
+      "budget_values": {
+        "timeout_seconds": 90,
+        "max_tool_calls": 40,
+        "max_time_minutes": 4,
+        "max_turns": 100
+      },
+      "notebook_name": null,
+      "notebook_version": null,
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "NOT_SUBMITTED",
+      "public_score": "PENDING",
+      "error_text": null,
+      "notes": [
+        "Blocked until M2 result understood and B2 official compiler/package reconciliation succeeds."
+      ]
+    }
+  ]
+}

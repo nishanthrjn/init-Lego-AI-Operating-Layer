@@ -81,7 +81,12 @@ Starter cell 10 reads these keys plus local-only alternatives
 verification_timeout_seconds and max_llm_calls; those extra demo fields do not
 establish additional supported submission keys and are not proposed here.
 
-## Proposed later frozen budget variants — not implemented
+## Budget variants
+
+B2 is now authored, pending maintainer validation, in
+[candidates/b2](../candidates/b2/). Its exact limits, source citations and separate
+compiler/reconciliation sequence are in the [B2 instructions](../candidates/README.md).
+B1 and B3 remain proposals. The historical M2 package remains unchanged.
 
 Keep prompts, model, tools and sampling fixed to isolate the budget intervention.
 Every variant needs separate authorization and its own M2-style directory/full
@@ -115,10 +120,29 @@ The 120-minute reserve is an UNMEASURED planning assumption, not a documented
 allowance. For an illustrative N=100, C=1 and aggregate overhead=120 minutes,
 M2/B1/B2/B3 take 220/320/520/920 minutes respectively; B3 exceeds 720 by 200.
 This does not assert N=100. Do not use these tables to guarantee completion.
-Prefer measuring the first unchanged M2 scored run before authorizing B1; defer
-B2/B3 until task timing/coverage evidence can support the global-cap decision.
+Record the first unchanged M2 scored result before submitting B2. B2 construction
+and offline qualification are authorized; submission remains separately gated.
 
 ## Maintainer steps
+
+The notebook defaults to `CANDIDATE = "m2"` and preserves the original M2 pins
+and authorization. To prepare B2 later, select `"b2"` explicitly and fill its
+placeholder pins only from reconciled B2 evidence, following the B2 instructions.
+Unfilled pins are refused. B2 must not be submitted until the M2 result is known
+and is not an unexplained error, and B2 has both official compiler and package
+qualification. The two evidence flags record maintainer review; they do not
+independently establish a score or reconciliation result.
+
+The combined submission controls (including the unchanged M2 tests) are:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/submission_only -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Candidate submission controls failed' }
+```
+
+Keep `.zip.bin` inputs for either candidate, with that candidate's exact manifest.
+The output is still `/kaggle/working/submission.zip`; no compiler, installer or
+submission API is added to this notebook. The following original steps describe M2.
 
 1. Review this note and `first_submission.ipynb`; local offline tests may be run
    from the repository root in the existing environment:
