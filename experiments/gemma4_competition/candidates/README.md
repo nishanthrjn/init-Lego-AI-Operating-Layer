@@ -266,3 +266,129 @@ The diagnostic loader uses a temporary copy containing only authenticated receip
 inputs and the unchanged receipt. Unpinned package initializers or cached bytecode
 from a saved bundle are not executed. This creates temporary local files only;
 it does not modify the preserved inputs/results or execute compiler/model code.
+
+## FORGEAI-GEMMA4-P1-PROCEDURE-PROMPT-1
+
+Status: authored; VERIFICATION NOT RUN — AWAITING MAINTAINER EXECUTION.
+The existing M2/B2 candidates, evidence, compiler notebooks and evaluator sources
+are unchanged. B2 is SCORING according to the supplied maintainer observation;
+no B2 score is invented. M2's observed score remains 0.05.
+
+P1 is `candidates/p1/`: the same model (`gemma-4-31b-it-qat-w4a16-ct`), root agent,
+six tools and sampling as M2, with a new independently authored
+[prompt](p1/prompts/system.md) and evaluation values 180 / 28 / 6 / 80
+(timeout seconds / counted tool calls / task minutes / turns). It differs from B2
+in exactly prompts/system.md and eval_config.yaml. No graph-tool instruction or
+ban appears in the prompt; graph tools are not declared, just as in M2. P2 is
+separate future work. The four-file ZIP has no copied public prompt or code.
+
+[PRIOR-ART.md](../PRIOR-ART.md) records authors, URLs, licences, harness citations,
+source conflicts and UNKNOWNs. In particular, the public wheel implements
+unsubmitted-patch fallback, but hidden scorer parity/hard-global-timeout fallback
+is UNKNOWN. submit_patch captures the patch and the runner exits; all checks must
+precede it. Unignored untracked files may enter the diff; protected test/config
+sections are stripped. P1 conservatively prohibits all test/config edits and
+uses /tmp for reproduction scripts.
+
+The P1 prompt makes checkpoints at 90 seconds/6 calls, 240 seconds/18 calls,
+and 300 seconds/24 calls (whichever threshold is reached first). The final minute
+and four counted calls are a planned reserve, not a runtime guarantee. The
+180-second command ceiling can consume half the task budget; short targeted
+checks are essential. Dynamic remaining-time bounding applies as in M2/B2.
+Hidden scorer environment overrides remain UNKNOWN.
+
+Budget arithmetic: 116 x 6 = 696 minutes = 11.6 hours BEFORE setup, leaving
+24 minutes of the 12-hour cap. At 120 tasks there is no remaining overhead margin.
+The 116 count is a public estimate, not a verified hidden task count; throughput,
+concurrency and setup cost remain UNMEASURED. This is a reduced-cap candidate,
+not a certified time-safe configuration. Before ANY increase, a separately
+approved local harness measurement must cover mean end-to-end task time, setup,
+timeouts and tails. Mean alone cannot guarantee compliance with a hard cap.
+Changing both prompt and budgets also prevents attributing P1-vs-B2 differences
+solely to the prompt. One noisy public score is insufficient evidence of gain.
+
+### Reused implementation and preservation
+
+`portable_p1.py` configures a private instance of unchanged portable_m2.py. It
+uses the same compiler, exact five-wheel scoped install, official-environment
+deviation policy, negative compiler controls, child isolation, deterministic ZIP
+and receipt reconciliation. The approved prompt has a fixed SHA256 in the P1
+composition; its copied candidate bytes cannot silently redefine the expected
+prompt. P1 receipts require candidate=p1, exact budgets and the prompt hash.
+
+The new thin `validate_forgeai_gemma4_p1_procedure_prompt_1.py` owns P1's local
+scope, phase labels and diagnostics, delegating export/reconcile algorithms.
+Its parent is bffc014cadea36c87770986a3a06afe17d503edd. Only this P1 slice may
+change relative to that parent; an unrelated later change must not be silently
+admitted. The M2/B2 historical validators are not the P1 scope gate.
+
+The transfer includes shared source/contract pins, original candidates and the
+new P1 files. It replaces the transfer's old M2 compiler notebook with the P1
+compiler notebook, excluding later download/export helpers. All transferred
+files are raw-byte receipt-bound. Preserve LF candidate bytes and copy bundle
+bytes unchanged across machines; do not recreate a receipt-bound bundle through
+an autocrlf checkout. Keep bundles, results and downloaded public notebooks OUTSIDE
+the repository. Filling submission pins later is independent of the transfer
+receipt; the submission-only notebook is intentionally not a transfer input.
+
+### Maintainer commands and gates
+
+From the repository root, in the existing locked project environment with the
+preserved official wheels already present (no install/download by this slice):
+
+```powershell
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p1_procedure_prompt_1.py --local-only
+if ($LASTEXITCODE -ne 0) { throw 'P1 local preparation failed' }
+```
+
+Expected: existing 28 M2 controls, 10 new P1 controls and 13 submission controls
+pass, followed by P1_LOCAL_SCOPE_AND_STATIC_PASS and a fresh external bundle and
+receipt SHA256. Existing B2 historical scope tests are not rerun against today's
+modified compiler notebooks. No tests have been executed by the coding agent.
+
+After local success, separately approve compiler-only execution. Copy the
+official starter for its observed Python 3.12.13 Linux environment, set Accelerator
+None / Internet Off, and use ONLY `kaggle_compiler/p1_compiler_only.ipynb` cells.
+Attach the new P1 bundle and the official wheelhouse dataset. Set BUNDLE to its
+actual mount and use a fresh output/session. Do not run starter serving/evaluator
+cells. The exact combined approval is:
+
+`AUTHORIZE FORGEAI GEMMA4 P1 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY`
+
+Only the existing five pinned wheels are installed in that future disposable
+session. Additional dependency repair, inference and evaluation are not authorized.
+A blocked environment stops; retain failure evidence. Download all files in
+`/kaggle/working/gemma4-p1-compiler/` plus the sibling log OUTSIDE this repository.
+Portable success alone does not qualify P1. Then:
+
+```powershell
+$p1Receipt = Read-Host 'Absolute path to NEW P1 local-receipt.json FILE'
+$p1Results = Read-Host 'Absolute path to downloaded gemma4-p1-compiler DIRECTORY'
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p1_procedure_prompt_1.py --receipt $p1Receipt --reconcile $p1Results
+if ($LASTEXITCODE -ne 0) { throw 'P1 reconciliation failed' }
+# After maintainer review and staging of this P1 slice:
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p1_procedure_prompt_1.py --pre-commit --receipt $p1Receipt --reconcile $p1Results
+if ($LASTEXITCODE -ne 0) { throw 'P1 pre-commit consistency failed' }
+```
+
+Expected: P1_OFFICIAL_COMPILER_VALIDATED, P1_PACKAGE_VALIDATED and
+P1_PRE_COMMIT_STAGED_CONSISTENCY_PASSED. No model-quality or Kaggle acceptance claim.
+
+Only after qualification, fill P1's null manifest/ZIP/size/receipt pins from its
+own evidence in submission_only/first_submission.ipynb. Set reconciled=true and
+use `AUTHORIZE FORGEAI GEMMA4 SUBMISSION OF P1 PACKAGE <receipt prefix>`.
+M2/B2 pins, default CANDIDATE=m2 and their existing tests remain intact. P1 cannot
+reuse either candidate's identity. Blank pins are deliberately non-executable.
+After filling, rerun the P1 and submission tests and stage/recheck the reviewed
+submission change. Use the byte-identical `.zip.bin` upload convention, private
+inputs, Accelerator None / Internet Off. Actual model execution or submission
+requires a separate maintainer decision; this task authorizes neither.
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p test_p1_candidate.py
+if ($LASTEXITCODE -ne 0) { throw 'P1 controls failed' }
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/submission_only -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Submission controls failed' }
+```
+
+Proposed commit: `feat(gemma4): prepare P1 procedure prompt and bounded budget candidate`.
