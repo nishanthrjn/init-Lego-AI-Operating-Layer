@@ -176,3 +176,93 @@ or error state is not permission to retry. Actual Kaggle submission is separate
 from compiler/copy approval and is never performed by these tools.
 
 Suggested commit: `feat(gemma4): prepare isolated B2 budget ablation candidate`.
+
+## FORGEAI-GEMMA4-VALIDATOR-DIAGNOSTICS-AND-B2-SCOPE-1
+
+Status: authored; maintainer validation pending. No tests or validators run by
+this change's author.
+
+The historical B2 gate compares the whole tree against b319b8c. A clean tree
+still failed after c7417a8 added unrelated screenshots/notebook files and edited
+the receipt-bound M2 compiler notebook. Committing B2 itself was not the problem.
+The old top-level exception handler hid that scope failure behind `ValueError`.
+
+Use `validate_forgeai_gemma4_validator_diagnostics_1.py` for diagnostic
+reconciliation of the qualified M2 and B2 receipts. This deliberately wraps both
+original validators rather than editing their receipt-bound bytes. Direct calls
+to the historical entry points keep their historical scope and diagnostics.
+The wrapper emits [PHASE] labels and exact plain ValueError messages with a
+nonzero exit code. Other exception types print their class only; no traceback,
+file contents or environment values are printed.
+
+The original B2 slice is exactly:
+- parent: b319b8c76615a1705623fddbeb73d52b51605cdd;
+- slice: c636bac7c3dd7ff23f41f104f26f7c3b77c44fae.
+
+The wrapper requires this ancestry and exact historical file set, and refuses
+later committed edits to B2 slice implementation files. Unrelated later commits
+are not attributed to B2. Uncommitted changes are restricted to this diagnostic
+entry point, its new focused test file and this append-only README extension.
+The historical slice allowlist is not widened. This checks current candidate
+bytes too; it does not qualify today's changed compiler notebook or other code.
+
+The two accepted historical receipt SHA256s are pinned explicitly:
+- M2: ca6a05b46844c86369c7aaef3d989b542c5f3c5f63fcc91c7fce5997742893d9;
+- B2: d7195f13fc0f4da056e003317d72c6d46f5b5acb0521742515721684d01f383f.
+
+All bundle inputs must still match their receipt's exact raw bytes and sizes.
+Only after authentication is the preserved validator loaded for reconciliation;
+its compiler, install-deviation, ZIP and evidence checks remain unchanged. No
+models, installs, compiler runs, tests or notebook execution occur in this
+reconciliation wrapper. Local tests remain a separate maintainer command. A new
+receipt requires a separately reviewed pin; this tool cannot qualify a new build.
+Do not copy today's modified source over a historical bundle or regenerate a
+receipt to make a mismatch pass.
+
+### Evidence storage policy
+
+Keep all newly preserved transfer bundles and downloaded results outside the
+repository, for example under D:\Downloads\b2-staging or a maintainer-selected
+external evidence root. `--receipt` identifies the actual local-receipt.json FILE
+inside its complete preserved bundle; `--reconcile` identifies the results
+DIRECTORY containing manifest.json, compiler-output.json, install-evidence.json
+and submission.zip. The wrapper rejects evidence arguments inside the repository.
+Only reviewed manifest/receipt/hash records should be committed in future evidence
+slices; do not commit entire bundles, wheel copies or downloaded result directories.
+Existing historical committed evidence is grandfathered and remains untouched.
+Records added in a separate committed evidence slice do not expand B2's scope.
+An extra untracked file inside the repository remains an error with its named path.
+
+### Maintainer commands
+
+Working directory: repository root. Use the existing locked environment; no new
+package installation or environment variables are needed. Keep the original
+external receipt and results. First run the new offline controls:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p test_validator_diagnostics.py
+if ($LASTEXITCODE -ne 0) { throw 'Validator diagnostic controls failed' }
+```
+
+Then reconcile B2 from the current checkout, with the same external files that
+previously passed (use assignments, not path strings as Read-Host prompts):
+
+```powershell
+$b2Receipt = 'D:\Downloads\gemma-b2-transfer-parent-eouf5647\bundle\local-receipt.json'
+$b2Results = 'D:\Downloads\gemma4-b2-compiler-d7195f13\gemma4-b2-compiler'
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_validator_diagnostics_1.py --candidate b2 --receipt $b2Receipt --reconcile $b2Results
+if ($LASTEXITCODE -ne 0) { throw 'B2 diagnostic reconciliation failed' }
+```
+
+For the preserved M2 bundle/results, use the same command with `--candidate m2`
+and its own receipt/results paths. Do not substitute the B2 receipt.
+Expected: the historical candidate's compiler/package reconciliation labels,
+then HISTORICAL_PACKAGE_RECONCILED; CURRENT_CHECKOUT_COMPILER_NOT_QUALIFIED.
+A failure names the phase and exact contract message; nothing is resubmitted.
+This is historical evidence reconciliation, not a fresh full-suite run, a new
+pre-commit claim, model quality qualification or Kaggle submission authorization.
+
+The diagnostic loader uses a temporary copy containing only authenticated receipt
+inputs and the unchanged receipt. Unpinned package initializers or cached bytecode
+from a saved bundle are not executed. This creates temporary local files only;
+it does not modify the preserved inputs/results or execute compiler/model code.
