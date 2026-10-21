@@ -52,6 +52,34 @@
         "max_time_minutes": 4,
         "max_turns": 100
       },
+      "notebook_name": "first_submission",
+      "notebook_version": "2",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SCORING",
+      "public_score": null,
+      "error_text": null,
+      "notes": [
+        "Previously blocked pending M2 result and B2 reconciliation; both prerequisites are now satisfied by maintainer evidence.",
+        "B2_OFFICIAL_COMPILER_VALIDATED; B2_PACKAGE_VALIDATED; HISTORICAL_PACKAGE_RECONCILED via the diagnostic validator.",
+        "Retained results: D:\\Downloads\\gemma4-b2-compiler-d7195f13\\gemma4-b2-compiler. Previously recorded READY_NOT_SUBMITTED before the maintainer supplied submission evidence.",
+        "Maintainer reports SCORING (Notebook Running), submitted 2026-10-21 approximately two hours before the status message; exact UTC timestamp and submission ID not supplied.",
+        "Submission description: B2 d7195f13 – budget 90/40/4/100, prompt = M2",
+        "Public score is not yet available. Status is a maintainer-reported observation, not independently queried live Kaggle state."
+      ]
+    },
+    {
+      "candidate": "p1",
+      "receipt": "20aa090e37a2333851a94501cb09db9fc88f9c46ca92c0880f2a10239a64da57",
+      "zip_sha256": "fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9",
+      "manifest_sha256": "b43c9b1e62c6beb8a028cc6963caa6b1196e8e81249e266375f6ab2398b8318f",
+      "zip_size": 4736,
+      "budget_values": {
+        "timeout_seconds": 180,
+        "max_tool_calls": 28,
+        "max_time_minutes": 6,
+        "max_turns": 80
+      },
       "notebook_name": null,
       "notebook_version": null,
       "submission_time_utc": null,
@@ -60,9 +88,9 @@
       "public_score": null,
       "error_text": null,
       "notes": [
-        "Previously blocked pending M2 result and B2 reconciliation; both prerequisites are now satisfied by maintainer evidence.",
-        "B2_OFFICIAL_COMPILER_VALIDATED; B2_PACKAGE_VALIDATED; HISTORICAL_PACKAGE_RECONCILED via the diagnostic validator.",
-        "Retained results: D:\\Downloads\\gemma4-b2-compiler-d7195f13\\gemma4-b2-compiler. Submission pins populated; no B2 submission performed."
+        "Maintainer supplied P1_OFFICIAL_COMPILER_VALIDATED; P1_PACKAGE_VALIDATED; P1_PRE_COMMIT_STAGED_CONSISTENCY_PASSED.",
+        "Retained results: D:\\Downloads\\p1-init\\gemma4-p1-compiler-20aa090e\\gemma4-p1-compiler.",
+        "Receipt, raw manifest and ZIP hashes read from retained files; submission pins populated. No submission performed."
       ]
     }
   ]
