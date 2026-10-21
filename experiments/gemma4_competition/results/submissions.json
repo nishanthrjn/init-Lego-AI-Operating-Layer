@@ -56,16 +56,19 @@
       "notebook_version": "2",
       "submission_time_utc": null,
       "submission_id": null,
-      "status": "SCORING",
-      "public_score": null,
+      "status": "SUCCEEDED",
+      "public_score": 0.12,
       "error_text": null,
       "notes": [
         "Previously blocked pending M2 result and B2 reconciliation; both prerequisites are now satisfied by maintainer evidence.",
         "B2_OFFICIAL_COMPILER_VALIDATED; B2_PACKAGE_VALIDATED; HISTORICAL_PACKAGE_RECONCILED via the diagnostic validator.",
         "Retained results: D:\\Downloads\\gemma4-b2-compiler-d7195f13\\gemma4-b2-compiler. Previously recorded READY_NOT_SUBMITTED before the maintainer supplied submission evidence.",
-        "Maintainer reports SCORING (Notebook Running), submitted 2026-10-21 approximately two hours before the status message; exact UTC timestamp and submission ID not supplied.",
+        "Previously reported SCORING (Notebook Running); maintainer now reports final status SUCCEEDED for first_submission Version 2.",
+        "Maintainer reports submission on 2026-10-21 at approximately 05:00 local (Europe/Berlin); exact UTC timestamp and submission ID not supplied.",
         "Submission description: B2 d7195f13 – budget 90/40/4/100, prompt = M2",
-        "Public score is not yet available. Status is a maintainer-reported observation, not independently queried live Kaggle state."
+        "Maintainer reports public score 0.12, approximately 7 of 58 tasks; exact resolved-task count not independently verified.",
+        "Scoring including queue took approximately 13–14 hours of wall-clock time; evaluator runtime is unknown and must not be inferred from this elapsed time.",
+        "Status and score are maintainer-reported observations, not independently queried live Kaggle state."
       ]
     },
     {
