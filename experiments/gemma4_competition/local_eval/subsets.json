@@ -1,0 +1,288 @@
+{
+  "confirm-20": [
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_7427"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14459"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3882"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_7205"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14616"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3675"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_7502"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14430"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3105"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6757"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14186"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3506"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15745"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3480"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14077"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3061"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_9753"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3468"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15023"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3296"
+    }
+  ],
+  "dev-30": [
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6644"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14492"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3130"
+    },
+    {
+      "label": null,
+      "repo": "encode/httpx",
+      "task_id": "httpx_3672"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6589"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_12942"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3905"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_7309"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5624"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3454"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6629"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15763"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3934"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6592"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15800"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_4075"
+    },
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_7315"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14419"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3471"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5077"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_4079"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14851"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_4070"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15030"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3486"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_11194"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_4076"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14786"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3067"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15589"
+    }
+  ],
+  "inventory_size": 129,
+  "label_field": null,
+  "schema": 1,
+  "seed": 20261021,
+  "smoke-5": [
+    {
+      "label": null,
+      "repo": "psf/requests",
+      "task_id": "requests_6644"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14492"
+    },
+    {
+      "label": null,
+      "repo": "Textualize/rich",
+      "task_id": "rich_3130"
+    },
+    {
+      "label": null,
+      "repo": "encode/httpx",
+      "task_id": "httpx_3672"
+    },
+    {
+      "label": null,
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_12942"
+    }
+  ],
+  "source_sha256": "8c84d46169b5ca97437151a341792754c4672eafdaba5187abe3e74e3606f7e7"
+}
