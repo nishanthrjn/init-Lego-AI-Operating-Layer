@@ -1,5 +1,85 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## Environment update: FORGEAI-GEMMA4-LOCAL-EVAL-ENVIRONMENT-1
+
+The notebook runs the official starter's installation
+and serving source unchanged inside the existing watchdog worker, then the harness.
+No extra installation is added. Existing authorization, package identity, subset,
+holdout, runtime-source and wall-clock gates remain.
+
+Official source: `docs/getting-started-gemma-4-developer-agent.ipynb`:
+
+| Zero-based notebook cell | Code-cell ordinal | Purpose | SHA256 of joined UTF-8 source |
+|---|---|---|---|
+| 2 | First | Official wheelhouse installation | `c3032e216b0a393aec76180338e56f3ae5d7d995b5de9913f78b79a1fa1105af` |
+| 8 | Fourth | Official VllmServer and model registry | `05c129500663d3b377f0ffec84ff7145a942e5414717f1a7733108c619c71b9a` |
+
+`official-cells.json` preserves that source exactly. The worker authenticates both
+sources and executes them in one namespace, using `exec(compile(...))`. This keeps
+official source unchanged while preserving process-level timeout and cleanup and
+avoiding stale notebook imports after package replacement. Do not run a second
+copy manually in the notebook kernel. A bridge supplies `AGENT_DIR` (the verified
+candidate) and `re`, normally set by starter cell 4. We do not run cell 4, which
+copies/mutates sample agents and selects 12B. Cell 8 discovers the actual candidate
+model and supplies the exact `models` and `adapters` objects used by evaluation.
+The previous handwritten VllmServer configuration has been removed. Official
+sample evaluation cell 10 and packaging cell 12 are not executed.
+
+### Click-by-click maintainer setup
+
+1. Open the official **Getting Started: Gemma 4 Developer Agent** notebook from
+   the competition **Code** tab. Click **Copy & Edit**. Do not Run All.
+2. In the copy choose **File > Import Notebook** and import this repository's
+   `local_eval.ipynb`, replacing the example cells. If the UI lacks import, replace
+   the copied cells with the local_eval cells in order. Remove original runnable
+   demo/evaluation/submission cells before execution. Official cell source remains
+   in the attached tooling, executed unchanged by the gated worker.
+3. Set **Notebook options / Settings > Accelerator: GPU L4 x4** and **Internet: Off**.
+   Use a fresh disposable session with no secrets. GPU quota includes idle time.
+4. In **Input > Add Input / Add Data**, attach these five inputs:
+   - Competition: **Gemma 4 Developer Agent**, public data at
+     `/kaggle/input/competitions/gemma-4-developer-agent`.
+   - Official dataset: **metric/gemma-4-developer-agent-wheelhouse**, at
+     `/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`.
+   - Model: **Google Gemma 4 > other > gemma-4-31b-it-qat-w4a16-ct > version 2**,
+     at `/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2`.
+     Select 31B, not the starter's 12B example. A different mount/version stops.
+   - Private harness tooling dataset: the whole current `local_eval/` directory,
+     including `official-cells.json`, `source-pins.json`, modules and frozen subsets.
+     Set `TOOLS` to its actual mounted path.
+   - Private reconciled candidate package dataset: unchanged `manifest.json` and
+     `submission.zip.bin`. Use `.bin` to prevent upload auto-extraction. Fill the
+     trusted manifest/receipt pins from reconciliation, not a replacement manifest.
+5. Review all configuration and choose smoke-5 first. Set a fresh output path,
+   the exact candidate/subset authorization, existing approval flags, and the new
+   **official_environment_authorized=true**. This explicitly approves the official
+   whole-wheelhouse installation and cutlass `.pth` cleanup in this session only.
+6. Run the configuration cell, then the launch cell. The watchdog starts before
+   installation. Worker order: unchanged cell 2, installed-version/source checks,
+   candidate and four-L4 checks, unchanged cell 8, frozen-subset evaluation.
+   The official install cell lacks `--no-index`; the worker retains `PIP_NO_INDEX=1`
+   and Kaggle Internet Off is mandatory. No other pip commands are authorized.
+7. On failure, preserve evidence and stop; do not repair dependencies ad hoc or
+   relax source pins. Do not rerun completed tasks automatically.
+8. Download the complete output directory and stop the Kaggle session. Analyze
+   externally with the existing commands. Never commit outputs or downloaded traces.
+
+New `environment.json` records starter hash, cell hashes, pre/post-install package
+versions, post-server versions, installation duration and server startup duration.
+`run.json` also records the cell hashes and installation duration. A failed install
+retains STARTED evidence and `worker.log`; it never fabricates a successful state.
+Package/source checks occur after the official install. The GPU environment remains
+unverified until maintainer execution; prior CPU compiler qualification is distinct.
+
+The watchdog includes installation in its total limit. The established 116-task
+projection remains measured server startup plus task wall times; installation is
+reported separately, so it is not an all-inclusive session-time projection.
+Quota/throughput remain UNMEASURED; hidden scorer parity/concurrency remain UNKNOWN.
+
+Existing tests are retained. Added controls compare exact source to starter cells,
+reject altered source, and check explicit install approval/evidence plumbing.
+Run the existing unittest command and STOP for review before GPU execution.
+
 Status: IMPLEMENTED, MAINTAINER VALIDATION PENDING. No tests, notebooks, models,
 installations, evaluations, submissions or commits were executed by the coding
 agent. Metadata was read and the approved frozen ID lists were authored as data.
@@ -61,8 +141,8 @@ Missing public verification data blocks execution; hidden bundles are not sought
 
 Source pin authority is the supplied wheel/document bytes recorded in
 `source-pins.json`, including all Python members of the three harness wheels.
-Runtime preflight checks installed versions and those member bytes without
-installing or repairing anything. The selected official wheel files are also
+After the authorized official installation, runtime preflight checks installed
+versions and those member bytes without further repair. The selected official wheel files are also
 hash-checked in the attached wheelhouse. The new Python modules use standard
 library code on the laptop; official dependencies are imported only by the
 explicitly authorized GPU worker.
@@ -76,14 +156,14 @@ explicitly authorized GPU worker.
 | Timing and counters | `context.py:184–199, 388–445`; adk-eval-core 0.1.0 `tracing/trace.py:23–78, 373–431` | Agent active time, model-call count, trace tool requests by name and tokens when usage exists |
 | Incremental evidence | `results.py:39–88`; README §9.2 | Official patch/test-output artifacts plus our append/flush/fsync task JSONL. Do not replace or merge original attempts |
 | Protected files and fallback | README §§8.1–8.2; `tools/execution.py:76–116` | Official filtering and fallback unchanged; filtered final patches cannot prove test files were never touched |
-| Runtime package preparation | starter cell 2 | Official offline wheelhouse procedure is a **separate maintainer operation**, not an automatic notebook install. It replaces many packages and removes cutlass `.pth` hooks; review and authorize it in a disposable session only |
+| Runtime package preparation | starter cell 2 | Exact pinned cell executed inside the watchdog after explicit environment approval. It replaces wheelhouse packages and removes cutlass `.pth` hooks in the disposable session |
 
 Local dependency pins: adk-submission 0.2.13, adk-eval-core 0.1.0, swegemma 0.2.11,
 google-adk 1.36.1, google-genai 2.11.0, vLLM 0.19.1, transformers 5.13.1.
 The broad serving environment is distinct from the previous CPU compiler-only
 five-wheel install; that CPU qualification does not qualify GPU serving.
 Any missing distribution, source mismatch or import failure is ENVIRONMENT_BLOCKED
-or HARNESS_ERROR, not a coding-model failure. No automatic package download,
+or HARNESS_ERROR, not a coding-model failure. No additional package download,
 installation, compatibility exception, candidate adjustment, or model fallback.
 
 **UNKNOWN:** private scorer concurrency, hidden task count, hidden environment
@@ -225,11 +305,11 @@ After local controls PASS, separately approve the first smoke-5 GPU run:
    official wheelhouse, and matching permitted model. No downloaded trace or complete
    task source enters Git. Verify `manifest_sha256` and `receipt_sha256` from retained
    reconciliation evidence; a manifest claiming portable PASS alone is insufficient.
-2. Prepare an official compatible Python 3.12 Linux serving environment in the
-   disposable session. If packages are missing, **stop for separate approval** of the
-   official starter cell 2 installation; do not infer it is covered by previous CPU
-   scoped-install approval. Keep Internet Off. No automatic preparation is implemented.
-3. Open `local_eval.ipynb`, set Accelerator **L4x4**, Internet **Off**. Review the
+2. Follow the Copy & Edit and five-input setup above in a disposable Python 3.12
+   Linux session. Explicitly approve the official installation with
+   `official_environment_authorized=true`; previous CPU scoped-install approval
+   does not authorize this broader operation. Keep Internet Off.
+3. Import `local_eval.ipynb`, set Accelerator **L4x4**, Internet **Off**. Review the
    GPU-quota effect before enabling the accelerator. Set input paths, candidate,
    raw manifest/receipt pins, fresh output path, and flags. Use the exact phrase
    `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p1 ON smoke-5` (replace candidate/subset

@@ -1,5 +1,6 @@
 """Independent fixture controls; no official imports, GPU, subprocess or network calls."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -219,6 +220,37 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("kaggle competitions submit", cells)
         self.assertIn('"gpu_authorized": False', cells)
         self.assertTrue(all(c.get("execution_count") is None and not c.get("outputs") for c in notebook["cells"]))
+
+    def test_official_cells_are_exact_starter_source(self):
+        root = Path(__file__).parent
+        starter = root.parent / "docs/getting-started-gemma-4-developer-agent.ipynb"
+        original = json.loads(starter.read_bytes())
+        copied = r.official_cells()
+        self.assertEqual(copied["starter_sha256"], hashlib.sha256(starter.read_bytes()).hexdigest())
+        for index in (2, 8):
+            self.assertEqual(copied["cells"][str(index)]["source"], "".join(original["cells"][index]["source"]))
+
+    def test_official_cell_tampering_refused(self):
+        from unittest.mock import patch
+        root = Path(__file__).parent
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            document = json.loads((root / "official-cells.json").read_bytes())
+            document["cells"]["8"]["source"] += "\n# altered\n"
+            (target / "official-cells.json").write_text(json.dumps(document))
+            (target / "source-pins.json").write_bytes((root / "source-pins.json").read_bytes())
+            with patch.object(r, "HERE", target), self.assertRaisesRegex(ValueError, "source changed"):
+                r.official_cells()
+
+    def test_environment_install_is_explicit_and_only_official(self):
+        root = Path(__file__).parent
+        notebook = json.loads((root / "local_eval.ipynb").read_bytes())
+        source = "".join(notebook["cells"][1]["source"])
+        self.assertIn('"official_environment_authorized": False', source)
+        runtime_source = (root / "runtime.py").read_text()
+        self.assertNotIn('"pip", "install"', runtime_source)
+        self.assertLess(runtime_source.index('"official-starter-cell-2"'), runtime_source.index('"official-starter-cell-8"'))
+        self.assertIn('"environment.json"', runtime_source)
 
 
 if __name__ == "__main__":

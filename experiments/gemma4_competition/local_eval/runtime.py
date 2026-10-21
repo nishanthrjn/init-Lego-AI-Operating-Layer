@@ -5,6 +5,7 @@ import argparse
 import asyncio
 import fnmatch
 import importlib.metadata
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -251,12 +252,51 @@ async def evaluate(config: dict, output: Path, selected: list[dict], models, ada
         evaluator.docker.cleanup_all()
 
 
+OFFICIAL_CELL_HASHES = {
+    "2": "c3032e216b0a393aec76180338e56f3ae5d7d995b5de9913f78b79a1fa1105af",
+    "8": "05c129500663d3b377f0ffec84ff7145a942e5414717f1a7733108c619c71b9a",
+}
+
+
+def official_cells() -> dict:
+    document = json.loads((HERE / "official-cells.json").read_bytes())
+    pins = json.loads((HERE / "source-pins.json").read_bytes())
+    if document["starter_sha256"] != pins["documents"]["docs/getting-started-gemma-4-developer-agent.ipynb"]:
+        raise ValueError("official starter identity mismatch")
+    if set(document["cells"]) != set(OFFICIAL_CELL_HASHES):
+        raise ValueError("unexpected official cells")
+    for index, digest in OFFICIAL_CELL_HASHES.items():
+        cell = document["cells"][index]
+        if cell["sha256"] != digest or hashlib.sha256(cell["source"].encode()).hexdigest() != digest:
+            raise ValueError("official cell source changed: " + index)
+    return document
+
+
+def installed_versions() -> dict:
+    return {d.metadata["Name"]: d.version for d in importlib.metadata.distributions() if d.metadata["Name"]}
+
+
 def worker(config: dict, output: Path) -> None:
     doc, selected, manifest = prepare(config)
+    cells = official_cells()
+    if config.get("official_environment_authorized") is not True:
+        raise ValueError("official wheelhouse installation requires explicit approval")
+    if sys.platform != "linux" or sys.version_info[:2] != (3, 12):
+        raise ValueError("Python 3.12 Linux required")
+    evidence = {"starter_sha256": cells["starter_sha256"], "cell_sha256": OFFICIAL_CELL_HASHES,
+                "pre_install_versions": installed_versions(), "state": "INSTALL_STARTED"}
+    write_json(output / "environment.json", evidence)
+    namespace = {"__name__": "__main__"}
+    installation_start = time.perf_counter()
+    exec(compile(cells["cells"]["2"]["source"], "official-starter-cell-2", "exec"), namespace)
+    evidence.update(post_install_versions=installed_versions(),
+                    installation_seconds=time.perf_counter() - installation_start,
+                    state="OFFICIAL_INSTALL_COMPLETED")
+    write_json(output / "environment.json", evidence)
     pins = check_environment()
     import litellm
     import torch
-    from adk_submission import VllmConfig, VllmServer, discover_adapters, validate_directory
+    from adk_submission import discover_adapters, validate_directory
     from adk_submission.discovery import discover_declared_models
     from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS, build_submission_limits
     from swegemma.models import load_tasks
@@ -284,16 +324,12 @@ def worker(config: dict, output: Path) -> None:
     amap = getattr(adapters, "adapters", None) or {}
     if any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", key) for key in amap):
         raise ValueError("unsafe adapter identity")
-    ranks = [a.rank for a in amap.values() if getattr(a, "rank", None) and a.rank > 0]
-    extra = ("--hf-overrides", '{"architectures": ["Gemma4ForCausalLM"], "model_type": "gemma4"}') if "12b" in model else ()
-    litellm.drop_params = True
-    server = VllmServer(VllmConfig(model=str(model_path), port=8000, host="127.0.0.1",
-                        tool_call_parser="gemma4", reasoning_parser="gemma4", max_model_len=32768,
-                        dtype="bfloat16" if torch.cuda.is_bf16_supported() else "auto",
-                        gpu_memory_utilization=0.90, enable_auto_tool_choice=True,
-                        enable_lora=bool(amap), max_loras=max(1, len(amap)),
-                        max_lora_rank=max(ranks) if ranks else 128, scheduler_reserve_full_isl=False,
-                        tensor_parallel_size=4, startup_timeout=1200, extra_args=extra), adapter_manifest=adapters)
+    # Dependencies normally supplied by starter cell 4, without copying/mutating sample agents.
+    namespace.update(AGENT_DIR=agent, re=re)
+    # The unchanged server cell uses this exact official model path (version 2).
+    expected_model_path = Path(f"/kaggle/input/models/google/gemma-4/other/{model}/2")
+    if model_path != expected_model_path:
+        raise ValueError("model path differs from unchanged official server cell")
     meta = {"schema": 1, "candidate": config["candidate"], "subset": config["subset"],
             "subset_sha256": config["subset_sha256"], "source_sha256": doc["source_sha256"],
             "official_tasks_sha256": sha(Path(config["data"]) / "tasks.jsonl"),
@@ -302,6 +338,8 @@ def worker(config: dict, output: Path) -> None:
             "confirmation_only": config.get("confirmation_only", False),
             "winner_evidence_sha256": config.get("winner_evidence_sha256"),
             "task_repos": {r["task_id"]: r["repo"] for r in selected}, "startup_seconds": None,
+            "official_cell_sha256": OFFICIAL_CELL_HASHES,
+            "installation_seconds": evidence["installation_seconds"],
             "runtime_pins": pins["versions"], "source_pins_sha256": sha(HERE / "source-pins.json"),
             "python": sys.version, "model": model, "model_input": str(model_path),
             "torch_version": torch.__version__, "cuda_version": torch.version.cuda,
@@ -312,13 +350,17 @@ def worker(config: dict, output: Path) -> None:
     (output / "tasks.jsonl").touch(exist_ok=False)
     begin = time.perf_counter()
     try:
-        server.start()
+        exec(compile(cells["cells"]["8"]["source"], "official-starter-cell-8", "exec"), namespace)
         meta["startup_seconds"] = time.perf_counter() - begin
+        evidence.update(state="OFFICIAL_SERVER_STARTED", server_startup_seconds=meta["startup_seconds"],
+                        post_server_versions=installed_versions())
+        write_json(output / "environment.json", evidence)
         write_json(output / "run.json", meta)
-        models = server.create_model_registry(aliases=[model], model_prefix="openai/", api_key="EMPTY")
-        asyncio.run(evaluate(config, output, selected, models, adapters, agent, meta))
+        asyncio.run(evaluate(config, output, selected, namespace["models"], namespace["adapters"], agent, meta))
     finally:
-        server.stop()
+        server = namespace.get("server_instance")
+        if server is not None:
+            server.stop()
 
 
 def process_snapshot() -> dict[int, tuple[int, str]]:
@@ -361,7 +403,11 @@ def signal_tracked(tracked: dict[int, str], sig: int) -> None:
 def launch(config_path: Path) -> None:
     config = json.loads(config_path.read_bytes())
     prepare(config)  # stop before any GPU/import/install on missing authorization or identity
-    check_environment()
+    official_cells()
+    if config.get("official_environment_authorized") is not True:
+        raise ValueError("official wheelhouse installation requires explicit approval")
+    if config["wheelhouse"] != "/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse":
+        raise ValueError("unchanged official install cell requires its exact wheelhouse mount")
     output = Path(config["output"]).resolve()
     if not output.is_relative_to(Path("/kaggle/working")) or output == Path("/kaggle/working"):
         raise ValueError("output must be a new directory below /kaggle/working")
