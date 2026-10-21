@@ -4,12 +4,14 @@
     "candidate": "string",
     "receipt": "SHA256 or null",
     "zip_sha256": "SHA256 or null",
+    "manifest_sha256": "optional raw-file SHA256 or null",
+    "zip_size": "optional byte count or null",
     "budget_values": "object with four integer keys",
     "notebook_name": "string or null",
     "notebook_version": "string or null",
     "submission_time_utc": "ISO8601 timestamp or null; never infer from date alone",
     "submission_id": "string or null",
-    "status": "SCORING | COMPLETE | ERROR | NOT_SUBMITTED",
+    "status": "SCORING | COMPLETE | SUCCEEDED | ERROR | NOT_SUBMITTED | READY_NOT_SUBMITTED",
     "public_score": "number or PENDING or null",
     "error_text": "string or null",
     "notes": "array of strings"
@@ -29,18 +31,21 @@
       "notebook_version": "1",
       "submission_time_utc": null,
       "submission_id": null,
-      "status": "SCORING",
-      "public_score": "PENDING",
+      "status": "SUCCEEDED",
+      "public_score": 0.05,
       "error_text": null,
       "notes": [
         "Maintainer reports submission on 2026-10-20; exact UTC timestamp and submission ID not supplied.",
-        "Status is maintainer-reported historical observation, not live Kaggle state."
+        "Status is maintainer-reported historical observation, not live Kaggle state.",
+        "Previously recorded SCORING with score PENDING; maintainer subsequently supplied Succeeded and public score 0.05."
       ]
     },
     {
       "candidate": "b2",
-      "receipt": null,
-      "zip_sha256": null,
+      "receipt": "d7195f13fc0f4da056e003317d72c6d46f5b5acb0521742515721684d01f383f",
+      "zip_sha256": "fe47a6f7a807d0baef9bc2b55455616b26d56423229e2e82d402d82663f8dadb",
+      "manifest_sha256": "102aa8f225aa264fe6cfa66d01b25c3ccb3db88e1541bf8f86da3cfb3ac6bb09",
+      "zip_size": 1567,
       "budget_values": {
         "timeout_seconds": 90,
         "max_tool_calls": 40,
@@ -51,11 +56,13 @@
       "notebook_version": null,
       "submission_time_utc": null,
       "submission_id": null,
-      "status": "NOT_SUBMITTED",
-      "public_score": "PENDING",
+      "status": "READY_NOT_SUBMITTED",
+      "public_score": null,
       "error_text": null,
       "notes": [
-        "Blocked until M2 result understood and B2 official compiler/package reconciliation succeeds."
+        "Previously blocked pending M2 result and B2 reconciliation; both prerequisites are now satisfied by maintainer evidence.",
+        "B2_OFFICIAL_COMPILER_VALIDATED; B2_PACKAGE_VALIDATED; HISTORICAL_PACKAGE_RECONCILED via the diagnostic validator.",
+        "Retained results: D:\\Downloads\\gemma4-b2-compiler-d7195f13\\gemma4-b2-compiler. Submission pins populated; no B2 submission performed."
       ]
     }
   ]
