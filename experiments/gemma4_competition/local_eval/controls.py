@@ -1,4 +1,4 @@
-"""Attended CPU-only GOLD/EMPTY verification; no agent, serving or installs."""
+"""Attended CPU-only GOLD/EMPTY verification with pinned official setup only."""
 from __future__ import annotations
 
 import argparse
@@ -16,6 +16,7 @@ import time
 
 from analysis import canonical, load_subset, sha, verification_outcome
 from runtime import check_environment, clean_env, signal_tracked, track_descendants, process_snapshot, write_json
+from runtime import install_official_environment, official_cells
 
 HERE = Path(__file__).resolve().parent
 AUTHORIZATION = "AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL CONTROLS ON dev-30+confirm-20 CPU"
@@ -62,7 +63,7 @@ async def verify_one(task, mode, verifier, manager, config, paths):
         return safe_result(False, "CONTROL_EXECUTION_ERROR", time.perf_counter() - begin)
 
 
-def preflight(config):
+def preflight(config, *, before_install=False):
     if (config.get("authorization") != AUTHORIZATION or config.get("cpu_only_confirmed") is not True
             or config.get("internet_off_confirmed") is not True):
         raise ValueError("Exact CPU control authorization and Internet Off required")
@@ -70,7 +71,14 @@ def preflight(config):
         raise ValueError("CPU controls require Python 3.12 Linux")
     if Path("/dev/nvidia0").exists():
         raise ValueError("Accelerator must be None")
-    check_environment()  # Metadata/source checks only; missing packages block, never install.
+    if config.get("official_environment_authorized") is not True:
+        raise ValueError("official wheelhouse installation requires explicit approval")
+    wheelhouse = "/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse"
+    if config.get("wheelhouse") != wheelhouse or not Path(wheelhouse).is_dir():
+        raise ValueError("unchanged official install cell requires its exact wheelhouse mount")
+    official_cells()
+    if not before_install:
+        check_environment()
     pins = (HERE / "subsets.sha256").read_text().split()[0]
     doc, dev = load_subset(HERE / "subsets.json", pins, "dev-30")
     _, confirm = load_subset(HERE / "subsets.json", pins, "confirm-20")
@@ -149,10 +157,14 @@ def run_child(config_file, task_id, mode, remaining):
 
 def run(config_file):
     config = json.loads(config_file.read_bytes())
-    data, selected, subset_sha = preflight(config)
+    data, selected, subset_sha = preflight(config, before_install=True)
     output = Path(config["output"]).resolve()
     if output.parent != Path("/kaggle/working") or output.name != "controls.json" or output.exists():
         raise ValueError("Use fresh /kaggle/working/controls.json; preserve previous attempts")
+    if (output.parent / "environment.json").exists():
+        raise ValueError("Preserve existing environment evidence; use a fresh session")
+    install_official_environment(config, output.parent)
+    check_environment()
     source_pins = json.loads((HERE / "source-pins.json").read_bytes())
     doc = {"schema": 1, "state": "INCOMPLETE", "subset_sha256": subset_sha,
            "official_tasks_sha256": sha(data / "tasks.jsonl"),

@@ -15,7 +15,13 @@ and 20 disjoint confirmation IDs, in frozen order. GOLD supplies `Task.patch` as
 `agent_patch`; EMPTY supplies an empty string. Both call official
 `swegemma.harness.verification.verify_task` directly, not an agent/Evaluator loop.
 Every call gets a new subprocess manager and fresh official verification workspace.
-There are no model, vLLM, compilation, training, pip or submission calls.
+There are no model, serving, compilation, training or submission calls.
+FORGEAI-GEMMA4-LOCAL-EVAL-CONTROLS-ENVIRONMENT-1 adds only the unchanged official
+starter cell 2 installation, executed once in the controls process before verification.
+The shared `runtime.install_official_environment` verifies `official-cells.json`
+against the pinned starter and cell hashes. It never executes cell 8. The official
+cell may install serving distributions, but no serving process or model is started.
+No task-specific dependency repair or other installation is permitted.
 
 Pinned source contracts:
 
@@ -31,7 +37,7 @@ Pinned source contracts:
   limits; `models=None` is unused because no agent call is made.
 - Starter cell 10 and HARNESS_README §§4, 8.2: the existing public subprocess
   verification path. Dependency-install skips remain unchanged. No Docker parity
-  is claimed, and no dependency installation is added by this control slice.
+  is claimed; only official starter cell 2 provisions the common environment.
 
 Each GOLD/EMPTY worker is limited to 900s including imports/setup/teardown;
 the whole run is limited to 11h plus cleanup grace. No retries/resume or task
@@ -80,23 +86,33 @@ holdout. The reference patch is never exposed to an agent.
    errors, exclusions, pin/schema/task coverage, no approval effects and no gold
    in projected output. STOP and paste results before notebook execution.
 
-2. In a separately authorized disposable Kaggle CPU session choose **Accelerator
-   None, Internet Off**. Attach competition public data and the updated complete
-   `local_eval/` tooling directory. No candidate or model input is required.
-   Use the pinned official environment already provisioned for verification;
-   this notebook does not install packages. The existing metadata/source checks
-   run before tasks are read. If a fresh CPU image lacks them, stop and report
-   ENVIRONMENT BLOCKED; do not run an install cell or substitute dependencies.
-   Do not execute starter serving/evaluation cells 8/10 or the GPU notebook.
+2. Open the official starter in Kaggle and click **Copy & Edit**. Before running
+   any cell, open notebook settings and select **Accelerator: None**, **Internet: Off**.
+   Use **Add Input** to attach the competition public data, official wheelhouse
+   (`/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`), and your
+   updated complete `local_eval/` tooling dataset, including `official-cells.json`
+   and `source-pins.json`. Remove any model/candidate inputs inherited from the starter.
+   Replace the starter cells with the cells from `controls.ipynb`; do not Run All
+   with starter cells still present. The controls worker, not a manually executed
+   starter cell, performs the pinned cell 2 installation. Never run cells 8/10.
+   If the official installation or pinned metadata/source checks fail, preserve
+   `environment.json` and stop; do not add installs or substitute dependencies.
 
-3. Import `controls.ipynb`, set TOOLS and both CPU/Internet confirmations, and set:
+3. Set TOOLS to the attached tooling directory, both CPU/Internet confirmations
+   to true, and `OFFICIAL_ENVIRONMENT_AUTHORIZED = True` after reviewing the
+   official cell 2 effects. Set AUTHORIZATION to:
 
    ```text
    AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL CONTROLS ON dev-30+confirm-20 CPU
    ```
 
-   Output is a fresh `/kaggle/working/controls.json`; existing evidence causes
-   refusal. Download only that file, retain the printed digest, and review it.
+   Execute the controls cells only. Outputs are fresh `/kaggle/working/controls.json`
+   and `/kaggle/working/environment.json`; existing evidence causes refusal before
+   installation. The latter records starter/cell hashes, pre/post package versions,
+   installation duration and state, as in GPU runs. Its cell-hash map identifies
+   the pinned starter sources; it does not indicate cell 8 execution.
+   Download both files, retain the printed controls digest, and review them.
+   Keep environment evidence outside Git; only reviewed controls metadata may be committed.
    No automatic commits or submissions.
 
 4. Analyze the retained smoke run with completed controls and its independently

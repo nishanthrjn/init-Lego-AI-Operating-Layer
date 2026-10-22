@@ -279,8 +279,8 @@ def installed_versions() -> dict:
     return {d.metadata["Name"]: d.version for d in importlib.metadata.distributions() if d.metadata["Name"]}
 
 
-def worker(config: dict, output: Path) -> None:
-    doc, selected, manifest = prepare(config)
+def install_official_environment(config: dict, output: Path):
+    """Execute only pinned starter cell 2; never start serving."""
     cells = official_cells()
     if config.get("official_environment_authorized") is not True:
         raise ValueError("official wheelhouse installation requires explicit approval")
@@ -296,6 +296,12 @@ def worker(config: dict, output: Path) -> None:
                     installation_seconds=time.perf_counter() - installation_start,
                     state="OFFICIAL_INSTALL_COMPLETED")
     write_json(output / "environment.json", evidence)
+    return cells, evidence, namespace
+
+
+def worker(config: dict, output: Path) -> None:
+    doc, selected, manifest = prepare(config)
+    cells, evidence, namespace = install_official_environment(config, output)
     pins = check_environment()
     import litellm
     import torch

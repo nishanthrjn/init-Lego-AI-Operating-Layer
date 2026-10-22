@@ -8,13 +8,39 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import analysis as a
 import controls as c
+import runtime as r
 from test_local_eval import record, meta
 
 
 class ControlTests(unittest.TestCase):
+    def test_cpu_setup_executes_only_cell_two_and_records_environment(self):
+        # Independent inert cell fixtures; no official code or installation executes.
+        cells = {"starter_sha256": "fixture", "cells": {
+            "2": {"source": "installation_ran = True"},
+            "8": {"source": "raise AssertionError('serving must never run')"}}}
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(r, "official_cells", return_value=cells), \
+                patch.object(r, "installed_versions", side_effect=[{"pkg": "before"}, {"pkg": "after"}]), \
+                patch.object(r.sys, "platform", "linux"), \
+                patch.object(r.sys, "version_info", (3, 12)):
+            _, evidence, namespace = c.install_official_environment(
+                {"official_environment_authorized": True}, Path(directory))
+            self.assertTrue(namespace["installation_ran"])
+            self.assertEqual(evidence["state"], "OFFICIAL_INSTALL_COMPLETED")
+            self.assertEqual(evidence["post_install_versions"], {"pkg": "after"})
+            self.assertEqual(json.loads((Path(directory) / "environment.json").read_bytes()), evidence)
+
+    def test_cpu_setup_requires_install_approval(self):
+        with patch.object(r, "official_cells", return_value={}), \
+                patch.object(r, "installed_versions") as versions:
+            with self.assertRaisesRegex(ValueError, "explicit approval"):
+                c.install_official_environment({}, Path("unused"))
+            versions.assert_not_called()
+
     def test_classification_matrix(self):
         passed = c.safe_result(True, "NONE", 1)
         failed = c.safe_result(False, "VERIFICATION_FAILED", 1)
