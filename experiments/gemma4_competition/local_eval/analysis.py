@@ -108,6 +108,20 @@ def freeze(rows: list[dict], source_sha256: str, label_field: str | None = None)
 
 
 def load_subset(path: Path, expected_sha: str, name: str) -> tuple[dict, list[dict]]:
+    if name == "dev-16v":
+        if sha(path) != expected_sha or expected_sha != "5a91f0513a3cdddea3eb7a2a3f5208ebdd40a5ab41821f29f6a31a4f07585056":
+            raise ValueError("derived subset hash mismatch")
+        derived = json.loads(path.read_bytes())
+        root = Path(__file__).parent
+        parent, rows = load_subset(root / "subsets.json", derived["parent_sha256"], "dev-30")
+        controls_path = root / "evidence/controls-05706c6a.json"
+        if sha(controls_path) != derived["controls_sha256"]:
+            raise ValueError("derived controls hash mismatch")
+        ids = {r["task_id"] for r in json.loads(controls_path.read_bytes())["tasks"] if r["class"] == "VERIFIABLE"}
+        expected = [r for r in rows if r["task_id"] in ids]
+        if derived["tasks"] != expected or len(expected) != 16:
+            raise ValueError("derived subset selection mismatch")
+        return parent, expected
     if sha(path) != expected_sha or name not in ALLOCATIONS:
         raise ValueError("subset hash/name mismatch")
     doc = json.loads(path.read_bytes())
@@ -314,6 +328,11 @@ def load_controls(path: Path, digest: str, meta: dict) -> dict:
     if set(doc) != fields or doc["schema"] != 1 or doc["state"] != "COMPLETE":
         raise ValueError("complete metadata-only controls required")
     for key in ("subset_sha256", "official_tasks_sha256", "source_pins_sha256", "runtime_pins"):
+        if key == "subset_sha256" and meta["subset"] == "dev-16v":
+            _, selected = load_subset(Path(__file__).parent / "dev-16v.json", meta[key], "dev-16v")
+            if meta["task_ids"] != [r["task_id"] for r in selected]:
+                raise ValueError("derived run task identity mismatch")
+            continue
         if doc[key] != meta[key]:
             raise ValueError("controls/run identity mismatch: " + key)
     if doc["backend"] != "subprocess" or doc["verification_timeout_seconds"] != 300:

@@ -1,5 +1,51 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-P1-DEV30-REVIEW-1
+
+Maintainer reports P1 dev-30 completed in 2.45h: control-filtered 8/16
+(FastAPI 5/8, Rich 3/8; repo macro 0.5). This is not independently recomputed
+here. Config/run metadata, not the former smoke5 directory name, identifies the
+subset. Mean task time 277s implies 116*277/3600 = 8.93h before startup;
+this is not the p95 time-fit gate or a guarantee. No comparison improvement claim.
+
+Exact manual summary (repository root; no execution by coding agent):
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+if ($LASTEXITCODE -ne 0) { throw 'P1 dev-30 controlled summary failed' }
+```
+
+Trace review reads only selected retained agent traces, never test/reference
+patches. It writes exclusively to a new external output file. Tool response text
+may contain repository data: do not commit reports. Missing timings/tokens/status
+remain null. Timestamp deltas are explicitly model-plus-overhead and tool-observation
+intervals, not measured inference latency. First edit is an observed attempt, not
+proof of successful mutation. Arbitrary shell/Python edits cannot be reliably
+inferred. Last recorded git status is not assumed to describe the final workspace.
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/trace_review.py 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' rich_3454 requests_7315 rich_4070 rich_3934 rich_3471 rich_4076 fastapi_15589 rich_4075 fastapi_15800 rich_4079 fastapi_11194 --output 'D:\Downloads\p1-dev30-trace-review.json'
+if ($LASTEXITCODE -ne 0) { throw 'P1 trace review failed' }
+```
+
+`dev-16v.json` is a separate derived frozen subset, preserving original dev-30
+order, with eight FastAPI and eight Rich tasks; original subsets.json is unchanged.
+Its raw SHA256 is `5a91f0513a3cdddea3eb7a2a3f5208ebdd40a5ab41821f29f6a31a4f07585056`.
+It records both parent and frozen controls hashes. Future GPU configuration:
+subset `dev-16v`, subset_file `TOOLS / 'dev-16v.json'`, subset_sha256 as above,
+output directory containing `dev-16v`, authorization ending `ON dev-16v`.
+Attach the complete tooling directory including evidence/controls-05706c6a.json.
+This is a selected development population, not all-repository generalization;
+confirm-20 remains held out. No GPU execution is authorized by these edits.
+
+Reproducibility: maintainer reports second controls hash f0a2d0ed… matches
+05706c6a… in class and GOLD/EMPTY outcomes for **50/50** tasks. Timing/byte equality
+is not claimed; the first controls remain authoritative. See the full hashes below.
+
+Tests added for derived selection/pins, repeated submit responses, timing unknowns,
+edit attempts and last recorded status. Run the existing `test_*.py` discovery
+command below and paste results. Verification NOT RUN.
+
 ## FORGEAI-GEMMA4-LOCAL-EVAL-FIDELITY-1
 
 ### Reproducibility observation and visible CPU mode
