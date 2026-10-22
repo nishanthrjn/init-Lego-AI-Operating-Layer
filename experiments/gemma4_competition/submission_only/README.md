@@ -1,5 +1,72 @@
 # FORGEAI-GEMMA4-M3-FIRST-SUBMISSION-READINESS-1
 
+## FORGEAI-GEMMA4-SUBMISSION-SELF-CONTAINED-1
+
+**Dataset-based `first_submission.ipynb` and `first-submission_Kaggle.ipynb`:
+interactive only; not for scoring reruns.** Their source and existing tests are
+preserved for history. Dataset workflow instructions below are historical.
+
+On 2026-10-22 the maintainer reported P1 `p1_submission` Version 1 failed with
+`Notebook Threw Exception` during the scoring rerun, before agent scoring.
+Both interactive preparation and the committed run succeeded; the committed log
+reported `P1_PACKAGE_COPIED_UNCHANGED`, hash `fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9`,
+4736 bytes. Cause remains **UNKNOWN**. Dataset dependence is only a hypothesis;
+no scoring-rerun exception traceback has established it. This is not a model score.
+
+The new offline generator reads `CANDIDATE_PINS` using AST data inspection, without
+executing notebook cells. It checks reconciliation flags, raw manifest SHA256,
+manifest state/receipt/package identity, ZIP size and SHA256 before embedding bytes.
+M2 retains its historical closed-baseline admission (its original pin schema has
+no flags); B2/P1 require their explicit reconciliation and understood-M2 flags.
+No pins, candidate bytes or evidence are rewritten. New candidates require populated
+reviewed pins and true flags. The manifest hash remains embedded provenance;
+the generated notebook needs neither the manifest nor any dataset at runtime.
+
+Run offline controls first, from repository root, in the existing uv environment:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/submission_only -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Self-contained submission controls failed' }
+```
+
+STOP and review the results. After approval, generate P1 outside the repository:
+
+```powershell
+$p1Evidence = 'D:\Downloads\p1-init\gemma4-p1-compiler-20aa090e\gemma4-p1-compiler'
+$p1Notebook = Join-Path $env:TEMP ('p1-self-contained-' + [guid]::NewGuid().ToString('N') + '.ipynb')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/submission_only/generate_self_contained.py --candidate p1 --manifest "$p1Evidence\manifest.json" --package "$p1Evidence\submission.zip" --output $p1Notebook
+if ($LASTEXITCODE -ne 0) { throw 'Self-contained notebook generation failed' }
+Write-Output $p1Notebook
+```
+
+Use `--candidate m2` or `b2` with that candidate's retained manifest/package to
+generate its own notebook. Output creation is exclusive; no prior notebook is
+overwritten. No generator or generated notebook has been executed by the agent.
+
+Import the generated notebook into Kaggle with **Accelerator None, Internet Off,
+no input datasets**. Set its final cell's `AUTHORIZATION` to the displayed exact
+phrase; for P1: `AUTHORIZE FORGEAI GEMMA4 SUBMISSION OF P1 PACKAGE 20aa090e`.
+Save the version with that authorization present so reruns receive it. Execution
+and actual submission require separate maintainer decisions; no API submits it.
+
+The notebook verifies decoded bytes before touching output, writes only
+`/kaggle/working/submission.zip`, re-verifies size/hash and prints a report:
+
+- `CREATED`: absent output created exclusively.
+- `ALREADY_PRESENT_IDENTICAL`: matching output accepted without rewriting.
+- `REPLACED_DIFFERENT`: different output replaced after payload verification;
+  report includes `replaced_sha256`.
+
+Symlink output is refused. No inputs, installs, compilation, models, evaluator,
+sidecars or temporary files are used. Replacement is intentionally a direct write
+to the sole output path: interruption can leave partial output; a later authorized
+rerun repairs it from the verified payload. This assumes a single notebook writer;
+it is not concurrent-writer protection. Preserve printed reports and submitted
+version externally. Notebook transport changes do not establish scoring-rerun
+success or authorize automatic retries of the failed submission.
+
+Verification: **NOT RUN — Awaiting maintainer execution.**
+
 Date: 2026-10-20. Status: authored; maintainer execution pending.
 This is first-submission preparation, not completion of the research plan's
 baseline-results milestone. No score, model quality or submission is claimed.

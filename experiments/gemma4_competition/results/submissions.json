@@ -84,20 +84,22 @@
         "max_turns": 80
       },
       "notebook_name": "p1_submission",
-      "notebook_version": null,
+      "notebook_version": "1",
       "submission_time_utc": null,
       "submission_id": null,
-      "status": "SCORING",
+      "status": "ERROR",
       "public_score": null,
-      "error_text": null,
+      "error_text": "Notebook Threw Exception",
       "notes": [
         "Maintainer supplied P1_OFFICIAL_COMPILER_VALIDATED; P1_PACKAGE_VALIDATED; P1_PRE_COMMIT_STAGED_CONSISTENCY_PASSED.",
         "Retained results: D:\\Downloads\\p1-init\\gemma4-p1-compiler-20aa090e\\gemma4-p1-compiler.",
         "Receipt, raw manifest and ZIP hashes read from retained files; submission pins populated. Previously recorded READY_NOT_SUBMITTED before maintainer submission evidence.",
         "Maintainer reports submission on 2026-10-22 at approximately 02:05 local (Europe/Berlin); exact UTC timestamp and submission ID not supplied.",
-        "Notebook p1_submission; version not supplied (<n> placeholder), so notebook_version remains null.",
+        "Maintainer subsequently identified notebook p1_submission Version 1.",
         "Submission description: P1 20aa090e – own procedure prompt, budget 180/28/6/80",
-        "Maintainer reports SCORING; public score not yet supplied. Status is a maintainer-reported observation, not independently queried live Kaggle state."
+        "Previously SCORING; on 2026-10-22 maintainer reports ERROR (Notebook Threw Exception) during Kaggle scoring rerun, before agent scoring; public score remains null.",
+        "Maintainer reports the committed Version 1 run log showed P1_PACKAGE_COPIED_UNCHANGED, ZIP SHA256 fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9, 4736 bytes; interactive preparation also succeeded.",
+        "Failure cause UNKNOWN; dataset-input dependence is a hypothesis, not an established cause. This is not a model-quality failure. Observations are maintainer-reported, not independently queried Kaggle state."
       ]
     }
   ]
