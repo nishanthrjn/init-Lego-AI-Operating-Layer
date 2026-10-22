@@ -149,9 +149,10 @@ def telemetry(task, result, context, elapsed: float, trace) -> dict:
     stop = stop_reason(error, context.patch_submitted)
     verification_ran = (result.test_output or "").startswith("STDOUT:\n")
     harness_errors = ["HARNESS_ERROR_DETAILS_IN_EXTERNAL_LOG"] if error and stop == "error" and not verification_ran else []
-    outcome = verification_outcome(bool(result.resolved), result.test_output or "")
+    outcome = verification_outcome(bool(result.resolved), result.test_output or "", task.repo)
     harness_errors.extend(outcome["harness_errors"])
-    if not result.resolved and result.test_exit_code not in (0, 1) and stop == "submitted":
+    if (not result.resolved and result.test_exit_code not in (0, 1) and stop == "submitted"
+            and outcome["verification_status"] != "UNRESOLVED_INCOMPLETE_API"):
         harness_errors.append("VERIFICATION_ERROR_OR_INCOMPLETE")
     agent_seconds = context.agent_elapsed_seconds if context.agent_start_time is not None else None
     turns = context.llm_calls_used

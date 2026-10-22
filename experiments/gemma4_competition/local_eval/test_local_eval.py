@@ -157,7 +157,7 @@ class EvidenceTests(unittest.TestCase):
 
     def test_unknown_not_scored_as_failure_and_graph_tools_counted(self):
         m = meta(("a", "b"))
-        out = a.summarize(m, [record()])
+        out = a.summarize_observations(m, [record()])
         self.assertIsNone(out["pass_rate"])
         self.assertEqual(out["pass_rate_lower_bound"], 0.5)
         self.assertEqual(out["tool_usage"]["get_code_neighbors"], 2)
@@ -167,7 +167,7 @@ class EvidenceTests(unittest.TestCase):
         m = meta(("a", "b", "c"))
         m["task_repos"] = {"a": "org/httpx", "b": "org/rich", "c": "org/rich"}
         rows = [record("a", True), dict(record("b", False), repo="org/rich"), dict(record("c", False), repo="org/rich")]
-        out = a.summarize(m, rows)
+        out = a.summarize_observations(m, rows)
         self.assertAlmostEqual(out["pass_rate"], 1 / 3)
         self.assertEqual(out["repo_macro_pass_rate"], 0.5)
 
@@ -179,7 +179,7 @@ class EvidenceTests(unittest.TestCase):
         ids = tuple(str(i) for i in range(7))
         aa = [record(i, False) for i in ids]
         bb = [record(i, i != "6") for i in ids]
-        out = a.paired(meta(ids), aa, meta(ids), bb)
+        out = a.paired(meta(ids), aa, meta(ids), bb, {i: {"class": "VERIFIABLE"} for i in ids})
         self.assertEqual(out["ties"], 1)
         self.assertEqual(out["exact_two_sided_sign_test_p"], 0.03125)
 
@@ -187,9 +187,9 @@ class EvidenceTests(unittest.TestCase):
         changed = copy.deepcopy(meta())
         changed["subset_sha256"] = "d" * 64
         with self.assertRaises(ValueError):
-            a.paired(meta(), [record()], changed, [record()])
+            a.paired(meta(), [record()], changed, [record()], {"a": {"class": "VERIFIABLE"}})
         with self.assertRaises(ValueError):
-            a.paired(meta(), [], meta(), [record()])
+            a.paired(meta(), [], meta(), [record()], {"a": {"class": "VERIFIABLE"}})
 
     def test_stop_reason_requires_explicit_evidence(self):
         self.assertEqual(r.stop_reason("Agent exceeded tool call budget (28 calls)", False), "call_budget")
@@ -261,7 +261,7 @@ class DependencyClassificationTests(unittest.TestCase):
         self.assertEqual(outcome["verification_status"], "HARNESS_ENVIRONMENT_ERROR")
         row = dict(record(), **outcome)
         self.assertNotIn("tests_fail", a.categories(row))
-        report = a.summarize(meta(), [row])
+        report = a.summarize_observations(meta(), [row])
         self.assertEqual(report["harness_environment_errors"], 1)
         self.assertEqual(report["unresolved"], 0)
         self.assertIsNone(report["pass_rate"])
@@ -274,7 +274,7 @@ class DependencyClassificationTests(unittest.TestCase):
 
     def test_summary_reports_task_budget_tokens_and_macro(self):
         rows = [record("a"), dict(record("b", False), stop_reason="call_budget", tokens=42)]
-        report = a.summarize(meta(("a", "b")), rows)
+        report = a.summarize_observations(meta(("a", "b")), rows)
         self.assertEqual(report["pass_rate"], 0.5)
         self.assertEqual(report["repo_macro_pass_rate"], 0.5)
         self.assertEqual(report["tool_call_limit_hits"], 1)

@@ -1,5 +1,151 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-LOCAL-EVAL-CONTROLS-1
+
+Status: authored; **NOT RUN — awaiting maintainer execution**. This section
+supersedes the dependency-repair proposal and unqualified scorable-rate reporting
+below. Maintainer decision: no additional installs or repairs; exclude tasks that
+cannot be verified in the official environment. Candidates and historical attempts
+remain unchanged. No controls results or controls.json are fabricated in Git.
+
+### CPU control contract
+
+`controls.ipynb` / `controls.py` run GOLD and EMPTY once each for all 30 development
+and 20 disjoint confirmation IDs, in frozen order. GOLD supplies `Task.patch` as
+`agent_patch`; EMPTY supplies an empty string. Both call official
+`swegemma.harness.verification.verify_task` directly, not an agent/Evaluator loop.
+Every call gets a new subprocess manager and fresh official verification workspace.
+There are no model, vLLM, compilation, training, pip or submission calls.
+
+Pinned source contracts:
+
+- `swegemma/models/task.py:116–129`: `Task.patch` is gold; `test_patch` is verifier
+  input. Read only inside the future Kaggle worker, never by the coding agent.
+- `swegemma/evaluate.py:271–273, 359–377`: public snapshot resolver and verifier
+  call signature reused; no secret-hydration fallback is used.
+- `swegemma/harness/verification.py:345–358, 384–427, 435–462, 628–719`: fresh
+  verification setup, protected-path filtering, patch application, official pytest
+  and JUnit predicates, finally/cleanup. GOLD uses the same protected-file filtering
+  as candidates; a filtered gold patch is not silently repaired.
+- `swegemma/config.py:88–119`: subprocess EvalConfig, 300s command and verification
+  limits; `models=None` is unused because no agent call is made.
+- Starter cell 10 and HARNESS_README §§4, 8.2: the existing public subprocess
+  verification path. Dependency-install skips remain unchanged. No Docker parity
+  is claimed, and no dependency installation is added by this control slice.
+
+Each GOLD/EMPTY worker is limited to 900s including imports/setup/teardown;
+the whole run is limited to 11h plus cleanup grace. No retries/resume or task
+replacement. Incomplete attempts remain INCOMPLETE and cannot qualify a task list.
+CPU time is UNMEASURED; 100 verification calls with 300s pytest limits alone could
+consume 8h20m, excluding setup. The total guard may stop the run before all 50 pairs.
+
+Reference patches exist only in worker memory and temporary official verifier
+scratch under `/tmp`, which is removed after the worker. Official verifier needs
+temporary patch files to apply GOLD. They are never copied to retained outputs.
+Worker stdout/stderr go to the null device; exceptions are reduced to bounded
+categories, and no official result/trace writer is called. No task/test/issue text
+is included in the output. A quota kill can prevent cleanup: do not download `/tmp`
+or arbitrary session files, and end the disposable session. Process ancestry
+cleanup has the same non-cgroup limitation documented for the agent harness.
+
+`controls.json` contains fixed provenance hashes, runtime versions, backend,
+verification timeout and task rows: ID, repo, class, GOLD/EMPTY boolean/category/
+duration. The final raw-file SHA256 is printed as `CONTROLS_SHA256`; retain it
+independently and provide it when analyzing. Only this reviewed metadata evidence
+file may later be committed, not patches, tasks.jsonl, logs or executed notebooks.
+
+| Control observations | Class |
+|---|---|
+| GOLD passes; EMPTY fails with a test or own-API verdict | VERIFIABLE |
+| GOLD has a third-party import environment error; EMPTY does not pass | ENV_BROKEN |
+| EMPTY passes, or GOLD otherwise fails | UNSOUND |
+| GOLD passes but EMPTY times out/has environment or execution error | UNSOUND (cannot establish a meaningful failing baseline) |
+
+Timeouts, missing public specs and control execution errors are bounded categories,
+not invented missing-dependency diagnoses. Control metadata for confirm-20 is an
+environment/soundness screen only; it does not authorize candidate tuning on that
+holdout. The reference patch is never exposed to an agent.
+
+### Maintainer steps
+
+1. Run offline fixture controls from repository root in the existing uv environment:
+
+   ```powershell
+   uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+   if ($LASTEXITCODE -ne 0) { throw 'Local evaluation CPU control tests failed' }
+   ```
+
+   Existing descriptive-statistics tests remain, now explicitly testing raw
+   observations. New tests cover gold/empty classification, third-party vs own-API
+   errors, exclusions, pin/schema/task coverage, no approval effects and no gold
+   in projected output. STOP and paste results before notebook execution.
+
+2. In a separately authorized disposable Kaggle CPU session choose **Accelerator
+   None, Internet Off**. Attach competition public data and the updated complete
+   `local_eval/` tooling directory. No candidate or model input is required.
+   Use the pinned official environment already provisioned for verification;
+   this notebook does not install packages. The existing metadata/source checks
+   run before tasks are read. If a fresh CPU image lacks them, stop and report
+   ENVIRONMENT BLOCKED; do not run an install cell or substitute dependencies.
+   Do not execute starter serving/evaluation cells 8/10 or the GPU notebook.
+
+3. Import `controls.ipynb`, set TOOLS and both CPU/Internet confirmations, and set:
+
+   ```text
+   AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL CONTROLS ON dev-30+confirm-20 CPU
+   ```
+
+   Output is a fresh `/kaggle/working/controls.json`; existing evidence causes
+   refusal. Download only that file, retain the printed digest, and review it.
+   No automatic commits or submissions.
+
+4. Analyze the retained smoke run with completed controls and its independently
+   retained SHA256 (replace both placeholders):
+
+   ```powershell
+   $controlsFile = 'D:\Downloads\YOUR-CONTROLS\controls.json'
+   $controlsSha = 'PASTE_PRINTED_CONTROLS_SHA256'
+   uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls $controlsFile --controls-sha256 $controlsSha
+   if ($LASTEXITCODE -ne 0) { throw 'Control-qualified summary failed' }
+   ```
+
+All 50 task IDs, raw control hash, subset/data/source pins, runtime versions,
+backend, timeout and bounded metadata schema must match. These pins are not a
+claim that every unpinned CPU/GPU host package is identical. Environment changes
+require new controls; do not merge outputs across different provisioning baselines.
+Only VERIFIABLE tasks enter agent pass rates, repo-macro and paired sign tests.
+Excluded counts are reported per class; repositories with no eligible tasks are
+explicitly omitted from macro averaging. Runs with unknown eligible outcomes do
+not get a complete pass rate. All observed task times remain in time projections
+to avoid artificially improving throughput by dropping slow excluded tasks.
+
+### Corrected retained smoke interpretation (static log review, not a run)
+
+| Task | Retained verifier evidence | Descriptive classification |
+|---|---|---|
+| requests_6644 | Previously supplied resolved=true | Passed observation |
+| fastapi_14492 | Previously supplied resolved=true | Passed observation |
+| rich_3130 | Previously supplied verification failed | Unresolved observation |
+| httpx_3672 | `AttributeError: module 'httpx' has no attribute 'Stream'` | UNRESOLVED_INCOMPLETE_API; agent-side API failure, not a third-party dependency failure |
+| fastapi_12942 | `ModuleNotFoundError: No module named 'dirty_equals'` | HARNESS_ENVIRONMENT_ERROR |
+
+The two logs were read from the external retained `official/test_outputs/`
+directory; no historical file was rewritten. The derived HTTPX row removes the
+generic VERIFICATION_ERROR_OR_INCOMPLETE flag while preserving its false official
+verdict. FastAPI retains official_resolved=false but resolved=null. Ambiguous
+errors remain unknown; no raw traceback, missing attribute name or patch is placed
+in controls.json. The failing module named in an import exception drives ownership,
+not the mere presence of repository frames earlier in the traceback.
+
+Corrected descriptive totals: 2 passes, 2 unresolved, 1 environment error; all five
+submitted, zero recorded call-budget stops. Previous supplied projections remain
+7.238h mean / 9.444h p95, INCONCLUSIVE. **No control-qualified rate is available yet.**
+Without --controls, summary emits CONTROLS_REQUIRED, all five UNASSESSED, and null
+agent pass/macro rates; raw observations are under
+`descriptive_observations_not_control_qualified`. The earlier 2/4=50% describes raw
+non-environment observations only and is not a control-qualified result. Do not
+fabricate VERIFIABLE classifications before running GOLD/EMPTY.
+
 ## Dependency investigation: FORGEAI-GEMMA4-LOCAL-EVAL-DEPENDENCY-FIX-1
 
 Status: classification/summary implemented; **provisioning correction blocked by

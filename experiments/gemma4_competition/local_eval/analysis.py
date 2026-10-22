@@ -28,11 +28,23 @@ def missing_collection_dependency(output: str) -> bool:
     return bool(missing and collection)
 
 
-def verification_outcome(official_resolved: bool, output: str) -> dict:
-    if not official_resolved and missing_collection_dependency(output):
+def verification_outcome(official_resolved: bool, output: str, repo: str = "") -> dict:
+    own = repo.rsplit("/", 1)[-1].lower()
+    modules = re.findall(r"ModuleNotFoundError: No module named ['\"]([A-Za-z0-9_.-]+)['\"]", output)
+    imports = re.findall(r"ImportError: cannot import name ['\"][^'\"]+['\"] from ['\"]([A-Za-z0-9_.-]+)['\"]", output)
+    attrs = re.findall(r"AttributeError: module ['\"]([A-Za-z0-9_.-]+)['\"] has no attribute", output)
+    # Classify the named failing module, not whichever repository appears in a traceback.
+    own_error = own in REPOS and any(m.split('.')[0].lower() == own for m in modules + imports + attrs)
+    external = any(m.split('.')[0].lower() not in REPOS | {"tests", "test", "conftest", "__main__"}
+                   for m in modules + imports)
+    collection = bool(re.search(r"ERROR collecting\b|errors? during collection\b|ImportError while loading conftest", output, re.I))
+    if not official_resolved and external and (collection or imports or repo):
         return {"resolved": None, "official_resolved": False,
                 "verification_status": "HARNESS_ENVIRONMENT_ERROR",
                 "harness_errors": ["HARNESS_ENVIRONMENT_ERROR"]}
+    if not official_resolved and own_error:
+        return {"resolved": False, "official_resolved": False,
+                "verification_status": "UNRESOLVED_INCOMPLETE_API", "harness_errors": []}
     return {"resolved": official_resolved, "official_resolved": official_resolved,
             "verification_status": "passed" if official_resolved else ("failed" if output.startswith("STDOUT:\n") else "unknown"),
             "harness_errors": []}
@@ -201,9 +213,11 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
         if not log.resolve().is_relative_to(log_root):
             raise ValueError("unsafe verification log identity")
         if row["resolved"] is False and log.is_file():
-            outcome = verification_outcome(False, log.read_text(encoding="utf-8", errors="replace"))
-            if outcome["verification_status"] == "HARNESS_ENVIRONMENT_ERROR":
+            outcome = verification_outcome(False, log.read_text(encoding="utf-8", errors="replace"), row["repo"])
+            if outcome["verification_status"] in {"HARNESS_ENVIRONMENT_ERROR", "UNRESOLVED_INCOMPLETE_API"}:
                 prior_errors = row["harness_errors"]
+                if outcome["verification_status"] == "UNRESOLVED_INCOMPLETE_API":
+                    prior_errors = [e for e in prior_errors if e != "VERIFICATION_ERROR_OR_INCOMPLETE"]
                 row = dict(row, **outcome)
                 row["harness_errors"] = sorted(set(prior_errors + outcome["harness_errors"]))
                 row["classification_source"] = "RETAINED_OFFICIAL_VERIFICATION_LOG"
@@ -241,13 +255,15 @@ def categories(row: dict) -> list[str]:
         result.append("budget_exhausted")
     if row["harness_errors"]:
         result.append("harness_error")
-    if row.get("verification_status") == "failed":
+    if row.get("verification_status") in {"failed", "UNRESOLVED_INCOMPLETE_API"}:
         result.append("tests_fail")
+    if row.get("verification_status") == "UNRESOLVED_INCOMPLETE_API":
+        result.append("UNRESOLVED_INCOMPLETE_API")
     # Wrong-location and stray-file judgments require independent human evidence.
     return result
 
 
-def summarize(meta: dict, rows: list[dict]) -> dict:
+def summarize_observations(meta: dict, rows: list[dict]) -> dict:
     n = len(meta["task_ids"])
     complete = len(rows) == n and all(r["resolved"] is not None for r in rows)
     time_complete = complete and meta.get("completion_state") == "COMPLETED" and not any(r["harness_errors"] or r["stop_reason"] == "wall_guard" for r in rows)
@@ -287,12 +303,96 @@ def summarize(meta: dict, rows: list[dict]) -> dict:
             "caveat": "Public development evidence only; small n; task count/hidden concurrency unverified."}
 
 
-def paired(a_meta: dict, a: list[dict], b_meta: dict, b: list[dict]) -> dict:
+def load_controls(path: Path, digest: str, meta: dict) -> dict:
+    """Accept only pinned, complete, metadata-only controls for this frozen environment."""
+    from controls import classify, safe_result, CLASSES
+    if not re.fullmatch(r"[0-9a-f]{64}", digest) or sha(path) != digest:
+        raise ValueError("controls SHA256 mismatch")
+    doc = json.loads(path.read_bytes())
+    fields = {"schema", "state", "subset_sha256", "official_tasks_sha256", "source_pins_sha256",
+              "runtime_pins", "backend", "verification_timeout_seconds", "tasks"}
+    if set(doc) != fields or doc["schema"] != 1 or doc["state"] != "COMPLETE":
+        raise ValueError("complete metadata-only controls required")
+    for key in ("subset_sha256", "official_tasks_sha256", "source_pins_sha256", "runtime_pins"):
+        if doc[key] != meta[key]:
+            raise ValueError("controls/run identity mismatch: " + key)
+    if doc["backend"] != "subprocess" or doc["verification_timeout_seconds"] != 300:
+        raise ValueError("unsupported controls verification contract")
+    if meta.get("evaluation_config", {}).get("verification_timeout_seconds", 300) != 300:
+        raise ValueError("agent/control verification timeout mismatch")
+    freeze_path = Path(__file__).parent / "subsets.json"
+    frozen, _ = load_subset(freeze_path, doc["subset_sha256"], "dev-30")
+    expected = {r["task_id"]: r["repo"] for r in frozen["dev-30"] + frozen["confirm-20"]}
+    seen = {}
+    for row in doc["tasks"]:
+        if set(row) != {"task_id", "repo", "class", "gold", "empty"} or row["class"] not in CLASSES:
+            raise ValueError("unexpected control fields")
+        if row["task_id"] in seen or expected.get(row["task_id"]) != row["repo"]:
+            raise ValueError("control task identity mismatch")
+        for mode in ("gold", "empty"):
+            value = row[mode]
+            if set(value) != {"passed", "error_category", "seconds"}:
+                raise ValueError("control payload must contain only bounded metadata")
+            safe_result(value["passed"], value["error_category"], value["seconds"])
+            if value["passed"] != (value["error_category"] == "NONE"):
+                raise ValueError("control outcome/category contradiction")
+        if classify(row["gold"], row["empty"]) != row["class"]:
+            raise ValueError("control classification mismatch")
+        seen[row["task_id"]] = row
+    if seen.keys() != expected.keys():
+        raise ValueError("all 50 frozen controls required")
+    return seen
+
+
+def summarize(meta: dict, rows: list[dict], controls: dict | None = None) -> dict:
+    observations = summarize_observations(meta, rows)
+    classes = {tid: controls[tid]["class"] if controls and tid in controls else "UNASSESSED"
+               for tid in meta["task_ids"]}
+    eligible = [r for r in rows if classes[r["task_id"]] == "VERIFIABLE"]
+    expected = [tid for tid, cls in classes.items() if cls == "VERIFIABLE"]
+    clean = [r for r in eligible if r["resolved"] is not None and not r["harness_errors"]]
+    complete = bool(expected) and len(clean) == len(expected)
+    passed = sum(r["resolved"] is True for r in clean)
+    repos = {}
+    for repo in sorted(set(meta["task_repos"].values())):
+        rr = [r for r in clean if r["repo"] == repo]
+        planned = sum(meta["task_repos"][tid] == repo for tid in expected)
+        repos[repo] = {"verifiable": planned, "scored": len(rr),
+                       "passed": sum(r["resolved"] is True for r in rr),
+                       "pass_rate": sum(r["resolved"] is True for r in rr) / planned if planned and len(rr) == planned else None}
+    macro_values = [r["pass_rate"] for r in repos.values() if r["pass_rate"] is not None]
+    for row in observations["per_task"]:
+        row["control_class"] = classes[row["task_id"]]
+        row["agent_verdict"] = ("RESOLVED" if row["resolved"] else "UNRESOLVED") if (
+            row["control_class"] == "VERIFIABLE" and row["resolved"] is not None and not row["harness_errors"]
+        ) else "EXCLUDED_OR_UNKNOWN"
+    return {"controls_status": "PINNED_CONTROLS_APPLIED" if controls else "CONTROLS_REQUIRED",
+            "planned": len(meta["task_ids"]), "observed": len(rows), "verifiable": len(expected),
+            "excluded_counts": dict(Counter(c for c in classes.values() if c != "VERIFIABLE")),
+            "passed": passed, "unresolved": len(clean) - passed, "complete": complete,
+            "pass_rate": passed / len(expected) if complete else None,
+            "repo_macro_pass_rate": statistics.mean(macro_values) if complete and macro_values else None,
+            "by_repo": repos, "macro_excluded_repos": [k for k, v in repos.items() if not v["verifiable"]],
+            "time_fit": projection([r["wall_seconds"] for r in rows], meta.get("startup_seconds"),
+                                   complete and len(rows) == len(meta["task_ids"]) and not any(r["harness_errors"] for r in rows)
+                                   and meta.get("completion_state") == "COMPLETED"),
+            "per_task": observations.pop("per_task"),
+            "descriptive_observations_not_control_qualified": observations,
+            "caveat": "Agent verdicts require VERIFIABLE controls. Raw observed rates are descriptive only; exclusions change the population."}
+
+
+def paired(a_meta: dict, a: list[dict], b_meta: dict, b: list[dict], controls: dict | None = None) -> dict:
+    if not controls:
+        raise ValueError("paired agent verdicts require pinned controls")
     for key in ("subset_sha256", "subset", "source_sha256", "official_tasks_sha256", "task_ids", "task_repos", "runtime_pins", "source_pins_sha256"):
         if a_meta[key] != b_meta[key]:
             raise ValueError("unpaired run contract: " + key)
     if len(a) != len(a_meta["task_ids"]) or len(b) != len(b_meta["task_ids"]):
         raise ValueError("paired comparison requires two complete subsets")
+    a = [r for r in a if controls[r["task_id"]]["class"] == "VERIFIABLE"]
+    b = [r for r in b if controls[r["task_id"]]["class"] == "VERIFIABLE"]
+    if not a:
+        raise ValueError("no VERIFIABLE paired tasks")
     aa, bb = {r["task_id"]: r for r in a}, {r["task_id"]: r for r in b}
     if aa.keys() != bb.keys() or any(r["resolved"] is None or r["harness_errors"] for r in a + b):
         raise ValueError("paired comparison has unknown outcomes")
@@ -314,6 +414,8 @@ def main() -> None:
     a = sub.add_parser("analyze", aliases=["summary"])
     a.add_argument("run", type=Path)
     a.add_argument("--compare", type=Path)
+    a.add_argument("--controls", type=Path)
+    a.add_argument("--controls-sha256")
     args = parser.parse_args()
     if args.command == "freeze":
         if any((p / ".git").exists() for p in args.tasks.resolve().parents):
@@ -326,10 +428,16 @@ def main() -> None:
         print("REVIEW_AND_FREEZE_BEFORE_GPU_EXECUTION")
     else:
         meta, rows = read_run(args.run)
-        report = summarize(meta, rows)
+        if bool(args.controls) != bool(args.controls_sha256):
+            raise ValueError("supply controls file and independently retained SHA256 together")
+        controls = load_controls(args.controls, args.controls_sha256, meta) if args.controls else None
+        report = summarize(meta, rows, controls)
+        report["controls_sha256"] = args.controls_sha256
         if args.compare:
             other_meta, other = read_run(args.compare)
-            report["comparison"] = paired(meta, rows, other_meta, other)
+            if args.controls:
+                load_controls(args.controls, args.controls_sha256, other_meta)
+            report["comparison"] = paired(meta, rows, other_meta, other, controls)
         print(json.dumps(report, indent=2, allow_nan=False))
 
 
