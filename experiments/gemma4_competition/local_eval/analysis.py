@@ -21,6 +21,23 @@ ALLOCATIONS = {
 STOPS = {"submitted", "call_budget", "time_budget", "turn_budget", "error", "unknown", "wall_guard"}
 
 
+def missing_collection_dependency(output: str) -> bool:
+    """Only explicit verifier collection/import errors, not arbitrary tool failures."""
+    missing = re.search(r"ModuleNotFoundError: No module named ['\"][A-Za-z0-9_.-]+['\"]", output)
+    collection = re.search(r"ERROR collecting\b|errors? during collection\b|ImportError while loading conftest", output, re.I)
+    return bool(missing and collection)
+
+
+def verification_outcome(official_resolved: bool, output: str) -> dict:
+    if not official_resolved and missing_collection_dependency(output):
+        return {"resolved": None, "official_resolved": False,
+                "verification_status": "HARNESS_ENVIRONMENT_ERROR",
+                "harness_errors": ["HARNESS_ENVIRONMENT_ERROR"]}
+    return {"resolved": official_resolved, "official_resolved": official_resolved,
+            "verification_status": "passed" if official_resolved else ("failed" if output.startswith("STDOUT:\n") else "unknown"),
+            "harness_errors": []}
+
+
 def sha(path: Path) -> str:
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
@@ -178,6 +195,18 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
         validate_record(row)
         if meta["task_repos"].get(row["task_id"]) != row["repo"]:
             raise ValueError("task/repository identity mismatch")
+        # Derive corrections from retained official verification logs, never rewrite history.
+        log_root = (path / "official" / "test_outputs").resolve()
+        log = log_root / (row["task_id"].replace("/", "__") + ".log")
+        if not log.resolve().is_relative_to(log_root):
+            raise ValueError("unsafe verification log identity")
+        if row["resolved"] is False and log.is_file():
+            outcome = verification_outcome(False, log.read_text(encoding="utf-8", errors="replace"))
+            if outcome["verification_status"] == "HARNESS_ENVIRONMENT_ERROR":
+                prior_errors = row["harness_errors"]
+                row = dict(row, **outcome)
+                row["harness_errors"] = sorted(set(prior_errors + outcome["harness_errors"]))
+                row["classification_source"] = "RETAINED_OFFICIAL_VERIFICATION_LOG"
         rows.append(row)
     ids = [r["task_id"] for r in rows]
     if len(set(ids)) != len(ids) or not set(ids) <= set(meta["task_ids"]):
@@ -201,6 +230,8 @@ def projection(times: list[float], startup: float | None, complete: bool) -> dic
 
 
 def categories(row: dict) -> list[str]:
+    if row.get("verification_status") == "HARNESS_ENVIRONMENT_ERROR":
+        return ["harness_error", "HARNESS_ENVIRONMENT_ERROR"]
     result = []
     if row["patch_bytes"] == 0:
         result.append("no_edit")
@@ -227,16 +258,29 @@ def summarize(meta: dict, rows: list[dict]) -> dict:
         rr = [r for r in rows if r["repo"] == repo]
         planned = sum(v == repo for v in meta["task_repos"].values())
         repos[repo] = {"passed": sum(r["resolved"] is True for r in rr), "planned": planned,
+                       "scorable": sum(r["resolved"] is not None for r in rr),
+                       "harness_environment_errors": sum(r.get("verification_status") == "HARNESS_ENVIRONMENT_ERROR" for r in rr),
                        "observed": len(rr), "pass_rate_lower_bound": sum(r["resolved"] is True for r in rr) / planned,
                        "caveat": "ANECDOTAL n=1" if repo.lower().endswith("/httpx") else "small n"}
     for r in rows:
         tools.update(r["tool_calls"] or {})
         failures.update(categories(r))
     return {"planned": n, "observed": len(rows), "passed": passed,
+            "unresolved": sum(r["resolved"] is False for r in rows),
+            "harness_environment_errors": sum(r.get("verification_status") == "HARNESS_ENVIRONMENT_ERROR" for r in rows),
+            "scorable_tasks": sum(r["resolved"] is not None for r in rows),
+            "scorable_pass_rate": passed / sum(r["resolved"] is not None for r in rows) if any(r["resolved"] is not None for r in rows) else None,
             "pass_rate": passed / n if complete else None, "pass_rate_lower_bound": passed / n,
             "repo_macro_pass_rate": statistics.mean(r["pass_rate_lower_bound"] for r in repos.values()) if complete else None,
             "repo_macro_lower_bound": statistics.mean(r["pass_rate_lower_bound"] for r in repos.values()),
+            "scorable_repo_macro_pass_rate": statistics.mean(r["passed"] / r["scorable"] for r in repos.values() if r["scorable"]) if any(r["scorable"] for r in repos.values()) else None,
+            "scorable_macro_excluded_repos": [repo for repo, r in repos.items() if not r["scorable"]],
             "complete": complete, "by_repo": repos, "tool_usage": dict(tools),
+            "stop_reasons": dict(Counter(r["stop_reason"] for r in rows)),
+            "tool_call_limit_hits": sum(r["stop_reason"] == "call_budget" for r in rows),
+            "observed_tokens": sum(r["tokens"] or 0 for r in rows),
+            "tokens_unknown_tasks": sum(r["tokens"] is None for r in rows),
+            "per_task": [{k: r.get(k) for k in ("task_id", "repo", "resolved", "official_resolved", "verification_status", "wall_seconds", "stop_reason", "model_turns", "tool_calls", "tokens", "harness_errors")} for r in rows],
             "tool_telemetry_unknown_tasks": sum(r["tool_calls"] is None for r in rows),
             "failure_categories_nonexclusive": dict(failures), "wrong_location": "UNKNOWN: human review required",
             "time_fit": projection([r["wall_seconds"] for r in rows], meta.get("startup_seconds"), time_complete),
@@ -267,7 +311,7 @@ def main() -> None:
     f.add_argument("tasks", type=Path)
     f.add_argument("output", type=Path)
     f.add_argument("--label-field")
-    a = sub.add_parser("analyze")
+    a = sub.add_parser("analyze", aliases=["summary"])
     a.add_argument("run", type=Path)
     a.add_argument("--compare", type=Path)
     args = parser.parse_args()

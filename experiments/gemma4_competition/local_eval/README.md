@@ -1,5 +1,107 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## Dependency investigation: FORGEAI-GEMMA4-LOCAL-EVAL-DEPENDENCY-FIX-1
+
+Status: classification/summary implemented; **provisioning correction blocked by
+missing dependency evidence after public setup inspection**. No tests or workloads
+run by the coding agent.
+
+### Export inspection, 2026-10-22
+
+The maintainer supplied four text files under external
+`D:\Downloads\competition-infra`. Exact raw-byte SHA256 and sizes are recorded in
+`dependency-source-pins.json`; source files remain outside Git. Provenance is the
+maintainer-reported CPU/Internet-Off export of the public competition input;
+dataset version and exact export timestamp were not supplied.
+
+- `sandbox/setup.py:290–320, 355–361`: fast path adds workspace paths and configures
+  test discovery; it does not install missing test wheels. It assumes pre-baked
+  dependencies (or the harness's Docker wheel injection).
+- `sandbox/setup.py:114–119, 363–390`: slow path collects declared dependencies and
+  installs only names present in `/wheels`. Missing names are silently omitted;
+  pip runs with `check=False`. Merely invoking it does not prove readiness.
+- `sandbox/setup.py:193–213, 352–353`: editable install precedes either path and
+  has a fallback that omits `--no-index`; do not execute this on the serving host
+  or presume it provides a safe subprocess provisioning bridge.
+- `wheels-listing.txt`: no `dirty_equals`/`dirty-equals` distribution filename is
+  present. A filename listing cannot rule out vendored code inside other archives,
+  but establishes no independently installable wheel for this missing module.
+- `docker/` export contains only `imp.py` (compatibility shim) and `telnetlib.py`;
+  no Dockerfile, image digest or package installation recipe is available.
+
+Therefore the request's `dirty_equals wheels found: <paste ...>` is an unfilled
+placeholder, not evidence that the wheel exists. Wiring the supplied fast-path
+script into subprocess verification would not fix the observed missing module.
+The current starter-compatible evaluator remains unchanged; no official-source
+patch, host installation, dependency stub or backend switch is introduced.
+
+Smallest next evidence: the organizer's participant-accessible dependency artifact
+or documented provisioning recipe that supplies `dirty_equals` (and its required
+dependencies) for the public subprocess evaluator. If this is not distributed,
+request organizer clarification for fastapi_12942 public verification. Do not seek
+hidden evaluator data or download a substitute dependency without separate scope.
+Do not spend another GPU evaluation on this unresolved environment condition.
+
+Maintainer reports P1 smoke-5 completed with 2/5 official resolved, startup 411.5s,
+mean task wall 221s. Mean projection `(411.5 + 116*221)/3600 = 7.235h` is descriptive,
+not a PASS: p95 is not supplied and fastapi_12942 collection failed with missing
+`dirty_equals`. Preserve that attempt; do not rerun or rewrite it automatically.
+
+Static source findings (the pinned wheel bytes, not installed code):
+
+| Source | Finding |
+|---|---|
+| HARNESS_README §§4.1–4.2, 8.2 | Docker uses swebench-sandbox:latest; agent and verification have separate lifecycles; documented setup stages wheels and installs test dependencies. |
+| Starter notebook cell 10 (zero-based) | Explicit subprocess backend and `wheels_dir=DATA_DIR / 'wheels'`; our EvalConfig already matches these provisioning fields. |
+| swegemma 0.2.11 `harness/container_setup.py:506–530` | Both editable package installation and test-dependency installation explicitly return for SubprocessManager/SubprocessSandbox. This is a material backend distinction from the general README setup description. |
+| Same file, `21–55`, `61–86`, `318–343`, `393–413`, `531–572` | Docker path resolves public sandbox/setup.py, discovers wheels, injects cached packages and invokes official setup.py with --fast-path and repo. Wheel staging alone is not dependency installation. |
+| swegemma `sandbox/subprocess.py:33–41, 328–399` | Per-task virtualenv uses system_site_packages and exposes host site-packages; this does not ensure repository test dependencies exist. |
+| adk-eval-core 0.1.0 `sandbox/subprocess_sandbox.py:38–54, 57–100` | Sanitized command environment and bounded process execution, not repository dependency provisioning. |
+| swegemma `results.py:39–88`; README §9.2 | Official verification output is retained under test_outputs/<instance_id>.log. |
+
+Confirmed code gap: using the official starter's subprocess configuration skips
+the Docker dependency installer. Exact cause of this run's missing module still
+needs runtime/setup evidence. No ad hoc dirty_equals installation, wheel unpacking,
+class-name bypass, official-package monkeypatch or Docker switch is implemented.
+The public setup and wheel-listing inspection above narrows the remaining evidence
+to the missing official dependency/provisioning recipe. Do not provide tasks.jsonl,
+reference patches or hidden data. Running setup.py on the host has not been shown
+safe or equivalent to Docker verification.
+
+New task rows classify explicit ModuleNotFoundError plus pytest collection/conftest
+loading evidence as `HARNESS_ENVIRONMENT_ERROR`, with `resolved=null` and
+`official_resolved=false`. Ordinary assertion failures remain unresolved. This is
+an operational environment classification, not proof of ultimate causality:
+candidate-created imports can also cause collection failures and require review.
+No error is converted to a pass. Analysis separates environment errors from
+resolved/unresolved, reports scorable denominators explicitly, and leaves the
+full-subset pass rate and time-fit gate inconclusive when outcomes are unknown.
+
+Analyze a downloaded folder without modifying it (existing uv environment,
+repository root; substitute the actual external path):
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\YOUR-P1-SMOKE5-OUTPUT'
+if ($LASTEXITCODE -ne 0) { throw 'Local evaluation summary failed' }
+```
+
+The JSON report includes a per-task table (`per_task`), overall and repo-macro
+rates, scorable rates/denominators, stop reasons, tool-call-limit hits, tool usage,
+known token totals/unknown counts and mean/p95 time projections. Retained official
+verification logs are consulted to derive environment classifications for old
+rows in memory; historical tasks.jsonl and official results remain unchanged.
+Without the retained log an old unresolved row cannot be reclassified from a
+task ID or this README. Excluded repositories are explicit in scorable macro rates.
+
+Manual controls (includes four new classification/summary tests):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p test_local_eval.py
+if ($LASTEXITCODE -ne 0) { throw 'Local evaluation dependency diagnostic controls failed' }
+```
+
+STOP for results and setup artifacts before any further GPU evaluation.
+
 ## Environment update: FORGEAI-GEMMA4-LOCAL-EVAL-ENVIRONMENT-1
 
 The notebook runs the official starter's installation

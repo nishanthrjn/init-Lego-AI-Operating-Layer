@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-from analysis import canonical, extract_package, load_subset, sha, validate_record, verify_package
+from analysis import canonical, extract_package, load_subset, sha, validate_record, verify_package, verification_outcome
 
 HERE = Path(__file__).resolve().parent
 
@@ -149,7 +149,8 @@ def telemetry(task, result, context, elapsed: float, trace) -> dict:
     stop = stop_reason(error, context.patch_submitted)
     verification_ran = (result.test_output or "").startswith("STDOUT:\n")
     harness_errors = ["HARNESS_ERROR_DETAILS_IN_EXTERNAL_LOG"] if error and stop == "error" and not verification_ran else []
-    verification = "passed" if result.resolved else ("failed" if verification_ran else "unknown")
+    outcome = verification_outcome(bool(result.resolved), result.test_output or "")
+    harness_errors.extend(outcome["harness_errors"])
     if not result.resolved and result.test_exit_code not in (0, 1) and stop == "submitted":
         harness_errors.append("VERIFICATION_ERROR_OR_INCOMPLETE")
     agent_seconds = context.agent_elapsed_seconds if context.agent_start_time is not None else None
@@ -160,7 +161,8 @@ def telemetry(task, result, context, elapsed: float, trace) -> dict:
         if line.startswith("diff --git a/") and " b/" in line:
             files.append(line.split(" b/", 1)[1])
     return {"schema": 1, "task_id": task.instance_id, "repo": task.repo,
-            "resolved": bool(result.resolved), "verification_status": verification,
+            "resolved": outcome["resolved"], "official_resolved": outcome["official_resolved"],
+            "verification_status": outcome["verification_status"],
             "wall_seconds": elapsed, "agent_seconds": agent_seconds, "model_turns": turns,
             "tool_calls": tools, "budget_counted_tool_calls": context.tool_calls_used,
             "tokens": trace.summarize()["total_tokens"] if entries is not None and any(e.usage for e in entries) else None,

@@ -253,5 +253,48 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn('"environment.json"', runtime_source)
 
 
+class DependencyClassificationTests(unittest.TestCase):
+    def test_collection_missing_module_is_not_agent_failure(self):
+        outcome = a.verification_outcome(False, "STDOUT:\nERROR collecting tests/test_x.py\nModuleNotFoundError: No module named 'dirty_equals'")
+        self.assertIsNone(outcome["resolved"])
+        self.assertFalse(outcome["official_resolved"])
+        self.assertEqual(outcome["verification_status"], "HARNESS_ENVIRONMENT_ERROR")
+        row = dict(record(), **outcome)
+        self.assertNotIn("tests_fail", a.categories(row))
+        report = a.summarize(meta(), [row])
+        self.assertEqual(report["harness_environment_errors"], 1)
+        self.assertEqual(report["unresolved"], 0)
+        self.assertIsNone(report["pass_rate"])
+        self.assertEqual(report["time_fit"]["gate"], "INCONCLUSIVE")
+
+    def test_ordinary_assertions_and_noncollection_imports_not_reclassified(self):
+        for output in ("STDOUT:\nAssertionError", "STDOUT:\nModuleNotFoundError: No module named 'foo'", "STDOUT:\nERROR collecting test.py\nSyntaxError"):
+            self.assertFalse(a.verification_outcome(False, output)["resolved"])
+            self.assertEqual(a.verification_outcome(False, output)["harness_errors"], [])
+
+    def test_summary_reports_task_budget_tokens_and_macro(self):
+        rows = [record("a"), dict(record("b", False), stop_reason="call_budget", tokens=42)]
+        report = a.summarize(meta(("a", "b")), rows)
+        self.assertEqual(report["pass_rate"], 0.5)
+        self.assertEqual(report["repo_macro_pass_rate"], 0.5)
+        self.assertEqual(report["tool_call_limit_hits"], 1)
+        self.assertEqual(report["observed_tokens"], 42)
+        self.assertEqual(report["tokens_unknown_tasks"], 1)
+        self.assertEqual(len(report["per_task"]), 2)
+
+    def test_retained_log_projection_preserves_historical_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "run.json").write_bytes(a.canonical(meta()))
+            raw = a.canonical(record(passed=False)).replace(b"\n", b"") + b"\n"
+            (root / "tasks.jsonl").write_bytes(raw)
+            logs = root / "official/test_outputs"
+            logs.mkdir(parents=True)
+            (logs / "a.log").write_text("ERROR collecting test.py\nModuleNotFoundError: No module named 'dirty_equals'")
+            _, rows = a.read_run(root)
+            self.assertIsNone(rows[0]["resolved"])
+            self.assertEqual((root / "tasks.jsonl").read_bytes(), raw)
+
+
 if __name__ == "__main__":
     unittest.main()

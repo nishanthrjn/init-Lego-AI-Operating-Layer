@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "review_date": "2026-10-22",
+  "provenance": "Maintainer reports export from /kaggle/input/competitions/gemma-4-developer-agent in a CPU Kaggle session with Internet Off; retrieval timestamp and dataset version not supplied.",
+  "external_root": "D:\\Downloads\\competition-infra",
+  "files": {
+    "sandbox/setup.py": {
+      "bytes": 13883,
+      "sha256": "0263995ade90f83c8efa0ab5c7c9b7629696f39bc75274d58fc27ab774568409"
+    },
+    "docker/imp.py": {
+      "bytes": 834,
+      "sha256": "9fdd84ba6d52327a3f1a291b90b4babfa1393a693a8f14f589a5ee81ed59afdf"
+    },
+    "docker/telnetlib.py": {
+      "bytes": 23336,
+      "sha256": "579731aca27a0ddd7b39a8c63f97941b3329ce892142cbd7748c6a09904daedb"
+    },
+    "wheels-listing.txt": {
+      "bytes": 5491,
+      "sha256": "6fdde6ef5e49571b49a8f381cbb26ee3ba3256d7e2439b7afd2050d6e9d2062c"
+    }
+  },
+  "limitations": [
+    "Only exported text bytes are pinned; wheel binaries and Docker image contents were not supplied or hashed.",
+    "No dirty_equals distribution filename appears in the supplied wheel listing.",
+    "No Dockerfile or container dependency installation recipe was supplied.",
+    "Official subprocess provisioning parity is not established; no runtime installation correction implemented."
+  ]
+}
