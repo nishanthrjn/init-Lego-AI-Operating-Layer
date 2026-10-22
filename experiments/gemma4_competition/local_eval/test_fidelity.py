@@ -6,12 +6,76 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import fidelity as f
 import controls as c
 
 
 class FidelityTests(unittest.TestCase):
+    def test_notebook_diagnostics_routes_to_import_origin_worker(self):
+        config = {}
+        entry = f.notebook_mode(config, "diagnostics", f.AUTH.format(operation="DIAGNOSTIC"))
+        self.assertEqual(entry, "fidelity.py")
+        self.assertEqual(config["operation"], "DIAGNOSTIC")
+        # Exercise the actual worker with independent official-module fixtures.
+        import sys
+        import types
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            snapshot = root / "snapshot"
+            snapshot.touch()
+            task = SimpleNamespace(repo="psf/requests", patch="gold", test_patch="test")
+            class SubprocessManager:
+                def __init__(self, **kwargs): pass
+                def exec(self, *args):
+                    return SimpleNamespace(exit_code=0, stdout="ORIGIN=/workspace/src/requests/__init__.py\n")
+                def stop(self, *args): pass
+                def cleanup_all(self): pass
+            async def verify(manager, *args, **kwargs):
+                manager.stop("fixture")
+                return SimpleNamespace(resolved=False, test_output="AssertionError", test_exit_code=1)
+            modules = {}
+            for name, attributes in {
+                "swegemma.models": {"load_tasks": lambda _: [task]},
+                "swegemma.config": {"EvalConfig": lambda **kw: kw},
+                "swegemma.deduplication": {"resolve_task_snapshot_paths": lambda *a: (snapshot, None, None)},
+                "swegemma.harness.verification": {"verify_task": verify},
+                "swegemma.sandbox": {"SubprocessManager": SubprocessManager},
+            }.items():
+                modules[name] = types.ModuleType(name)
+                modules[name].__dict__.update(attributes)
+            task.instance_id = "requests_fixture"
+            config.update(controls="fixture", fidelity_output="/kaggle/working/fixture")
+            captured = []
+            with patch.dict(sys.modules, modules), patch.dict("os.environ", {"TMPDIR": directory}), \
+                    patch.object(c, "preflight", return_value=(root, [{"task_id": task.instance_id, "repo": task.repo}], "pin")), \
+                    patch.object(c, "sha", return_value="inventory"), \
+                    patch.object(f, "frozen_controls", return_value={"official_tasks_sha256": "inventory", "tasks": [{"task_id": task.instance_id, "class": "UNSOUND"}]}), \
+                    patch.object(Path, "resolve", lambda self: self), patch.object(Path, "is_dir", return_value=True), \
+                    patch.object(c, "write_json", side_effect=lambda p, value: captured.append(value)):
+                c.worker(config, task.instance_id, config["operation"], root / "result.json")
+            self.assertEqual(captured[0]["import_origin"]["status"], "OBSERVED")
+            self.assertEqual(captured[0]["import_origin"]["file"], "/workspace/src/requests/__init__.py")
+
+    def test_mode_authorizations_are_not_interchangeable(self):
+        for mode in ("diagnostics", "reverify", "invalid"):
+            with self.assertRaises(ValueError):
+                f.notebook_mode({}, mode, c.AUTHORIZATION)
+
+    def test_gpu_notebook_output_subset_guard(self):
+        notebook = json.loads((Path(__file__).parent / "local_eval.ipynb").read_bytes())
+        source = "".join("".join(cell["source"]) for cell in notebook["cells"] if cell["cell_type"] == "code")
+        start = source.index("if CONFIG['subset'] not in Path(CONFIG['output']).name:")
+        guard = "\n".join(source[start:].splitlines()[:2])
+        for output, valid in (("/tmp/p1-smoke-5-1", True), ("/tmp/p1-dev-30-1", False)):
+            namespace = {"CONFIG": {"subset": "smoke-5", "output": output}, "Path": Path}
+            if valid:
+                exec(guard, namespace)
+            else:
+                with self.assertRaises(RuntimeError):
+                    exec(guard, namespace)
+
     def test_reverification_uses_retained_patch_not_gold(self):
         seen = []
         async def verifier(*args, **kwargs):

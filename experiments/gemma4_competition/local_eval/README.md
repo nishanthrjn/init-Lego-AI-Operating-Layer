@@ -2,6 +2,40 @@
 
 ## FORGEAI-GEMMA4-LOCAL-EVAL-FIDELITY-1
 
+### Reproducibility observation and visible CPU mode
+
+Maintainer reports a second completed CPU control run with raw SHA256
+`f0a2d0edd1e6885e993918c13d0532c93629084073ed3cb34d7507f1f2a4b871`:
+all 50 task classes and GOLD/EMPTY outcomes match the first run. This is reported
+outcome reproducibility, not byte identity (timings/provenance may differ), nor
+verification fidelity. The frozen set remains **05706c6a**. The second run was
+plain controls; it produced no import-origin evidence. Its bytes have not been
+independently inspected in this change.
+
+`controls.ipynb` now exposes MODE explicitly. Select exactly one and use its exact
+AUTHORIZATION; all CPU, Internet-Off and official-install approval gates remain:
+
+| MODE | AUTHORIZATION | Worker/output |
+|---|---|---|
+| `controls` | `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL CONTROLS ON dev-30+confirm-20 CPU` | controls.py; controls.json |
+| `diagnostics` | `AUTHORIZE FORGEAI GEMMA4 CPU FIDELITY DIAGNOSTIC` | fidelity.py; excluded-task import-origin and redacted-tail records |
+| `reverify` | `AUTHORIZE FORGEAI GEMMA4 CPU FIDELITY REVERIFY` | fidelity.py; retained agent-patch verification results |
+
+For the next diagnostic attempt set `MODE = 'diagnostics'`, set CONTROLS_FILE to
+the attached **05706c6a** controls file, and choose a fresh FIDELITY_OUTPUT directory
+directly under `/kaggle/working`. No previous-run/patch input is needed in this mode.
+The notebook prints the selected mode and worker before launching. Expect
+`*.diagnostic.json` with `import_origin` plus `*.result.json`, provenance.json and
+environment.json. A failed/timed-out worker may produce only a result error;
+do not interpret missing import records as proof of import correctness.
+For reverify also configure PREVIOUS_RUN and PATCHES as described below.
+Do not manually replace the notebook launch command anymore: MODE chooses it.
+All diagnostic/reverification outputs remain external to Git.
+
+The GPU notebook refuses output directory names missing the exact configured
+subset string. For `smoke-5`, use e.g. `p1-smoke-5-attempt1`, not `p1-smoke5-attempt1`.
+Historical output directories are unchanged.
+
 Status: authored, NOT RUN. Historical CPU controls are preserved byte-for-byte in
 `evidence/controls-05706c6a.json`, SHA256
 `05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033`.

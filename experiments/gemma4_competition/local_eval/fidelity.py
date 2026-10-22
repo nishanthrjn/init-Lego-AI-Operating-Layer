@@ -11,6 +11,22 @@ PIN = "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033"
 AUTH = "AUTHORIZE FORGEAI GEMMA4 CPU FIDELITY {operation}"
 
 
+def notebook_mode(config, mode, authorization):
+    """Translate visible notebook selection into an explicitly authorized worker."""
+    import controls as c
+    phrases = {"controls": c.AUTHORIZATION,
+               "diagnostics": AUTH.format(operation="DIAGNOSTIC"),
+               "reverify": AUTH.format(operation="REVERIFY")}
+    if mode not in phrases or authorization != phrases[mode]:
+        raise ValueError("mode-specific authorization required")
+    config["authorization"] = c.AUTHORIZATION
+    if mode == "controls":
+        return "controls.py"
+    config.update(operation="DIAGNOSTIC" if mode == "diagnostics" else "REVERIFY",
+                  fidelity_authorization=authorization)
+    return "fidelity.py"
+
+
 def frozen_controls(path):
     raw = Path(path).read_bytes()
     if hashlib.sha256(raw).hexdigest() != PIN:
