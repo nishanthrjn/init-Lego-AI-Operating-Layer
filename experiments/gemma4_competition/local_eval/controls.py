@@ -45,14 +45,17 @@ def safe_result(passed: bool, category: str, duration: float) -> dict:
     return {"passed": passed, "error_category": category, "seconds": duration}
 
 
-async def verify_one(task, mode, verifier, manager, config, paths):
+async def verify_one(task, mode, verifier, manager, config, paths, *, agent_patch=None, diagnostic=None):
     begin = time.perf_counter()
     if not task.test_patch.strip() or (mode == "GOLD" and not task.patch.strip()):
         return safe_result(False, "MISSING_PUBLIC_SPEC", time.perf_counter() - begin)
     try:
         result = await verifier(manager, config, task, paths[0], base_snapshot_path=paths[1],
-                                patch_path=paths[2], agent_patch=task.patch if mode == "GOLD" else "",
+                                patch_path=paths[2], agent_patch=agent_patch if agent_patch is not None else (task.patch if mode == "GOLD" else ""),
                                 trace=None, start_time=begin)
+        if diagnostic is not None:
+            from fidelity import safe_tail
+            diagnostic["gold_output_tail"] = safe_tail(result.test_output or "", task.patch, task.test_patch)
         outcome = verification_outcome(bool(result.resolved), result.test_output or "", task.repo)
         category = "NONE" if result.resolved else outcome["verification_status"]
         if category not in ERRORS:
@@ -92,7 +95,7 @@ def preflight(config, *, before_install=False):
 
 def worker(config, task_id, mode, destination):
     data, selected, _ = preflight(config)
-    if mode not in {"GOLD", "EMPTY"} or task_id not in {r["task_id"] for r in selected}:
+    if mode not in {"GOLD", "EMPTY", "DIAGNOSTIC", "REVERIFY"} or task_id not in {r["task_id"] for r in selected}:
         raise ValueError("unapproved control")
     # No Evaluator: avoid agent loop, secret hydration, traces and result artifact writers.
     from swegemma.models import load_tasks
@@ -113,10 +116,35 @@ def worker(config, task_id, mode, destination):
                      results_dir=scratch / "unused-results", submission_dir=scratch,
                      models=None, sandbox="subprocess", wheels_dir=data / "wheels",
                      timeout_seconds=300, verification_timeout_seconds=300)
+    diagnostic = None
+    agent_patch = None
+    effective_mode = mode
+    if mode in {"DIAGNOSTIC", "REVERIFY"}:
+        from fidelity import AUTH, frozen_controls, observe_import, patch_input
+        if config.get("fidelity_authorization") != AUTH.format(operation=mode):
+            raise ValueError("exact fidelity authorization required")
+        history = frozen_controls(config["controls"])
+        if history["official_tasks_sha256"] != sha(data / "tasks.jsonl"):
+            raise ValueError("official inventory changed")
+        if mode == "DIAGNOSTIC":
+            eligible = {r["task_id"] for r in history["tasks"] if r["class"] in {"UNSOUND", "ENV_BROKEN"}}
+            if task_id not in eligible:
+                raise ValueError("diagnostics restricted to excluded controls")
+            diagnostic = {"task_id": task_id, "import_origin": observe_import(manager, task.repo)}
+            effective_mode = "GOLD"
+        else:
+            agent_patch = patch_input(config, task_id)
+            effective_mode = "EMPTY"
     try:
-        result = asyncio.run(verify_one(task, mode, verify_task, manager, cfg, paths))
+        result = asyncio.run(verify_one(task, effective_mode, verify_task, manager, cfg, paths,
+                                       agent_patch=agent_patch, diagnostic=diagnostic))
     finally:
         manager.cleanup_all()
+    if diagnostic is not None:
+        target = Path(config["fidelity_output"]).resolve()
+        if target.parent != Path("/kaggle/working") or not target.is_dir():
+            raise ValueError("external diagnostic output required")
+        write_json(target / (task_id + ".diagnostic.json"), diagnostic)
     destination.write_bytes(canonical(result))  # strict metadata only
 
 

@@ -1,0 +1,770 @@
+{
+  "backend": "subprocess",
+  "official_tasks_sha256": "e4b3fd60f69dbc2b9213e54eeb9636db78aefe92c1d06269d73d9f5f8f3c8ad6",
+  "runtime_pins": {
+    "adk-eval-core": "0.1.0",
+    "adk-submission": "0.2.13",
+    "google-adk": "1.36.1",
+    "google-genai": "2.11.0",
+    "swegemma": "0.2.11",
+    "transformers": "5.13.1",
+    "vllm": "0.19.1"
+  },
+  "schema": 1,
+  "source_pins_sha256": "5354e81f1872db05d64b6daef48b9bb0a0684c04f76580e9f5aecdcd8f2082ad",
+  "state": "COMPLETE",
+  "subset_sha256": "627f17c74f81450a5ff1787175a30ab9af7ebd9588697ef9e1bbe29367920316",
+  "tasks": [
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 29.930896824
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 41.993231794999986
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_6644"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 30.95537618200001
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.159741490000044
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14492"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 30.341206493000016
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.15150371300001
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3130"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "UNRESOLVED_INCOMPLETE_API",
+        "passed": false,
+        "seconds": 29.134704107999937
+      },
+      "gold": {
+        "error_category": "UNRESOLVED_INCOMPLETE_API",
+        "passed": false,
+        "seconds": 29.145206558999973
+      },
+      "repo": "encode/httpx",
+      "task_id": "httpx_3672"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 99.26541861800001
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 96.07011553400002
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_6589"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 33.76642551600003
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 35.7685109360001
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_12942"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.75203796599999
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 33.958766354999966
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3905"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.75597973899994
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 34.36192967200009
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_7309"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 34.985382931000004
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 39.61886430699997
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5624"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.756814778000034
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 33.96519449100015
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3454"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 96.0440114590001
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 97.05373953100002
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_6629"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 38.62104936900005
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 39.18129362800005
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15763"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 34.556393523
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.97972390600012
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3934"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 96.87124994100009
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 98.26356648500018
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_6592"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.98231707299988
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 39.9806730639998
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15800"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.163142736000054
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 33.34970272700002
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_4075"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.768415456999946
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.746302123000078
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_7315"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.16632703100004
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 36.576060836999886
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14419"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.15041710200012
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 33.352660644000025
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3471"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.357353239000304
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.96975546699991
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5077"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.948850742000104
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.36239772299996
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_4079"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 32.57807222500014
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 41.80253306399982
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14851"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.380941127999904
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 36.588725564000015
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_4070"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 32.34762209199971
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 36.786299750000126
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15030"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.36751527599972
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.95747681700004
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3486"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.75406611399967
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.56166383100026
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_11194"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 30.336532002999775
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 31.94380066299982
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_4076"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.547388197000146
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.38189411800022
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14786"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.950411618999624
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 39.59088691399984
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3067"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.16689317700002
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 39.58037877400011
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15589"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.342222482000125
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.151488338000036
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_7427"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 32.36894327799973
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 36.78189449799993
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14459"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.140310077999857
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 32.749429599999985
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3882"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.150586503999875
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 31.945715974999985
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_7205"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.55471281900009
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 36.976687070000025
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14616"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.15064801200015
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.36094068300008
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3675"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 104.10440065699959
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 105.08253471699982
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_7502"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 33.75687439000012
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 39.79802328799997
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14430"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 32.34732579599995
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.55942139199988
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3105"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 104.71546248100003
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 105.72666781399994
+      },
+      "repo": "psf/requests",
+      "task_id": "requests_6757"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 34.366949989000204
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 38.392922136999914
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14186"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.16991580800004
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.573221182
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3506"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 47.255250000999695
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 40.39561615000002
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15745"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "CONTROL_EXECUTION_ERROR",
+        "passed": false,
+        "seconds": 292.646821197
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 40.587627670000074
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3480"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 34.566111183999965
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 46.85639389000062
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14077"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 33.55241452700011
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.38252250300047
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3061"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 35.177845700000034
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 36.97869001400068
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_9753"
+    },
+    {
+      "class": "VERIFIABLE",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 34.98456731500028
+      },
+      "gold": {
+        "error_category": "NONE",
+        "passed": true,
+        "seconds": 35.16506725199997
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3468"
+    },
+    {
+      "class": "ENV_BROKEN",
+      "empty": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 34.3646071080002
+      },
+      "gold": {
+        "error_category": "HARNESS_ENVIRONMENT_ERROR",
+        "passed": false,
+        "seconds": 38.40148154399958
+      },
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15023"
+    },
+    {
+      "class": "UNSOUND",
+      "empty": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 34.56220148800003
+      },
+      "gold": {
+        "error_category": "VERIFICATION_FAILED",
+        "passed": false,
+        "seconds": 35.573947177000264
+      },
+      "repo": "Textualize/rich",
+      "task_id": "rich_3296"
+    }
+  ],
+  "verification_timeout_seconds": 300
+}

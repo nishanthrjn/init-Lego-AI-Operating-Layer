@@ -1,5 +1,109 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-LOCAL-EVAL-FIDELITY-1
+
+Status: authored, NOT RUN. Historical CPU controls are preserved byte-for-byte in
+`evidence/controls-05706c6a.json`, SHA256
+`05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033`.
+No Git commit was performed. These classes describe the observed subprocess
+environment, not intrinsic task quality or organizer verification parity.
+
+| Subset | VERIFIABLE | ENV_BROKEN | UNSOUND |
+|---|---:|---:|---:|
+| dev-30 | 16 | 2 | 12 |
+| confirm-20 | 8 | 5 | 7 |
+
+Applied to the previously retained P1 smoke observations, only fastapi_14492 is
+VERIFIABLE: 1/1, repo-macro 1.0 over FastAPI alone. Exclusions: three UNSOUND
+(requests_6644, rich_3130, httpx_3672) and one ENV_BROKEN (fastapi_12942).
+The requests pass is excluded. This is a manual evidence join, not a newly run
+analysis or new model-quality claim. Confirmation controls must not guide tuning.
+
+### Static fidelity findings
+
+- HARNESS_README §§4.1–4.2, 8.2 describes setup and separate verification;
+  starter cell 10 selects subprocess, not Docker.
+- Pinned swegemma 0.2.11 `harness/verification.py:384–424` invokes editable setup,
+  test-dependency setup (fast-path default), and workspace test configuration.
+  Our controls invoke that same verifier. `container_setup.py:506–530` explicitly
+  skips both install functions for SubprocessManager; `531–556` invokes setup.py
+  only after that return. This is an official backend difference, not a locally
+  omitted verifier call.
+- `sandbox/subprocess.py:389–399, 418–498` exposes host site-packages and sets
+  PYTHONPATH to the workspace root. `adk_eval_core/sandbox/subprocess_sandbox.py`
+  provides subprocess command execution; the swegemma manager chooses these paths.
+- Exported `sandbox/setup.py:290–320` adds workspace and child directories to
+  workspace_paths.pth; `352–361` calls editable installation before fast-path.
+  Its SHA256 remains in dependency-source-pins.json. Blindly invoking that script
+  would add an install and would not match the official subprocess path.
+
+Thus src-layout imports from installed copies are a supported hypothesis, NOT
+an observed origin. No import-path override or installation is added. Exact Docker
+parity cannot be established under the current no-install/no-Docker constraints.
+The diagnostic records actual sandbox module.__file__ before teardown.
+
+Requests ~100s durations alone do not prove network access/timeouts. Whether the
+particular failing tests require network is UNKNOWN without their diagnostics;
+no reference tests were read to reconstruct failures. Rich/FastAPI gold failure
+causes likewise remain UNKNOWN. Organizer gold-pass curation was supplied by the
+maintainer; these local failures do not invalidate that claim or condemn tasks.
+
+### Future CPU diagnostics and retained-patch re-verification
+
+Use the existing CPU notebook settings/inputs and authorization gates below.
+Attach historical controls as metadata. Do not run this during development.
+Create an external JSON configuration using the same CPU controls fields
+(`authorization`, CPU/Internet confirmations, official_environment_authorized,
+wheelhouse, data), plus:
+
+```json
+{
+  "operation": "DIAGNOSTIC",
+  "fidelity_authorization": "AUTHORIZE FORGEAI GEMMA4 CPU FIDELITY DIAGNOSTIC",
+  "controls": "/kaggle/input/YOUR-CONTROLS/controls.json",
+  "fidelity_output": "/kaggle/working/fidelity-diagnostic"
+}
+```
+
+Merge these keys with the existing config, not a standalone replacement. In the
+CPU notebook worker launch, replace `controls.py` with `fidelity.py` and pass this
+config path. Official cell 2 runs once; no cell 8, candidate, model, or GPU.
+Only historical UNSOUND/ENV_BROKEN tasks run GOLD. Each receives the existing
+900s watchdog; the sequence has an 11h verification guard. Fresh output required.
+
+For retained agent patches use operation REVERIFY and authorization
+`AUTHORIZE FORGEAI GEMMA4 CPU FIDELITY REVERIFY`. Attach the previous run privately;
+add `previous_run` (its mounted root) and `patches`, an explicit task-ID mapping:
+
+```json
+{"patches": {"fastapi_14492": {"path": "relative/path/to/retained-agent.patch", "sha256": "EXACT_RAW_PATCH_SHA256"}}}
+```
+
+Choose actual retained patch paths; no guessed filenames, gold fallback, model
+invocation or changed historical records. Patch bytes and containment are checked
+before installation. Re-verification uses the current unchanged official verifier;
+it does NOT claim the fidelity problem is fixed. New per-task results are separate.
+
+Diagnostics retain module origin and a conservative projection of the last 60
+gold-output lines: error types only, with arbitrary text/source redacted. Reference
+and test patch lines are explicitly suppressed. This sacrifices detailed assertion
+messages to avoid retaining gold; no raw output is written. Origin probing is an
+additional observation before teardown and may affect diagnostic timings.
+No diagnostic files may be committed. Preserve provenance/environment/results
+externally; do not download temporary sandbox contents.
+
+Manual offline checks (repository root, existing uv environment):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Local evaluation fidelity controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+if ($LASTEXITCODE -ne 0) { throw 'Historical smoke analysis failed' }
+```
+
+Expected: tests pass; one eligible resolved smoke task, three UNSOUND and one
+ENV_BROKEN excluded. STOP for maintainer results before any Kaggle execution.
+
 ## FORGEAI-GEMMA4-LOCAL-EVAL-CONTROLS-1
 
 Status: authored; **NOT RUN — awaiting maintainer execution**. This section
