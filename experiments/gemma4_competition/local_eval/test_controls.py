@@ -109,7 +109,7 @@ class ControlTests(unittest.TestCase):
 
     def test_control_hash_schema_and_task_set(self):
         root = Path(__file__).parent
-        subset_digest = (root / "subsets.sha256").read_text().strip()
+        subset_digest = (root / "subsets.sha256").read_text().split()[0]
         frozen, _ = a.load_subset(root / "subsets.json", subset_digest, "dev-30")
         m = dict(meta(), subset_sha256=subset_digest)
         doc = {"schema": 1, "state": "COMPLETE", "backend": "subprocess", "verification_timeout_seconds": 300,

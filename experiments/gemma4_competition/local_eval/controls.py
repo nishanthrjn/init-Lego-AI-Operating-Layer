@@ -71,7 +71,7 @@ def preflight(config):
     if Path("/dev/nvidia0").exists():
         raise ValueError("Accelerator must be None")
     check_environment()  # Metadata/source checks only; missing packages block, never install.
-    pins = (HERE / "subsets.sha256").read_text().strip()
+    pins = (HERE / "subsets.sha256").read_text().split()[0]
     doc, dev = load_subset(HERE / "subsets.json", pins, "dev-30")
     _, confirm = load_subset(HERE / "subsets.json", pins, "confirm-20")
     data = Path(config["data"]).resolve()
