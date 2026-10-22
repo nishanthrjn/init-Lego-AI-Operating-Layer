@@ -392,3 +392,90 @@ if ($LASTEXITCODE -ne 0) { throw 'Submission controls failed' }
 ```
 
 Proposed commit: `feat(gemma4): prepare P1 procedure prompt and bounded budget candidate`.
+# FORGEAI-GEMMA4-P1B-P1C-CANDIDATES-1
+
+Status: authored, NOT RUN. P1 baseline remains 8/16 VERIFIABLE dev-30, not a
+leaderboard prediction. P1b changes only prompts/system.md from P1; P1c changes
+only configs/sampling.yaml from P1b (thinking_budget 2048, max_output_tokens 8192).
+Budget remains timeout 180s / 28 calls / 6 minutes / 80 turns. Model, six tools,
+temperature, top_p and include_thoughts remain unchanged. Static raw-byte pins
+are in ../local_eval/experimental-pins.json; do not regenerate on mismatch.
+
+## Corrected submission-loop finding
+
+Earlier P1 `prompts/system.md` §6 says the runner terminates after successful
+submission; the earlier HARNESS_README §6.1 / submit_patch interpretation informed
+that wording. **Contradicting retained runtime evidence:** P1 dev-30
+`official/traces/trace_rich_4070.json`, `trace_rich_3454.json`, and
+`trace_requests_7315.json` show respectively 32, 9 and 20 submissions. Maintainer
+reports status ok for all rich_4070 calls, identical patch_size 1807. Our previous
+inspection of rich_3454 trace steps 42–43 also showed consecutive ok responses.
+Thus success did not terminate these episodes. Do not generalize this observation
+to unseen scorer implementations. Historical P1 prompt/evidence is preserved;
+P1b explicitly instructs the model to stop itself after ok.
+
+Maintainer trace observations: write_file rejected /tmp/repro.py as outside the
+workspace (rich_3471/rich_4075); use run_command for /tmp. Model-plus-overhead gaps
+of 30–121s are not measured thinking time. P1c's smaller thinking/output limits
+are an experimental hypothesis, not a proven latency fix. The forced edit deadline
+may increase wrong patches. The prompt's "unedited workspace always scores zero"
+is a requested procedure heuristic for screened tasks, not a universal harness
+fact (historical EMPTY controls include passing tasks).
+
+## Experimental builds and local comparisons only
+
+From repository root, AFTER offline tests pass, maintainer may build into fresh
+external directories using the existing deterministic zip_bytes/inspect_zip:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'P1b/P1c static controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1b --output 'D:\Downloads\gemma-p1b-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P1b experimental packaging failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1c --output 'D:\Downloads\gemma-p1c-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P1c experimental packaging failed' }
+```
+
+Keep the printed ZIP and manifest SHA256 independently. Upload each pair
+submission.zip.bin + manifest.json as its own private Kaggle input. Upload updated
+complete local_eval tooling (including experimental.py, experimental-pins.json,
+dev-16v.json and evidence/). Use local_eval.ipynb, L4x4, Internet Off and the same
+official data/wheelhouse/31B model inputs; no other installs. Run separately, not
+concurrently, with matched environment and full task set:
+
+- candidate: p1b or p1c; subset: dev-16v; subset_file: TOOLS / dev-16v.json.
+- subset_sha256: 5a91f0513a3cdddea3eb7a2a3f5208ebdd40a5ab41821f29f6a31a4f07585056.
+- package_mode: EXPERIMENTAL_UNQUALIFIED; experimental_authorized: true;
+  package_reconciled: false; receipt_sha256: empty (no fabricated receipt).
+- package/manifest: that candidate's mounted files; zip_sha256 and manifest_sha256:
+  exact printed hashes. Both required; archive members are also matched to static pins.
+- authorization: AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p1b ON dev-16v (or p1c).
+- gpu_authorized, internet_off_confirmed, official_environment_authorized: true
+  only after maintainer approval; fresh output containing dev-16v and candidate name;
+  wall_seconds: 14400 (4h total guard, not measured runtime).
+
+Official directory validation remains; official evaluator performs agent compilation
+and loading. Exceptions stop the run; returned unexpected load/runtime errors stop
+with EXPERIMENTAL_LOAD_OR_RUNTIME_FAILURE after retaining the task result. Normal
+budget exhaustion remains a task result. No retry/fallback. A failed load never
+qualifies the package. GPU quota may be consumed before a load error is discovered.
+
+EXPERIMENTAL_UNQUALIFIED manifests are rejected by the existing reconciled-package
+verifier and never authorize submission. Submission pin registries are unchanged.
+Real submissions still require the full official compile/reconcile/pin process.
+Keep packages and outputs outside Git. Do not tune on confirm-20.
+
+## Time-fit change
+
+New analysis uses 10,000 seeded (20261022) empirical bootstrap totals: each samples
+116 observed task durations with replacement, then adds measured startup once.
+The one-sided 95th percentile must be <=11h; incomplete evidence cannot pass.
+The sample p95 multiplied by 116 remains informational, not a strict worst case.
+This is a predictive resampling bound conditional on empirical times, NOT a
+distribution-free confidence guarantee. Small n, shared repositories, selection
+of only verifiable tasks, unmeasured hidden-task mix/concurrency and startup
+variability can invalidate coverage. Installation/setup outside recorded startup
+may add overhead. Historical reports remain unchanged; new reports name the method.
+
+Verification NOT RUN; STOP for maintainer test results before GPU execution.
+

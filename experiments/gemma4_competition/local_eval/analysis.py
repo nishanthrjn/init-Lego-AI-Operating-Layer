@@ -9,6 +9,7 @@ import math
 from pathlib import Path, PurePosixPath
 import re
 import statistics
+import random
 import zipfile
 
 SEED = 20261021
@@ -252,9 +253,13 @@ def projection(times: list[float], startup: float | None, complete: bool) -> dic
     p95 = sorted(times)[math.ceil(0.95 * len(times)) - 1]
     mean_hours = (startup + 116 * statistics.mean(times)) / 3600
     p95_hours = (startup + 116 * p95) / 3600
-    return {"gate": "FAIL" if max(mean_hours, p95_hours) > 11 else ("PASS" if complete else "INCONCLUSIVE"),
+    rng = random.Random(20261022)
+    totals = sorted((startup + math.fsum(rng.choices(times, k=116))) / 3600 for _ in range(10000))
+    upper = totals[math.ceil(0.95 * len(totals)) - 1]
+    return {"gate": "FAIL" if upper > 11 else ("PASS" if complete else "INCONCLUSIVE"),
             "mean_hours": mean_hours, "p95_hours": p95_hours, "p95_task_seconds": p95,
-            "method": "116 sequential tasks; nearest-rank sample p95, not a confidence bound"}
+            "bootstrap_upper95_hours": upper, "bootstrap_seed": 20261022, "bootstrap_replicates": 10000,
+            "method": "Empirical bootstrap predictive total: 116 task times sampled with replacement plus fixed startup; one-sided 95th percentile. Assumes iid representative tasks; small-n and repo dependence limit coverage. p95*116 is informational, not a strict worst-case bound."}
 
 
 def categories(row: dict) -> list[str]:

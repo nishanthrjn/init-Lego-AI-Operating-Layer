@@ -74,7 +74,10 @@ def prepare(config: dict) -> tuple[dict, list[dict], dict]:
     if subset == "confirm-20" and (config.get("confirmation_only") is not True
                                    or not re.fullmatch(r"[0-9a-f]{64}", config.get("winner_evidence_sha256", ""))):
         raise ValueError("held-out confirmation requires winner evidence hash and confirmation-only approval")
-    if config.get("internet_off_confirmed") is not True or config.get("package_reconciled") is not True:
+    experimental = config.get("package_mode") == "EXPERIMENTAL_UNQUALIFIED"
+    if config.get("package_mode", "RECONCILED") not in {"RECONCILED", "EXPERIMENTAL_UNQUALIFIED"}:
+        raise ValueError("unknown package mode")
+    if config.get("internet_off_confirmed") is not True or (not experimental and config.get("package_reconciled") is not True):
         raise ValueError("Internet Off and prior local package reconciliation must be confirmed")
     if type(config["wall_seconds"]) is not int or not 60 <= config["wall_seconds"] <= 11 * 3600:
         raise ValueError("total wall guard must be 60..39600 seconds")
@@ -95,8 +98,12 @@ def prepare(config: dict) -> tuple[dict, list[dict], dict]:
     for filename, digest in wheel_pins.items():
         if sha(Path(config["wheelhouse"]) / filename) != digest:
             raise ValueError("official wheelhouse byte mismatch: " + filename)
-    manifest = verify_package(Path(config["package"]), Path(config["manifest"]),
-                              config["manifest_sha256"], config["receipt_sha256"])
+    if experimental:
+        from experimental import verify
+        manifest = verify(config)
+    else:
+        manifest = verify_package(Path(config["package"]), Path(config["manifest"]),
+                                  config["manifest_sha256"], config["receipt_sha256"])
     return doc, selected, manifest
 
 
@@ -250,6 +257,10 @@ async def evaluate(config: dict, output: Path, selected: list[dict], models, ada
             validate_record(row)
             append(output / "tasks.jsonl", row)
             append_task_result(result, cfg.results_dir)
+            if (config.get("package_mode") == "EXPERIMENTAL_UNQUALIFIED" and result.error
+                    and stop_reason(result.error, False) == "error"):
+                append(output / "events.jsonl", {"event": "EXPERIMENTAL_LOAD_OR_RUNTIME_FAILURE", "task_id": task.instance_id})
+                raise ValueError("EXPERIMENTAL_LOAD_OR_RUNTIME_FAILURE; inspect retained official error; run stopped")
             print(json.dumps({"task_id": task.instance_id, "resolved": row["resolved"], "wall_seconds": elapsed}), flush=True)
     finally:
         evaluator.docker.cleanup_all()
@@ -343,7 +354,8 @@ def worker(config: dict, output: Path) -> None:
             "subset_sha256": config["subset_sha256"], "source_sha256": doc["source_sha256"],
             "official_tasks_sha256": sha(Path(config["data"]) / "tasks.jsonl"),
             "manifest_sha256": config["manifest_sha256"], "package_sha256": manifest["zip_sha256"],
-            "receipt_sha256": config["receipt_sha256"], "task_ids": [r["task_id"] for r in selected],
+            "receipt_sha256": config.get("receipt_sha256"), "task_ids": [r["task_id"] for r in selected],
+            "package_mode": config.get("package_mode", "RECONCILED"),
             "confirmation_only": config.get("confirmation_only", False),
             "winner_evidence_sha256": config.get("winner_evidence_sha256"),
             "task_repos": {r["task_id"]: r["repo"] for r in selected}, "startup_seconds": None,
