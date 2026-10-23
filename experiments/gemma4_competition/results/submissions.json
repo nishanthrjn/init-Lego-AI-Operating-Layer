@@ -101,6 +101,33 @@
         "Maintainer reports the committed Version 1 run log showed P1_PACKAGE_COPIED_UNCHANGED, ZIP SHA256 fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9, 4736 bytes; interactive preparation also succeeded.",
         "Failure cause UNKNOWN; dataset-input dependence is a hypothesis, not an established cause. This is not a model-quality failure. Observations are maintainer-reported, not independently queried Kaggle state."
       ]
+    },
+    {
+      "candidate": "p1",
+      "receipt": "20aa090e37a2333851a94501cb09db9fc88f9c46ca92c0880f2a10239a64da57",
+      "zip_sha256": "fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9",
+      "manifest_sha256": "b43c9b1e62c6beb8a028cc6963caa6b1196e8e81249e266375f6ab2398b8318f",
+      "zip_size": 4736,
+      "budget_values": {
+        "timeout_seconds": 180,
+        "max_tool_calls": 28,
+        "max_time_minutes": 6,
+        "max_turns": 80
+      },
+      "notebook_name": "p1_selfcontained",
+      "notebook_version": "1",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SUCCEEDED",
+      "public_score": 0.10,
+      "error_text": null,
+      "notes": [
+        "Maintainer reports self-contained resubmission on 2026-10-23; exact UTC timestamp and submission ID not supplied.",
+        "Separate attempt using the same P1 package; the earlier p1_submission Version 1 ERROR record is preserved.",
+        "Maintainer reports public score 0.10, approximately 6 of 58 tasks; exact resolved-task count not independently verified.",
+        "B2 0.12 versus P1 0.10 is within the observed identical-file variation of approximately +/-3 of 58 tasks; these scores do not establish a performance difference.",
+        "Status and score are maintainer-reported observations, not independently queried live Kaggle state."
+      ]
     }
   ]
 }
