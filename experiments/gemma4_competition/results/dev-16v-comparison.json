@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "evidence_basis": "MAINTAINER_REPORTED; run artifacts not independently re-analyzed for this record",
+  "controls_sha256": "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033",
+  "subset": "dev-16v",
+  "runs": [
+    {"candidate": "p1", "state": "COMPLETED", "resolved": 8, "verifiable": 16, "source": "VERIFIABLE projection of dev-30"},
+    {"candidate": "p1b", "state": "COMPLETED", "resolved": 8, "verifiable": 16, "source": "attempt1 + attempt2 merged", "agent_error_tasks": ["fastapi_14419", "rich_3471"]},
+    {"candidate": "p1c", "state": "COMPLETED", "resolved": 7, "verifiable": 16}
+  ],
+  "always_solved": ["fastapi_14492", "rich_3905", "rich_3454", "fastapi_14786", "rich_3067"],
+  "variable": ["fastapi_5624", "fastapi_14419", "fastapi_5077", "fastapi_11194", "fastapi_15589"],
+  "never_solved": ["rich_3934", "fastapi_15800", "rich_4075", "rich_3471", "rich_4079", "rich_4076"],
+  "per_candidate_variable_task_outcomes": null,
+  "public_evidence": {"candidate": "p1", "notebook": "p1_selfcontained", "version": "1", "status": "SUCCEEDED", "public_score": 0.10, "submitted_date": "2026-10-23", "canonical_record": "submissions.json"},
+  "decision": {"base_candidate": "p1b", "p1c_adopted": false, "authority": "MAINTAINER"},
+  "limitations": [
+    "The adoption decision does not establish statistically significant improvement.",
+    "Individual candidate outcomes for variable tasks were not supplied and are not reconstructed from aggregate totals.",
+    "Historical attempt1 remains HARNESS_ERROR; COMPLETED describes the merged P1b run.",
+    "Public B2 0.12 versus P1 0.10 lies within reported identical-file variation; no performance difference established."
+  ]
+}

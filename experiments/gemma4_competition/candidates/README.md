@@ -394,6 +394,33 @@ if ($LASTEXITCODE -ne 0) { throw 'Submission controls failed' }
 Proposed commit: `feat(gemma4): prepare P1 procedure prompt and bounded budget candidate`.
 # FORGEAI-GEMMA4-P1B-P1C-CANDIDATES-1
 
+Maintainer decision: **P1b is the base; P1c is not adopted.** Reported completed
+dev-16v results under controls 05706c6a: P1 8/16 (dev-30 projection), P1b 8/16
+(merged attempts), P1c 7/16. Full reported task groups and qualifications are in
+`../results/dev-16v-comparison.json`. Five tasks always solved, five variable,
+six never solved. This decision does not claim a significant improvement. P1
+public result remains 0.10 for p1_selfcontained v1; submissions.json preserves
+both that success and the preceding failed submission attempt.
+
+Offline per-task table generator (any number of uniquely labelled runs; outputs
+external; inherited attempt provenance retained):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Run comparison controls failed' }
+$p1Run = 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1'
+$p1bRun = Read-Host 'Absolute path to COMPLETED merged P1b run folder'
+$p1cRun = Read-Host 'Absolute path to COMPLETED P1c run folder'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py --run "P1=$p1Run" --run "P1b=$p1bRun" --run "P1c=$p1cRun" --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'D:\Downloads\dev-16v-comparison.md'
+if ($LASTEXITCODE -ne 0) { throw 'Run comparison failed' }
+```
+
+The table shows the task union, allowing dev-30 and dev-16v to be compared without
+treating excluded or unplanned tasks as failures. Controls and official inventory/
+runtime identities must match. Missing/incomplete/environment-error outcomes are
+not converted to failures. Variable-task outcomes are read from retained evidence,
+never inferred from reported aggregate totals. No analysis was executed here.
+
 Status: authored, NOT RUN. P1 baseline remains 8/16 VERIFIABLE dev-30, not a
 leaderboard prediction. P1b changes only prompts/system.md from P1; P1c changes
 only configs/sampling.yaml from P1b (thinking_budget 2048, max_output_tokens 8192).
