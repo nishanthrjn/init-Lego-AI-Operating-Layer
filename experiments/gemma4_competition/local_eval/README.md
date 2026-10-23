@@ -1,5 +1,74 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-LOCAL-EVAL-CONTINUE-AND-RESUME-1
+
+NOT RUN. `runtime.py` previously stopped on every unexpected experimental
+`result.error`. Official swegemma 0.2.11 `harness/agent_runner.py:965–970,
+1026–1046, 1078–1100` distinguishes budget exhaustion and returning without
+submission from exceptions. A returned no-patch outcome is not a failed load.
+The broad guard is removed. Completed evaluator results continue; recognized
+load/compile/server failures stop, as do escaping evaluator exceptions. The
+bounded fatal-error recognizer covers retained textual errors; unfamiliar provider
+error wording may require a further narrow classifier update. Raw errors remain
+in external official evidence, never promoted to authority.
+
+Nudge exhaustion/malformed tool text produces TOOL_CALL_FORMAT_FAILURE; empty
+patches produce NO_PATCH. Known agent outcomes clear only the prior generic
+HARNESS_ERROR_DETAILS_IN_EXTERNAL_LOG label, preserving independent environment
+errors. A passing official verification is not changed into failure merely because
+an earlier malformed tool call occurred. Analysis includes these failure counts.
+
+Static retained evidence review: `fastapi_14419` emitted malformed read_file text
+in its official log and has a complete false result, zero patch bytes, and no
+successful submission. Derived verdict: UNRESOLVED (TOOL_CALL_FORMAT_FAILURE,
+NO_PATCH). Source hashes and disposition are in
+`evidence/p1b-attempt1-disposition.json`; no original bytes or completion state
+were changed. The earlier attempt remains historically HARNESS_ERROR because of
+our runtime guard. That completed task is NOT retried by resume. A genuinely
+interrupted task (no complete result, or escaping exception) IS retried.
+
+### Maintainer offline preparation
+
+From repository root, first run tests; then prepare an external resume manifest
+and derived reclassified rows (no model/verification calls):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Continue/resume controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/continuation.py 'D:\Downloads\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --config 'D:\Downloads\local-eval-p1b-dev16v\local-eval-config.json' --output 'D:\Downloads\p1b-resume-preparation'
+if ($LASTEXITCODE -ne 0) { throw 'P1b resume preparation failed' }
+```
+
+Expected derived fastapi_14419 categories as above. Manifest pins run.json,
+original config, tasks.jsonl, completion.json and all classification-bearing
+official agent/verification logs. The original results/config remain external.
+Truncated final JSONL rows are not completed evidence. Duplicate task IDs refuse.
+
+### Separately authorized new GPU attempt
+
+Attach the unchanged prior attempt folder, original config and generated manifest
+privately alongside the existing inputs. Update tooling, retain the same P1b
+package, dev-16v and runtime pins. Fill the notebook's visible fields:
+
+- resume_manifest: mounted resume-manifest.json.
+- resume_manifest_sha256: printed RESUME_MANIFEST_SHA256.
+- resume_previous: mounted prior attempt folder.
+- resume_previous_config: mounted original local-eval-config.json.
+- output: a fresh candidate/subset attempt directory; never the previous directory.
+
+Keep the existing exact candidate/subset authorization, GPU/Internet/install
+gates. Resume is refused on candidate/subset/package/manifest/runtime/source/model/
+task identity changes. Mutable dataset paths may differ, but underlying pins may
+not. New attempts copy their config into output/config.json. `tasks.jsonl` is the
+merged per-task view, with attempt_id and inherited_from_run_sha256; old traces
+remain in the referenced prior folder. Complete failures are retained, not retried.
+Only missing/incomplete tasks run. No historical result is overwritten.
+
+Merged time-fit includes previous plus new startup seconds conservatively;
+timings span multiple attempts and are not a single uninterrupted benchmark.
+Resume does not waive the time-fit gate or authorize submission. Preserve the
+entire attempt chain. Stop for maintainer results; no execution performed here.
+
 ## FORGEAI-GEMMA4-P1-DEV30-REVIEW-1
 
 Maintainer reports P1 dev-30 completed in 2.45h: control-filtered 8/16

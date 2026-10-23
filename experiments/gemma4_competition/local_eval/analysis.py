@@ -236,6 +236,11 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
                 row = dict(row, **outcome)
                 row["harness_errors"] = sorted(set(prior_errors + outcome["harness_errors"]))
                 row["classification_source"] = "RETAINED_OFFICIAL_VERIFICATION_LOG"
+        agent_log = path / "official/logs" / (row["task_id"].replace("/", "__") + ".log")
+        if not agent_log.resolve().is_relative_to((path / "official/logs").resolve()):
+            raise ValueError("unsafe agent log identity")
+        from continuation import project
+        row = project(row, log=agent_log.read_text(encoding="utf-8", errors="replace") if agent_log.is_file() else "")
         rows.append(row)
     ids = [r["task_id"] for r in rows]
     if len(set(ids)) != len(ids) or not set(ids) <= set(meta["task_ids"]):
@@ -265,7 +270,7 @@ def projection(times: list[float], startup: float | None, complete: bool) -> dic
 def categories(row: dict) -> list[str]:
     if row.get("verification_status") == "HARNESS_ENVIRONMENT_ERROR":
         return ["harness_error", "HARNESS_ENVIRONMENT_ERROR"]
-    result = []
+    result = list(row.get("failure_categories", []))
     if row["patch_bytes"] == 0:
         result.append("no_edit")
     if row["submit_patch_called"] is False:

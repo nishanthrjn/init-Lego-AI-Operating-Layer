@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "candidate": "p1b",
+  "task_id": "fastapi_14419",
+  "assessment": "MANUAL_STATIC_EVIDENCE_REVIEW",
+  "run_sha256": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83",
+  "tasks_sha256": "8cc5167a1d5218017b64da067f8f20c5170cfee5b96e33a8edf68d401e8c01e0",
+  "agent_log_sha256": "579257e3a18e2884ef15f6e529de8fcaf81b06e6981ad0bb58dff8f0fe0242cf",
+  "derived_verdict": "UNRESOLVED",
+  "failure_categories": ["TOOL_CALL_FORMAT_FAILURE", "NO_PATCH"],
+  "completed_result": true,
+  "historical_completion_state": "HARNESS_ERROR",
+  "historical_completion_preserved": true,
+  "cause_of_run_stop": "LOCAL_RUNTIME_OVERBROAD_EXPERIMENTAL_ERROR_GUARD",
+  "resume_disposition": "RETAIN_COMPLETED_TASK; RUN_ONLY_MISSING_OR_INCOMPLETE_TASKS"
+}

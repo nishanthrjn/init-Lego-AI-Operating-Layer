@@ -104,6 +104,13 @@ def prepare(config: dict) -> tuple[dict, list[dict], dict]:
     else:
         manifest = verify_package(Path(config["package"]), Path(config["manifest"]),
                                   config["manifest_sha256"], config["receipt_sha256"])
+    from continuation import load_resume
+    prior, old = load_resume(config)
+    if old is not None:
+        if (old["package_sha256"] != manifest["zip_sha256"]
+                or old["runtime_pins"] != json.loads((HERE / "source-pins.json").read_bytes())["versions"]
+                or old["source_pins_sha256"] != sha(HERE / "source-pins.json")):
+            raise ValueError("resume package/runtime pin mismatch")
     return doc, selected, manifest
 
 
@@ -228,6 +235,7 @@ async def evaluate(config: dict, output: Path, selected: list[dict], models, ada
     meta["evaluation_config"] = section
     write_json(output / "run.json", meta)
     evaluator = Evaluator(cfg)
+    from continuation import project, fatal_error
     try:
         for i, task in enumerate(tasks, 1):
             begin = time.perf_counter()
@@ -245,7 +253,8 @@ async def evaluate(config: dict, output: Path, selected: list[dict], models, ada
                        "tool_calls": None, "tokens": None, "submit_patch_called": None,
                        "patch_bytes": None, "files_changed": None, "test_files_touched": None,
                        "stray_files": None, "stop_reason": "error", "last_tool_error": None,
-                       "harness_errors": [type(exc).__name__], "seconds_per_model_turn": None}
+                       "harness_errors": [type(exc).__name__], "seconds_per_model_turn": None,
+                       "completed_result": False, "attempt_id": meta["attempt_id"]}
                 validate_record(row)
                 append(output / "tasks.jsonl", row)
                 raise
@@ -254,13 +263,17 @@ async def evaluate(config: dict, output: Path, selected: list[dict], models, ada
             if trace is None and result.trace_path:
                 trace = SessionTrace.from_json(result.trace_path)
             row = telemetry(task, result, context, elapsed, trace)
+            log_path = cfg.results_dir / "logs" / (task.instance_id.replace("/", "__") + ".log")
+            row = project(row, error=result.error or "",
+                          log=log_path.read_text(encoding="utf-8", errors="replace") if log_path.is_file() else "")
+            fatal = fatal_error(result.error)
+            row.update(completed_result=not fatal, attempt_id=meta["attempt_id"])
             validate_record(row)
             append(output / "tasks.jsonl", row)
             append_task_result(result, cfg.results_dir)
-            if (config.get("package_mode") == "EXPERIMENTAL_UNQUALIFIED" and result.error
-                    and stop_reason(result.error, False) == "error"):
-                append(output / "events.jsonl", {"event": "EXPERIMENTAL_LOAD_OR_RUNTIME_FAILURE", "task_id": task.instance_id})
-                raise ValueError("EXPERIMENTAL_LOAD_OR_RUNTIME_FAILURE; inspect retained official error; run stopped")
+            if fatal:
+                append(output / "events.jsonl", {"event": "LOAD_OR_SERVER_FAILURE", "task_id": task.instance_id})
+                raise ValueError("LOAD_OR_SERVER_FAILURE; inspect retained official error; run stopped")
             print(json.dumps({"task_id": task.instance_id, "resolved": row["resolved"], "wall_seconds": elapsed}), flush=True)
     finally:
         evaluator.docker.cleanup_all()
@@ -366,18 +379,29 @@ def worker(config: dict, output: Path) -> None:
             "torch_version": torch.__version__, "cuda_version": torch.version.cuda,
             "gpu_names": [torch.cuda.get_device_name(i) for i in range(4)],
             "concurrency": 1, "hidden_scorer_concurrency": "UNKNOWN",
-            "utc_epoch_start": time.time(), "wall_guard_seconds": config["wall_seconds"]}
+            "utc_epoch_start": time.time(), "wall_guard_seconds": config["wall_seconds"],
+            "attempt_id": output.name, "resume_manifest_sha256": config.get("resume_manifest_sha256")}
+    from continuation import load_resume, merge
+    prior, previous_meta = load_resume(config, meta)
+    done = {r["task_id"] for r in prior}
+    pending = [r for r in selected if r["task_id"] not in done]
+    meta["inherited_task_ids"] = sorted(done)
     write_json(output / "run.json", meta)
     (output / "tasks.jsonl").touch(exist_ok=False)
+    for row in merge(prior, []):
+        append(output / "tasks.jsonl", row)
     begin = time.perf_counter()
     try:
         exec(compile(cells["cells"]["8"]["source"], "official-starter-cell-8", "exec"), namespace)
         meta["startup_seconds"] = time.perf_counter() - begin
+        meta["attempt_startup_seconds"] = meta["startup_seconds"]
+        if previous_meta is not None:
+            meta["startup_seconds"] += previous_meta.get("startup_seconds") or 0
         evidence.update(state="OFFICIAL_SERVER_STARTED", server_startup_seconds=meta["startup_seconds"],
                         post_server_versions=installed_versions())
         write_json(output / "environment.json", evidence)
         write_json(output / "run.json", meta)
-        asyncio.run(evaluate(config, output, selected, namespace["models"], namespace["adapters"], agent, meta))
+        asyncio.run(evaluate(config, output, pending, namespace["models"], namespace["adapters"], agent, meta))
     finally:
         server = namespace.get("server_instance")
         if server is not None:
@@ -433,6 +457,7 @@ def launch(config_path: Path) -> None:
     if not output.is_relative_to(Path("/kaggle/working")) or output == Path("/kaggle/working"):
         raise ValueError("output must be a new directory below /kaggle/working")
     output.mkdir(parents=True, exist_ok=False)
+    write_json(output / "config.json", config)
     start = time.perf_counter()
     with (output / "worker.log").open("xb") as log:
         process = subprocess.Popen([sys.executable, "-B", str(Path(__file__).resolve()),
