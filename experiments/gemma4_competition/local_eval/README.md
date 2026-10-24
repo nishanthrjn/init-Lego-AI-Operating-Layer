@@ -1,5 +1,82 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-FAILURE-LOCATION-DIAGNOSIS-1
+
+Authored, NOT RUN. Gold location metadata is evaluation-only privileged evidence.
+Never attach it to a GPU/agent notebook, prompt, tool input, skill or retrieval
+index. Keep raw task data, reference/test patches and snapshot code inside Kaggle.
+No reference files have been read or exported by the coding agent in this slice.
+
+### CPU export (competition data only)
+
+1. After offline tests pass, create/import `gold_location_export.ipynb` in a fresh
+   Kaggle notebook. Settings: Accelerator **None**, Internet **Off**. Attach only
+   the public competition data at `/kaggle/input/competitions/gemma-4-developer-agent`.
+   The notebook embeds the reviewed standard-library source; no tooling dataset,
+   wheelhouse, model, install, official evaluation, or repository execution required.
+2. Set CPU_CONFIRMED and INTERNET_OFF_CONFIRMED to True. Set AUTHORIZATION_INPUT:
+   `AUTHORIZE FORGEAI GEMMA4 GOLD LOCATION METADATA EXPORT CPU`.
+3. Execute the single code cell. It reads reference patch LOCATION data in memory,
+   never accesses test_patch for extraction, and parses snapshot Python with AST
+   without importing/executing it. Archives are read in place, not extracted.
+4. Download only gold-locations.json and gold-locations.sha256. Retain printed
+   GOLD_LOCATIONS_SHA256 independently. Review the metadata schema before any
+   decision to commit the JSON; this task creates no actual export or commit.
+
+The metadata contains 129 task IDs/repos, non-test gold file paths, qualified
+deepest enclosing AST function/class names with pre-change source spans, hunk and
+added+deleted line counts, and resolution status. No source/diff/issue/test text.
+Insertion-only changes use an old-line anchor; new functions, module-level changes,
+syntax errors, unsupported diffs or unavailable snapshots are UNRESOLVED/PARTIAL.
+Exact task inventory SHA256 binds the export to the evaluation input.
+
+Snapshot filename precedence follows pinned swegemma 0.2.11
+`deduplication.py:1311–1377`: fallback, base+delta, then standalone .tgz/.tar.gz;
+repo normalization is at lines 25–45. HARNESS_README §4.2 documents deduplicated
+snapshots. Only exact-context textual deltas are reconstructed in memory.
+Binary/ambiguous delta layouts stay unresolved; no shell/git application or
+silent fallback to the wrong snapshot is used. Metadata-only errors replace raw
+exceptions to prevent source snippets appearing in notebook output.
+
+### Offline comparison
+
+Use retained run folders and the original attempt1 folder for inherited P1b
+patches. Add `--attempt` for every earlier ancestor if there are multiple resumes.
+Paths below requiring new run/export locations are entered by the maintainer:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Location diagnosis controls failed' }
+$gold = Read-Host 'Absolute path to reviewed gold-locations.json FILE'
+$goldSha = Read-Host 'Exact printed GOLD_LOCATIONS_SHA256'
+$p1b = Read-Host 'Absolute path to completed merged P1b run DIRECTORY'
+$p1c = Read-Host 'Absolute path to completed P1c run DIRECTORY'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/location_review.py --gold $gold --gold-sha256 $goldSha --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --run 'P1=D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run "P1b=$p1b" --run "P1c=$p1c" --attempt 'D:\Downloads\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --output 'D:\Downloads\gemma-location-review'
+if ($LASTEXITCODE -ne 0) { throw 'Location comparison failed' }
+```
+
+Expected external outputs: locations.json with file/function hit/miss, extra files,
+patch SHA256, reasons and per-run category counts; locations.md with per-task ×
+run categories. Only VERIFIABLE controls receive verdicts. Missing patches/results
+and incomplete or environment-error outcomes are OTHER, never inferred NO_EDIT.
+
+Classification precedence for unresolved rows: TOOL_CALL_FORMAT_FAILURE ->
+TOOL_FORMAT/OTHER; zero retained patch bytes -> NO_EDIT; no gold-file overlap ->
+WRONG_LOCATION; overlapping known gold function span -> RIGHT_LOCATION_WRONG_FIX;
+complete known gold locations but no scope overlap -> WRONG_LOCATION. Uncertain
+scope evidence -> TOOL_FORMAT/OTHER. Resolved rows remain RESOLVED and are not
+counted as unresolved failures. No new scorer or test execution is involved.
+
+Important limits: agent patch alone does not contain the full original AST.
+`agent_functions` therefore names only exported scopes intersecting agent old-line
+changes, and explicitly marks other scopes UNRESOLVED. It does not invent qualified
+names from hunk heading text. Location overlap is a diagnostic heuristic, not proof
+that an alternative valid fix could not touch another location. A source edit later
+reverted may yield NO_EDIT; this means no retained patch, not no editing activity.
+Counts cannot establish causal benefit or select a new method until reviewed.
+No candidate, agent runtime, production code or historical result was changed.
+
+
 ## FORGEAI-GEMMA4-LOCAL-EVAL-CONTINUE-AND-RESUME-1
 
 NOT RUN. `runtime.py` previously stopped on every unexpected experimental
