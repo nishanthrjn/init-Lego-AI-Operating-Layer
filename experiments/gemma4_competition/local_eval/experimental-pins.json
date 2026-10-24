@@ -16,5 +16,11 @@
     "eval_config.yaml": "2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8",
     "configs/sampling.yaml": "a806a89ca17ede59d03c834efcef1e397df999a9a1e222008031e76c2c1a9fda",
     "prompts/system.md": "65ee3fd052e92b455e7bb29908fd75a45116d84c94b47b11ecc9950d43aec45d"
+  },
+  "p2": {
+    "agent.yaml": "65c884e5b397eb51fede019d579b041ce65d71ed6f31f935481461dc1a6a912b",
+    "eval_config.yaml": "2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8",
+    "configs/sampling.yaml": "3dab0b2506dae34ce92fef7b380d6073729104b23fe2cf66d44ac1d2f213aa6a",
+    "prompts/system.md": "93f7dc6329b4c1f05414492869b33da0ad2138d7a4359817247ed2db56ca4aec"
   }
 }

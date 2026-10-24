@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c"}:
+    if candidate not in {"p1b", "p1c", "p2"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c"):
+    for name in ("p1", "p1b", "p1c", "p2"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -32,6 +32,11 @@ def static_files(candidate):
         raise ValueError("P1b scope mismatch")
     if {k for k in MEMBERS if data["p1b"][k] != data["p1c"][k]} != {"configs/sampling.yaml"}:
         raise ValueError("P1c scope mismatch")
+    if {k for k in MEMBERS if data["p1b"][k] != data["p2"][k]} != {"agent.yaml", "prompts/system.md"}:
+        raise ValueError("P2 scope mismatch")
+    added = b"  - search_similar_code\n  - get_code_neighbors\n  - get_code_subgraph\n"
+    if data["p2"]["agent.yaml"].replace(added, b"") != data["p1b"]["agent.yaml"]:
+        raise ValueError("P2 may only add the three graph tools")
     return data[candidate]
 
 
@@ -49,7 +54,7 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
@@ -61,7 +66,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()

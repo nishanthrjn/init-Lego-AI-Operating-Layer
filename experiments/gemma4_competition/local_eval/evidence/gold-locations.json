@@ -1,0 +1,6042 @@
+{
+  "coordinate_system": "pre-change snapshot; insertion anchors; deepest enclosing AST scope",
+  "official_tasks_sha256": "e4b3fd60f69dbc2b9213e54eeb9636db78aefe92c1d06269d73d9f5f8f3c8ad6",
+  "schema": 1,
+  "tasks": [
+    {
+      "gold_files": [
+        "scripts/prepare_release.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "scripts/prepare_release.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 216,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15661"
+    },
+    {
+      "gold_files": [
+        "fastapi/sse.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 39,
+          "file": "fastapi/sse.py",
+          "name": "_check_id_no_null",
+          "start": 36
+        },
+        {
+          "end": null,
+          "file": "fastapi/sse.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 143,
+          "file": "fastapi/sse.py",
+          "name": "ServerSentEvent",
+          "start": 42
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 23,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15588"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 866,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_params_to_args",
+          "start": 784
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15589"
+    },
+    {
+      "gold_files": [
+        "docs_src/server_sent_events/tutorial001_py310.py",
+        "docs_src/server_sent_events/tutorial002_py310.py",
+        "docs_src/server_sent_events/tutorial003_py310.py",
+        "docs_src/server_sent_events/tutorial004_py310.py",
+        "docs_src/server_sent_events/tutorial005_py310.py",
+        "fastapi/openapi/utils.py",
+        "fastapi/responses.py",
+        "fastapi/routing.py",
+        "fastapi/sse.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/server_sent_events/tutorial001_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/server_sent_events/tutorial002_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/server_sent_events/tutorial003_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/server_sent_events/tutorial004_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/server_sent_events/tutorial005_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 460,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_path",
+          "start": 262
+        },
+        {
+          "end": null,
+          "file": "fastapi/responses.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 587,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler",
+          "start": 339
+        },
+        {
+          "end": 585,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 369
+        },
+        {
+          "end": 483,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app._serialize_item",
+          "start": 459
+        },
+        {
+          "end": 822,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 670
+        },
+        {
+          "end": null,
+          "file": "fastapi/sse.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 17,
+      "lines_changed_count": 560,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15030"
+    },
+    {
+      "gold_files": [
+        "docs_src/custom_response/tutorial010_py310.py",
+        "fastapi/_compat/v2.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/custom_response/tutorial010_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 9,
+          "file": "docs_src/custom_response/tutorial010_py310.py",
+          "name": "read_items",
+          "start": 7
+        },
+        {
+          "end": 205,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.__hash__",
+          "start": 202
+        },
+        {
+          "end": 301,
+          "file": "fastapi/routing.py",
+          "name": "serialize_response",
+          "start": 262
+        },
+        {
+          "end": 470,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 340
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 55,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14962"
+    },
+    {
+      "gold_files": [
+        "docs_src/vibe/tutorial001_py310.py",
+        "fastapi/applications.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/vibe/tutorial001_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/applications.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 4569,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.websocket_route",
+          "start": 4562
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 72,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15280"
+    },
+    {
+      "gold_files": [
+        "fastapi/responses.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/responses.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 33,
+          "file": "fastapi/responses.py",
+          "name": "UJSONResponse",
+          "start": 23
+        },
+        {
+          "end": 48,
+          "file": "fastapi/responses.py",
+          "name": "ORJSONResponse",
+          "start": 36
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 52,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14964"
+    },
+    {
+      "gold_files": [
+        "docs_src/stream_data/tutorial002_py310.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 26,
+          "file": "docs_src/stream_data/tutorial002_py310.py",
+          "name": "stream_image",
+          "start": 23
+        },
+        {
+          "end": null,
+          "file": "docs_src/stream_data/tutorial002_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 32,
+          "file": "docs_src/stream_data/tutorial002_py310.py",
+          "name": "stream_image_no_async",
+          "start": 29
+        },
+        {
+          "end": 38,
+          "file": "docs_src/stream_data/tutorial002_py310.py",
+          "name": "stream_image_no_annotation",
+          "start": 35
+        },
+        {
+          "end": 44,
+          "file": "docs_src/stream_data/tutorial002_py310.py",
+          "name": "stream_image_no_async_no_annotation",
+          "start": 41
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 26,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15023"
+    },
+    {
+      "gold_files": [
+        "fastapi/applications.py",
+        "fastapi/openapi/docs.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1153,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.setup",
+          "start": 1102
+        },
+        {
+          "end": 1113,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.setup.openapi",
+          "start": 1107
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/docs.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 180,
+          "file": "fastapi/openapi/docs.py",
+          "name": "get_swagger_ui_html",
+          "start": 26
+        }
+      ],
+      "hunk_count": 4,
+      "lines_changed_count": 34,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14986"
+    },
+    {
+      "gold_files": [
+        "docs_src/strict_content_type/tutorial001_py310.py",
+        "fastapi/applications.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/strict_content_type/tutorial001_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 995,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.__init__",
+          "start": 61
+        },
+        {
+          "end": 489,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler",
+          "start": 318
+        },
+        {
+          "end": 487,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 341
+        },
+        {
+          "end": 699,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 572
+        },
+        {
+          "end": 716,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.get_route_handler",
+          "start": 701
+        },
+        {
+          "end": 1011,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.__init__",
+          "start": 752
+        },
+        {
+          "end": 4643,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter",
+          "start": 725
+        },
+        {
+          "end": 1109,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.add_api_route",
+          "start": 1032
+        },
+        {
+          "end": 1516,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.include_router",
+          "start": 1270
+        }
+      ],
+      "hunk_count": 14,
+      "lines_changed_count": 82,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14978"
+    },
+    {
+      "gold_files": [
+        "src/requests/_types.py",
+        "src/requests/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 34,
+          "file": "src/requests/_types.py",
+          "name": "SupportsItems",
+          "start": 32
+        },
+        {
+          "end": null,
+          "file": "src/requests/models.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 181,
+          "file": "src/requests/models.py",
+          "name": "RequestEncodingMixin._encode_params",
+          "start": 151
+        },
+        {
+          "end": 254,
+          "file": "src/requests/models.py",
+          "name": "RequestEncodingMixin._encode_files",
+          "start": 183
+        },
+        {
+          "end": 655,
+          "file": "src/requests/models.py",
+          "name": "PreparedRequest.prepare_body",
+          "start": 579
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 16,
+      "location_status": "PARTIAL",
+      "repo": "psf/requests",
+      "task_id": "requests_7505"
+    },
+    {
+      "gold_files": [
+        "src/requests/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 252,
+          "file": "src/requests/models.py",
+          "name": "RequestEncodingMixin._encode_files",
+          "start": 183
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7502"
+    },
+    {
+      "gold_files": [
+        "src/requests/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 650,
+          "file": "src/requests/models.py",
+          "name": "PreparedRequest.prepare_body",
+          "start": 574
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 6,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7433"
+    },
+    {
+      "gold_files": [
+        "src/requests/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 868,
+          "file": "src/requests/utils.py",
+          "name": "should_bypass_proxies",
+          "start": 810
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 6,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7427"
+    },
+    {
+      "gold_files": [
+        "src/requests/adapters.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 554,
+          "file": "src/requests/adapters.py",
+          "name": "HTTPAdapter.request_url",
+          "start": 524
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7315"
+    },
+    {
+      "gold_files": [
+        "src/requests/sessions.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 281,
+          "file": "src/requests/sessions.py",
+          "name": "SessionRedirectMixin.resolve_redirects",
+          "start": 160
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7328"
+    },
+    {
+      "gold_files": [
+        "src/requests/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 526,
+          "file": "src/requests/utils.py",
+          "name": "_parse_content_type_header",
+          "start": 504
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 15,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7309"
+    },
+    {
+      "gold_files": [
+        "src/requests/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 246,
+          "file": "src/requests/utils.py",
+          "name": "get_netrc_auth",
+          "start": 205
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_7205"
+    },
+    {
+      "gold_files": [
+        "rich/_emoji_replace.py",
+        "rich/console.py",
+        "rich/emoji.py",
+        "rich/logging.py",
+        "rich/protocol.py",
+        "rich/repr.py",
+        "rich/segment.py",
+        "rich/syntax.py",
+        "rich/theme.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/_emoji_replace.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 32,
+          "file": "rich/_emoji_replace.py",
+          "name": "_emoji_replace",
+          "start": 12
+        },
+        {
+          "end": null,
+          "file": "rich/console.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1349,
+          "file": "rich/console.py",
+          "name": "Console.render",
+          "start": 1300
+        },
+        {
+          "end": 1583,
+          "file": "rich/console.py",
+          "name": "Console._collect_renderables",
+          "start": 1506
+        },
+        {
+          "end": 1934,
+          "file": "rich/console.py",
+          "name": "Console._caller_frame_info",
+          "start": 1901
+        },
+        {
+          "end": 2015,
+          "file": "rich/console.py",
+          "name": "Console.log",
+          "start": 1936
+        },
+        {
+          "end": 2175,
+          "file": "rich/console.py",
+          "name": "Console.input",
+          "start": 2143
+        },
+        {
+          "end": 2296,
+          "file": "rich/console.py",
+          "name": "Console.export_html",
+          "start": 2223
+        },
+        {
+          "end": 2578,
+          "file": "rich/console.py",
+          "name": "Console.export_svg",
+          "start": 2329
+        },
+        {
+          "end": 2628,
+          "file": "rich/console.py",
+          "name": "_svg_hash",
+          "start": 2619
+        },
+        {
+          "end": null,
+          "file": "rich/emoji.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 73,
+          "file": "rich/emoji.py",
+          "name": "Emoji",
+          "start": 22
+        },
+        {
+          "end": 50,
+          "file": "rich/emoji.py",
+          "name": "Emoji.__init__",
+          "start": 27
+        },
+        {
+          "end": null,
+          "file": "rich/logging.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 180,
+          "file": "rich/logging.py",
+          "name": "RichHandler.emit",
+          "start": 132
+        },
+        {
+          "end": 205,
+          "file": "rich/logging.py",
+          "name": "RichHandler.render_message",
+          "start": 182
+        },
+        {
+          "end": 239,
+          "file": "rich/logging.py",
+          "name": "RichHandler.render",
+          "start": 207
+        },
+        {
+          "end": null,
+          "file": "rich/protocol.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 42,
+          "file": "rich/protocol.py",
+          "name": "rich_cast",
+          "start": 19
+        },
+        {
+          "end": null,
+          "file": "rich/repr.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 86,
+          "file": "rich/repr.py",
+          "name": "auto.do_replace.auto_rich_repr",
+          "start": 68
+        },
+        {
+          "end": null,
+          "file": "rich/segment.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/syntax.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/theme.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 56,
+          "file": "rich/theme.py",
+          "name": "Theme.from_file",
+          "start": 38
+        }
+      ],
+      "hunk_count": 33,
+      "lines_changed_count": 128,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4070"
+    },
+    {
+      "gold_files": [
+        "rich/file_proxy.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/file_proxy.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4077"
+    },
+    {
+      "gold_files": [
+        "rich/markdown.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 336,
+          "file": "rich/markdown.py",
+          "name": "TableDataElement.on_text",
+          "start": 333
+        },
+        {
+          "end": null,
+          "file": "rich/markdown.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 7,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4079"
+    },
+    {
+      "gold_files": [
+        "rich/ansi.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 136,
+          "file": "rich/ansi.py",
+          "name": "AnsiDecoder.decode",
+          "start": 126
+        },
+        {
+          "end": 211,
+          "file": "rich/ansi.py",
+          "name": "AnsiDecoder",
+          "start": 120
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 6,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4076"
+    },
+    {
+      "gold_files": [
+        "rich/console.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/console.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1753,
+          "file": "rich/console.py",
+          "name": "Console.print",
+          "start": 1652
+        },
+        {
+          "end": 2233,
+          "file": "rich/console.py",
+          "name": "Console.save_text",
+          "start": 2221
+        }
+      ],
+      "hunk_count": 4,
+      "lines_changed_count": 15,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4075"
+    },
+    {
+      "gold_files": [
+        "rich/cells.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 211,
+          "file": "rich/cells.py",
+          "name": "split_graphemes",
+          "start": 161
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 45,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_4006"
+    },
+    {
+      "gold_files": [
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1503,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.include_router",
+          "start": 1261
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14258"
+    },
+    {
+      "gold_files": [
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 160,
+          "file": "fastapi/routing.py",
+          "name": "_merge_lifespan_context",
+          "start": 146
+        },
+        {
+          "end": 929,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.__init__",
+          "start": 691
+        },
+        {
+          "end": 4508,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.on_event",
+          "start": 4476
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 157,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14851"
+    },
+    {
+      "gold_files": [
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 998,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.__init__",
+          "start": 740
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 21,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14873"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 530,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 362
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 4,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_13920"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 529,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 362
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 5,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14794"
+    },
+    {
+      "gold_files": [
+        "fastapi/security/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 10,
+          "file": "fastapi/security/utils.py",
+          "name": "get_authorization_scheme_param",
+          "start": 4
+        },
+        {
+          "end": null,
+          "file": "fastapi/security/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14786"
+    },
+    {
+      "gold_files": [
+        "docs_src/metadata/tutorial001_1_py39.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/metadata/tutorial001_1_py39.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14492"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 557,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 373
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14479"
+    },
+    {
+      "gold_files": [
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 442,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_path",
+          "start": 259
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 3,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14463"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 598,
+          "file": "fastapi/_compat.py",
+          "name": "field_annotation_is_complex",
+          "start": 588
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_12942"
+    },
+    {
+      "gold_files": [
+        "docs_src/dependencies/tutorial013_an_py310.py",
+        "docs_src/dependencies/tutorial014_an_py310.py",
+        "fastapi/applications.py",
+        "fastapi/middleware/asyncexitstack.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/dependencies/tutorial013_an_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/dependencies/tutorial014_an_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/applications.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1024,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.openapi",
+          "start": 993
+        },
+        {
+          "end": null,
+          "file": "fastapi/middleware/asyncexitstack.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 130,
+          "file": "fastapi/routing.py",
+          "name": "_prepare_response_content",
+          "start": 85
+        },
+        {
+          "end": 362,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 247
+        },
+        {
+          "end": 390,
+          "file": "fastapi/routing.py",
+          "name": "get_websocket_app.app",
+          "start": 372
+        },
+        {
+          "end": 392,
+          "file": "fastapi/routing.py",
+          "name": "get_websocket_app",
+          "start": 367
+        }
+      ],
+      "hunk_count": 13,
+      "lines_changed_count": 477,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14099"
+    },
+    {
+      "gold_files": [
+        "docs_src/request_form_models/tutorial002_pv1_an_py39.py",
+        "docs_src/request_form_models/tutorial002_pv1_py39.py",
+        "fastapi/_compat/__init__.py",
+        "fastapi/_compat/main.py",
+        "fastapi/_compat/may_v1.py",
+        "fastapi/_compat/model_field.py",
+        "fastapi/_compat/shared.py",
+        "fastapi/_compat/v1.py",
+        "fastapi/_compat/v2.py",
+        "fastapi/datastructures.py",
+        "fastapi/dependencies/utils.py",
+        "fastapi/encoders.py",
+        "fastapi/exceptions.py",
+        "fastapi/openapi/models.py",
+        "fastapi/openapi/utils.py",
+        "fastapi/param_functions.py",
+        "fastapi/params.py",
+        "fastapi/routing.py",
+        "fastapi/temp_pydantic_v1_params.py",
+        "fastapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/request_form_models/tutorial002_pv1_an_py39.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 15,
+          "file": "docs_src/request_form_models/tutorial002_pv1_an_py39.py",
+          "name": "FormData",
+          "start": 10
+        },
+        {
+          "end": 15,
+          "file": "docs_src/request_form_models/tutorial002_pv1_an_py39.py",
+          "name": "FormData.Config",
+          "start": 14
+        },
+        {
+          "end": 20,
+          "file": "docs_src/request_form_models/tutorial002_pv1_an_py39.py",
+          "name": "login",
+          "start": 18
+        },
+        {
+          "end": null,
+          "file": "docs_src/request_form_models/tutorial002_pv1_py39.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 13,
+          "file": "docs_src/request_form_models/tutorial002_pv1_py39.py",
+          "name": "FormData",
+          "start": 8
+        },
+        {
+          "end": 13,
+          "file": "docs_src/request_form_models/tutorial002_pv1_py39.py",
+          "name": "FormData.Config",
+          "start": 12
+        },
+        {
+          "end": 18,
+          "file": "docs_src/request_form_models/tutorial002_pv1_py39.py",
+          "name": "login",
+          "start": 16
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/__init__.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/main.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 40,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_cached_model_fields",
+          "start": 31
+        },
+        {
+          "end": 47,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_undefined",
+          "start": 43
+        },
+        {
+          "end": 56,
+          "file": "fastapi/_compat/main.py",
+          "name": "_get_model_config",
+          "start": 50
+        },
+        {
+          "end": 67,
+          "file": "fastapi/_compat/main.py",
+          "name": "_model_dump",
+          "start": 59
+        },
+        {
+          "end": 74,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_error_wrapper",
+          "start": 70
+        },
+        {
+          "end": 83,
+          "file": "fastapi/_compat/main.py",
+          "name": "copy_field_info",
+          "start": 77
+        },
+        {
+          "end": 94,
+          "file": "fastapi/_compat/main.py",
+          "name": "create_body_model",
+          "start": 86
+        },
+        {
+          "end": 109,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_annotation_from_field_info",
+          "start": 97
+        },
+        {
+          "end": 118,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_bytes_field",
+          "start": 112
+        },
+        {
+          "end": 127,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_bytes_sequence_field",
+          "start": 121
+        },
+        {
+          "end": 136,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_scalar_field",
+          "start": 130
+        },
+        {
+          "end": 140,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_scalar_sequence_field",
+          "start": 139
+        },
+        {
+          "end": 149,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_sequence_field",
+          "start": 143
+        },
+        {
+          "end": 158,
+          "file": "fastapi/_compat/main.py",
+          "name": "serialize_sequence_value",
+          "start": 152
+        },
+        {
+          "end": 181,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_compat_model_name_map",
+          "start": 161
+        },
+        {
+          "end": 222,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_definitions",
+          "start": 184
+        },
+        {
+          "end": 250,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_schema_from_model_field",
+          "start": 225
+        },
+        {
+          "end": 257,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_model_field",
+          "start": 253
+        },
+        {
+          "end": 264,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_model_class",
+          "start": 260
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 10,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "AnyUrl",
+          "start": 9
+        },
+        {
+          "end": 13,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "BaseConfig",
+          "start": 12
+        },
+        {
+          "end": 16,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "BaseModel",
+          "start": 15
+        },
+        {
+          "end": 19,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "Color",
+          "start": 18
+        },
+        {
+          "end": 22,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "CoreSchema",
+          "start": 21
+        },
+        {
+          "end": 25,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "ErrorWrapper",
+          "start": 24
+        },
+        {
+          "end": 28,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "FieldInfo",
+          "start": 27
+        },
+        {
+          "end": 31,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "GetJsonSchemaHandler",
+          "start": 30
+        },
+        {
+          "end": 34,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "JsonSchemaValue",
+          "start": 33
+        },
+        {
+          "end": 37,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "ModelField",
+          "start": 36
+        },
+        {
+          "end": 40,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "NameEmail",
+          "start": 39
+        },
+        {
+          "end": 43,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "RequiredParam",
+          "start": 42
+        },
+        {
+          "end": 46,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "SecretBytes",
+          "start": 45
+        },
+        {
+          "end": 49,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "SecretStr",
+          "start": 48
+        },
+        {
+          "end": 52,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "Undefined",
+          "start": 51
+        },
+        {
+          "end": 55,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "UndefinedType",
+          "start": 54
+        },
+        {
+          "end": 58,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "Url",
+          "start": 57
+        },
+        {
+          "end": 73,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "get_definitions",
+          "start": 62
+        },
+        {
+          "end": 113,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "_normalize_errors",
+          "start": 101
+        },
+        {
+          "end": 124,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "_regenerate_error_with_loc",
+          "start": 116
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 50,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField",
+          "start": 11
+        },
+        {
+          "end": 18,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.alias",
+          "start": 17
+        },
+        {
+          "end": 21,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.required",
+          "start": 20
+        },
+        {
+          "end": 24,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.default",
+          "start": 23
+        },
+        {
+          "end": 27,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.type_",
+          "start": 26
+        },
+        {
+          "end": 29,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.get_default",
+          "start": 29
+        },
+        {
+          "end": 37,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.validate",
+          "start": 31
+        },
+        {
+          "end": 50,
+          "file": "fastapi/_compat/model_field.py",
+          "name": "ModelField.serialize",
+          "start": 39
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/shared.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 89,
+          "file": "fastapi/_compat/shared.py",
+          "name": "_annotation_is_complex",
+          "start": 82
+        },
+        {
+          "end": 194,
+          "file": "fastapi/_compat/shared.py",
+          "name": "annotation_is_pydantic_v1",
+          "start": 182
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/v1.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 86,
+          "file": "fastapi/_compat/v1.py",
+          "name": "GenerateJsonSchema",
+          "start": 84
+        },
+        {
+          "end": 90,
+          "file": "fastapi/_compat/v1.py",
+          "name": "PydanticSchemaGenerationError",
+          "start": 89
+        },
+        {
+          "end": 103,
+          "file": "fastapi/_compat/v1.py",
+          "name": "with_info_plain_validator_function",
+          "start": 96
+        },
+        {
+          "end": 122,
+          "file": "fastapi/_compat/v1.py",
+          "name": "get_model_definitions",
+          "start": 106
+        },
+        {
+          "end": 141,
+          "file": "fastapi/_compat/v1.py",
+          "name": "is_pv1_scalar_field",
+          "start": 125
+        },
+        {
+          "end": 147,
+          "file": "fastapi/_compat/v1.py",
+          "name": "_model_dump",
+          "start": 144
+        },
+        {
+          "end": 151,
+          "file": "fastapi/_compat/v1.py",
+          "name": "_get_model_config",
+          "start": 150
+        },
+        {
+          "end": 167,
+          "file": "fastapi/_compat/v1.py",
+          "name": "get_schema_from_model_field",
+          "start": 154
+        },
+        {
+          "end": 185,
+          "file": "fastapi/_compat/v1.py",
+          "name": "get_definitions",
+          "start": 175
+        },
+        {
+          "end": 189,
+          "file": "fastapi/_compat/v1.py",
+          "name": "is_scalar_field",
+          "start": 188
+        },
+        {
+          "end": 193,
+          "file": "fastapi/_compat/v1.py",
+          "name": "is_sequence_field",
+          "start": 192
+        },
+        {
+          "end": 197,
+          "file": "fastapi/_compat/v1.py",
+          "name": "is_bytes_field",
+          "start": 196
+        },
+        {
+          "end": 201,
+          "file": "fastapi/_compat/v1.py",
+          "name": "is_bytes_sequence_field",
+          "start": 200
+        },
+        {
+          "end": 205,
+          "file": "fastapi/_compat/v1.py",
+          "name": "copy_field_info",
+          "start": 204
+        },
+        {
+          "end": 209,
+          "file": "fastapi/_compat/v1.py",
+          "name": "serialize_sequence_value",
+          "start": 208
+        },
+        {
+          "end": 218,
+          "file": "fastapi/_compat/v1.py",
+          "name": "create_body_model",
+          "start": 212
+        },
+        {
+          "end": 222,
+          "file": "fastapi/_compat/v1.py",
+          "name": "get_model_fields",
+          "start": 221
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 180,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.validate",
+          "start": 165
+        },
+        {
+          "end": 216,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_annotation_from_field_info",
+          "start": 213
+        },
+        {
+          "end": 222,
+          "file": "fastapi/_compat/v2.py",
+          "name": "_model_dump",
+          "start": 219
+        },
+        {
+          "end": 226,
+          "file": "fastapi/_compat/v2.py",
+          "name": "_get_model_config",
+          "start": 225
+        },
+        {
+          "end": 519,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_model_name_map",
+          "start": 504
+        },
+        {
+          "end": 528,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_flat_models_from_model",
+          "start": 522
+        },
+        {
+          "end": 571,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_long_model_name",
+          "start": 570
+        },
+        {
+          "end": null,
+          "file": "fastapi/datastructures.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 147,
+          "file": "fastapi/datastructures.py",
+          "name": "UploadFile.__get_pydantic_json_schema__",
+          "start": 143
+        },
+        {
+          "end": 155,
+          "file": "fastapi/datastructures.py",
+          "name": "UploadFile.__get_pydantic_core_schema__",
+          "start": 149
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 195,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_get_flat_fields_from_params",
+          "start": 188
+        },
+        {
+          "end": 339,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 258
+        },
+        {
+          "end": 557,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 373
+        },
+        {
+          "end": 751,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_validate_value_with_model_field",
+          "start": 736
+        },
+        {
+          "end": 775,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_get_multidict_value",
+          "start": 754
+        },
+        {
+          "end": 858,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_params_to_args",
+          "start": 778
+        },
+        {
+          "end": 877,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "is_union_of_base_models",
+          "start": 861
+        },
+        {
+          "end": 901,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_should_embed_body_fields",
+          "start": 880
+        },
+        {
+          "end": 948,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_extract_form_body",
+          "start": 904
+        },
+        {
+          "end": 998,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_body_to_args",
+          "start": 951
+        },
+        {
+          "end": 1064,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_body_field",
+          "start": 1001
+        },
+        {
+          "end": null,
+          "file": "fastapi/encoders.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 355,
+          "file": "fastapi/encoders.py",
+          "name": "jsonable_encoder",
+          "start": 113
+        },
+        {
+          "end": 240,
+          "file": "fastapi/exceptions.py",
+          "name": "FastAPIDeprecationWarning",
+          "start": 236
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/models.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 48,
+          "file": "fastapi/openapi/models.py",
+          "name": "EmailStr.__get_pydantic_json_schema__",
+          "start": 44
+        },
+        {
+          "end": 54,
+          "file": "fastapi/openapi/models.py",
+          "name": "EmailStr.__get_pydantic_core_schema__",
+          "start": 50
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 177,
+          "file": "fastapi/openapi/utils.py",
+          "name": "_get_openapi_operation_parameters",
+          "start": 107
+        },
+        {
+          "end": 212,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_operation_request_body",
+          "start": 180
+        },
+        {
+          "end": 445,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_path",
+          "start": 262
+        },
+        {
+          "end": 476,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_fields_from_routes",
+          "start": 448
+        },
+        {
+          "end": null,
+          "file": "fastapi/param_functions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 338,
+          "file": "fastapi/param_functions.py",
+          "name": "Path",
+          "start": 13
+        },
+        {
+          "end": 642,
+          "file": "fastapi/param_functions.py",
+          "name": "Query",
+          "start": 341
+        },
+        {
+          "end": 958,
+          "file": "fastapi/param_functions.py",
+          "name": "Header",
+          "start": 645
+        },
+        {
+          "end": 1262,
+          "file": "fastapi/param_functions.py",
+          "name": "Cookie",
+          "start": 961
+        },
+        {
+          "end": 1591,
+          "file": "fastapi/param_functions.py",
+          "name": "Body",
+          "start": 1265
+        },
+        {
+          "end": 1905,
+          "file": "fastapi/param_functions.py",
+          "name": "Form",
+          "start": 1594
+        },
+        {
+          "end": 2219,
+          "file": "fastapi/param_functions.py",
+          "name": "File",
+          "start": 1908
+        },
+        {
+          "end": null,
+          "file": "fastapi/params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 133,
+          "file": "fastapi/params.py",
+          "name": "Param.__init__",
+          "start": 29
+        },
+        {
+          "end": 222,
+          "file": "fastapi/params.py",
+          "name": "Path.__init__",
+          "start": 142
+        },
+        {
+          "end": 306,
+          "file": "fastapi/params.py",
+          "name": "Query.__init__",
+          "start": 228
+        },
+        {
+          "end": 392,
+          "file": "fastapi/params.py",
+          "name": "Header.__init__",
+          "start": 312
+        },
+        {
+          "end": 476,
+          "file": "fastapi/params.py",
+          "name": "Cookie.__init__",
+          "start": 398
+        },
+        {
+          "end": 587,
+          "file": "fastapi/params.py",
+          "name": "Body.__init__",
+          "start": 480
+        },
+        {
+          "end": 674,
+          "file": "fastapi/params.py",
+          "name": "Form.__init__",
+          "start": 594
+        },
+        {
+          "end": 758,
+          "file": "fastapi/params.py",
+          "name": "File.__init__",
+          "start": 678
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 193,
+          "file": "fastapi/routing.py",
+          "name": "_prepare_response_content",
+          "start": 151
+        },
+        {
+          "end": 302,
+          "file": "fastapi/routing.py",
+          "name": "serialize_response",
+          "start": 240
+        },
+        {
+          "end": 475,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler",
+          "start": 318
+        },
+        {
+          "end": 473,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 343
+        },
+        {
+          "end": 510,
+          "file": "fastapi/routing.py",
+          "name": "get_websocket_app.app",
+          "start": 483
+        },
+        {
+          "end": 714,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 558
+        },
+        {
+          "end": null,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 109,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Param",
+          "start": 14
+        },
+        {
+          "end": 106,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Param.__init__",
+          "start": 17
+        },
+        {
+          "end": 109,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Param.__repr__",
+          "start": 108
+        },
+        {
+          "end": 195,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Path",
+          "start": 112
+        },
+        {
+          "end": 195,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Path.__init__",
+          "start": 115
+        },
+        {
+          "end": 279,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Query",
+          "start": 198
+        },
+        {
+          "end": 279,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Query.__init__",
+          "start": 201
+        },
+        {
+          "end": 365,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Header",
+          "start": 282
+        },
+        {
+          "end": 365,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Header.__init__",
+          "start": 285
+        },
+        {
+          "end": 449,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Cookie",
+          "start": 368
+        },
+        {
+          "end": 449,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Cookie.__init__",
+          "start": 371
+        },
+        {
+          "end": 550,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Body",
+          "start": 452
+        },
+        {
+          "end": 547,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Body.__init__",
+          "start": 453
+        },
+        {
+          "end": 550,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Body.__repr__",
+          "start": 549
+        },
+        {
+          "end": 634,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Form",
+          "start": 553
+        },
+        {
+          "end": 634,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Form.__init__",
+          "start": 554
+        },
+        {
+          "end": 718,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "File",
+          "start": 637
+        },
+        {
+          "end": 718,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "File.__init__",
+          "start": 638
+        },
+        {
+          "end": null,
+          "file": "fastapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 134,
+          "file": "fastapi/utils.py",
+          "name": "create_model_field",
+          "start": 74
+        },
+        {
+          "end": 192,
+          "file": "fastapi/utils.py",
+          "name": "create_cloned_field",
+          "start": 137
+        }
+      ],
+      "hunk_count": 92,
+      "lines_changed_count": 2047,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14609"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py",
+        "fastapi/params.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 525,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 341
+        },
+        {
+          "end": 769,
+          "file": "fastapi/params.py",
+          "name": "Depends",
+          "start": 765
+        },
+        {
+          "end": 774,
+          "file": "fastapi/params.py",
+          "name": "Security",
+          "start": 772
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 7,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14372"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 290,
+          "file": "fastapi/_compat/v2.py",
+          "name": "_replace_refs",
+          "start": 257
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 12,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14349"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 106,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.__post_init__",
+          "start": 86
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 52,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14512"
+    },
+    {
+      "gold_files": [
+        "docs_src/handling_errors/tutorial004.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 16,
+          "file": "docs_src/handling_errors/tutorial004.py",
+          "name": "validation_exception_handler",
+          "start": 14
+        },
+        {
+          "end": null,
+          "file": "docs_src/handling_errors/tutorial004.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 7,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14487"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 207,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_signature",
+          "start": 193
+        },
+        {
+          "end": 228,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_return_annotation",
+          "start": 219
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 11,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_11355"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 229,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_signature",
+          "start": 212
+        },
+        {
+          "end": 253,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_return_annotation",
+          "start": 241
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 19,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14485"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 151,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField",
+          "start": 62
+        },
+        {
+          "end": 99,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.__post_init__",
+          "start": 85
+        },
+        {
+          "end": 418,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_model_fields",
+          "start": 414
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 32,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14482"
+    },
+    {
+      "gold_files": [
+        "fastapi/exceptions.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/exceptions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 66,
+          "file": "fastapi/exceptions.py",
+          "name": "HTTPException",
+          "start": 10
+        },
+        {
+          "end": 159,
+          "file": "fastapi/exceptions.py",
+          "name": "ValidationException.__init__",
+          "start": 158
+        },
+        {
+          "end": 162,
+          "file": "fastapi/exceptions.py",
+          "name": "ValidationException",
+          "start": 157
+        },
+        {
+          "end": 168,
+          "file": "fastapi/exceptions.py",
+          "name": "RequestValidationError.__init__",
+          "start": 166
+        },
+        {
+          "end": 172,
+          "file": "fastapi/exceptions.py",
+          "name": "WebSocketRequestValidationError",
+          "start": 171
+        },
+        {
+          "end": 178,
+          "file": "fastapi/exceptions.py",
+          "name": "ResponseValidationError.__init__",
+          "start": 176
+        },
+        {
+          "end": 184,
+          "file": "fastapi/exceptions.py",
+          "name": "ResponseValidationError",
+          "start": 175
+        },
+        {
+          "end": 184,
+          "file": "fastapi/exceptions.py",
+          "name": "ResponseValidationError.__str__",
+          "start": 180
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 273,
+          "file": "fastapi/routing.py",
+          "name": "serialize_response",
+          "start": 215
+        },
+        {
+          "end": 430,
+          "file": "fastapi/routing.py",
+          "name": "get_request_handler.app",
+          "start": 314
+        },
+        {
+          "end": 457,
+          "file": "fastapi/routing.py",
+          "name": "get_websocket_app.app",
+          "start": 440
+        }
+      ],
+      "hunk_count": 12,
+      "lines_changed_count": 137,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14306"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 127,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_gen_callable",
+          "start": 105
+        },
+        {
+          "end": 151,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_async_gen_callable",
+          "start": 129
+        },
+        {
+          "end": 180,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_coroutine_callable",
+          "start": 153
+        }
+      ],
+      "hunk_count": 4,
+      "lines_changed_count": 7,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14458"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py",
+        "fastapi/dependencies/utils.py",
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/models.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 34,
+          "file": "fastapi/dependencies/models.py",
+          "name": "SecurityRequirement",
+          "start": 31
+        },
+        {
+          "end": 174,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant",
+          "start": 37
+        },
+        {
+          "end": 89,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant._uses_scopes",
+          "start": 80
+        },
+        {
+          "end": 113,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_gen_callable",
+          "start": 91
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 172,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_flat_dependant",
+          "start": 140
+        },
+        {
+          "end": 317,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 238
+        },
+        {
+          "end": 101,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_security_definitions",
+          "start": 78
+        }
+      ],
+      "hunk_count": 8,
+      "lines_changed_count": 71,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14459"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py",
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 21,
+          "file": "fastapi/dependencies/models.py",
+          "name": "SecurityRequirement",
+          "start": 18
+        },
+        {
+          "end": 85,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant._unwrapped_call",
+          "start": 78
+        },
+        {
+          "end": 116,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant",
+          "start": 24
+        },
+        {
+          "end": 92,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_gen_callable",
+          "start": 87
+        },
+        {
+          "end": 99,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_async_gen_callable",
+          "start": 94
+        },
+        {
+          "end": 108,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_coroutine_callable",
+          "start": 101
+        },
+        {
+          "end": 555,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_solve_generator",
+          "start": 547
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 106,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14448"
+    },
+    {
+      "gold_files": [
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 92,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_security_definitions",
+          "start": 78
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 13,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14455"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/models.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 82,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant._unwrapped_call",
+          "start": 78
+        },
+        {
+          "end": 113,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant",
+          "start": 24
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 7,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_9753"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 392,
+          "file": "fastapi/_compat/v2.py",
+          "name": "serialize_sequence_value",
+          "start": 382
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 4,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14430"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 206,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_signature",
+          "start": 193
+        },
+        {
+          "end": 226,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_return_annotation",
+          "start": 218
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 6,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5077"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 83,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_gen_callable",
+          "start": 78
+        },
+        {
+          "end": 90,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_async_gen_callable",
+          "start": 85
+        },
+        {
+          "end": 99,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_coroutine_callable",
+          "start": 92
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 22,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_9555"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 336,
+          "file": "fastapi/_compat/v2.py",
+          "name": "_remap_definitions_and_field_mappings",
+          "start": 293
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14361"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 194,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_schema_from_model_field",
+          "start": 174
+        },
+        {
+          "end": 254,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_definitions",
+          "start": 197
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 14,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_13207"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 830,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_params_to_args",
+          "start": 747
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14360"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 823,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_params_to_args",
+          "start": 747
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 11,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14356"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 308,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 230
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_5624"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/models.py",
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 83,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant",
+          "start": 24
+        },
+        {
+          "end": 52,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.cache_key",
+          "start": 46
+        },
+        {
+          "end": 59,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.is_gen_callable",
+          "start": 54
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 137,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_parameterless_sub_dependant",
+          "start": 125
+        },
+        {
+          "end": 310,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 230
+        },
+        {
+          "end": 704,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "solve_dependencies",
+          "start": 567
+        }
+      ],
+      "hunk_count": 7,
+      "lines_changed_count": 62,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14419"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 133,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_parameterless_sub_dependant",
+          "start": 124
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 5,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14301"
+    },
+    {
+      "gold_files": [
+        "docs_src/dependencies/tutorial008e.py",
+        "docs_src/dependencies/tutorial008e_an.py",
+        "docs_src/dependencies/tutorial008e_an_py39.py",
+        "fastapi/dependencies/models.py",
+        "fastapi/dependencies/utils.py",
+        "fastapi/exceptions.py",
+        "fastapi/param_functions.py",
+        "fastapi/params.py",
+        "fastapi/routing.py",
+        "fastapi/types.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/dependencies/tutorial008e.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/dependencies/tutorial008e_an.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/dependencies/tutorial008e_an_py39.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/models.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 37,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant",
+          "start": 14
+        },
+        {
+          "end": 37,
+          "file": "fastapi/dependencies/models.py",
+          "name": "Dependant.__post_init__",
+          "start": 36
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 175,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_flat_dependant",
+          "start": 143
+        },
+        {
+          "end": 298,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 233
+        },
+        {
+          "end": 541,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "is_coroutine_callable",
+          "start": 535
+        },
+        {
+          "end": 548,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "is_async_gen_callable",
+          "start": 544
+        },
+        {
+          "end": 555,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "is_gen_callable",
+          "start": 551
+        },
+        {
+          "end": 565,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "solve_generator",
+          "start": 558
+        },
+        {
+          "end": 574,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "SolvedDependency",
+          "start": 568
+        },
+        {
+          "end": 700,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "solve_dependencies",
+          "start": 577
+        },
+        {
+          "end": 155,
+          "file": "fastapi/exceptions.py",
+          "name": "ValidationException",
+          "start": 150
+        },
+        {
+          "end": null,
+          "file": "fastapi/param_functions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 2278,
+          "file": "fastapi/param_functions.py",
+          "name": "Depends",
+          "start": 2221
+        },
+        {
+          "end": null,
+          "file": "fastapi/params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 121,
+          "file": "fastapi/routing.py",
+          "name": "request_response.app.app",
+          "start": 104
+        },
+        {
+          "end": 147,
+          "file": "fastapi/routing.py",
+          "name": "websocket_session.app.app",
+          "start": 142
+        },
+        {
+          "end": 150,
+          "file": "fastapi/routing.py",
+          "name": "websocket_session.app",
+          "start": 139
+        },
+        {
+          "end": 498,
+          "file": "fastapi/routing.py",
+          "name": "APIWebSocketRoute.__init__",
+          "start": 468
+        },
+        {
+          "end": 648,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 508
+        },
+        {
+          "end": null,
+          "file": "fastapi/types.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 29,
+      "lines_changed_count": 266,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14262"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 300,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 233
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 18,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14266"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 234,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_definitions",
+          "start": 197
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 28,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14246"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/__init__.py",
+        "fastapi/_compat/main.py",
+        "fastapi/_compat/may_v1.py",
+        "fastapi/_compat/shared.py",
+        "fastapi/_compat/v1.py",
+        "fastapi/_compat/v2.py",
+        "fastapi/dependencies/utils.py",
+        "fastapi/encoders.py",
+        "fastapi/temp_pydantic_v1_params.py",
+        "fastapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/_compat/__init__.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/main.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 58,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_cached_model_fields",
+          "start": 51
+        },
+        {
+          "end": 68,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_undefined",
+          "start": 61
+        },
+        {
+          "end": 77,
+          "file": "fastapi/_compat/main.py",
+          "name": "_get_model_config",
+          "start": 71
+        },
+        {
+          "end": 88,
+          "file": "fastapi/_compat/main.py",
+          "name": "_model_dump",
+          "start": 80
+        },
+        {
+          "end": 98,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_error_wrapper",
+          "start": 91
+        },
+        {
+          "end": 108,
+          "file": "fastapi/_compat/main.py",
+          "name": "copy_field_info",
+          "start": 101
+        },
+        {
+          "end": 120,
+          "file": "fastapi/_compat/main.py",
+          "name": "create_body_model",
+          "start": 111
+        },
+        {
+          "end": 136,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_annotation_from_field_info",
+          "start": 123
+        },
+        {
+          "end": 146,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_bytes_field",
+          "start": 139
+        },
+        {
+          "end": 156,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_bytes_sequence_field",
+          "start": 149
+        },
+        {
+          "end": 166,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_scalar_field",
+          "start": 159
+        },
+        {
+          "end": 176,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_scalar_sequence_field",
+          "start": 169
+        },
+        {
+          "end": 186,
+          "file": "fastapi/_compat/main.py",
+          "name": "is_sequence_field",
+          "start": 179
+        },
+        {
+          "end": 196,
+          "file": "fastapi/_compat/main.py",
+          "name": "serialize_sequence_value",
+          "start": 189
+        },
+        {
+          "end": 205,
+          "file": "fastapi/_compat/main.py",
+          "name": "_model_rebuild",
+          "start": 199
+        },
+        {
+          "end": 226,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_compat_model_name_map",
+          "start": 208
+        },
+        {
+          "end": 257,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_definitions",
+          "start": 229
+        },
+        {
+          "end": 285,
+          "file": "fastapi/_compat/main.py",
+          "name": "get_schema_from_model_field",
+          "start": 260
+        },
+        {
+          "end": 295,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_model_field",
+          "start": 288
+        },
+        {
+          "end": 305,
+          "file": "fastapi/_compat/main.py",
+          "name": "_is_model_class",
+          "start": 298
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/may_v1.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/shared.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 104,
+          "file": "fastapi/_compat/shared.py",
+          "name": "_annotation_is_complex",
+          "start": 99
+        },
+        {
+          "end": 209,
+          "file": "fastapi/_compat/shared.py",
+          "name": "annotation_is_pydantic_v1",
+          "start": 197
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/v1.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 230,
+          "file": "fastapi/_compat/v1.py",
+          "name": "_normalize_errors",
+          "start": 218
+        },
+        {
+          "end": 241,
+          "file": "fastapi/_compat/v1.py",
+          "name": "_regenerate_error_with_loc",
+          "start": 233
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 121,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.validate",
+          "start": 106
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 545,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "analyze_param",
+          "start": 362
+        },
+        {
+          "end": 747,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_validate_value_with_model_field",
+          "start": 732
+        },
+        {
+          "end": null,
+          "file": "fastapi/encoders.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 351,
+          "file": "fastapi/encoders.py",
+          "name": "jsonable_encoder",
+          "start": 109
+        },
+        {
+          "end": null,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 128,
+          "file": "fastapi/utils.py",
+          "name": "create_model_field",
+          "start": 76
+        },
+        {
+          "end": 188,
+          "file": "fastapi/utils.py",
+          "name": "create_cloned_field",
+          "start": 131
+        }
+      ],
+      "hunk_count": 51,
+      "lines_changed_count": 364,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14186"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 257,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_typed_annotation",
+          "start": 253
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_9425"
+    },
+    {
+      "gold_files": [
+        "fastapi/applications.py",
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 964,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.__init__",
+          "start": 64
+        },
+        {
+          "end": 996,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.openapi",
+          "start": 966
+        },
+        {
+          "end": 568,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi",
+          "start": 476
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 31,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_13713"
+    },
+    {
+      "gold_files": [
+        "docs_src/handling_errors/tutorial005.py",
+        "fastapi/exception_handlers.py",
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/handling_errors/tutorial005.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 15,
+          "file": "docs_src/handling_errors/tutorial005.py",
+          "name": "validation_exception_handler",
+          "start": 10
+        },
+        {
+          "end": null,
+          "file": "fastapi/exception_handlers.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 26,
+          "file": "fastapi/exception_handlers.py",
+          "name": "request_validation_exception_handler",
+          "start": 20
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 443,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_path",
+          "start": 254
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 11,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14077"
+    },
+    {
+      "gold_files": [
+        "rich/panel.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 276,
+          "file": "rich/panel.py",
+          "name": "Panel.__rich_console__",
+          "start": 141
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 7,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3718"
+    },
+    {
+      "gold_files": [
+        "rich/live.py",
+        "rich/live_render.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 177,
+          "file": "rich/live.py",
+          "name": "Live.stop",
+          "start": 145
+        },
+        {
+          "end": null,
+          "file": "rich/live_render.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 39,
+          "file": "rich/live_render.py",
+          "name": "LiveRender.set_renderable",
+          "start": 33
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 20,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3934"
+    },
+    {
+      "gold_files": [
+        "rich/cells.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 75,
+          "file": "rich/cells.py",
+          "name": "get_character_cell_size",
+          "start": 46
+        },
+        {
+          "end": 152,
+          "file": "rich/cells.py",
+          "name": "_cell_len",
+          "start": 110
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 26,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3953"
+    },
+    {
+      "gold_files": [
+        "rich/cells.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 75,
+          "file": "rich/cells.py",
+          "name": "get_character_cell_size",
+          "start": 46
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3944"
+    },
+    {
+      "gold_files": [
+        "rich/default_styles.py",
+        "rich/markdown.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/default_styles.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/markdown.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 159,
+          "file": "rich/markdown.py",
+          "name": "Heading",
+          "start": 127
+        },
+        {
+          "end": 132,
+          "file": "rich/markdown.py",
+          "name": "Heading.create",
+          "start": 130
+        },
+        {
+          "end": 159,
+          "file": "rich/markdown.py",
+          "name": "Heading.__rich_console__",
+          "start": 143
+        },
+        {
+          "end": 222,
+          "file": "rich/markdown.py",
+          "name": "HorizontalRule.__rich_console__",
+          "start": 218
+        },
+        {
+          "end": 255,
+          "file": "rich/markdown.py",
+          "name": "TableElement.__rich_console__",
+          "start": 241
+        }
+      ],
+      "hunk_count": 7,
+      "lines_changed_count": 70,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3942"
+    },
+    {
+      "gold_files": [
+        "rich/console.py",
+        "rich/segment.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1745,
+          "file": "rich/console.py",
+          "name": "Console.print",
+          "start": 1648
+        },
+        {
+          "end": 323,
+          "file": "rich/segment.py",
+          "name": "Segment.split_and_crop_lines",
+          "start": 278
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 45,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3938"
+    },
+    {
+      "gold_files": [
+        "rich/prompt.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 265,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.on_validate_error",
+          "start": 258
+        },
+        {
+          "end": 301,
+          "file": "rich/prompt.py",
+          "name": "PromptBase",
+          "start": 30
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3882"
+    },
+    {
+      "gold_files": [
+        "rich/_inspect.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 119,
+          "file": "rich/_inspect.py",
+          "name": "Inspect._get_signature",
+          "start": 82
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3894"
+    },
+    {
+      "gold_files": [
+        "rich/table.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 521,
+          "file": "rich/table.py",
+          "name": "Table.__rich_console__",
+          "start": 476
+        },
+        {
+          "end": 585,
+          "file": "rich/table.py",
+          "name": "Table._calculate_column_widths",
+          "start": 523
+        },
+        {
+          "end": 705,
+          "file": "rich/table.py",
+          "name": "Table._get_padding_width",
+          "start": 699
+        },
+        {
+          "end": 745,
+          "file": "rich/table.py",
+          "name": "Table._measure_column",
+          "start": 707
+        },
+        {
+          "end": 926,
+          "file": "rich/table.py",
+          "name": "Table._render",
+          "start": 747
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 16,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3935"
+    },
+    {
+      "gold_files": [
+        "rich/progress.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1177,
+          "file": "rich/progress.py",
+          "name": "Progress.stop",
+          "start": 1173
+        },
+        {
+          "end": 1650,
+          "file": "rich/progress.py",
+          "name": "Progress",
+          "start": 1061
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 7,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3905"
+    },
+    {
+      "gold_files": [
+        "rich/__main__.py",
+        "rich/_cell_widths.py",
+        "rich/_unicode_data/__init__.py",
+        "rich/_unicode_data/_versions.py",
+        "rich/_unicode_data/unicode10-0-0.py",
+        "rich/_unicode_data/unicode11-0-0.py",
+        "rich/_unicode_data/unicode12-0-0.py",
+        "rich/_unicode_data/unicode12-1-0.py",
+        "rich/_unicode_data/unicode13-0-0.py",
+        "rich/_unicode_data/unicode14-0-0.py",
+        "rich/_unicode_data/unicode15-0-0.py",
+        "rich/_unicode_data/unicode15-1-0.py",
+        "rich/_unicode_data/unicode16-0-0.py",
+        "rich/_unicode_data/unicode17-0-0.py",
+        "rich/_unicode_data/unicode4-1-0.py",
+        "rich/_unicode_data/unicode5-0-0.py",
+        "rich/_unicode_data/unicode5-1-0.py",
+        "rich/_unicode_data/unicode5-2-0.py",
+        "rich/_unicode_data/unicode6-0-0.py",
+        "rich/_unicode_data/unicode6-1-0.py",
+        "rich/_unicode_data/unicode6-2-0.py",
+        "rich/_unicode_data/unicode6-3-0.py",
+        "rich/_unicode_data/unicode7-0-0.py",
+        "rich/_unicode_data/unicode8-0-0.py",
+        "rich/_unicode_data/unicode9-0-0.py",
+        "rich/cells.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/__main__.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_cell_widths.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/__init__.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/_versions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode10-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode11-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode12-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode12-1-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode13-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode14-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode15-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode15-1-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode16-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode17-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode4-1-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode5-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode5-1-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode5-2-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode6-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode6-1-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode6-2-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode6-3-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode7-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode8-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/_unicode_data/unicode9-0-0.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/cells.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 48,
+          "file": "rich/cells.py",
+          "name": "cached_cell_len",
+          "start": 33
+        },
+        {
+          "end": 64,
+          "file": "rich/cells.py",
+          "name": "cell_len",
+          "start": 51
+        },
+        {
+          "end": 93,
+          "file": "rich/cells.py",
+          "name": "get_character_cell_size",
+          "start": 67
+        },
+        {
+          "end": 128,
+          "file": "rich/cells.py",
+          "name": "set_cell_size",
+          "start": 96
+        },
+        {
+          "end": 165,
+          "file": "rich/cells.py",
+          "name": "chop_cells",
+          "start": 131
+        }
+      ],
+      "hunk_count": 29,
+      "lines_changed_count": 12714,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3930"
+    },
+    {
+      "gold_files": [
+        "src/ahttpx/_parsers.py",
+        "src/ahttpx/_pool.py",
+        "src/ahttpx/_server.py",
+        "src/httpx/_network.py",
+        "src/httpx/_parsers.py",
+        "src/httpx/_pool.py",
+        "src/httpx/_server.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 399,
+          "file": "src/ahttpx/_parsers.py",
+          "name": "HTTPParser.complete",
+          "start": 378
+        },
+        {
+          "end": 426,
+          "file": "src/ahttpx/_parsers.py",
+          "name": "HTTPParser",
+          "start": 72
+        },
+        {
+          "end": 411,
+          "file": "src/ahttpx/_parsers.py",
+          "name": "HTTPParser.is_idle",
+          "start": 407
+        },
+        {
+          "end": 175,
+          "file": "src/ahttpx/_pool.py",
+          "name": "Connection.send",
+          "start": 167
+        },
+        {
+          "end": 259,
+          "file": "src/ahttpx/_pool.py",
+          "name": "Connection",
+          "start": 141
+        },
+        {
+          "end": 241,
+          "file": "src/ahttpx/_pool.py",
+          "name": "Connection._complete",
+          "start": 239
+        },
+        {
+          "end": 53,
+          "file": "src/ahttpx/_server.py",
+          "name": "HTTPConnection.handle_requests",
+          "start": 32
+        },
+        {
+          "end": 93,
+          "file": "src/ahttpx/_server.py",
+          "name": "HTTPConnection._complete",
+          "start": 91
+        },
+        {
+          "end": 90,
+          "file": "src/httpx/_network.py",
+          "name": "NetworkStream.__repr__",
+          "start": 86
+        },
+        {
+          "end": 163,
+          "file": "src/httpx/_network.py",
+          "name": "NetworkServer.__init__",
+          "start": 157
+        },
+        {
+          "end": 190,
+          "file": "src/httpx/_network.py",
+          "name": "NetworkServer",
+          "start": 156
+        },
+        {
+          "end": 180,
+          "file": "src/httpx/_network.py",
+          "name": "NetworkServer.__exit__",
+          "start": 178
+        },
+        {
+          "end": 399,
+          "file": "src/httpx/_parsers.py",
+          "name": "HTTPParser.complete",
+          "start": 378
+        },
+        {
+          "end": 426,
+          "file": "src/httpx/_parsers.py",
+          "name": "HTTPParser",
+          "start": 72
+        },
+        {
+          "end": 411,
+          "file": "src/httpx/_parsers.py",
+          "name": "HTTPParser.is_idle",
+          "start": 407
+        },
+        {
+          "end": 175,
+          "file": "src/httpx/_pool.py",
+          "name": "Connection.send",
+          "start": 167
+        },
+        {
+          "end": 259,
+          "file": "src/httpx/_pool.py",
+          "name": "Connection",
+          "start": 141
+        },
+        {
+          "end": 241,
+          "file": "src/httpx/_pool.py",
+          "name": "Connection._complete",
+          "start": 239
+        },
+        {
+          "end": 53,
+          "file": "src/httpx/_server.py",
+          "name": "HTTPConnection.handle_requests",
+          "start": 32
+        },
+        {
+          "end": 93,
+          "file": "src/httpx/_server.py",
+          "name": "HTTPConnection._complete",
+          "start": 91
+        },
+        {
+          "end": 102,
+          "file": "src/httpx/_server.py",
+          "name": "HTTPServer.wait",
+          "start": 100
+        },
+        {
+          "end": null,
+          "file": "src/httpx/_server.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 18,
+      "lines_changed_count": 79,
+      "location_status": "PARTIAL",
+      "repo": "encode/httpx",
+      "task_id": "httpx_3672"
+    },
+    {
+      "gold_files": [
+        "fastapi/openapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14791"
+    },
+    {
+      "gold_files": [
+        "docs_src/frontend/tutorial001_py310.py",
+        "docs_src/frontend/tutorial002_py310.py",
+        "docs_src/frontend/tutorial003_py310.py",
+        "docs_src/frontend/tutorial004_py310.py",
+        "docs_src/frontend/tutorial005_py310.py",
+        "docs_src/frontend/tutorial006_py310.py",
+        "fastapi/applications.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial001_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial002_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial003_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial004_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial005_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/frontend/tutorial006_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/applications.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1279,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.api_route",
+          "start": 1221
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 832,
+          "file": "fastapi/routing.py",
+          "name": "_get_fastapi_scope",
+          "start": 829
+        },
+        {
+          "end": 836,
+          "file": "fastapi/routing.py",
+          "name": "_get_scope_effective_route_context",
+          "start": 835
+        },
+        {
+          "end": 1311,
+          "file": "fastapi/routing.py",
+          "name": "_RouterIncludeContext.path_for",
+          "start": 1308
+        },
+        {
+          "end": 1687,
+          "file": "fastapi/routing.py",
+          "name": "_IncludedRouter",
+          "start": 1498
+        },
+        {
+          "end": 1596,
+          "file": "fastapi/routing.py",
+          "name": "_IncludedRouter._build_effective_context",
+          "start": 1528
+        },
+        {
+          "end": 5693,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter",
+          "start": 1723
+        },
+        {
+          "end": 2104,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.handle",
+          "start": 2096
+        },
+        {
+          "end": 2133,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.route",
+          "start": 2116
+        }
+      ],
+      "hunk_count": 20,
+      "lines_changed_count": 654,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15800"
+    },
+    {
+      "gold_files": [
+        "fastapi/openapi/utils.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 490,
+          "file": "fastapi/openapi/utils.py",
+          "name": "_get_api_route_for_openapi",
+          "start": 481
+        },
+        {
+          "end": 524,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_fields_from_routes",
+          "start": 493
+        },
+        {
+          "end": 621,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi",
+          "start": 527
+        },
+        {
+          "end": 1646,
+          "file": "fastapi/routing.py",
+          "name": "_IncludedRouter",
+          "start": 1457
+        },
+        {
+          "end": 1665,
+          "file": "fastapi/routing.py",
+          "name": "_iter_routes_with_context",
+          "start": 1657
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 81,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15785"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py",
+        "fastapi/dependencies/utils.py",
+        "fastapi/openapi/utils.py",
+        "fastapi/params.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 115,
+          "file": "fastapi/_compat/v2.py",
+          "name": "ModelField.required",
+          "start": 113
+        },
+        {
+          "end": 254,
+          "file": "fastapi/_compat/v2.py",
+          "name": "get_schema_from_model_field",
+          "start": 232
+        },
+        {
+          "end": 773,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_get_multidict_value",
+          "start": 752
+        },
+        {
+          "end": 858,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_params_to_args",
+          "start": 776
+        },
+        {
+          "end": 948,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_extract_form_body",
+          "start": 904
+        },
+        {
+          "end": 998,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "request_body_to_args",
+          "start": 951
+        },
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 174,
+          "file": "fastapi/openapi/utils.py",
+          "name": "_get_openapi_operation_parameters",
+          "start": 104
+        },
+        {
+          "end": 134,
+          "file": "fastapi/params.py",
+          "name": "Param.__init__",
+          "start": 29
+        },
+        {
+          "end": 591,
+          "file": "fastapi/params.py",
+          "name": "Body.__init__",
+          "start": 481
+        }
+      ],
+      "hunk_count": 12,
+      "lines_changed_count": 62,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14371"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py",
+        "fastapi/exceptions.py",
+        "fastapi/openapi/utils.py",
+        "fastapi/params.py",
+        "fastapi/routing.py",
+        "fastapi/temp_pydantic_v1_params.py",
+        "fastapi/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 339,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 258
+        },
+        {
+          "end": null,
+          "file": "fastapi/exceptions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/openapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 226,
+          "file": "fastapi/openapi/utils.py",
+          "name": "generate_operation_id",
+          "start": 214
+        },
+        {
+          "end": null,
+          "file": "fastapi/params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 132,
+          "file": "fastapi/params.py",
+          "name": "Param.__init__",
+          "start": 28
+        },
+        {
+          "end": 586,
+          "file": "fastapi/params.py",
+          "name": "Body.__init__",
+          "start": 479
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 713,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 557
+        },
+        {
+          "end": null,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 105,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Param.__init__",
+          "start": 16
+        },
+        {
+          "end": 546,
+          "file": "fastapi/temp_pydantic_v1_params.py",
+          "name": "Body.__init__",
+          "start": 452
+        },
+        {
+          "end": null,
+          "file": "fastapi/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 206,
+          "file": "fastapi/utils.py",
+          "name": "generate_operation_id_for_path",
+          "start": 194
+        }
+      ],
+      "hunk_count": 20,
+      "lines_changed_count": 44,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14605"
+    },
+    {
+      "gold_files": [
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 2469,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.include_router",
+          "start": 2289
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 13,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15763"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 331,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "get_dependant",
+          "start": 257
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 697,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 555
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 24,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14583"
+    },
+    {
+      "gold_files": [
+        "docs_src/path_operation_advanced_configuration/tutorial002_py310.py",
+        "fastapi/applications.py",
+        "fastapi/openapi/utils.py",
+        "fastapi/routing.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/path_operation_advanced_configuration/tutorial002_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 9,
+          "file": "docs_src/path_operation_advanced_configuration/tutorial002_py310.py",
+          "name": "read_items",
+          "start": 7
+        },
+        {
+          "end": 21,
+          "file": "docs_src/path_operation_advanced_configuration/tutorial002_py310.py",
+          "name": "use_route_names_as_operation_ids",
+          "start": 12
+        },
+        {
+          "end": 1016,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.__init__",
+          "start": 57
+        },
+        {
+          "end": 1099,
+          "file": "fastapi/applications.py",
+          "name": "FastAPI.openapi",
+          "start": 1068
+        },
+        {
+          "end": 227,
+          "file": "fastapi/openapi/utils.py",
+          "name": "generate_operation_id",
+          "start": 215
+        },
+        {
+          "end": 233,
+          "file": "fastapi/openapi/utils.py",
+          "name": "generate_operation_summary",
+          "start": 230
+        },
+        {
+          "end": 257,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_operation_metadata",
+          "start": 236
+        },
+        {
+          "end": 478,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi_path",
+          "start": 260
+        },
+        {
+          "end": 511,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_fields_from_routes",
+          "start": 481
+        },
+        {
+          "end": 606,
+          "file": "fastapi/openapi/utils.py",
+          "name": "get_openapi",
+          "start": 514
+        },
+        {
+          "end": null,
+          "file": "fastapi/routing.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1002,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute",
+          "start": 811
+        },
+        {
+          "end": 976,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.__init__",
+          "start": 812
+        },
+        {
+          "end": 996,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.get_route_handler",
+          "start": 978
+        },
+        {
+          "end": 1002,
+          "file": "fastapi/routing.py",
+          "name": "APIRoute.matches",
+          "start": 998
+        },
+        {
+          "end": 4956,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter",
+          "start": 1005
+        },
+        {
+          "end": 1829,
+          "file": "fastapi/routing.py",
+          "name": "APIRouter.include_router",
+          "start": 1578
+        }
+      ],
+      "hunk_count": 21,
+      "lines_changed_count": 1230,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_15745"
+    },
+    {
+      "gold_files": [
+        "fastapi/_compat/v2.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 375,
+          "file": "fastapi/_compat/v2.py",
+          "name": "serialize_sequence_value",
+          "start": 372
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 7,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14297"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 909,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_extract_form_body",
+          "start": 869
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 8,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14303"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 908,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_extract_form_body",
+          "start": 869
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_13537"
+    },
+    {
+      "gold_files": [
+        "docs_src/json_base64_bytes/tutorial001_py310.py",
+        "fastapi/_compat/v2.py",
+        "fastapi/datastructures.py",
+        "scripts/playwright/json_base64_bytes/image01.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/json_base64_bytes/tutorial001_py310.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "fastapi/_compat/v2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 142,
+          "file": "fastapi/datastructures.py",
+          "name": "UploadFile.__get_pydantic_json_schema__",
+          "start": 138
+        },
+        {
+          "end": 150,
+          "file": "fastapi/datastructures.py",
+          "name": "UploadFile",
+          "start": 21
+        },
+        {
+          "end": null,
+          "file": "scripts/playwright/json_base64_bytes/image01.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 104,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14953"
+    },
+    {
+      "gold_files": [
+        "docs_src/authentication_error_status_code/tutorial001_an.py",
+        "docs_src/authentication_error_status_code/tutorial001_an_py39.py",
+        "docs_src/security/tutorial003.py",
+        "docs_src/security/tutorial003_an.py",
+        "docs_src/security/tutorial003_an_py310.py",
+        "docs_src/security/tutorial003_an_py39.py",
+        "docs_src/security/tutorial003_py310.py",
+        "fastapi/security/api_key.py",
+        "fastapi/security/http.py",
+        "fastapi/security/oauth2.py",
+        "fastapi/security/open_id_connect_url.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "docs_src/authentication_error_status_code/tutorial001_an.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "docs_src/authentication_error_status_code/tutorial001_an_py39.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 66,
+          "file": "docs_src/security/tutorial003.py",
+          "name": "get_current_user",
+          "start": 58
+        },
+        {
+          "end": 67,
+          "file": "docs_src/security/tutorial003_an.py",
+          "name": "get_current_user",
+          "start": 59
+        },
+        {
+          "end": 66,
+          "file": "docs_src/security/tutorial003_an_py310.py",
+          "name": "get_current_user",
+          "start": 58
+        },
+        {
+          "end": 66,
+          "file": "docs_src/security/tutorial003_an_py39.py",
+          "name": "get_current_user",
+          "start": 58
+        },
+        {
+          "end": 64,
+          "file": "docs_src/security/tutorial003_py310.py",
+          "name": "get_current_user",
+          "start": 56
+        },
+        {
+          "end": null,
+          "file": "fastapi/security/api_key.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 21,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyBase.check_api_key",
+          "start": 13
+        },
+        {
+          "end": 109,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyQuery.__init__",
+          "start": 56
+        },
+        {
+          "end": 113,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyQuery.__call__",
+          "start": 111
+        },
+        {
+          "end": 197,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyHeader.__init__",
+          "start": 148
+        },
+        {
+          "end": 201,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyHeader.__call__",
+          "start": 199
+        },
+        {
+          "end": 285,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyCookie.__init__",
+          "start": 236
+        },
+        {
+          "end": 289,
+          "file": "fastapi/security/api_key.py",
+          "name": "APIKeyCookie.__call__",
+          "start": 287
+        },
+        {
+          "end": null,
+          "file": "fastapi/security/http.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 81,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPBase.__init__",
+          "start": 71
+        },
+        {
+          "end": 95,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPBase.__call__",
+          "start": 83
+        },
+        {
+          "end": 218,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPBasic",
+          "start": 98
+        },
+        {
+          "end": 218,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPBasic.__call__",
+          "start": 188
+        },
+        {
+          "end": 322,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPBearer.__call__",
+          "start": 302
+        },
+        {
+          "end": 424,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPDigest",
+          "start": 325
+        },
+        {
+          "end": 424,
+          "file": "fastapi/security/http.py",
+          "name": "HTTPDigest.__call__",
+          "start": 404
+        },
+        {
+          "end": null,
+          "file": "fastapi/security/oauth2.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 389,
+          "file": "fastapi/security/oauth2.py",
+          "name": "OAuth2.__call__",
+          "start": 380
+        },
+        {
+          "end": 501,
+          "file": "fastapi/security/oauth2.py",
+          "name": "OAuth2PasswordBearer.__call__",
+          "start": 489
+        },
+        {
+          "end": 611,
+          "file": "fastapi/security/oauth2.py",
+          "name": "OAuth2AuthorizationCodeBearer.__call__",
+          "start": 599
+        },
+        {
+          "end": null,
+          "file": "fastapi/security/open_id_connect_url.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 85,
+          "file": "fastapi/security/open_id_connect_url.py",
+          "name": "OpenIdConnect",
+          "start": 12
+        },
+        {
+          "end": 85,
+          "file": "fastapi/security/open_id_connect_url.py",
+          "name": "OpenIdConnect.__call__",
+          "start": 76
+        }
+      ],
+      "hunk_count": 25,
+      "lines_changed_count": 259,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_13786"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 750,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_get_multidict_value",
+          "start": 729
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 12,
+      "location_status": "PARTIAL",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_14616"
+    },
+    {
+      "gold_files": [
+        "fastapi/dependencies/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 910,
+          "file": "fastapi/dependencies/utils.py",
+          "name": "_extract_form_body",
+          "start": 870
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 7,
+      "location_status": "RESOLVED",
+      "repo": "fastapi/fastapi",
+      "task_id": "fastapi_11194"
+    },
+    {
+      "gold_files": [
+        "src/requests/compat.py",
+        "src/requests/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "src/requests/compat.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "src/requests/utils.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 201,
+          "file": "src/requests/utils.py",
+          "name": "super_len",
+          "start": 135
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 17,
+      "location_status": "PARTIAL",
+      "repo": "psf/requests",
+      "task_id": "requests_6757"
+    },
+    {
+      "gold_files": [
+        "src/requests/exceptions.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "src/requests/exceptions.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 10,
+      "location_status": "PARTIAL",
+      "repo": "psf/requests",
+      "task_id": "requests_6629"
+    },
+    {
+      "gold_files": [
+        "src/requests/adapters.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 396,
+          "file": "src/requests/adapters.py",
+          "name": "HTTPAdapter.request_url",
+          "start": 369
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_6644"
+    },
+    {
+      "gold_files": [
+        "src/requests/utils.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 196,
+          "file": "src/requests/utils.py",
+          "name": "super_len",
+          "start": 133
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 3,
+      "location_status": "RESOLVED",
+      "repo": "psf/requests",
+      "task_id": "requests_6589"
+    },
+    {
+      "gold_files": [
+        "src/requests/status_codes.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "src/requests/status_codes.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "psf/requests",
+      "task_id": "requests_6592"
+    },
+    {
+      "gold_files": [
+        "rich/_wrap.py",
+        "rich/cells.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/_wrap.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 17,
+          "file": "rich/_wrap.py",
+          "name": "words",
+          "start": 10
+        },
+        {
+          "end": 48,
+          "file": "rich/_wrap.py",
+          "name": "divide_line",
+          "start": 20
+        },
+        {
+          "end": null,
+          "file": "rich/cells.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 144,
+          "file": "rich/cells.py",
+          "name": "chop_cells",
+          "start": 124
+        }
+      ],
+      "hunk_count": 4,
+      "lines_changed_count": 127,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3180"
+    },
+    {
+      "gold_files": [
+        "rich/default_styles.py",
+        "rich/syntax.py",
+        "rich/traceback.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/default_styles.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/syntax.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 548,
+          "file": "rich/syntax.py",
+          "name": "Syntax.stylize_range",
+          "start": 536
+        },
+        {
+          "end": 808,
+          "file": "rich/syntax.py",
+          "name": "Syntax",
+          "start": 226
+        },
+        {
+          "end": 788,
+          "file": "rich/syntax.py",
+          "name": "Syntax._apply_stylized_ranges",
+          "start": 760
+        },
+        {
+          "end": null,
+          "file": "rich/traceback.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 491,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract",
+          "start": 368
+        },
+        {
+          "end": 724,
+          "file": "rich/traceback.py",
+          "name": "Traceback._render_stack",
+          "start": 610
+        },
+        {
+          "end": 735,
+          "file": "rich/traceback.py",
+          "name": "bar",
+          "start": 733
+        },
+        {
+          "end": 757,
+          "file": "rich/traceback.py",
+          "name": "error",
+          "start": 750
+        }
+      ],
+      "hunk_count": 12,
+      "lines_changed_count": 98,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3486"
+    },
+    {
+      "gold_files": [
+        "rich/console.py",
+        "rich/diagnose.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/console.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 747,
+          "file": "rich/console.py",
+          "name": "Console.__init__",
+          "start": 623
+        },
+        {
+          "end": 34,
+          "file": "rich/diagnose.py",
+          "name": "report",
+          "start": 10
+        }
+      ],
+      "hunk_count": 3,
+      "lines_changed_count": 13,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3777"
+    },
+    {
+      "gold_files": [
+        "rich/console.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1394,
+          "file": "rich/console.py",
+          "name": "Console.render_lines",
+          "start": 1337
+        },
+        {
+          "end": 1453,
+          "file": "rich/console.py",
+          "name": "Console.render_str",
+          "start": 1396
+        },
+        {
+          "end": 2069,
+          "file": "rich/console.py",
+          "name": "Console._check_buffer",
+          "start": 1992
+        }
+      ],
+      "hunk_count": 4,
+      "lines_changed_count": 42,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3468"
+    },
+    {
+      "gold_files": [
+        "rich/syntax.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/syntax.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 819,
+          "file": "rich/syntax.py",
+          "name": "Syntax",
+          "start": 227
+        },
+        {
+          "end": 299,
+          "file": "rich/syntax.py",
+          "name": "Syntax.__init__",
+          "start": 263
+        },
+        {
+          "end": 362,
+          "file": "rich/syntax.py",
+          "name": "Syntax.from_path",
+          "start": 301
+        },
+        {
+          "end": 404,
+          "file": "rich/syntax.py",
+          "name": "Syntax.guess_lexer",
+          "start": 364
+        },
+        {
+          "end": 623,
+          "file": "rich/syntax.py",
+          "name": "Syntax.__rich_measure__",
+          "start": 607
+        },
+        {
+          "end": 632,
+          "file": "rich/syntax.py",
+          "name": "Syntax.__rich_console__",
+          "start": 625
+        },
+        {
+          "end": 766,
+          "file": "rich/syntax.py",
+          "name": "Syntax._get_syntax",
+          "start": 634
+        }
+      ],
+      "hunk_count": 7,
+      "lines_changed_count": 29,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3782"
+    },
+    {
+      "gold_files": [
+        "rich/traceback.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/traceback.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 586,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract",
+          "start": 409
+        },
+        {
+          "end": 451,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract.safe_str",
+          "start": 446
+        }
+      ],
+      "hunk_count": 6,
+      "lines_changed_count": 45,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3772"
+    },
+    {
+      "gold_files": [
+        "rich/syntax.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 626,
+          "file": "rich/syntax.py",
+          "name": "Syntax.__rich_console__",
+          "start": 617
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3296"
+    },
+    {
+      "gold_files": [
+        "rich/console.py",
+        "rich/diagnose.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 512,
+          "file": "rich/console.py",
+          "name": "group.decorator",
+          "start": 502
+        },
+        {
+          "end": 753,
+          "file": "rich/console.py",
+          "name": "Console.__init__",
+          "start": 631
+        },
+        {
+          "end": 964,
+          "file": "rich/console.py",
+          "name": "Console.is_terminal",
+          "start": 930
+        },
+        {
+          "end": 33,
+          "file": "rich/diagnose.py",
+          "name": "report",
+          "start": 10
+        }
+      ],
+      "hunk_count": 5,
+      "lines_changed_count": 41,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3675"
+    },
+    {
+      "gold_files": [
+        "rich/default_styles.py",
+        "rich/traceback.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/default_styles.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": null,
+          "file": "rich/traceback.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 411,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract.safe_str",
+          "start": 406
+        },
+        {
+          "end": 527,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract",
+          "start": 371
+        },
+        {
+          "end": 444,
+          "file": "rich/traceback.py",
+          "name": "Traceback.extract.get_locals",
+          "start": 432
+        },
+        {
+          "end": 605,
+          "file": "rich/traceback.py",
+          "name": "Traceback.__rich_console__",
+          "start": 529
+        }
+      ],
+      "hunk_count": 8,
+      "lines_changed_count": 13,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3676"
+    },
+    {
+      "gold_files": [
+        "rich/table.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 468,
+          "file": "rich/table.py",
+          "name": "Table.add_row",
+          "start": 423
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3518"
+    },
+    {
+      "gold_files": [
+        "rich/cells.py",
+        "rich/segment.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/cells.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 178,
+          "file": "rich/segment.py",
+          "name": "Segment.split_cells",
+          "start": 158
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 8,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3535"
+    },
+    {
+      "gold_files": [
+        "rich/segment.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 159,
+          "file": "rich/segment.py",
+          "name": "Segment._split_cells",
+          "start": 109
+        },
+        {
+          "end": 667,
+          "file": "rich/segment.py",
+          "name": "Segment",
+          "start": 63
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 35,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3521"
+    },
+    {
+      "gold_files": [
+        "rich/segment.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 146,
+          "file": "rich/segment.py",
+          "name": "Segment._split_cells",
+          "start": 109
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 17,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3506"
+    },
+    {
+      "gold_files": [
+        "rich/text.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1004,
+          "file": "rich/text.py",
+          "name": "Text.append",
+          "start": 962
+        },
+        {
+          "end": 1026,
+          "file": "rich/text.py",
+          "name": "Text.append_text",
+          "start": 1006
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3480"
+    },
+    {
+      "gold_files": [
+        "rich/pretty.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 870,
+          "file": "rich/pretty.py",
+          "name": "traverse._traverse",
+          "start": 621
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 4,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3472"
+    },
+    {
+      "gold_files": [
+        "rich/highlighter.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 103,
+          "file": "rich/highlighter.py",
+          "name": "ReprHighlighter",
+          "start": 80
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3454"
+    },
+    {
+      "gold_files": [
+        "rich/text.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 1049,
+          "file": "rich/text.py",
+          "name": "Text.append_tokens",
+          "start": 1028
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 1,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3471"
+    },
+    {
+      "gold_files": [
+        "rich/console.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 2099,
+          "file": "rich/console.py",
+          "name": "Console._write_buffer",
+          "start": 2028
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3470"
+    },
+    {
+      "gold_files": [
+        "rich/markdown.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 686,
+          "file": "rich/markdown.py",
+          "name": "Markdown.__rich_console__",
+          "start": 569
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3469"
+    },
+    {
+      "gold_files": [
+        "rich/prompt.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 283,
+          "file": "rich/prompt.py",
+          "name": "PromptBase",
+          "start": 30
+        },
+        {
+          "end": 73,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.__init__",
+          "start": 53
+        },
+        {
+          "end": 89,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.ask",
+          "start": 75
+        },
+        {
+          "end": 104,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.ask",
+          "start": 91
+        },
+        {
+          "end": 141,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.ask",
+          "start": 106
+        },
+        {
+          "end": 215,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.check_choice",
+          "start": 205
+        },
+        {
+          "end": 238,
+          "file": "rich/prompt.py",
+          "name": "PromptBase.process_response",
+          "start": 217
+        },
+        {
+          "end": null,
+          "file": "rich/prompt.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 12,
+      "lines_changed_count": 34,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3052"
+    },
+    {
+      "gold_files": [
+        "rich/ansi.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/ansi.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 1,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3278"
+    },
+    {
+      "gold_files": [
+        "rich/style.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 669,
+          "file": "rich/style.py",
+          "name": "Style.clear_meta_and_links",
+          "start": 648
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_2943"
+    },
+    {
+      "gold_files": [
+        "rich/table.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 919,
+          "file": "rich/table.py",
+          "name": "Table._render",
+          "start": 741
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 10,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_2725"
+    },
+    {
+      "gold_files": [
+        "rich/_export_format.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/_export_format.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3105"
+    },
+    {
+      "gold_files": [
+        "rich/markdown.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 330,
+          "file": "rich/markdown.py",
+          "name": "TableDataElement.create",
+          "start": 315
+        },
+        {
+          "end": 334,
+          "file": "rich/markdown.py",
+          "name": "TableDataElement.__init__",
+          "start": 332
+        },
+        {
+          "end": 341,
+          "file": "rich/markdown.py",
+          "name": "TableDataElement.on_text",
+          "start": 336
+        },
+        {
+          "end": null,
+          "file": "rich/markdown.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 12,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3130"
+    },
+    {
+      "gold_files": [
+        "rich/_export_format.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/_export_format.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 2,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3043"
+    },
+    {
+      "gold_files": [
+        "rich/highlighter.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 103,
+          "file": "rich/highlighter.py",
+          "name": "ReprHighlighter",
+          "start": 80
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3067"
+    },
+    {
+      "gold_files": [
+        "rich/repr.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 86,
+          "file": "rich/repr.py",
+          "name": "auto.do_replace.auto_rich_repr",
+          "start": 68
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 2,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3006"
+    },
+    {
+      "gold_files": [
+        "rich/markdown.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 267,
+          "file": "rich/markdown.py",
+          "name": "TableElement.__rich_console__",
+          "start": 252
+        }
+      ],
+      "hunk_count": 1,
+      "lines_changed_count": 17,
+      "location_status": "RESOLVED",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3064"
+    },
+    {
+      "gold_files": [
+        "rich/markup.py"
+      ],
+      "gold_functions": [
+        {
+          "end": 67,
+          "file": "rich/markup.py",
+          "name": "escape",
+          "start": 48
+        },
+        {
+          "end": null,
+          "file": "rich/markup.py",
+          "name": "UNRESOLVED",
+          "start": null
+        }
+      ],
+      "hunk_count": 2,
+      "lines_changed_count": 4,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3063"
+    },
+    {
+      "gold_files": [
+        "rich/text.py"
+      ],
+      "gold_functions": [
+        {
+          "end": null,
+          "file": "rich/text.py",
+          "name": "UNRESOLVED",
+          "start": null
+        },
+        {
+          "end": 1279,
+          "file": "rich/text.py",
+          "name": "Text",
+          "start": 101
+        },
+        {
+          "end": 148,
+          "file": "rich/text.py",
+          "name": "Text.__init__",
+          "start": 127
+        },
+        {
+          "end": 310,
+          "file": "rich/text.py",
+          "name": "Text.from_ansi",
+          "start": 274
+        },
+        {
+          "end": 380,
+          "file": "rich/text.py",
+          "name": "Text.assemble",
+          "start": 337
+        },
+        {
+          "end": 588,
+          "file": "rich/text.py",
+          "name": "Text.highlight_regex",
+          "start": 552
+        },
+        {
+          "end": 663,
+          "file": "rich/text.py",
+          "name": "Text.__rich_console__",
+          "start": 646
+        },
+        {
+          "end": 807,
+          "file": "rich/text.py",
+          "name": "Text.expand_tabs",
+          "start": 775
+        },
+        {
+          "end": 955,
+          "file": "rich/text.py",
+          "name": "Text.append",
+          "start": 913
+        },
+        {
+          "end": 974,
+          "file": "rich/text.py",
+          "name": "Text.append_text",
+          "start": 957
+        },
+        {
+          "end": 997,
+          "file": "rich/text.py",
+          "name": "Text.append_tokens",
+          "start": 976
+        },
+        {
+          "end": 1129,
+          "file": "rich/text.py",
+          "name": "Text.divide",
+          "start": 1051
+        }
+      ],
+      "hunk_count": 13,
+      "lines_changed_count": 91,
+      "location_status": "PARTIAL",
+      "repo": "Textualize/rich",
+      "task_id": "rich_3061"
+    }
+  ]
+}

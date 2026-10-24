@@ -1,5 +1,130 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-P2-LOCALIZATION-STUDY-AND-CANDIDATE-1
+
+Implementation and tests authored; execution NOT RUN. No experimental ZIP has
+been built in this slice. P2 is EXPERIMENTAL_UNQUALIFIED, never submission-ready.
+
+Reviewed metadata is preserved byte-for-byte at `evidence/gold-locations.json`,
+SHA256 `c366076d5d2862d6a3c07c5db6f977c06bdcef8f94657f3f6591501826290c54`.
+Its 129 records comprise 65 RESOLVED and 64 PARTIAL; unknown scopes are not zero
+recall. Metadata contains paths/scopes/counts, no patch, issue or source text.
+The maintainer's 11 solved patches and localization examples motivate a hypothesis,
+not a measured P2 improvement or a causal attribution of every NO_EDIT outcome.
+`fastapi_15800` stays in the study: patch size alone does not justify excluding it.
+Previously reported public-notebook opinions are unverified, not study authority.
+
+### Pinned source findings
+
+All line references below are inside the preserved swegemma 0.2.11 wheel.
+HARNESS_README §6 tools 7–9 documents these three interfaces:
+
+| Tool | Implementation / contract |
+|---|---|
+| `search_similar_code(query: str, k: int = 10)` | `tools/graph.py:197–288`: JSON `status`, `results[{node_name,code,similarity}]`, count/truncation; `SimilaritySearchError` on failure |
+| `get_code_neighbors(node: str, edge_type: str \| None = None, max_neighbors: int = 50)` | `tools/graph.py:88–194`: JSON neighbors/count/truncation, `GraphLookupError`; callers/callees, optional relation filter |
+| `get_code_subgraph(nodes: list[str])` | `tools/graph.py:291–421`: JSON nodes, directed edges/from/to/type and counts/truncation; `SubgraphExtractionError` |
+
+`tools/__init__.py:43–45` binds these exact names; graph.py:424 onward supplies
+ADK factory wrappers. README §2 tools registry permits named registered tools.
+This establishes static name availability, NOT an executed P2 compilation pass.
+The unchanged evaluator compiles the package when loading it; load/compile failure
+must stop the GPU run. No official package changes or synthetic compiler bypass.
+
+Each tool uses repo/base_commit and graph/embedding paths from context and
+`use_local_storage=True` (graph.py:138–162,237–259,344–364).
+`graph/retrieval_utils.py:785–863` selects an existing embedding for a resolved
+symbol, otherwise falls back to lexical node/code token overlap.
+`graph/embedding_utils.py:388–436` looks up stored values and returns None when
+missing: no live embedding model. Thus T1(issue text) is generally the official
+LEXICAL FALLBACK, not neural semantic embedding of the issue. No LLM needed.
+Missing/unsupported graph, embedding or snapshot inputs are UNAVAILABLE, not
+evidence of poor localization. Hidden scorer retrieval parity remains UNKNOWN.
+
+### Frozen CPU study protocol and setup
+
+1. First run the offline tests below. Upload a **CPU-only** tooling dataset containing
+   the complete local_eval directory, pinned official-cells.json and the reviewed
+   gold metadata. Attach public competition data and official wheelhouse at
+   `/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse`.
+2. Import `localization_study.ipynb`. Accelerator **None**, Internet **Off**; no
+   model/candidate input. Set TOOLS to the attached local_eval directory, a fresh
+   OUTPUT, and all three confirmation flags True. Approval:
+   `AUTHORIZE FORGEAI GEMMA4 LOCALIZATION STUDY CPU`.
+3. Run only that notebook's cell. The worker reuses unchanged, hash-checked starter
+   **cell 2** via runtime.install_official_environment, never cell 8 or evaluator.
+   It records environment.json. No other installation or dependency repair.
+4. The study launches a fresh CPU child per public task (300 s timeout), sequentially,
+   with a 3 h loop guard and 11400 s notebook subprocess guard. Quota/runtime cost
+   UNMEASURED. Download the entire output outside the repo; do not commit traces.
+
+Snapshot enumeration follows official `deduplication.py:1311–1368`; Python source
+is read from tar members and a base-to-task delta reconstructed in memory with
+exact context checks. It is never imported/executed. This restricted textual reader
+does not claim full Git parity: unsupported deltas produce UNAVAILABLE. Tests and
+non-Python files are excluded from the retrieval corpus, so their gold locations
+remain in file-recall denominators but cannot be retrieved by this baseline.
+
+Retrieval receives only issue text, repo, base commit and snapshot graph/embedding
+inputs. Gold is passed only to metrics after retrieval. Raw response code and query
+strings never enter exported results. Unmapped graph symbols become UNRESOLVED;
+mapping uses unique snapshot AST module/scope names, never gold to disambiguate.
+
+Frozen methods: T1 top 10 from the official query tool; T2 top hit then its first
+10 neighbors, second hit then its first 10 neighbors, then remaining T1 hits
+(stable deduplication, official neighbor order). A fourth call characterizes the
+induced subgraph of the first two hits without changing ranking. L is casefolded
+identifier token hit density over snapshot modules/scopes; ties by symbol name.
+L+T1 is reciprocal-rank fusion with fixed constant 60 and equal weights.
+No parameter selection from gold. Method CPU and actual tool response character
+counts/timings are retained; raw responses are discarded. Source indexing CPU is
+reported separately. CPU time excludes child startup; wall timings accompany calls.
+
+`study.jsonl` records metrics and ranked NAMES only, incrementally. summary.json
+reports per repo, overall, and the six supplied diagnosis examples, with explicit
+UNAVAILABLE counts. File Recall@1/3/5/10 deduplicates ranked files; function
+Recall@5/10 uses known (file,qualified-scope) pairs, including known scopes within
+PARTIAL gold records. MRR is first correct file rank. A null function metric has
+no known gold function denominator; it is not counted as zero. Unmapped entries
+consume a rank. Error returns remain explicitly marked PARTIAL_UNAVAILABLE and
+must not be interpreted as valid zero-retrieval evidence. hashes.json pins outputs.
+
+**Holdout limitation:** this explicitly requested all-129 localization study uses
+confirm-20 as diagnostic data too. It is no longer untouched localization evaluation
+data. Claims of generalization require a separate untouched set. HTTPX n=1 is
+anecdotal. These are retrieval metrics, not agent task-success or correctness claims.
+
+### P2 experimental package and dev-16v
+
+P2 preserves P1b model, sampling and 180/28/6/80 budgets exactly. Only agent.yaml
+(three registered tools added) and prompts/system.md (Localization section appended)
+change. Four graph calls share the original 28 calls; the early-edit deadline and
+finish reserve are unchanged. No graph-tool requirement was added to P1b/P1c.
+
+From repository root, existing uv environment, no credentials/environment overrides:
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'P2 localization controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p2 --output 'D:\Downloads\gemma-p2-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P2 experimental packaging failed' }
+```
+
+Expected: tests OK; packaging prints EXPERIMENTAL_UNQUALIFIED, ZIP size/SHA256 and
+manifest SHA256, submission_authorized false. Output directory must be fresh.
+
+For GPU comparison, make a **separate tooling dataset without
+evidence/gold-locations.json or its .sha256**. Do not attach the CPU study dataset
+or any gold-location output. The GPU worker refuses tooling containing that JSON.
+Attach the unchanged official GPU inputs plus P2 submission.zip.bin and manifest.
+Use local_eval.ipynb with candidate `p2`, subset `dev-16v`, package_mode
+`EXPERIMENTAL_UNQUALIFIED`, experimental_authorized true; paste the generated
+ZIP/manifest hashes and set fresh output containing `dev-16v`. Exact approval:
+`AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p2 ON dev-16v`.
+Follow the existing GPU confirmation and official-cell setup instructions below.
+Compare against P1b under frozen controls; apply the existing bootstrap 11 h gate.
+No submission, compile/reconciliation qualification or new model admission follows.
+
 ## FORGEAI-GEMMA4-FAILURE-LOCATION-DIAGNOSIS-1
 
 Authored, NOT RUN. Gold location metadata is evaluation-only privileged evidence.

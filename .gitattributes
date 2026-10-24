@@ -1,2 +1,4 @@
 experiments/gemma4_competition/baseline/** text eol=lf
 experiments/gemma4_competition/candidates/** text eol=lf
+experiments/gemma4_competition/local_eval/evidence/gold-locations.json -text
+experiments/gemma4_competition/local_eval/evidence/gold-locations.sha256 -text

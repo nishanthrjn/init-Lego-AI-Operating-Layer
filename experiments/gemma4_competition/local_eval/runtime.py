@@ -324,6 +324,8 @@ def install_official_environment(config: dict, output: Path):
 
 
 def worker(config: dict, output: Path) -> None:
+    if (HERE / "evidence/gold-locations.json").exists():
+        raise ValueError("Remove gold-location metadata from GPU tooling input; CPU study only")
     doc, selected, manifest = prepare(config)
     cells, evidence, namespace = install_official_environment(config, output)
     pins = check_environment()
