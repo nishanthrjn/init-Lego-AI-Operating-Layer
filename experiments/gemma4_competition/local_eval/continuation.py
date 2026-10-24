@@ -18,11 +18,15 @@ def project(row, error="", log=""):
     result = dict(row)
     categories = set(row.get("failure_categories", []))
     text = (error + "\n" + log).lower()
+    # Structured per-task evaluator error only: model prose may quote error names.
+    context_failure = "contextwindowexceedederror" in error.lower()
     format_failure = any(s in text for s in (
         "reached maximum continuation nudges", "malformed tool", "unparsed tool",
         "<|tool_call>call:", "<|tool_call|> was cut off"))
     agent_outcome = (error.startswith("Agent exceeded ") or
-                     "without calling submit_patch" in error or format_failure)
+                     "without calling submit_patch" in error or format_failure or context_failure)
+    if context_failure:
+        categories.add("CONTEXT_WINDOW_EXCEEDED")
     if format_failure:
         categories.add("TOOL_CALL_FORMAT_FAILURE")
     if row.get("patch_bytes") == 0:
@@ -66,7 +70,8 @@ def load_resume(config, current=None):
     # Require every classification-bearing log to be pinned, including absence.
     actual_logs = {p.relative_to(root).as_posix() for p in (root / "official/logs").glob("*.log")}
     actual_tests = {p.relative_to(root).as_posix() for p in (root / "official/test_outputs").glob("*.log")}
-    if set(manifest["files"]) != {"run.json", "tasks.jsonl", "completion.json"} | actual_logs | actual_tests:
+    official_results = {"official/task_results.jsonl"} if (root / "official/task_results.jsonl").is_file() else set()
+    if set(manifest["files"]) != {"run.json", "tasks.jsonl", "completion.json"} | actual_logs | actual_tests | official_results:
         raise ValueError("resume evidence inventory mismatch")
     old, rows = read_run(root)
     old_config = json.loads(previous_config.read_bytes())
@@ -107,6 +112,8 @@ def main():
     files = [root / n for n in ("run.json", "tasks.jsonl", "completion.json")]
     files += list((root / "official/logs").glob("*.log"))
     files += list((root / "official/test_outputs").glob("*.log"))
+    if (root / "official/task_results.jsonl").is_file():
+        files.append(root / "official/task_results.jsonl")
     doc = {"schema": 1, "config_sha256": digest(args.config),
            "files": {p.relative_to(root).as_posix(): digest(p) for p in files}}
     from analysis import canonical, read_run

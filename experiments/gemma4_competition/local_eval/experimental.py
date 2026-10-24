@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -37,6 +37,19 @@ def static_files(candidate):
     added = b"  - search_similar_code\n  - get_code_neighbors\n  - get_code_subgraph\n"
     if data["p2"]["agent.yaml"].replace(added, b"") != data["p1b"]["agent.yaml"]:
         raise ValueError("P2 may only add the three graph tools")
+    if {k for k in MEMBERS if data["p1b"][k] != data["p3"][k]} != {"configs/sampling.yaml"}:
+        raise ValueError("P3 scope mismatch")
+    if data["p3"]["configs/sampling.yaml"] != data["p1b"]["configs/sampling.yaml"].replace(b"max_output_tokens: 16384", b"max_output_tokens: 8192"):
+        raise ValueError("P3 output cap must be the only sampling change")
+    if {k for k in MEMBERS if data["p3"][k] != data["p3g"][k]} != {"agent.yaml", "prompts/system.md"}:
+        raise ValueError("P3g scope mismatch")
+    if data["p3g"]["agent.yaml"].replace(added, b"") != data["p3"]["agent.yaml"]:
+        raise ValueError("P3g tool scope mismatch")
+    before = data["p3"]["prompts/system.md"]
+    after = data["p3g"]["prompts/system.md"]
+    if (before.split(b"2. Localize within a budget.")[0] != after.split(b"2. Localization.")[0]
+            or before.split(b"3. Make an early, reversible edit.")[1] != after.split(b"3. Make an early, reversible edit.")[1]):
+        raise ValueError("P3g must preserve prompt outside localization section")
     return data[candidate]
 
 
@@ -54,7 +67,7 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
@@ -66,7 +79,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()

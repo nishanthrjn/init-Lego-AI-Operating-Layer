@@ -4,20 +4,137 @@
   "controls_sha256": "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033",
   "subset": "dev-16v",
   "runs": [
-    {"candidate": "p1", "state": "COMPLETED", "resolved": 8, "verifiable": 16, "source": "VERIFIABLE projection of dev-30"},
-    {"candidate": "p1b", "state": "COMPLETED", "resolved": 8, "verifiable": 16, "source": "attempt1 + attempt2 merged", "agent_error_tasks": ["fastapi_14419", "rich_3471"]},
-    {"candidate": "p1c", "state": "COMPLETED", "resolved": 7, "verifiable": 16}
+    {
+      "candidate": "p1",
+      "state": "COMPLETED",
+      "resolved": 8,
+      "verifiable": 16,
+      "source": "VERIFIABLE projection of dev-30"
+    },
+    {
+      "candidate": "p1b",
+      "state": "COMPLETED",
+      "resolved": 8,
+      "verifiable": 16,
+      "source": "attempt1 + attempt2 merged",
+      "agent_error_tasks": [
+        "fastapi_14419",
+        "rich_3471"
+      ]
+    },
+    {
+      "candidate": "p1c",
+      "state": "COMPLETED",
+      "resolved": 7,
+      "verifiable": 16
+    },
+    {
+      "candidate": "p2",
+      "state": "COMPLETED",
+      "resolved": 8,
+      "verifiable": 16,
+      "source": "retained dev-16v attempt1; descriptive success count, qualified summary pending",
+      "graph_tool_calls": {
+        "get_code_subgraph": 0,
+        "search_similar_code": 0,
+        "get_code_neighbors": 1
+      },
+      "context_window_exceeded_tasks": [
+        "rich_3934",
+        "fastapi_14419",
+        "rich_3471"
+      ],
+      "remaining_unknown_task": "fastapi_15800",
+      "reclassification_status": "IMPLEMENTED_NOT_EXECUTED"
+    }
   ],
-  "always_solved": ["fastapi_14492", "rich_3905", "rich_3454", "fastapi_14786", "rich_3067"],
-  "variable": ["fastapi_5624", "fastapi_14419", "fastapi_5077", "fastapi_11194", "fastapi_15589"],
-  "never_solved": ["rich_3934", "fastapi_15800", "rich_4075", "rich_3471", "rich_4079", "rich_4076"],
+  "always_solved": [
+    "fastapi_14492",
+    "rich_3905",
+    "rich_3454",
+    "fastapi_14786",
+    "rich_3067"
+  ],
+  "variable": [
+    "fastapi_5624",
+    "fastapi_14419",
+    "fastapi_5077",
+    "fastapi_11194",
+    "fastapi_15589"
+  ],
+  "never_solved": [
+    "rich_3934",
+    "fastapi_15800",
+    "rich_4075",
+    "rich_3471",
+    "rich_4079",
+    "rich_4076"
+  ],
   "per_candidate_variable_task_outcomes": null,
-  "public_evidence": {"candidate": "p1", "notebook": "p1_selfcontained", "version": "1", "status": "SUCCEEDED", "public_score": 0.10, "submitted_date": "2026-10-23", "canonical_record": "submissions.json"},
-  "decision": {"base_candidate": "p1b", "p1c_adopted": false, "authority": "MAINTAINER"},
+  "public_evidence": {
+    "candidate": "p1",
+    "notebook": "p1_selfcontained",
+    "version": "1",
+    "status": "SUCCEEDED",
+    "public_score": 0.1,
+    "submitted_date": "2026-10-23",
+    "canonical_record": "submissions.json"
+  },
+  "decision": {
+    "base_candidate": "p1b",
+    "p1c_adopted": false,
+    "authority": "MAINTAINER"
+  },
   "limitations": [
     "The adoption decision does not establish statistically significant improvement.",
     "Individual candidate outcomes for variable tasks were not supplied and are not reconstructed from aggregate totals.",
     "Historical attempt1 remains HARNESS_ERROR; COMPLETED describes the merged P1b run.",
-    "Public B2 0.12 versus P1 0.10 lies within reported identical-file variation; no performance difference established."
-  ]
+    "Public B2 0.12 versus P1 0.10 lies within reported identical-file variation; no performance difference established.",
+    "P2 completed execution but its qualified summary still requires error classification; raw 8/16 is not a claim of a fully adjudicated pass rate."
+  ],
+  "context_diagnosis": {
+    "thinking_budget": 4096,
+    "p2_tasks": [
+      "rich_3934",
+      "fastapi_14419",
+      "rich_3471"
+    ],
+    "requested_output_tokens": 16384,
+    "new_experiment_output_tokens": 8192,
+    "max_model_len": 32768,
+    "p1c_tasks": [],
+    "historical_records_rewritten": false,
+    "evidence_basis": "Retained task-bound official/task_results.jsonl inspected for P1b attempt2, P1c attempt1 and P2 attempt1; derived summary execution pending",
+    "p1b_tasks": [
+      "rich_3471"
+    ],
+    "retained_error_records": {
+      "p1c": {
+        "records": 16,
+        "sha256": "3e6a62d81b44ed2dad6fcf35c114cda7ace1df001ad1e36d17216cfea6d32007",
+        "context_error_tasks": [],
+        "path": "D:/Downloads/local_eval_p1_dev30/p1c/forgeai-local-eval-p1c-dev-16v-attempt1/official/task_results.jsonl",
+        "session_timeout_tasks": [
+          "fastapi_5624",
+          "rich_3934",
+          "fastapi_5077",
+          "rich_4079",
+          "fastapi_15589"
+        ]
+      },
+      "p1b": {
+        "records": 8,
+        "sha256": "b1ba291a8a55710708489b307e6748baad7bb6fa9dd211868507dda17eea865a",
+        "context_error_tasks": [
+          "rich_3471"
+        ],
+        "path": "D:/Downloads/local_eval_p1_dev30/p1b/forgeai-local-eval-p1b-dev-16v-attempt2/official/task_results.jsonl",
+        "session_timeout_tasks": [
+          "rich_4079"
+        ],
+        "inherited_tasks": 8
+      }
+    },
+    "path_observation": "Newly supplied local-eval-p1b-dev16v/attempt2 and local-eval-p1c-dev16v/attempt1 paths were absent during inspection; verified unchanged retained copies at recorded local_eval_p1_dev30 paths instead."
+  }
 }

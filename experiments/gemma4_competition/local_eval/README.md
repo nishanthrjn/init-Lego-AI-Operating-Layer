@@ -1,5 +1,123 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## FORGEAI-GEMMA4-P3-CONTEXT-FIX-AND-GRAPH-REDO-1
+
+Authored; NOT RUN. Historical candidates, packages and run artifacts remain
+unchanged. P3 and P3g are experimental, not submission qualified. Packaging and
+category recomputation are maintainer actions, not already completed results.
+
+### Evidence and interpretation
+
+The three original study artifacts are preserved in
+`../results/localization-study-attempt1/` with `preserved-sha256.json`. Git preserves
+their raw bytes. summary.json SHA256:
+`c806c382ab488ee544323ff5ee7d08cb2e3b3590b15aed71ee19747749eb8927`.
+The original hashes.json also references per-task JSONs that intentionally remain
+external; it is not a claim that those files are committed. study.jsonl is ranked
+names/metadata only. File Recall@5 L/T1/T2/fusion: .204/.310/.311/.365; Recall@10:
+.307/.322/.353/.443. Function Recall@10: .041/.147/.149/.162. These are the original
+reported metrics, not rerun/revised numbers or evidence of an agent improvement.
+
+P2 completed execution in approximately 4150 s with eight recorded successes.
+Its only graph invocation was get_code_neighbors once; search_similar_code was
+never called. dev-16v-comparison.json preserves that descriptive result and the
+remaining qualified-summary limitation. The documented symbol-query contract
+(HARNESS_README §6 tool 8; swegemma 0.2.11 tools/graph.py:205–211,448–460) conflicts
+with P2's issue-behaviour instruction at the intended-use level: the tool supports
+a fallback but advertises symbols. This motivates, but does not prove, P3g.
+
+The pinned official starter **cell 8**, retained in official-cells.json, explicitly
+sets `VllmConfig(max_model_len=32768)`. The actual serving owner is
+**adk-submission 0.2.13**, `adk_submission/server.py:125,152,698–699`: the field
+defaults to 32768 and becomes `--max-model-len`. We do not attribute that option
+to swegemma or claim hidden-scoring settings are identical.
+
+P2's task-bound official error records explicitly report ContextWindowExceededError
+for rich_3934, fastapi_14419 and rich_3471: requested output 16384 plus at least
+16385 input exceeded 32768. Retained P1b attempt2 official records confirm rich_3471 has the same exception;
+all 16 P1c official task records contain no ContextWindowExceededError. With output 8192 the nominal input
+allowance is 24576 instead of 16384; special tokens, growing prompts and actual
+serving settings still matter. Lower output capacity may also truncate generation.
+P3 holds thinking_budget=4096 fixed to isolate the output reservation from P1c's
+thinking-budget change. Existing M2/B2/P1 submissions are not rewritten.
+
+### Outcome projection and provenance
+
+Independent inspection of retained official task-result fields confirms P1b
+attempt2 has eight new records plus eight inherited tasks: rich_3471 has the
+context exception, and rich_4079 reports `Agent exceeded session timeout (6.0 min)`.
+P1c's 16 records contain the same timeout for fastapi_5624, rich_3934,
+fastapi_5077, rich_4079 and fastapi_15589, and no context exception. These are
+distinct failure mechanisms; a timeout must not be labelled a context failure.
+The newly reported hyphenated download paths were absent during inspection;
+commands below use the accessible, hash-identical `local_eval_p1_dev30` copies.
+No category summary or evaluation was executed to establish these field readings.
+
+analysis.read_run now reads optional official/task_results.jsonl, requires unique
+task/repo identities and agreement with retained official resolution, and passes
+the structured error to continuation.project. Exact ContextWindowExceededError
+adds CONTEXT_WINDOW_EXCEEDED and treats the per-task request failure as UNRESOLVED.
+Only the generic HARNESS_ERROR_DETAILS_IN_EXTERNAL_LOG flag is removed; independent
+infrastructure/verification errors remain. Model prose mentioning the exception
+does not establish an error. No raw errors are added to committed records.
+
+Historical JSONL is never rewritten. Run the summary commands below to recompute
+derived categories. Expected P2 projection: eight resolved, seven unresolved and
+fastapi_15800 still unknown unless separately adjudicated. Its verification error
+is not a context failure; no complete pass rate or time gate is manufactured here.
+Resume manifests created now also pin official/task_results.jsonl when present.
+Older manifests that omit this classification-bearing file must be regenerated
+to a fresh external directory using continuation.py before a future resume.
+
+### Candidate boundaries and maintainer sequence
+
+P3 differs from P1b only by `max_output_tokens: 8192` in sampling.yaml; thinking
+4096, model, six tools, prompt and 180/28/6/80 budgets are unchanged. P3g differs
+from P3 only by adding the three graph tools and replacing prompt section 2 with
+bounded grep -> symbol -> neighbors/similar-symbol lookup, at most three graph
+calls. All other prompt sections, budget and sampling remain byte-identical.
+
+From repository root in the existing uv environment (no credentials needed):
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'P3 context and candidate controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3 --output 'D:\Downloads\gemma-p3-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P3 packaging failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3g --output 'D:\Downloads\gemma-p3g-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P3g packaging failed' }
+$controls = 'experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json'
+$controlsHash = '05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --controls $controls --controls-sha256 $controlsHash
+if ($LASTEXITCODE -ne 0) { throw 'P2 category projection failed' }
+# Set these to actual extracted run directories, not ZIP files or tooling folders.
+$p1bRun = 'D:\Downloads\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2'
+$p1cRun = 'D:\Downloads\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1'
+foreach ($run in @($p1bRun, $p1cRun)) {
+    if (-not (Test-Path -LiteralPath "$run\run.json" -PathType Leaf)) { throw 'Set the actual retained run path' }
+    uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $run --controls $controls --controls-sha256 $controlsHash
+    if ($LASTEXITCODE -ne 0) { throw 'Historical category projection failed' }
+}
+```
+
+For a merged P1b view, task errors can only be newly derived where the corresponding
+official records are present. Analyze attempt2 separately if its error records are
+not in the merged folder; absence is UNKNOWN, never evidence of zero errors.
+
+Expected tests OK; package state EXPERIMENTAL_UNQUALIFIED and printed ZIP/manifest
+hashes; output directories must be fresh. No ZIP is produced by this coding slice.
+After successful offline checks, use the existing GPU notebook with a **gold-free**
+tooling dataset. Run **P3 first, then P3g**, both on dev-16v and pinned controls.
+Attach each respective .zip.bin and manifest, set experimental_authorized true,
+package_mode EXPERIMENTAL_UNQUALIFIED, candidate p3/p3g, and paste its printed pins.
+Use separate fresh output directories containing `dev-16v`. Authorization phrases:
+`AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p3 ON dev-16v` and
+`AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p3g ON dev-16v`.
+Keep existing GPU/Internet-Off confirmations and serving cells unchanged. Compare
+context errors, graph adherence, paired task outcomes and the existing time-fit
+gate; do not infer superiority from aggregate counts alone. Do not attach the CPU
+study dataset or gold-location metadata. No submission is authorized.
+
 ## FORGEAI-GEMMA4-P2-LOCALIZATION-STUDY-AND-CANDIDATE-1
 
 Implementation and tests authored; execution NOT RUN. No experimental ZIP has

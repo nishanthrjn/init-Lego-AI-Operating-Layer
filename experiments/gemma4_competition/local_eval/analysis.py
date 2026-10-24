@@ -213,6 +213,17 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
     if not meta["task_ids"] or len(set(meta["task_ids"])) != len(meta["task_ids"]):
         raise ValueError("invalid planned task identity")
     rows = []
+    official = {}
+    official_file = path / "official/task_results.jsonl"
+    if official_file.is_file():
+        for raw in official_file.read_bytes().splitlines(keepends=True):
+            if not raw.endswith(b"\n"):
+                continue
+            item = json.loads(raw)
+            tid = item["instance_id"]
+            if tid in official or meta["task_repos"].get(tid) != item["repo"]:
+                raise ValueError("official task result identity mismatch")
+            official[tid] = item
     lines = (path / "tasks.jsonl").read_bytes().splitlines(keepends=True)
     for i, raw in enumerate(lines):
         # An unterminated final line is a torn write, not completed evidence.
@@ -240,7 +251,11 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
         if not agent_log.resolve().is_relative_to((path / "official/logs").resolve()):
             raise ValueError("unsafe agent log identity")
         from continuation import project
-        row = project(row, log=agent_log.read_text(encoding="utf-8", errors="replace") if agent_log.is_file() else "")
+        evidence = official.get(row["task_id"])
+        if evidence is not None and evidence["resolved"] != row.get("official_resolved", row["resolved"]):
+            raise ValueError("official outcome disagreement")
+        row = project(row, error=(evidence.get("error") or "") if evidence else "",
+                      log=agent_log.read_text(encoding="utf-8", errors="replace") if agent_log.is_file() else "")
         rows.append(row)
     ids = [r["task_id"] for r in rows]
     if len(set(ids)) != len(ids) or not set(ids) <= set(meta["task_ids"]):
