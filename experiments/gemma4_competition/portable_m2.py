@@ -35,6 +35,7 @@ MEMBERS = ("agent.yaml", "configs/sampling.yaml", "eval_config.yaml", "prompts/s
 PACKAGES = {"adk-submission": "0.2.13", "adk-eval-core": "0.1.0", "swegemma": "0.2.11"}
 INSTALL_PACKAGES = {**PACKAGES, "google-adk": "1.36.1", "google-genai": "2.11.0"}
 INSTALL_AUTHORIZATION = "AUTHORIZE FORGEAI GEMMA4 M2 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY"
+EXPECTED_OUTPUT_TOKENS = 16384
 SAMPLING = """temperature: 0.2
 top_p: 0.95
 max_output_tokens: 16384
@@ -467,14 +468,14 @@ def official_controls() -> None:
                 "compiled tools/subagents")
         generation = compiled["generate_content_config"]
         require(generation.temperature == 0.2 and generation.top_p == 0.95
-                and generation.max_output_tokens == 16384
+                and generation.max_output_tokens == EXPECTED_OUTPUT_TOKENS
                 and generation.thinking_config.thinking_budget == 4096
                 and generation.thinking_config.include_thoughts is True, "compiled sampling")
         mutations = {
             "unknown-field": ("agent.yaml", "agent_class: LlmAgent", "agent_class: LlmAgent\nunknown: true"),
             "unknown-tool": ("agent.yaml", "  - read_file", "  - missing_tool"),
             "unknown-model": ("agent.yaml", MODEL, "unregistered-model"),
-            "output-bound": ("configs/sampling.yaml", "16384", "32769"),
+            "output-bound": ("configs/sampling.yaml", str(EXPECTED_OUTPUT_TOKENS), "32769"),
             "include-escape": ("agent.yaml", "prompts/system.md", "../outside.md"),
         }
         (root / "outside.md").write_text("outside", encoding="utf-8")

@@ -1173,3 +1173,83 @@ deliberately reviewed metadata/hash records, never traces, patches, test outputs
 candidate binaries, notebooks downloaded after execution or full task data.
 Local public-dev performance is development evidence only: no model admission,
 production change, leaderboard correctness or general coding-quality qualification.
+# P3 submission qualification and six-run evidence
+
+P3 is selected for submission preparation, not yet compiler-qualified or submitted.
+Maintainer-reported dev-16v successes are P1/P1b/P1c/P2/P3/P3g = 8/8/7/8/8/7.
+P3 and P3g have zero observed context-window errors, with four and five session
+timeouts respectively. P3g used two graph calls; P2 used one. These single runs
+do not establish superiority. Raw run evidence is unchanged. The retained
+metadata table preserves UNKNOWN outcomes; the offline analysis below applies
+the existing structured-error projection rather than rewriting history.
+
+The record and source hashes are in `../results/dev-16v-comparison.json`, its
+Markdown table, and `../results/paper-evidence.json`. Paper values must retain
+their recorded provenance: public scores and noise are maintainer-reported;
+approximate mean-time projections are not the bootstrap upper-bound gate.
+Gold file overlap is diagnostic and does not prove correctness.
+
+Run from the repository root, using the existing locked environment. No command
+below has been executed by the coding agent. First perform local preparation:
+
+```powershell
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p3_submission_qualification_1.py --local-only
+if ($LASTEXITCODE -ne 0) { throw 'P3 local preparation failed' }
+```
+
+Expected: focused offline controls pass, an external transfer bundle is printed,
+and `P3_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED`.
+The four P3 candidate files and deterministic ZIP must match the retained
+experimental package (`19b4e77257004e5440e23520f05e83ab755257fd6ff43c71d38539b9d62c676f`).
+The shared compiler retains M2's default output expectation of 16384; the P3
+instance expects 8192. This shared-source change requires a NEW P3 receipt.
+Historical M2 receipts remain evidence for their historical source bytes,
+not qualification of this changed checkout.
+
+Next, import `../kaggle_compiler/p3_compiler_only.ipynb` into a fresh Kaggle CPU
+session (Accelerator None, Internet Off). Attach the NEW transfer bundle and
+official wheelhouse, correct BUNDLE, and use fresh output paths. After reviewing
+the existing five-wheel scoped installation, set the exact authorization:
+`AUTHORIZE FORGEAI GEMMA4 P3 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY`.
+Run the compiler-only notebook; no model, evaluation, GPU or submission is
+authorized by this operation. Download its complete results outside the repo.
+
+```powershell
+$p3Receipt = Read-Host 'Absolute path to NEW P3 local-receipt.json FILE'
+$p3Results = Read-Host 'Absolute path to NEW gemma4-p3-compiler DIRECTORY'
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p3_submission_qualification_1.py --receipt $p3Receipt --reconcile $p3Results
+if ($LASTEXITCODE -ne 0) { throw 'P3 reconciliation failed' }
+```
+
+Only successful reconciliation may emit `P3_OFFICIAL_COMPILER_VALIDATED` and
+`P3_PACKAGE_VALIDATED`. The P3 submission pins are intentionally null/false
+until then. Generate the rerun-safe, self-contained notebook and materialize
+only P3's pins using the shared generator:
+
+```powershell
+$p3Notebook = Join-Path $env:TEMP ('p3-self-contained-' + [guid]::NewGuid().ToString('N') + '.ipynb')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/submission_only/qualify_p3.py --receipt $p3Receipt --results $p3Results --notebook $p3Notebook
+if ($LASTEXITCODE -ne 0) { throw 'P3 submission preparation failed' }
+# Review and stage the slice, then:
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p3_submission_qualification_1.py --pre-commit --receipt $p3Receipt --reconcile $p3Results
+if ($LASTEXITCODE -ne 0) { throw 'P3 pre-commit consistency failed' }
+```
+
+Expected final label: `P3_PRE_COMMIT_STAGED_CONSISTENCY_PASSED`. The generated
+notebook remains external and requires separate operator authorization before
+execution/submission. No public score or model-quality qualification follows
+from compiler/package validation. The results register stays NOT_SUBMITTED.
+
+For the full derived six-run analysis, use a fresh external destination:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/paper_evidence.py --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --run 'p1=D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run 'p1b=D:\Downloads\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2' --run 'p1c=D:\Downloads\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1' --run 'p2=D:\Downloads\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --run 'p3=D:\Downloads\local_eval_p3\local_eval_p3_dev16v\forgeai-local-eval-p3-dev-16v-attempt1' --run 'p3g=D:\Downloads\local_eval_p3\local_eval_p3g_dev16v\forgeai-local-eval-p3g-dev-16v-attempt1' --output 'D:\Downloads\p3-six-run-review-1'
+if ($LASTEXITCODE -ne 0) { throw 'Six-run analysis failed' }
+```
+
+Expected external files: `dev-16v-comparison.md` and `six-run-analysis.json`,
+including per-run source hashes, control-filtered summaries and existing
+bootstrap time-fit projections. Review the 11-hour upper-bound gate before
+authorizing a future submission. Do not replace approximate reported projections
+with an unexecuted calculation. Paste maintainer results before proceeding.
+

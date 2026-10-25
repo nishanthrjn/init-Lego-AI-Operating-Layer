@@ -46,6 +46,40 @@
       ],
       "remaining_unknown_task": "fastapi_15800",
       "reclassification_status": "IMPLEMENTED_NOT_EXECUTED"
+    },
+    {
+      "graph_calls": 0,
+      "resolved": 8,
+      "session_timeout_tasks": [
+        "fastapi_15800",
+        "fastapi_14419",
+        "rich_3471",
+        "fastapi_15589"
+      ],
+      "state": "COMPLETED",
+      "projection_basis": "Maintainer-reported mean extrapolation; bootstrap submission gate pending",
+      "context_window_exceeded_tasks": [],
+      "verifiable": 16,
+      "projection_hours_approx": 8.0,
+      "candidate": "p3",
+      "mean_task_seconds_approx": 244
+    },
+    {
+      "graph_calls": 2,
+      "resolved": 7,
+      "session_timeout_tasks": [
+        "rich_3934",
+        "fastapi_15800",
+        "fastapi_14419",
+        "rich_4076",
+        "fastapi_15589"
+      ],
+      "state": "COMPLETED",
+      "projection_basis": "Maintainer-reported; bootstrap submission gate pending",
+      "context_window_exceeded_tasks": [],
+      "verifiable": 16,
+      "candidate": "p3g",
+      "projection_hours_approx": 9.2
     }
   ],
   "always_solved": [
@@ -136,5 +170,1911 @@
       }
     },
     "path_observation": "Newly supplied local-eval-p1b-dev16v/attempt2 and local-eval-p1c-dev16v/attempt1 paths were absent during inspection; verified unchanged retained copies at recorded local_eval_p1_dev30 paths instead."
+  },
+  "six_run_task_records": [
+    {
+      "candidate": "p1",
+      "source_files": [
+        {
+          "sha256": "32fb1a3b9b84e9d9c9dfc033d66103d5084616054a18bce7acfcc478ac1e11ba",
+          "file": "D:\\Downloads\\local-eval-p1-dev30\\forgeai-local-eval-p1-dev30-attempt1\\run.json"
+        },
+        {
+          "sha256": "3465a6250ae0f0f54877c67afac912cce6998cdb6e6de7c6a27720524a1a8694",
+          "file": "D:\\Downloads\\local-eval-p1-dev30\\forgeai-local-eval-p1-dev30-attempt1\\tasks.jsonl"
+        },
+        {
+          "sha256": "a72730100df7e700bf808fb7919d669892077808371a3c9546b0f387f27bbff6",
+          "file": "D:\\Downloads\\local-eval-p1-dev30\\forgeai-local-eval-p1-dev30-attempt1\\completion.json"
+        },
+        {
+          "sha256": "48ae7962c5f3c2b15eef5a058450000b9e68f3da9f57a5760d4a8016b728dfe4",
+          "file": "D:\\Downloads\\local-eval-p1-dev30\\forgeai-local-eval-p1-dev30-attempt1\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 110.85435513400012,
+          "agent_seconds": 103.725624574,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 82.877757621,
+          "agent_seconds": 77.31210758600037,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 322.6901058980002,
+          "agent_seconds": 315.515856644,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py",
+            "repro.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 214.55505311900015,
+          "agent_seconds": 210.20685213099978,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 361.9428037360003,
+          "agent_seconds": 360.01740419399994,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 217.44858184199984,
+          "agent_seconds": 206.97653144300057,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 361.9346457010006,
+          "agent_seconds": 360.00835364700015,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 309.13502447500014,
+          "agent_seconds": 302.3560854970001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/models.py",
+            "repro.py",
+            "repro_basic.py",
+            "repro_scopes.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 361.91936696500034,
+          "agent_seconds": 360.0111122569997,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 283.01240582300034,
+          "agent_seconds": 276.24430013500023,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 276.67942803000005,
+          "agent_seconds": 271.7690750390002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "repro.py"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 303.07415135300107,
+          "agent_seconds": 296.28944364400013,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "repro.py",
+            "repro_bytes.py",
+            "repro_bytes_reversed.py"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 362.4146317040013,
+          "agent_seconds": 360.0355642270006,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 73.48955471800036,
+          "agent_seconds": 65.94171830300002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 225.5555688839995,
+          "agent_seconds": 220.99063031600053,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 342.5710744469998,
+          "agent_seconds": 337.6653637320014,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    },
+    {
+      "candidate": "p1b",
+      "source_files": [
+        {
+          "sha256": "6bca8b9bbce0dbefb2502e38f092cce02fb5d8f666d4f16ea44bb4e08093bda5",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1b\\forgeai-local-eval-p1b-dev-16v-attempt2\\run.json"
+        },
+        {
+          "sha256": "56b9138095bae95e31fd09d106f8e3aee085775e7775b4f29678d01fb8ccdd87",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1b\\forgeai-local-eval-p1b-dev-16v-attempt2\\tasks.jsonl"
+        },
+        {
+          "sha256": "cf9ae6b29002c8c506e664ccf219ea54571437e2d9d803fb53755bdd852fb6e4",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1b\\forgeai-local-eval-p1b-dev-16v-attempt2\\completion.json"
+        },
+        {
+          "sha256": "b1ba291a8a55710708489b307e6748baad7bb6fa9dd211868507dda17eea865a",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1b\\forgeai-local-eval-p1b-dev-16v-attempt2\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 236.13312841700008,
+          "agent_seconds": 229.169990632,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 146.52032419299985,
+          "agent_seconds": 141.48563747100002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 225.94125426900018,
+          "agent_seconds": 218.80964534400005,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [
+            "TOOL_CALL_FORMAT_FAILURE"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 327.0812178010001,
+          "agent_seconds": 322.90574319200005,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 361.8760121,
+          "agent_seconds": 360.00843206699983,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 232.27126164599986,
+          "agent_seconds": 222.87884744200028,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/applications.py",
+            "fastapi/staticfiles.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 322.040504523,
+          "agent_seconds": 316.97595252899964,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "TOOL_CALL_FORMAT_FAILURE"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 86.40340373400022,
+          "agent_seconds": 82.60282632799999,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "5cfabbab4b38b008eaa0761f526458b816b9593445719bc62eb2733cab2edb83"
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "CONTEXT_WINDOW_EXCEEDED"
+          ],
+          "harness_error_count": 1,
+          "wall_seconds": 330.89246059799984,
+          "agent_seconds": 327.273092981,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 292.44325467299996,
+          "agent_seconds": 281.902310058,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 363.52046978700014,
+          "agent_seconds": 360.00301885,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 340.373204513,
+          "agent_seconds": 331.2749437520001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 222.83551761499984,
+          "agent_seconds": 216.7387475559999,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 102.78503927199972,
+          "agent_seconds": 93.99124311200012,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 103.370393444,
+          "agent_seconds": 97.32766984,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 370.7870479359999,
+          "agent_seconds": 360.0066801009998,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p1b-dev-16v-attempt2"
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    },
+    {
+      "candidate": "p1c",
+      "source_files": [
+        {
+          "sha256": "f5d59ee217f56b60d24218490ed3a5a74a7c55e70905a4ac71f010d8b1dc59da",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1c\\forgeai-local-eval-p1c-dev-16v-attempt1\\run.json"
+        },
+        {
+          "sha256": "6ac93802c756bafd9b9760b6891665ef6b2a756e1fb5369d53e2172fef2d5979",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1c\\forgeai-local-eval-p1c-dev-16v-attempt1\\tasks.jsonl"
+        },
+        {
+          "sha256": "15d023a6a413b5c4a4ac90e04e1f504ee983d9c191a4cb05a13c96e1e34b3082",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1c\\forgeai-local-eval-p1c-dev-16v-attempt1\\completion.json"
+        },
+        {
+          "sha256": "3e6a62d81b44ed2dad6fcf35c114cda7ace1df001ad1e36d17216cfea6d32007",
+          "file": "D:\\Downloads\\local_eval_p1_dev30\\p1c\\forgeai-local-eval-p1c-dev-16v-attempt1\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 176.11818723600004,
+          "agent_seconds": 167.97632211299992,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 123.08280671300008,
+          "agent_seconds": 117.73307358800002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 364.3872849169999,
+          "agent_seconds": 360.02749741499997,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 243.36748637899996,
+          "agent_seconds": 238.52231473999996,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 361.82197336000013,
+          "agent_seconds": 360.03648524999994,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 179.61978875399996,
+          "agent_seconds": 170.5362634720002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 233.56423438000002,
+          "agent_seconds": 228.566965428,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 366.84888005599987,
+          "agent_seconds": 360.007741117,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/models.py",
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 330.31702405900023,
+          "agent_seconds": 325.89623275400027,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/text.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 363.867320674,
+          "agent_seconds": 360.0072814320001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 364.82678737800006,
+          "agent_seconds": 360.0127946970001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/table.py"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 291.63276030299994,
+          "agent_seconds": 284.0995822089999,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 199.12356780599976,
+          "agent_seconds": 194.51000853699952,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/pretty.py"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 80.65531216,
+          "agent_seconds": 73.208079645,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 141.58048897300068,
+          "agent_seconds": 136.38655767599994,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": null
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 365.712579432,
+          "agent_seconds": 360.0038000579998,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": null
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    },
+    {
+      "candidate": "p2",
+      "source_files": [
+        {
+          "sha256": "bd5d9acebf4b0a4276fcfaf636a661143621591b3506d0cae23702a0ad64e1cd",
+          "file": "D:\\Downloads\\local_eval_p2_dev16v\\forgeai-local-eval-p2-dev-16v-attempt1\\run.json"
+        },
+        {
+          "sha256": "b49273fb85dea1ae94a9f487e547213da622bde79d9f7d90f6693b71822a6f9f",
+          "file": "D:\\Downloads\\local_eval_p2_dev16v\\forgeai-local-eval-p2-dev-16v-attempt1\\tasks.jsonl"
+        },
+        {
+          "sha256": "fd8ed1e37d3c43ae8b574d41d81e736e3ed98f3beb3ef377d4a26f36ca1ae804",
+          "file": "D:\\Downloads\\local_eval_p2_dev16v\\forgeai-local-eval-p2-dev-16v-attempt1\\completion.json"
+        },
+        {
+          "sha256": "3bc1e000cb8c787169c71137cfa1cf80d09c00f9f4cb7f6cef325d3855b24f49",
+          "file": "D:\\Downloads\\local_eval_p2_dev16v\\forgeai-local-eval-p2-dev-16v-attempt1\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 82.30174131700005,
+          "agent_seconds": 75.25672861700002,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 162.21619419,
+          "agent_seconds": 156.24987199199995,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 367.905547202,
+          "agent_seconds": 360.00875887100005,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 130.7147309249999,
+          "agent_seconds": 126.41043059000003,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "CONTEXT_WINDOW_EXCEEDED"
+          ],
+          "harness_error_count": 1,
+          "wall_seconds": 185.3169930690001,
+          "agent_seconds": 183.0906783139999,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 1,
+          "wall_seconds": 346.8995926350001,
+          "agent_seconds": 337.453275586,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/applications.py",
+            "fastapi/routing.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 312.4172812090003,
+          "agent_seconds": 306.19842729000015,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "CONTEXT_WINDOW_EXCEEDED"
+          ],
+          "harness_error_count": 1,
+          "wall_seconds": 150.926555172,
+          "agent_seconds": 146.65310057000033,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "CONTEXT_WINDOW_EXCEEDED"
+          ],
+          "harness_error_count": 1,
+          "wall_seconds": 261.5672703609998,
+          "agent_seconds": 259.560418775,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 315.2033874650001,
+          "agent_seconds": 308.5355995629998,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 265.220379673,
+          "agent_seconds": 260.0111396919997,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 256.43753293400005,
+          "agent_seconds": 248.687954516,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 285.83852683500027,
+          "agent_seconds": 281.376584179,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 86.75083028300014,
+          "agent_seconds": 78.64624410500028,
+          "graph_calls": {
+            "get_code_neighbors": 1,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [
+            "TOOL_CALL_FORMAT_FAILURE"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 106.58479716800002,
+          "agent_seconds": 102.52718208299984,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 365.7128151310003,
+          "agent_seconds": 360.01933246299996,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p2-dev-16v-attempt1"
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    },
+    {
+      "candidate": "p3",
+      "source_files": [
+        {
+          "sha256": "2f268f870e48d21d589820bb25ea200add1e8cd087e10f7b8936ab77c42fe61f",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3_dev16v\\forgeai-local-eval-p3-dev-16v-attempt1\\run.json"
+        },
+        {
+          "sha256": "0e73e1f302653f3cad5fe09900bf9a2f54cd827999c05b754c1312bc4ac1319d",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3_dev16v\\forgeai-local-eval-p3-dev-16v-attempt1\\tasks.jsonl"
+        },
+        {
+          "sha256": "98051d4d6d7370fbc1b46c80d223412f8c12fd213348e608f3fda0cd4d53c8cf",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3_dev16v\\forgeai-local-eval-p3-dev-16v-attempt1\\completion.json"
+        },
+        {
+          "sha256": "1954fedb8ccba7e1b7f618e9403d243f690eb442eb5af57cac6e669d14d6c2f5",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3_dev16v\\forgeai-local-eval-p3-dev-16v-attempt1\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 58.55223085800003,
+          "agent_seconds": 50.76160367400007,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 104.86909066999999,
+          "agent_seconds": 100.0981568310001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 366.725318369,
+          "agent_seconds": 360.02278363100004,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 122.03764503599996,
+          "agent_seconds": 117.69964660400001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 319.65370552399986,
+          "agent_seconds": 313.343407264,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/live_render.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 369.47216973000013,
+          "agent_seconds": 360.01120906899996,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "dist_test/app.js",
+            "dist_test/index.html"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 154.15903852200017,
+          "agent_seconds": 148.58103947600011,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 364.01234651699997,
+          "agent_seconds": 360.0109977879997,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 362.3627518080002,
+          "agent_seconds": 360.08402142900013,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 336.3034846380001,
+          "agent_seconds": 329.2803874299998,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "TOOL_CALL_FORMAT_FAILURE"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 271.35284009099996,
+          "agent_seconds": 269.02693986199984,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 268.1690126980002,
+          "agent_seconds": 261.47283879999986,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 219.18293850300006,
+          "agent_seconds": 214.81747116399993,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/text.py"
+          ],
+          "gold_file_hit": false,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 66.98144184499961,
+          "agent_seconds": 59.81704251300016,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 160.15620796600024,
+          "agent_seconds": 155.57454066699984,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 364.97954904499966,
+          "agent_seconds": 360.0271370390001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3-dev-16v-attempt1"
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    },
+    {
+      "candidate": "p3g",
+      "source_files": [
+        {
+          "sha256": "731f097b325d79b4e72bf075fa425bde62ef6043b1a5d41edeb7ee7546b55abf",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3g_dev16v\\forgeai-local-eval-p3g-dev-16v-attempt1\\run.json"
+        },
+        {
+          "sha256": "85730559fb5cc14980215798eec8a207e9c8fa5752439b6d852d311be940353e",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3g_dev16v\\forgeai-local-eval-p3g-dev-16v-attempt1\\tasks.jsonl"
+        },
+        {
+          "sha256": "59ed19b4daf7ca275ed2e9f7edc8dbe3af848d8a730583f0d3fec087f5e8296e",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3g_dev16v\\forgeai-local-eval-p3g-dev-16v-attempt1\\completion.json"
+        },
+        {
+          "sha256": "8abb23acceb688a37bf035d4ae0b5b091185e63ec63f1e193de5843618916d91",
+          "file": "D:\\Downloads\\local_eval_p3\\local_eval_p3g_dev16v\\forgeai-local-eval-p3g-dev-16v-attempt1\\official\\task_results.jsonl"
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "fastapi_14492",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 184.44561023200004,
+          "agent_seconds": 175.823015779,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "docs_src/metadata/tutorial001_1_py39.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3905",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 149.11524260300007,
+          "agent_seconds": 143.05854774500006,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/progress.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5624",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 368.6019640249999,
+          "agent_seconds": 360.001628709,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3454",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 195.40284128400003,
+          "agent_seconds": 189.71295904999988,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3934",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 363.32655542700013,
+          "agent_seconds": 360.00321712799996,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15800",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "TOOL_CALL_FORMAT_FAILURE",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 365.1651365030002,
+          "agent_seconds": 360.0054226249997,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4075",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 321.2369721780001,
+          "agent_seconds": 315.8723447980001,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14419",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 365.24441409500014,
+          "agent_seconds": 360.01058193200015,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3471",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 299.0129216800001,
+          "agent_seconds": 292.98851749100004,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/text.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_5077",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 254.27276975999985,
+          "agent_seconds": 245.64902685699963,
+          "graph_calls": {
+            "get_code_neighbors": 1,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4079",
+          "resolved": false,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 340.60187205700004,
+          "agent_seconds": 334.34754490600017,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/markdown.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_11194",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 324.59663566200015,
+          "agent_seconds": 316.3069428099998,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/dependencies/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_4076",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 363.1313849469998,
+          "agent_seconds": 360.09934697600056,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_14786",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 69.36036896299993,
+          "agent_seconds": 60.24841580799966,
+          "graph_calls": {
+            "get_code_neighbors": 1,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "fastapi/security/utils.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "rich_3067",
+          "resolved": true,
+          "failure_categories": [],
+          "harness_error_count": 0,
+          "wall_seconds": 158.95680778000042,
+          "agent_seconds": 153.50826001599944,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [
+            "rich/highlighter.py"
+          ],
+          "gold_file_hit": true,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        },
+        {
+          "task_id": "fastapi_15589",
+          "resolved": false,
+          "failure_categories": [
+            "NO_PATCH",
+            "SESSION_TIMEOUT"
+          ],
+          "harness_error_count": 0,
+          "wall_seconds": 366.67579857200053,
+          "agent_seconds": 360.00825603700014,
+          "graph_calls": {
+            "get_code_neighbors": null,
+            "search_similar_code": null,
+            "get_code_subgraph": null
+          },
+          "files_changed": [],
+          "gold_file_hit": null,
+          "attempt_id": "forgeai-local-eval-p3g-dev-16v-attempt1"
+        }
+      ],
+      "interpretation": "Retained task metadata and task-bound official errors; derived analysis CLI NOT RUN. Historical raw results unchanged. Gold file overlap is diagnostic, not correctness."
+    }
+  ],
+  "submission_decision": {
+    "qualification": "PENDING_MAINTAINER_COMPILER_RECONCILIATION",
+    "reason": "8/16 development result; observed context errors eliminated. No statistical superiority claim.",
+    "candidate": "p3"
   }
 }

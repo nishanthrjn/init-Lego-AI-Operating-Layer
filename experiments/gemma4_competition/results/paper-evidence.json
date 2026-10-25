@@ -1,0 +1,109 @@
+{
+  "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
+  "claims": [
+    {
+      "values": {
+        "dev30_verifiable": 16,
+        "confirm20_verifiable": 8,
+        "verifiable": 24,
+        "unsound": 19,
+        "env_broken": 7,
+        "total": 50
+      },
+      "sha256": "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033",
+      "file": "experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json",
+      "basis": "Frozen control outcomes; environment validity is local, not task quality",
+      "pointer": "/tasks",
+      "id": "controls"
+    },
+    {
+      "values": {
+        "p3g": 7,
+        "p2": 8,
+        "p1b": 8,
+        "p3": 8,
+        "p1c": 7,
+        "p1": 8,
+        "denominator": 16
+      },
+      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "basis": "Maintainer-reported successes and retained metadata; UNKNOWN remains separate in per-task table",
+      "pointer": "/six_run_task_records",
+      "id": "six_run_table_and_task_categories"
+    },
+    {
+      "values": {
+        "p3_projection_hours_approx": 8.0,
+        "p3_context": 0,
+        "p3_mean_seconds_approx": 244,
+        "p3g_projection_hours_approx": 9.2,
+        "p3g_context": 0,
+        "p3g_timeouts": 5,
+        "p3_timeouts": 4
+      },
+      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "basis": "Structured errors and maintainer-reported mean projections; bootstrap upper-bound gate not executed",
+      "pointer": "/runs",
+      "id": "context_and_time"
+    },
+    {
+      "values": {
+        "p3g_calls": 2,
+        "p2_calls": 1,
+        "combined_calls": 3,
+        "combined_task_runs": 32
+      },
+      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "basis": "Trace request counts, not guaranteed effects",
+      "pointer": "/six_run_task_records",
+      "id": "graph_use"
+    },
+    {
+      "values": {
+        "tasks": 129
+      },
+      "sha256": "c806c382ab488ee544323ff5ee7d08cb2e3b3590b15aed71ee19747749eb8927",
+      "file": "experiments/gemma4_competition/results/localization-study-attempt1/summary.json",
+      "basis": "Retained full precision metrics; use source values rather than rounded prose",
+      "pointer": "/summary",
+      "id": "localization"
+    },
+    {
+      "values": {
+        "p1": 0.1,
+        "b2": 0.12,
+        "reported_public_tasks": 58,
+        "reported_noise_tasks_plus_minus": 3,
+        "m2": 0.05
+      },
+      "sha256": "162e5a3ba08abd7146d50d26d3fb4402eab93e065ede940865a31253fc998bb1",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "basis": "Maintainer-reported Kaggle scores; noise claim attributed observation, not independently verified replication dataset",
+      "pointer": "/runs",
+      "id": "public_scores_and_noise"
+    },
+    {
+      "values": {
+        "resolved": 65,
+        "partial": 64,
+        "total": 129
+      },
+      "sha256": "c366076d5d2862d6a3c07c5db6f977c06bdcef8f94657f3f6591501826290c54",
+      "file": "experiments/gemma4_competition/local_eval/evidence/gold-locations.json",
+      "basis": "Metadata only; overlap does not establish fix correctness",
+      "pointer": "/tasks",
+      "id": "gold_location_coverage"
+    }
+  ],
+  "limitations": [
+    "Development subset repeatedly used for tuning; not held-out qualification.",
+    "No statistical superiority established by six single runs.",
+    "Historical run artifacts unchanged.",
+    "External source paths and hashes are retained in the six-run record.",
+    "Compiler and submission qualification are independent of model-quality observations."
+  ],
+  "schema_version": 1
+}

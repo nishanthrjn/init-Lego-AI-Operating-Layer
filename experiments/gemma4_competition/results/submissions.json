@@ -119,7 +119,7 @@
       "submission_time_utc": null,
       "submission_id": null,
       "status": "SUCCEEDED",
-      "public_score": 0.10,
+      "public_score": 0.1,
       "error_text": null,
       "notes": [
         "Maintainer reports self-contained resubmission on 2026-10-23; exact UTC timestamp and submission ID not supplied.",
@@ -128,6 +128,20 @@
         "B2 0.12 versus P1 0.10 is within the observed identical-file variation of approximately +/-3 of 58 tasks; these scores do not establish a performance difference.",
         "Status and score are maintainer-reported observations, not independently queried live Kaggle state."
       ]
+    },
+    {
+      "public_score": null,
+      "candidate": "p3",
+      "receipt": null,
+      "zip_sha256": null,
+      "qualification": "PENDING_OFFICIAL_COMPILER",
+      "notes": [
+        "Selected for submission preparation; experimental archive identity is not official compiler qualification.",
+        "Own receipt and compiler result must reconcile before pins and self-contained notebook are materialized."
+      ],
+      "zip_size": null,
+      "manifest_sha256": null,
+      "status": "NOT_SUBMITTED"
     }
   ]
 }
