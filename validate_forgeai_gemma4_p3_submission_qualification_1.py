@@ -35,9 +35,22 @@ def shared_gate():
     return gate
 
 
+def scope_git(*args):
+    """Preserve Git failure locations without printing offending file contents."""
+    result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+    if result.returncode:
+        output = (result.stdout + result.stderr).decode("utf-8", errors="replace")
+        diagnostics = "\n".join(line for line in output.splitlines()
+                                if not line.startswith(("+", "-")))
+        raise ValueError("git " + " ".join(args) + " exited " + str(result.returncode)
+                         + (":\n" + diagnostics if diagnostics else ""))
+    return result.stdout
+
+
 def scope_gate():
     gate = p3.load_instance(ROOT / "validate_forgeai_gemma4_p1_procedure_prompt_1.py", "_p3_scope_gate")
     gate.BASE, gate.SCOPE, gate.p1 = BASE, SCOPE, p3
+    gate.git = scope_git
     return gate
 
 

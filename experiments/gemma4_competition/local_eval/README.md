@@ -1173,6 +1173,7 @@ deliberately reviewed metadata/hash records, never traces, patches, test outputs
 candidate binaries, notebooks downloaded after execution or full task data.
 Local public-dev performance is development evidence only: no model admission,
 production change, leaderboard correctness or general coding-quality qualification.
+
 # P3 submission qualification and six-run evidence
 
 P3 is selected for submission preparation, not yet compiler-qualified or submitted.
@@ -1252,4 +1253,3 @@ including per-run source hashes, control-filtered summaries and existing
 bootstrap time-fit projections. Review the 11-hour upper-bound gate before
 authorizing a future submission. Do not replace approximate reported projections
 with an unexecuted calculation. Paste maintainer results before proceeding.
-

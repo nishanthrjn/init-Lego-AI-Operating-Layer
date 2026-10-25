@@ -5,11 +5,29 @@ from pathlib import Path
 import tempfile
 import unittest
 import sys
+from unittest.mock import patch
+import subprocess
 
 from experiments.gemma4_competition import portable_p3 as p3
 
 
 class P3QualificationTests(unittest.TestCase):
+    def test_scope_git_reports_whitespace_location_without_content(self):
+        import validate_forgeai_gemma4_p3_submission_qualification_1 as gate
+        result = subprocess.CompletedProcess(
+            ["git"], 2, b"README.md:1255: new blank line at EOF.\n+private text\n", b"")
+        with patch.object(gate.subprocess, "run", return_value=result):
+            with self.assertRaisesRegex(ValueError, "README.md:1255") as caught:
+                gate.scope_git("diff", "--check", gate.BASE)
+        self.assertNotIn("private text", str(caught.exception))
+
+    def test_scope_git_keeps_successful_output_and_wiring(self):
+        import validate_forgeai_gemma4_p3_submission_qualification_1 as gate
+        result = subprocess.CompletedProcess(["git"], 0, b"file.py\n", b"")
+        with patch.object(gate.subprocess, "run", return_value=result):
+            self.assertEqual(gate.scope_git("diff", "--name-only", gate.BASE), b"file.py\n")
+        self.assertIs(gate.scope_gate().git, gate.scope_git)
+
     def test_shared_default_and_p3_override_are_independent(self):
         from experiments.gemma4_competition import portable_m2
         self.assertEqual(portable_m2.EXPECTED_OUTPUT_TOKENS, 16384)
