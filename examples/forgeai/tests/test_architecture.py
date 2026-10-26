@@ -19,6 +19,7 @@ INNER = {
     "repository_context",
     "report",
     "guidance",
+    "line_endings",
 }
 FORBIDDEN_INNER = (
     "legoai.runtime.local",
@@ -84,6 +85,7 @@ def test_package_layout_is_the_expected_small_set() -> None:
     assert set(modules()) == {
         "__init__",
         "guidance",
+        "line_endings",
         "report",
         "domain",
         "repository_context",
@@ -102,6 +104,7 @@ def test_package_layout_is_the_expected_small_set() -> None:
     "name",
     [
         "guidance",
+        "line_endings",
         "report",
         "domain",
         "repository_context",
@@ -132,6 +135,7 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
     "name",
     [
         "guidance",
+        "line_endings",
         "report",
         "domain",
         "repository_context",

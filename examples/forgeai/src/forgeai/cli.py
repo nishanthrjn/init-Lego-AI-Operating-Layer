@@ -85,6 +85,7 @@ from forgeai.domain import (
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.guidance import GuidanceRefusal, guidance_candidates, guidance_summary
+from forgeai.line_endings import is_consistent_crlf
 from forgeai.remote import BINDING, RemoteProfile, load_profile
 from forgeai.report import ModelBindingKind, encode_report, run_report
 from forgeai.repository_context import ContextPreflight, context_summary
@@ -268,6 +269,7 @@ def patch(review: ProposalReview) -> list[str]:
         review.proposal.changeset.changes, review.before, strict=True
     ):
         path = change.path.value
+        crlf = is_consistent_crlf(before) and is_consistent_crlf(change.text)
         diff = difflib.unified_diff(
             _lines(before or ""),
             _lines(change.text or ""),
@@ -277,8 +279,13 @@ def patch(review: ProposalReview) -> list[str]:
         for index, line in enumerate(diff):
             if index < 2 or line.startswith("@@"):  # file headers and hunk ranges
                 lines.append(safe(line.removesuffix(chr(10))))
+                if index == 1 and crlf:
+                    lines.append(
+                        "line endings: CRLF (both versions; not shown per line)"
+                    )
             elif line.endswith(chr(10)):
-                lines.append(safe(line[:-1]))
+                displayed = line[:-1]
+                lines.append(safe(displayed.removesuffix("\r") if crlf else displayed))
             else:
                 lines.append(safe(line))
                 lines.append("\\ No newline at end of file")

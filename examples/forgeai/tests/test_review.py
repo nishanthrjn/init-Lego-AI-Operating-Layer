@@ -304,7 +304,7 @@ def test_reviewer_sees_authorized_file_reads_and_no_git_state(tmp_path: Path) ->
     assert start.head.commit.value[:7] not in prompt
     for forbidden in ("HEAD", ".git", "branch", "untracked", "notes.txt"):
         assert forbidden not in prompt, forbidden
-    final_text = (root / "src/inventory/stock.py").read_text(encoding="utf-8")
+    final_text = (root / "src/inventory/stock.py").read_bytes().decode("utf-8")
     review = result.evidence.review
     assert review is not None
     material = {m.material_id: m.text for m in review.request.evidence}

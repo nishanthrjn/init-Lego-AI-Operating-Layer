@@ -287,6 +287,20 @@ uv run forgeai run `
    miss weak code. In the first live pilot, tests that could never fail
    passed every check and were accepted by the 7B reviewer.
 
+### Line endings
+
+For UPDATE targets whose current text consistently uses CRLF, ForgeAI converts
+LF-only proposals to CRLF before computing approval identity. Preview, approval,
+mutation and evidence all use that same proposal, including on rework. CREATE,
+LF or mixed current text, lone CR, and proposals already containing CR are left
+unchanged. If conversion exceeds a file or aggregate proposal bound, the entire
+original proposal is retained; nothing is truncated.
+
+When both versions consistently use CRLF, the patch hides the CR terminators
+and states `line endings: CRLF (both versions; not shown per line)` directly
+under the file header. Mixed endings and lone or embedded CR remain escaped.
+LF previews and the existing display bounds are unchanged.
+
 **Approval.** Then comes `Apply this proposal? [y/N]`:
 - Only `y` or `yes` applies the proposal. Anything else, an empty answer,
   EOF (closed or empty stdin) or Ctrl+C declines.

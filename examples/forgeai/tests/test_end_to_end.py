@@ -122,7 +122,7 @@ def test_fixture_task_succeeds_in_the_real_sandbox(tmp_path: Path) -> None:
     assert evidence.final.head == evidence.start.head
     assert evidence.proposal is not None
     for change in evidence.proposal.changeset.changes:
-        assert (root / change.path.value).read_text(encoding="utf-8") == change.text
+        assert (root / change.path.value).read_bytes().decode("utf-8") == change.text
     assert not list(root.rglob("__pycache__")), "checks must not run on the host"
     review = evidence.review
     assert review is not None and review.status is ReviewStatus.COMPLETED
@@ -196,7 +196,7 @@ def test_rework_then_accept_in_the_real_sandbox(tmp_path: Path) -> None:
         for change in attempt.proposal.changeset.changes
     }
     for path, text in final.items():
-        assert (root / path).read_text(encoding="utf-8") == text
+        assert (root / path).read_bytes().decode("utf-8") == text
     assert not list(root.rglob("__pycache__")), "checks must not run on the host"
 
 

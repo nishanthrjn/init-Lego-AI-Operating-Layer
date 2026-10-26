@@ -78,6 +78,7 @@ from forgeai.domain import (
     proposal_identity,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.line_endings import match_line_endings
 from forgeai.repository_context import (
     ConfirmationReason,
     ConfirmedEvidence,
@@ -477,25 +478,24 @@ class RepositoryTaskWorker:
                 else TaskFailure.MODEL_FAILED
             )
             return self._stop(task, failure, evidence)
-        item = replace(item, proposal=coding.proposal)
-        evidence = _set(evidence, item)
-        self.progress(RunStage.PROPOSAL_GENERATED, number)
-
-        # Operator approval of this exact proposal before any effect.
-        identity = proposal_identity(coding.proposal)
         assert coding.evidence is not None
         current = {
             file.target.path: file.current.text if file.current else None
             for file in coding.evidence.files
         }
-        before = tuple(
-            current[change.path] for change in coding.proposal.changeset.changes
-        )
+        proposal = match_line_endings(coding.proposal, current)
+        item = replace(item, proposal=proposal)
+        evidence = _set(evidence, item)
+        self.progress(RunStage.PROPOSAL_GENERATED, number)
+
+        # Operator approval of this exact proposal before any effect.
+        identity = proposal_identity(proposal)
+        before = tuple(current[change.path] for change in proposal.changeset.changes)
         self.progress(RunStage.AWAITING_APPROVAL, number)
         try:
             review = ProposalReview(
                 number,
-                coding.proposal,
+                proposal,
                 identity,
                 before,
                 evidence.rework_trigger if number == 2 else None,
@@ -516,7 +516,7 @@ class RepositoryTaskWorker:
 
         # Apply through the authorized mutation Port; never retried.
         try:
-            applied = self.mutation.apply(coding.proposal.changeset)
+            applied = self.mutation.apply(proposal.changeset)
         except EffectAuthorizationError as error:
             item = replace(item, mutation_denial=error.reason)
             return self._finish(task, TaskFailure.MUTATION_DENIED, _set(evidence, item))
@@ -589,7 +589,7 @@ class RepositoryTaskWorker:
         # Independent review, only after every deterministic gate passed.
         assert evidence.gates_passed
         return await self._review(
-            task, context, coding.proposal, agent.definition.agent_id, evidence
+            task, context, proposal, agent.definition.agent_id, evidence
         )
 
     async def _review(

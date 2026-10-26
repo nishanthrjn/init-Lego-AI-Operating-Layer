@@ -301,8 +301,17 @@ def test_6b_huge_output_is_excerpted_with_an_omission_note() -> None:
 
 
 def test_7_rework_reasons_against_the_current_candidate(tmp_path: Path) -> None:
+    from legoai_engineering.repository.mutation import digest_text
+
+    from forgeai.line_endings import is_consistent_crlf
+
     root = repository(tmp_path)
-    head_text = (root / "tests/test_stock.py").read_text(encoding="utf-8")
+    head_text = (root / "tests/test_stock.py").read_bytes().decode("utf-8")
+    expected = (
+        "\r\n".join(ASSERT_FALSE_TESTS.split("\n"))
+        if is_consistent_crlf(head_text)
+        else ASSERT_FALSE_TESTS
+    )
     r = run(
         root,
         b011_proposal(),
@@ -311,10 +320,11 @@ def test_7_rework_reasons_against_the_current_candidate(tmp_path: Path) -> None:
         sandbox=ScriptedSandbox([RUFF_B011, PASS, PASS], ALL_PASS),
     )
     second = r.reviews[1]
-    assert second.before == (ASSERT_FALSE_TESTS,)  # candidate 1, not HEAD
+    assert second.before == (expected,)  # candidate 1, not HEAD
     assert second.before[0] != head_text
     change = r.mutation.changesets[1].changes[0]
     assert change.expected is not None  # precondition bound to candidate 1
+    assert change.expected == digest_text(expected)
     assert r.evidence.final is not None
     assert r.evidence.final.head == r.evidence.start.head  # type: ignore[union-attr]
 
