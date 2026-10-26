@@ -130,18 +130,24 @@
       ]
     },
     {
-      "public_score": null,
+      "public_score": 0.15,
       "candidate": "p3",
-      "receipt": null,
-      "zip_sha256": null,
-      "qualification": "PENDING_OFFICIAL_COMPILER",
+      "receipt": "02a7f680784d0c6813fc926095dafac8db106b5ac19c53cf95bd3badd2155e85",
+      "zip_sha256": "19b4e77257004e5440e23520f05e83ab755257fd6ff43c71d38539b9d62c676f",
+      "qualification": "OFFICIAL_COMPILER_AND_PACKAGE_VALIDATED",
       "notes": [
-        "Selected for submission preparation; experimental archive identity is not official compiler qualification.",
-        "Own receipt and compiler result must reconcile before pins and self-contained notebook are materialized."
+        "Qualification pins committed in 6cf6ce87206ce31a13fcc95b7995183a09561ad8; historical receipt and package preserved.",
+        "Maintainer reports P3 public score 0.15, p3_selfcontained Version 1; recorded 2026-10-26. Submission date, ID and exact UTC timestamp were not supplied.",
+        "Score and success are maintainer-reported, not independently queried Kaggle account state. No exact solved-task count inferred from rounded score.",
+        "P3 0.15 versus B2 0.12 is not evidence of superiority given reported identical-package variation of approximately +/-3 tasks out of 58."
       ],
-      "zip_size": null,
-      "manifest_sha256": null,
-      "status": "NOT_SUBMITTED"
+      "zip_size": 5100,
+      "manifest_sha256": "4a1c32adbc614e63870b704cea476a71ae9f3f0c04dc510ff6d94ba4e596b18f",
+      "notebook_name": "p3_selfcontained",
+      "notebook_version": "1",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SUCCEEDED"
     }
   ]
 }

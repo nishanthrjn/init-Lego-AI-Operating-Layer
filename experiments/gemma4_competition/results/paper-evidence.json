@@ -74,14 +74,15 @@
     {
       "values": {
         "p1": 0.1,
+        "p3": 0.15,
         "b2": 0.12,
         "reported_public_tasks": 58,
         "reported_noise_tasks_plus_minus": 3,
         "m2": 0.05
       },
-      "sha256": "162e5a3ba08abd7146d50d26d3fb4402eab93e065ede940865a31253fc998bb1",
+      "sha256": "87a7108b8405fdd8aed61111b61797f8d7961c2dfdaf3424dd40116047ae1e60",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "basis": "Maintainer-reported Kaggle scores; noise claim attributed observation, not independently verified replication dataset",
+      "basis": "Maintainer-reported Kaggle scores, including P3 p3_selfcontained v1 reported 2026-10-26; noise claim attributed observation, not independently verified replication dataset; no superiority inference",
       "pointer": "/runs",
       "id": "public_scores_and_noise"
     },
