@@ -1073,6 +1073,93 @@ unauthorized. The next slice, only after closeout, is research-only
 `KAGGLE-FORGEAI-INTEGRATION-OPTIONS-1`; mutation is not next.
 
 
+## Machine-readable run report (Developer Preview)
+
+Add `--json-report` to either CLI form to append one final stdout line:
+`forgeai-report: {JSON}`. The schema is `forgeai-run-report/1`. For example,
+from `examples/forgeai`, with the existing qualified Docker checks image:
+
+```powershell
+uv run --locked --offline --no-sync python demo.py accept --json-report
+uv run --locked --offline --no-sync python demo.py rework --json-report
+```
+
+The flag is opt-in; existing human output and exit codes are unchanged. No
+report file is written. Operators can redirect stdout and select the line
+beginning with `forgeai-report: `; preceding human output is not JSON and is
+not subject to the report's data exclusions. Startup refusals before a
+`TaskResult` exists produce no report line. Successful, failed and rejected
+task results can all produce reports. JSON uses sorted keys, ASCII escaping
+and compact separators, with a 65,536-byte UTF-8 limit excluding the prefix
+and line terminator. If exceeded, the final line is exactly
+`forgeai-report: REPORT_UNAVAILABLE (bound exceeded)`; the exit code is unchanged.
+
+| Top-level field | Meaning |
+| --- | --- |
+| `schema` | Always `forgeai-run-report/1`. |
+| `run_id` | Existing run identifier. |
+| `disposition` | `TaskDisposition` name: `SUCCEEDED`, `REJECTED` or `FAILED`. |
+| `failure` | Existing `TaskFailure` name, or `null`. |
+| `model_binding` | `REPLAY`, `OLLAMA` or `OPENAI_COMPATIBLE_REMOTE`. |
+| `model_quality` | `NOT_APPLICABLE_REPLAY` for replay; otherwise `UNQUALIFIED`. |
+| `start_head` | Full starting commit ID, or `null` if unavailable. |
+| `context_confirmed` | Recorded context-confirmation boolean. |
+| `rework_used` | Whether the single rework was used. |
+| `rework_trigger` | Existing trigger enum name, or `null`. |
+| `changes_retained` | Whether any attempt recorded an applied mutation result, exactly as in the pilot projection. |
+| `repository_effect` | `UNKNOWN` if any attempt has an uncertain mutation path; otherwise `KNOWN` if any has an applied result; otherwise `NONE`. |
+| `rollback_performed` | Always `false`; reporting performs no rollback. |
+| `attempts` | Ordered attempt objects described below. |
+| `limitations` | Existing fixed evidence-limitations strings. |
+
+| Attempt field | Meaning |
+| --- | --- |
+| `number` | Attempt number (1 or 2). |
+| `coding_status` | Coding status enum name, or `null`. |
+| `model_attempt` | Coding agent execution status enum name, or `null`. |
+| `model_effect` | Coding model effect enum name, or `null`. |
+| `proposal_valid` | Whether a validated proposal exists. |
+| `mutation_approval` | `true`/`false` for the operator's decision; `null` if not asked. |
+| `changed_paths` | Applied changes only: objects with repository-relative `path` and change-kind enum name `kind`; empty if not applied. |
+| `mutation_uncertain` | Whether an uncertain mutation path was recorded. |
+| `mutation_denied` | Whether mutation authorization was denied. |
+| `mutation_conflict` | Whether a mutation precondition conflict was recorded. |
+| `checks` | Objects with check-kind name `kind`, outcome name or `null` in `outcome`, and boolean `no_result`. |
+| `review_status` | Reviewer status enum name, or `null` if no review result. |
+| `review_decision` | Review decision enum name, or `null` if unavailable. |
+| `blocking_findings` | Count of blocking findings; `null` if no parsed review is available. |
+
+Reports never include objectives, task text, constraints, file contents, diffs,
+proposal text or summaries, risks, unknowns, reviewer finding text, prompts,
+model output, absolute/host paths, endpoint URLs, model names, remote profile
+values, custody paths, credentials, environment values or exception messages.
+Only explicit evidence fields are projected; evidence is never serialized wholesale.
+
+Model quality is always `UNQUALIFIED` or `NOT_APPLICABLE_REPLAY`. There is no
+`QUALIFIED` value and no input override. No live model is admitted by this slice;
+DeepSeek, GLM and qwen3-coder-next remain unqualified. A successful replay or
+task report does not qualify a model. For a fixed result and binding, encoding
+is deterministic; separate runs retain their distinct run identifiers.
+
+Maintainer validation from the repository root, using existing locked Python
+3.14 environments with Git, uv, pytest, mypy and Ruff already installed:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_dp_run_report_1.py
+```
+
+The validator clears `VIRTUAL_ENV` and `LEGOAI_QUALIFY_*`, sets `UV_OFFLINE=1`
+and `PYTHONDONTWRITEBYTECODE=1`, and runs no installation or live model phase.
+The maintainer-approved offline regression selection uses default testpaths
+but excludes the historical end-to-end, clean-install and two LQ1 Docker test
+modules, plus tests matching `real_docker` or `real_sandbox`. It prints these
+exclusions and preserves pytest's skip/deselection summary. This is not full
+integration qualification. The unchanged clean-install test also has an exact
+module inventory that needs a separate scope-approved addition for `report.py`.
+The strict scope phase rejects every untracked file outside this slice,
+including unrelated local planning documents; preserve or relocate those
+separately before running it. Validation status: **NOT RUN — Awaiting user execution**.
+
 ## Repository context preflight
 
 Before coding, ForgeAI now inspects the explicit targets and `--context` files

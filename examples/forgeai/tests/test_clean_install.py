@@ -61,6 +61,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
             f"forgeai/{m}.py"
             for m in (
                 "__init__",
+                "report",
                 "domain",
                 "repository_context",
                 "guard",

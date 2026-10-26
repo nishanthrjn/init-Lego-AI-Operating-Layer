@@ -83,6 +83,7 @@ from forgeai.domain import (
 )
 from forgeai.guard import WorkspaceGuard
 from forgeai.remote import BINDING, RemoteProfile, load_profile
+from forgeai.report import ModelBindingKind, encode_report, run_report
 from forgeai.repository_context import ContextPreflight, context_summary
 
 _MAX_LISTED = 20
@@ -582,6 +583,11 @@ def _target(text: str) -> CodingTarget:
 
 def _common(parser: argparse.ArgumentParser, binding: str) -> None:
     parser.add_argument(
+        "--json-report",
+        action="store_true",
+        help="also print one bounded machine-readable result line (schema forgeai-run-report/1); no file is written",
+    )
+    parser.add_argument(
         "--check-profile",
         choices=("generic", "project"),
         default="generic",
@@ -667,6 +673,11 @@ def main(
     `ask=None` means no operator can answer: every proposal is declined.
     """
     parser, args = _parse(list(sys.argv[1:] if argv is None else argv))
+    kind = {
+        "replay": ModelBindingKind.REPLAY,
+        "ollama": ModelBindingKind.OLLAMA,
+        BINDING: ModelBindingKind.OPENAI_COMPATIBLE_REMOTE,
+    }[args.binding]
     repository: Path = args.repo
     if not repository.is_dir():
         parser.error(f"repository not found: {repository}")
@@ -758,10 +769,28 @@ def main(
                 # Never interpolate exceptions from credential provisioning/runtime.
                 out("startup refused: remote credential, policy or custody unavailable")
                 return 2
-            return _execute(config, task, model, ask=ask, out=out, ready=ready)
+            return _execute(
+                config,
+                task,
+                model,
+                ask=ask,
+                out=out,
+                ready=ready,
+                kind=kind,
+                json_report=args.json_report,
+            )
         finally:
             source.close()
-    return _execute(config, task, model, ask=ask, out=out, ready=ready)
+    return _execute(
+        config,
+        task,
+        model,
+        ask=ask,
+        out=out,
+        ready=ready,
+        kind=kind,
+        json_report=args.json_report,
+    )
 
 
 def _execute(
@@ -772,6 +801,8 @@ def _execute(
     ask: Ask | None,
     out: Out,
     ready: Callable[[ForgeAIConfig], SandboxFailure | None],
+    kind: ModelBindingKind = ModelBindingKind.REPLAY,
+    json_report: bool = False,
 ) -> int:
     root = config.repository
     # Before any model call or effect: refuse unless the checks sandbox is ready.
@@ -814,6 +845,13 @@ def _execute(
     result = asyncio.run(prepared.worker.run(task, prepared.context))
     out(f"[{_STEPS}/{_STEPS}] Final result")
     out(summarize(result, root))
+    if json_report:
+        try:
+            encoded = encode_report(run_report(result, kind))
+        except ValueError:
+            out("forgeai-report: REPORT_UNAVAILABLE (bound exceeded)")
+        else:
+            out("forgeai-report: " + encoded)
     if result.disposition is TaskDisposition.SUCCEEDED:
         return 0
     return 2 if result.disposition is TaskDisposition.REJECTED else 1

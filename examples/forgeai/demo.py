@@ -86,7 +86,7 @@ SCENARIOS = {
 
 def main(argv: list[str] | None = None) -> int:
     scenario = (argv if argv is not None else sys.argv[1:]) or ["accept"]
-    if len(scenario) != 1 or scenario[0] not in SCENARIOS:
+    if scenario[0] not in SCENARIOS:
         raise SystemExit("usage: python demo.py [accept|rework]")
     executable = shutil.which("git")
     if executable is None:
@@ -100,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             arguments += ["--replay", str(FIXTURE / name)]
         for target in TARGETS:
             arguments += ["--target", target]
-        return forgeai(arguments)
+        return forgeai(arguments + scenario[1:])
 
 
 if __name__ == "__main__":
