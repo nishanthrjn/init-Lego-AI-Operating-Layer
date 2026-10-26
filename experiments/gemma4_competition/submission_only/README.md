@@ -32,7 +32,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Self-contained submission controls failed' }
 STOP and review the results. After approval, generate P1 outside the repository:
 
 ```powershell
-$p1Evidence = 'D:\Downloads\p1-init\gemma4-p1-compiler-20aa090e\gemma4-p1-compiler'
+$p1Evidence = 'C:\Work\Gemma4Localtest\p1-init\gemma4-p1-compiler-20aa090e\gemma4-p1-compiler'
 $p1Notebook = Join-Path $env:TEMP ('p1-self-contained-' + [guid]::NewGuid().ToString('N') + '.ipynb')
 uv run --locked --offline --no-sync python -B experiments/gemma4_competition/submission_only/generate_self_contained.py --candidate p1 --manifest "$p1Evidence\manifest.json" --package "$p1Evidence\submission.zip" --output $p1Notebook
 if ($LASTEXITCODE -ne 0) { throw 'Self-contained notebook generation failed' }

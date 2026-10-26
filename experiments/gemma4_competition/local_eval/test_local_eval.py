@@ -85,7 +85,7 @@ class SubsetTests(unittest.TestCase):
                 self.assertIsNone(entry["label"])
 
     def test_regeneration_against_external_metadata_if_available(self):
-        source = Path(r"D:\Downloads\gemma4-dev-metadata\public_dev_task_metadata.jsonl")
+        source = Path(r"C:\Work\Gemma4Localtest\gemma4-dev-metadata\public_dev_task_metadata.jsonl")
         if not source.is_file():
             self.skipTest("external metadata not present; committed byte and schema controls still apply")
         rows = [json.loads(line) for line in source.read_text().splitlines()]

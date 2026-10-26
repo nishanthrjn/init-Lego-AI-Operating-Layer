@@ -82,17 +82,17 @@ From repository root in the existing uv environment (no credentials needed):
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'P3 context and candidate controls failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3 --output 'D:\Downloads\gemma-p3-experiment'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3 --output 'C:\Work\Gemma4Localtest\gemma-p3-experiment'
 if ($LASTEXITCODE -ne 0) { throw 'P3 packaging failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3g --output 'D:\Downloads\gemma-p3g-experiment'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p3g --output 'C:\Work\Gemma4Localtest\gemma-p3g-experiment'
 if ($LASTEXITCODE -ne 0) { throw 'P3g packaging failed' }
 $controls = 'experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json'
 $controlsHash = '05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033'
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --controls $controls --controls-sha256 $controlsHash
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --controls $controls --controls-sha256 $controlsHash
 if ($LASTEXITCODE -ne 0) { throw 'P2 category projection failed' }
 # Set these to actual extracted run directories, not ZIP files or tooling folders.
-$p1bRun = 'D:\Downloads\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2'
-$p1cRun = 'D:\Downloads\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1'
+$p1bRun = 'C:\Work\Gemma4Localtest\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2'
+$p1cRun = 'C:\Work\Gemma4Localtest\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1'
 foreach ($run in @($p1bRun, $p1cRun)) {
     if (-not (Test-Path -LiteralPath "$run\run.json" -PathType Leaf)) { throw 'Set the actual retained run path' }
     uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $run --controls $controls --controls-sha256 $controlsHash
@@ -224,7 +224,7 @@ From repository root, existing uv environment, no credentials/environment overri
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'P2 localization controls failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p2 --output 'D:\Downloads\gemma-p2-experiment'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p2 --output 'C:\Work\Gemma4Localtest\gemma-p2-experiment'
 if ($LASTEXITCODE -ne 0) { throw 'P2 experimental packaging failed' }
 ```
 
@@ -294,7 +294,7 @@ $gold = Read-Host 'Absolute path to reviewed gold-locations.json FILE'
 $goldSha = Read-Host 'Exact printed GOLD_LOCATIONS_SHA256'
 $p1b = Read-Host 'Absolute path to completed merged P1b run DIRECTORY'
 $p1c = Read-Host 'Absolute path to completed P1c run DIRECTORY'
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/location_review.py --gold $gold --gold-sha256 $goldSha --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --run 'P1=D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run "P1b=$p1b" --run "P1c=$p1c" --attempt 'D:\Downloads\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --output 'D:\Downloads\gemma-location-review'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/location_review.py --gold $gold --gold-sha256 $goldSha --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --run 'P1=C:\Work\Gemma4Localtest\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run "P1b=$p1b" --run "P1c=$p1c" --attempt 'C:\Work\Gemma4Localtest\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --output 'C:\Work\Gemma4Localtest\gemma-location-review'
 if ($LASTEXITCODE -ne 0) { throw 'Location comparison failed' }
 ```
 
@@ -355,7 +355,7 @@ and derived reclassified rows (no model/verification calls):
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'Continue/resume controls failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/continuation.py 'D:\Downloads\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --config 'D:\Downloads\local-eval-p1b-dev16v\local-eval-config.json' --output 'D:\Downloads\p1b-resume-preparation'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/continuation.py 'C:\Work\Gemma4Localtest\local-eval-p1b-dev16v\forgeai-local-eval-p1b-dev-16v-attempt1' --config 'C:\Work\Gemma4Localtest\local-eval-p1b-dev16v\local-eval-config.json' --output 'C:\Work\Gemma4Localtest\p1b-resume-preparation'
 if ($LASTEXITCODE -ne 0) { throw 'P1b resume preparation failed' }
 ```
 
@@ -400,7 +400,7 @@ this is not the p95 time-fit gate or a guarantee. No comparison improvement clai
 Exact manual summary (repository root; no execution by coding agent):
 
 ```powershell
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
 if ($LASTEXITCODE -ne 0) { throw 'P1 dev-30 controlled summary failed' }
 ```
 
@@ -413,7 +413,7 @@ proof of successful mutation. Arbitrary shell/Python edits cannot be reliably
 inferred. Last recorded git status is not assumed to describe the final workspace.
 
 ```powershell
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/trace_review.py 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' rich_3454 requests_7315 rich_4070 rich_3934 rich_3471 rich_4076 fastapi_15589 rich_4075 fastapi_15800 rich_4079 fastapi_11194 --output 'D:\Downloads\p1-dev30-trace-review.json'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/trace_review.py 'C:\Work\Gemma4Localtest\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' rich_3454 requests_7315 rich_4070 rich_3934 rich_3471 rich_4076 fastapi_15589 rich_4075 fastapi_15800 rich_4079 fastapi_11194 --output 'C:\Work\Gemma4Localtest\p1-dev30-trace-review.json'
 if ($LASTEXITCODE -ne 0) { throw 'P1 trace review failed' }
 ```
 
@@ -566,7 +566,7 @@ Manual offline checks (repository root, existing uv environment):
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'Local evaluation fidelity controls failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
 if ($LASTEXITCODE -ne 0) { throw 'Historical smoke analysis failed' }
 ```
 
@@ -692,9 +692,9 @@ holdout. The reference patch is never exposed to an agent.
    retained SHA256 (replace both placeholders):
 
    ```powershell
-   $controlsFile = 'D:\Downloads\YOUR-CONTROLS\controls.json'
+   $controlsFile = 'C:\Work\Gemma4Localtest\YOUR-CONTROLS\controls.json'
    $controlsSha = 'PASTE_PRINTED_CONTROLS_SHA256'
-   uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls $controlsFile --controls-sha256 $controlsSha
+   uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\local-eval-p1-smoke5\forgeai-local-eval-p1-smoke5-attempt1' --controls $controlsFile --controls-sha256 $controlsSha
    if ($LASTEXITCODE -ne 0) { throw 'Control-qualified summary failed' }
    ```
 
@@ -744,7 +744,7 @@ run by the coding agent.
 ### Export inspection, 2026-10-22
 
 The maintainer supplied four text files under external
-`D:\Downloads\competition-infra`. Exact raw-byte SHA256 and sizes are recorded in
+`C:\Work\Gemma4Localtest\competition-infra`. Exact raw-byte SHA256 and sizes are recorded in
 `dependency-source-pins.json`; source files remain outside Git. Provenance is the
 maintainer-reported CPU/Internet-Off export of the public competition input;
 dataset version and exact export timestamp were not supplied.
@@ -816,7 +816,7 @@ Analyze a downloaded folder without modifying it (existing uv environment,
 repository root; substitute the actual external path):
 
 ```powershell
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'D:\Downloads\YOUR-P1-SMOKE5-OUTPUT'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\YOUR-P1-SMOKE5-OUTPUT'
 if ($LASTEXITCODE -ne 0) { throw 'Local evaluation summary failed' }
 ```
 
@@ -926,7 +926,7 @@ packages, historical evidence, pilot admissions and frozen KiSSKI evaluations.
 ## Frozen selection and research boundary
 
 The maintainer supplied the external metadata-only file
-`D:\Downloads\gemma4-dev-metadata\public_dev_task_metadata.jsonl`.
+`C:\Work\Gemma4Localtest\gemma4-dev-metadata\public_dev_task_metadata.jsonl`.
 Its raw SHA256 is
 `8c84d46169b5ca97437151a341792754c4672eafdaba5187abe3e74e3606f7e7`.
 It contains 129 rows with only `instance_id`, `repo`, `base_commit`, `created_at`:
@@ -1130,7 +1130,7 @@ write outside the repo and compare to committed subsets.json before changing any
 
 ```powershell
 $subsetReproduction = Join-Path $env:TEMP ('gemma-subsets-' + [guid]::NewGuid().ToString('N') + '.json')
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py freeze 'D:\Downloads\gemma4-dev-metadata\public_dev_task_metadata.jsonl' $subsetReproduction
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py freeze 'C:\Work\Gemma4Localtest\gemma4-dev-metadata\public_dev_task_metadata.jsonl' $subsetReproduction
 if ($LASTEXITCODE -ne 0) { throw 'Subset reproduction failed' }
 Get-FileHash -LiteralPath $subsetReproduction -Algorithm SHA256
 ```
@@ -1159,11 +1159,11 @@ After local controls PASS, separately approve the first smoke-5 GPU run:
 5. Download the entire new output directory outside the repository. Analyze:
 
 ```powershell
-$localEvalResults = 'D:\Downloads\forgeai-local-eval-p1-smoke5-attempt1'
+$localEvalResults = 'C:\Work\Gemma4Localtest\forgeai-local-eval-p1-smoke5-attempt1'
 uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py analyze $localEvalResults
 if ($LASTEXITCODE -ne 0) { throw 'Local evaluation analysis failed' }
 # Only for separately authorized complete matched-subset runs:
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py analyze 'D:\Downloads\run-a' --compare 'D:\Downloads\run-b'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py analyze 'C:\Work\Gemma4Localtest\run-a' --compare 'C:\Work\Gemma4Localtest\run-b'
 if ($LASTEXITCODE -ne 0) { throw 'Paired local evaluation analysis failed' }
 ```
 
@@ -1244,7 +1244,7 @@ from compiler/package validation. The results register stays NOT_SUBMITTED.
 For the full derived six-run analysis, use a fresh external destination:
 
 ```powershell
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/paper_evidence.py --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --run 'p1=D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run 'p1b=D:\Downloads\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2' --run 'p1c=D:\Downloads\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1' --run 'p2=D:\Downloads\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --run 'p3=D:\Downloads\local_eval_p3\local_eval_p3_dev16v\forgeai-local-eval-p3-dev-16v-attempt1' --run 'p3g=D:\Downloads\local_eval_p3\local_eval_p3g_dev16v\forgeai-local-eval-p3g-dev-16v-attempt1' --output 'D:\Downloads\p3-six-run-review-1'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/paper_evidence.py --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --run 'p1=C:\Work\Gemma4Localtest\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1' --run 'p1b=C:\Work\Gemma4Localtest\local_eval_p1_dev30\p1b\forgeai-local-eval-p1b-dev-16v-attempt2' --run 'p1c=C:\Work\Gemma4Localtest\local_eval_p1_dev30\p1c\forgeai-local-eval-p1c-dev-16v-attempt1' --run 'p2=C:\Work\Gemma4Localtest\local_eval_p2_dev16v\forgeai-local-eval-p2-dev-16v-attempt1' --run 'p3=C:\Work\Gemma4Localtest\local_eval_p3\local_eval_p3_dev16v\forgeai-local-eval-p3-dev-16v-attempt1' --run 'p3g=C:\Work\Gemma4Localtest\local_eval_p3\local_eval_p3g_dev16v\forgeai-local-eval-p3g-dev-16v-attempt1' --output 'C:\Work\Gemma4Localtest\p3-six-run-review-1'
 if ($LASTEXITCODE -ne 0) { throw 'Six-run analysis failed' }
 ```
 

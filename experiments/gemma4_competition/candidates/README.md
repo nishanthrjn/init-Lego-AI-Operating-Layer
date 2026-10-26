@@ -222,7 +222,7 @@ receipt to make a mismatch pass.
 ### Evidence storage policy
 
 Keep all newly preserved transfer bundles and downloaded results outside the
-repository, for example under D:\Downloads\b2-staging or a maintainer-selected
+repository, for example under C:\Work\Gemma4Localtest\b2-staging or a maintainer-selected
 external evidence root. `--receipt` identifies the actual local-receipt.json FILE
 inside its complete preserved bundle; `--reconcile` identifies the results
 DIRECTORY containing manifest.json, compiler-output.json, install-evidence.json
@@ -248,8 +248,8 @@ Then reconcile B2 from the current checkout, with the same external files that
 previously passed (use assignments, not path strings as Read-Host prompts):
 
 ```powershell
-$b2Receipt = 'D:\Downloads\gemma-b2-transfer-parent-eouf5647\bundle\local-receipt.json'
-$b2Results = 'D:\Downloads\gemma4-b2-compiler-d7195f13\gemma4-b2-compiler'
+$b2Receipt = 'C:\Work\Gemma4Localtest\gemma-b2-transfer-parent-eouf5647\bundle\local-receipt.json'
+$b2Results = 'C:\Work\Gemma4Localtest\gemma4-b2-compiler-d7195f13\gemma4-b2-compiler'
 uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_validator_diagnostics_1.py --candidate b2 --receipt $b2Receipt --reconcile $b2Results
 if ($LASTEXITCODE -ne 0) { throw 'B2 diagnostic reconciliation failed' }
 ```
@@ -408,10 +408,10 @@ external; inherited attempt provenance retained):
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'Run comparison controls failed' }
-$p1Run = 'D:\Downloads\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1'
+$p1Run = 'C:\Work\Gemma4Localtest\local-eval-p1-dev30\forgeai-local-eval-p1-dev30-attempt1'
 $p1bRun = Read-Host 'Absolute path to COMPLETED merged P1b run folder'
 $p1cRun = Read-Host 'Absolute path to COMPLETED P1c run folder'
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py --run "P1=$p1Run" --run "P1b=$p1bRun" --run "P1c=$p1cRun" --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'D:\Downloads\dev-16v-comparison.md'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py --run "P1=$p1Run" --run "P1b=$p1bRun" --run "P1c=$p1cRun" --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'C:\Work\Gemma4Localtest\dev-16v-comparison.md'
 if ($LASTEXITCODE -ne 0) { throw 'Run comparison failed' }
 ```
 
@@ -457,9 +457,9 @@ external directories using the existing deterministic zip_bytes/inspect_zip:
 ```powershell
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'P1b/P1c static controls failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1b --output 'D:\Downloads\gemma-p1b-experiment'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1b --output 'C:\Work\Gemma4Localtest\gemma-p1b-experiment'
 if ($LASTEXITCODE -ne 0) { throw 'P1b experimental packaging failed' }
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1c --output 'D:\Downloads\gemma-p1c-experiment'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p1c --output 'C:\Work\Gemma4Localtest\gemma-p1c-experiment'
 if ($LASTEXITCODE -ne 0) { throw 'P1c experimental packaging failed' }
 ```
 
