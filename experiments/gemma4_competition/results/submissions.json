@@ -2,6 +2,7 @@
   "schema_version": 1,
   "record_schema": {
     "candidate": "string",
+    "replicate_of": "optional object {notebook_name: string, notebook_version: string} or null; references an earlier run of the same candidate with identical zip_sha256; repeated draw, never a new candidate",
     "receipt": "SHA256 or null",
     "zip_sha256": "SHA256 or null",
     "manifest_sha256": "optional raw-file SHA256 or null",

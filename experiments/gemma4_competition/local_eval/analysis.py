@@ -448,6 +448,41 @@ def paired(a_meta: dict, a: list[dict], b_meta: dict, b: list[dict], controls: d
             "exact_two_sided_sign_test_p": p, "caveat": "Small n; stochastic runs, shared repos and dev-set tuning limit inference; no causal improvement claim."}
 
 
+def same_config_agreement(a_meta, a, b_meta, b, controls):
+    """Measured outcome flips for two complete, independent draws of one config."""
+    for key in ("candidate", "package_sha256", "manifest_sha256", "package_mode",
+                "evaluation_config", "model", "model_input", "official_cell_sha256",
+                "python", "torch_version", "cuda_version", "gpu_names", "concurrency",
+                "wall_guard_seconds"):
+        if key not in a_meta or key not in b_meta or a_meta[key] != b_meta[key]:
+            raise ValueError("same-config identity mismatch or missing: " + key)
+    if not a_meta.get("attempt_id") or not b_meta.get("attempt_id") or a_meta["attempt_id"] == b_meta["attempt_id"]:
+        raise ValueError("same-config comparison requires distinct attempt IDs")
+    for meta, rows in ((a_meta, a), (b_meta, b)):
+        if (meta.get("completion_state") != "COMPLETED" or meta.get("resume_manifest_sha256")
+                or meta.get("inherited_task_ids")):
+            raise ValueError("same-config comparison requires completed fresh runs")
+        ids = [r["task_id"] for r in rows]
+        if len(ids) != len(set(ids)) or set(ids) != set(meta["task_ids"]):
+            raise ValueError("same-config comparison requires each planned task exactly once")
+        if any(r.get("completed_result") is False or r.get("inherited_from_run_sha256") for r in rows):
+            raise ValueError("same-config comparison refuses incomplete or inherited results")
+    comparison = paired(a_meta, a, b_meta, b, controls)
+    aa = {r["task_id"]: r for r in a}
+    bb = {r["task_id"]: r for r in b}
+    tasks = [{"task_id": tid, "a_resolved": aa[tid]["resolved"],
+              "b_resolved": bb[tid]["resolved"],
+              "flipped": aa[tid]["resolved"] != bb[tid]["resolved"]}
+             for tid in a_meta["task_ids"] if controls[tid]["class"] == "VERIFIABLE"]
+    return {"status": "MEASURED_SAME_CONFIG_AGREEMENT", "tasks": len(tasks),
+            "flip_count": comparison["discordant"], "agreement_count": comparison["ties"],
+            "agreement_rate": comparison["ties"] / len(tasks),
+            "a_passed": sum(r["a_resolved"] for r in tasks),
+            "b_passed": sum(r["b_resolved"] for r in tasks),
+            "per_task": tasks, "paired": comparison,
+            "caveat": "Observed noise floor from one replicate pair, not a population bound or significance test. Equal totals can conceal flips."}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
@@ -458,9 +493,12 @@ def main() -> None:
     a = sub.add_parser("analyze", aliases=["summary"])
     a.add_argument("run", type=Path)
     a.add_argument("--compare", type=Path)
+    a.add_argument("--same-config", action="store_true", help="Require --compare to be an independent identical-config replicate")
     a.add_argument("--controls", type=Path)
     a.add_argument("--controls-sha256")
     args = parser.parse_args()
+    if getattr(args, "same_config", False) and not args.compare:
+        parser.error("--same-config requires --compare")
     if args.command == "freeze":
         if any((p / ".git").exists() for p in args.tasks.resolve().parents):
             raise ValueError("metadata source must remain outside the repository")
@@ -482,6 +520,8 @@ def main() -> None:
             if args.controls:
                 load_controls(args.controls, args.controls_sha256, other_meta)
             report["comparison"] = paired(meta, rows, other_meta, other, controls)
+            if args.same_config:
+                report["same_config_agreement"] = same_config_agreement(meta, rows, other_meta, other, controls)
         print(json.dumps(report, indent=2, allow_nan=False))
 
 

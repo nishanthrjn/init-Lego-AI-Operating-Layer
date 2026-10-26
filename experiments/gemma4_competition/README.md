@@ -1,5 +1,144 @@
 # Gemma 4 competition: independent continuation
 
+## FORGEAI-GEMMA4-P3-REPLICATE-AND-P4-TIME-BUDGET-1
+
+Status: **NOT RUN — Awaiting user execution**. Offline authoring only;
+no package build, tests, GPU runs, leaderboard submissions or commits performed.
+These instructions supersede the proposed P4/replicate sequence below for this slice.
+
+P4 is P3 with only `evaluation.max_time_minutes: 6` changed to `7`.
+`agent.yaml`, `configs/sampling.yaml`, and `prompts/system.md` are raw-byte copies.
+The packager checks all four pinned file hashes, the exact changed-file set and
+the exact one-line replacement. Other budgets remain **180 / 28 / 80**;
+model, prompt, tools, sampling and 8,192 output cap are unchanged. P3's existing
+experimental package and all qualification pins are preserved.
+
+For 116 serial tasks, the P4 agent-cap worst case is `116*7/60 = 13.5333 h`
+before startup, verification and other overhead. It is not worst-case time-safe.
+Using P3's approximate 244-second mean and illustrative 370-second startup:
+`(116*244 + 370)/3600 = 7.965 h`. Proportional task-time scaling gives
+`(116*244*(7/6) + 370)/3600 = 9.275 h` for P4; scaling the rounded eight-hour
+total instead gives 9.33 h. Both P4 figures are planning hypotheses, not measured
+results or a bootstrap bound. Measured full task wall times plus startup govern
+acceptance; the seven-minute cap does not cap verification/setup time.
+
+### Manual preparation and validation
+
+Working directory: `D:\Work\Projects\AI-Applications\ForgeAI-Gemma4`.
+Prerequisites: existing locked uv environment with Python 3.12+, dependencies
+already installed; no extra environment variables. The test discovery command
+uses local fixtures; the optional external-metadata test skips if absent.
+The build output must be a fresh directory outside any repository.
+
+```powershell
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p "test_*.py"
+if ($LASTEXITCODE -ne 0) { throw 'Local evaluation controls failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p4 --output 'D:\Downloads\gemma-p4-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P4 experimental packaging failed' }
+```
+
+Expected: unittest `OK` (document any skips), then `submission.zip.bin` and
+`manifest.json`, with printed ZIP and manifest SHA256, state
+`EXPERIMENTAL_UNQUALIFIED`, candidate `p4`, and `submission_authorized: false`.
+No P4 hashes are invented before the build. Do not rebuild P3 for the replicate.
+Paste local results before proceeding to the separately authorized GPU milestone.
+
+Maintainer feedback: P4 packaging succeeded, ZIP SHA256
+`c0828be94981f3066dfad75ba71df554e029e8f50c9bc26cd1b07a2935c96cdb`,
+5,100 bytes, manifest SHA256
+`b9079ec2f4b077b75aab31f053cb0bb86a2fea21724e06870a3177a5025ee667`.
+The supplied test run used CPython 3.14.5 and reported 98 tests with two errors:
+historical-controls and derived-subset hash mismatches. Git inspection showed
+LF index bytes checked out as CRLF for both fixtures. Explicit LF attributes now
+protect them, source-pins.json and official-cells.json; their working copies were
+restored to LF without changing historical pins or relaxing hash checks. Existing
+fixture/hash tests remain unchanged and cover these failures. Rerun the test
+command above; do not rebuild the successful package or advance to GPU execution
+while validation is pending. Fix verification: **NOT RUN — Awaiting user execution**.
+
+### Two prepared GPU configurations — execution not authorized here
+
+Use `local_eval/local_eval.ipynb` in separate fresh official starter sessions,
+**L4x4, Internet Off**, with the same official competition data, wheelhouse,
+model version and frozen dev-16v selection as P3 attempt1. Attach the updated
+entire local_eval tooling directory. Load the selected JSON as `CONFIG` in the
+configuration cell in place of the example dictionary; keep the existing guards
+and launch cell. Correct mount paths to attached inputs, never substitute bytes.
+
+| Configuration | Package and output |
+|---|---|
+| [P3 attempt2](local_eval/p3-dev-16v-attempt2.config.json) | Reuse retained P3 experimental ZIP `19b4e772…` and experimental manifest `1a1cc504…`; output `/kaggle/working/forgeai-local-eval-p3-dev-16v-attempt2` |
+| [P4 attempt1](local_eval/p4-dev-16v-attempt1.config.json) | Attach new P4 build; replace both hash placeholders with build output and both package mount paths; output `/kaggle/working/forgeai-local-eval-p4-dev-16v-attempt1` |
+
+Both configs retain the 7,200-second total watchdog, model version 2,
+`EXPERIMENTAL_UNQUALIFIED`, frozen subset hash
+`5a91f0513a3cdddea3eb7a2a3f5208ebdd40a5ab41821f29f6a31a4f07585056`, and
+empty resume fields. This is a fresh full replicate, not a continuation.
+P3 package/manifest hashes are copied from retained attempt1 config; the qualified
+manifest is a different file and must not replace the experimental manifest.
+
+Templates deliberately have approval booleans false. Only after separate GPU
+authorization, set `official_environment_authorized`, `gpu_authorized`,
+`internet_off_confirmed`, and `experimental_authorized` true, and set authorization
+to `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p3 ON dev-16v` or
+`AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p4 ON dev-16v`, respectively.
+Keep `package_reconciled` and `confirmation_only` false. No environment variables
+are required. Retain config, full outputs, failures and partial attempts externally.
+Expected successful runs contain 16 distinct completed task results; no score
+increase is promised. Watchdog stops/unknown outcomes cannot satisfy the gate.
+
+### Replicate analysis and selection rule
+
+After downloading the two runs, use the actual external folders in these commands.
+The example attempt2/P4 locations below are proposed destinations, not observed files.
+
+```powershell
+$p3a = 'D:\Downloads\local_eval_p3\local_eval_p3_dev16v\forgeai-local-eval-p3-dev-16v-attempt1'
+$p3b = 'D:\Downloads\forgeai-local-eval-p3-dev-16v-attempt2'
+$p4 = 'D:\Downloads\forgeai-local-eval-p4-dev-16v-attempt1'
+$controls = 'experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json'
+$controlsHash = '05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $p3a --compare $p3b --same-config --controls $controls --controls-sha256 $controlsHash
+if ($LASTEXITCODE -ne 0) { throw 'Replicate comparison failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py --run "P3a=$p3a" --run "P3b=$p3b" --run "P4=$p4" --same-config P3a=P3b --controls $controls --controls-sha256 $controlsHash --output 'D:\Downloads\p3-p4-replicate-comparison.md'
+if ($LASTEXITCODE -ne 0) { throw 'Comparison table failed' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $p4 --compare $p3a --controls $controls --controls-sha256 $controlsHash
+if ($LASTEXITCODE -ne 0) { throw 'P4 summary failed' }
+```
+
+Expected: same-config report lists all verifiable tasks, both outcomes, flip flags,
+agreement rate and `flip_count`. Package/config/runtime mismatches, duplicate IDs,
+unknown outcomes, incomplete or resumed runs fail rather than implying zero noise.
+The measured noise floor **F** is all P3 attempt1-vs-attempt2 per-task flips,
+including both directions, not the absolute difference in solved totals. It is an
+empirical estimate from one pair, not a population bound or significance claim.
+
+**P4 replaces P3 for submission selection only when** all runs are complete on
+the same 16 VERIFIABLE tasks, **S4 - S3a > F**, and P4's measured
+`time_fit.bootstrap_upper95_hours <= 11` with `time_fit.gate == "PASS"`.
+Use the preselected P3 attempt1 baseline (reported 8/16); do not choose the weaker
+P3 draw after seeing results. Equality with the flip count fails; equality at
+11 hours passes. Missing evidence means INCONCLUSIVE: retain P3.
+The existing deterministic 10,000-draw bootstrap samples 116 task wall times plus
+fixed startup and uses its one-sided 95th percentile. Small n, shared repositories
+and dev-set tuning limit generalization. Qualification, frozen held-out confirmation
+and actual submission remain separate gates; an experimental win does not authorize
+submission or replacement of P3 receipt pins.
+
+For later identical-file leaderboard resubmissions, keep `candidate: "p3"` and
+append a new run in [submissions.json](results/submissions.json) with
+`replicate_of: {"notebook_name": "p3_selfcontained", "notebook_version": "1"}`.
+Require identical ZIP SHA256 to that earlier record; preserve each draw's actual
+notebook version, submission ID/time and score (null until observed). The pair
+of notebook name/version identifies the earlier record even when submission ID
+is unknown. This is the ledger's documented field schema, not a new executable
+submission validator. No hypothetical submission records or scores are added.
+
+Tests authored: P4 byte/scope controls including a re-pinned invalid budget;
+replicate flips despite equal totals, full agreement, Markdown output and failure
+boundaries. **Verification: NOT RUN — Awaiting user execution.** Paste results
+before further debugging or implementation.
+
 Maintainer review snapshot: **2026-10-26**, branch **br-ForgeAI-Gemma4**, HEAD
 `6cf6ce87206ce31a13fcc95b7995183a09561ad8` before this documentary edit.
 The initially open product branch was clean at the same commit; the checkout

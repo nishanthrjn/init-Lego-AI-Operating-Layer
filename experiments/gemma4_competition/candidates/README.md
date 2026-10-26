@@ -1,3 +1,14 @@
+# Candidate work
+
+Current offline-authoring slice: [P3 replicate and P4 time budget](../README.md#forgeai-gemma4-p3-replicate-and-p4-time-budget-1).
+P4 changes only P3's `eval_config.yaml` max_time_minutes from 6 to 7; the
+other three files are byte copies. Static controls and pins are in
+`../local_eval/experimental.py` and `experimental-pins.json`. Build, tests and
+GPU execution are pending; P4 is experimental and unqualified. The linked
+instructions contain projections, both run configs, exact commands and the
+strict gain-above-flips plus bootstrap-at-most-11-hours selection rule.
+Historical entries follow; they do not authorize execution for this slice.
+
 # FORGEAI-GEMMA4-M3-BUDGET-VARIANT-B2-1
 
 Status: authored, NOT RUN — AWAITING MAINTAINER EXECUTION.

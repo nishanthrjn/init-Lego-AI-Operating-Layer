@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -50,6 +50,11 @@ def static_files(candidate):
     if (before.split(b"2. Localize within a budget.")[0] != after.split(b"2. Localization.")[0]
             or before.split(b"3. Make an early, reversible edit.")[1] != after.split(b"3. Make an early, reversible edit.")[1]):
         raise ValueError("P3g must preserve prompt outside localization section")
+    if {k for k in MEMBERS if data["p3"][k] != data["p4"][k]} != {"eval_config.yaml"}:
+        raise ValueError("P4 scope mismatch")
+    if data["p4"]["eval_config.yaml"] != data["p3"]["eval_config.yaml"].replace(
+            b"max_time_minutes: 6\n", b"max_time_minutes: 7\n"):
+        raise ValueError("P4 time cap must be the only evaluation change")
     return data[candidate]
 
 
@@ -67,7 +72,7 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
@@ -79,7 +84,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()

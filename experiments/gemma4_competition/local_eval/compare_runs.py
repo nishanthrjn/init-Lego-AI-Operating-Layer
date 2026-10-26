@@ -2,7 +2,20 @@
 import argparse
 from pathlib import Path
 import re
-from analysis import read_run, load_controls, sha
+from analysis import read_run, load_controls, sha, same_config_agreement
+
+
+def agreement_section(runs, controls, pair):
+    a, separator, b = pair.partition("=")
+    if not separator or a not in runs or b not in runs or a == b:
+        raise ValueError("same-config requires two distinct existing labels: A=B")
+    report = same_config_agreement(*runs[a], *runs[b], controls)
+    lines = [f"Same-config {a} vs {b}: {report['agreement_count']}/{report['tasks']} agree; "
+             f"observed noise floor = {report['flip_count']} task flips.",
+             "", "| Task | First resolved | Second resolved | Flipped |", "|---|---|---|---|"]
+    lines.extend(f"| {row['task_id']} | {row['a_resolved']} | {row['b_resolved']} | {row['flipped']} |"
+                 for row in report["per_task"])
+    return "\n".join(lines) + "\n\n" + report["caveat"] + "\n"
 
 
 def table(runs, controls):
@@ -57,6 +70,7 @@ def main():
     parser.add_argument("--controls", type=Path, required=True)
     parser.add_argument("--controls-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--same-config", action="append", default=[], metavar="A=B")
     args = parser.parse_args()
     output = args.output.resolve()
     if output.is_relative_to(Path(__file__).resolve().parents[3]) or any((p / ".git").exists() for p in output.parents):
@@ -73,6 +87,8 @@ def main():
         runs[label] = (meta, rows)
         provenance.append(f"{label}: run SHA256 {sha(path / 'run.json')}; tasks SHA256 {sha(path / 'tasks.jsonl')}; state {meta['completion_state']}")
     rendered = table(runs, controls)
+    for pair in args.same_config:
+        rendered += "\n" + agreement_section(runs, controls, pair)
     header = "Controls SHA256: " + args.controls_sha256 + "\n\n" + "\n\n".join(provenance)
     with output.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(header + "\n\n" + rendered + "\nTask union shown; NOT_PLANNED is not failure. UNKNOWN/MISSING are not unresolved verdicts. No significance or improvement claim.\n")

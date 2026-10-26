@@ -1,5 +1,15 @@
 # FORGEAI-GEMMA4-M3-LOCAL-EVAL-HARNESS-1
 
+## P3 replicate / P4 time-budget preparation
+
+See the [current offline-authoring instructions](../README.md#forgeai-gemma4-p3-replicate-and-p4-time-budget-1)
+for the two JSON run configs, P4 package command, projections and selection rule.
+`analysis.py summary A --compare B --same-config` and
+`compare_runs.py --run A=FOLDER --run B=FOLDER --same-config A=B` now expose
+per-task replicate flips and agreement under strict identical-config checks.
+Both require pinned controls; the latter also requires `--output`.
+Execution remains **NOT RUN — Awaiting user execution**. Historical text follows.
+
 ## FORGEAI-GEMMA4-P3-CONTEXT-FIX-AND-GRAPH-REDO-1
 
 Authored; NOT RUN. Historical candidates, packages and run artifacts remain
