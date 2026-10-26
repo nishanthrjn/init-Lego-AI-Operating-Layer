@@ -17,9 +17,9 @@ autonomous team.** It has no planner, no open-ended loop, no retry and no
 memory.
 
 **Status:**
-- **ForgeAI-3** (bounded one-cycle rework): locally qualified on 2026-09-29
-  for the Windows + Docker Desktop scope with replay models; see
-  "ForgeAI-3 qualification evidence".
+- **ForgeAI v0.2 Developer Preview:** locally qualified by
+  `validate_forgeai_v0_2_dp_1.py`, with replay models and real sandboxed checks.
+  Live model quality is unqualified.
 - **ForgeAI-2** (independent review gate): locally qualified on 2026-09-29.
   Its "CHANGES_REQUIRED stops the run" behavior is superseded by ForgeAI-3's
   single rework.
@@ -30,6 +30,136 @@ memory.
   "ForgeAI v0.1" below. Locally qualified on 2026-10-08 (`validate_forgeai_v01.py`,
   18/18 phases) with replay models and real sandboxed checks; live-model use is
   unqualified.
+
+## ForgeAI v0.2 Developer Preview
+
+### What it is
+
+An attended, supervised, single-repository, single-task coding worker. It is
+not an unattended or commercial coding agent, and it is not a hosted service.
+This DP packages the existing bounded workflow; it adds no new capability.
+
+### Quickstart (5 minutes, replay model, real Docker checks)
+
+Prerequisites: Windows, Docker Desktop with its Linux engine running and the
+already-qualified `PYTHON_CHECKS` image available locally, Git, and uv. Use the
+existing locked development environments and cached dependencies; these commands
+do not install missing dependencies or build/pull the checks image. The five-minute
+estimate assumes those prerequisites are ready.
+
+From the repository root:
+
+```powershell
+cd examples/forgeai
+uv run --locked --offline --no-sync python demo.py accept --discover-guidance --json-report
+```
+
+The demo creates a temporary, committed fixture repository. Guidance discovery
+is limited to that repository; it does not read guidance from the ForgeAI checkout.
+The stock fixture has no candidate guidance files, so `NOT_PRESENT` is expected.
+First, `Confirm this required repository context? [y/N]` asks you to confirm the
+listed inventory. This does not approve mutation. Next, `Apply this proposal?
+[y/N]` asks you to approve the exact displayed patch; answer `y` only after
+reviewing it. Declining either prompt stops the run. Successful output includes
+three passed sandbox checks, an accepted review, `disposition: succeeded`, and
+a final `forgeai-report:` JSON line with `model_quality: NOT_APPLICABLE_REPLAY`.
+CRLF files retain their line endings; the preview labels hidden CRLF terminators
+and shows the substantive changes. The temporary demo repository is removed when
+the demo exits.
+
+### Using it on your repository
+
+With ForgeAI available in your existing environment, a clean committed Python
+repository, and the named model already installed in a running local Ollama:
+
+```powershell
+forgeai run --repo C:\work\inventory --task "Reject non-positive reservation requests and add tests" --target src/inventory/stock.py --target tests/test_stock.py --context docs/conventions.md --discover-guidance --json-report --binding ollama --ollama-model qwen2.5-coder:7b
+```
+
+Replace the paths, task and model with your own. Explicit context must exist and
+fit the documented bounds. The operator selects every target and explicit context
+file; discovery adds bounded read-only guidance only when requested. Guidance
+discovery stays opt-in. Live model quality is **UNQUALIFIED**; the preview and
+identity-bound approval are the controls. Checks and review can both miss defects.
+
+### Feature summary
+
+| Feature | Behavior |
+|---|---|
+| Context confirmation | Confirm the exact required repository inventory before the model proceeds. |
+| Guidance discovery | Opt-in, bounded ancestor guidance as read-only context; local bindings only. |
+| Exact patch preview | Digest-bound before text and full bounded diff, with labeled CRLF handling. |
+| Identity-bound approval | Only approval of this exact changeset permits mutation. |
+| Sandboxed Ruff/mypy/pytest | Configured checks run in the qualified Docker sandbox. |
+| Independent review | A distinct reviewer Agent definition evaluates the checked candidate; this is model opinion, not proof. |
+| One rework | At most one correction after code findings or a review requesting changes; fresh confirmation and approval required. |
+| Machine-readable report | `--json-report` emits the bounded `forgeai-run-report/1` result. |
+
+### Model status
+
+Replay is qualified for demonstration by the prior local slice evidence. Ollama
+and remote OpenAI-compatible bindings work mechanically, but their model quality
+is **UNQUALIFIED**. No KiSSKI model is currently admitted: the pilot's `ADMISSIONS`
+tuple is empty. `--discover-guidance` is refused with the remote binding.
+The consolidated gate uses replay or local synthetic responses, never a live model.
+
+### Known limitations / behaviour
+
+- The qualified platform scope is Windows + Docker Desktop, with Python layouts
+  using `src/`, `tests/` and `pyproject.toml`.
+- There are 1–8 operator-chosen targets; there is no target discovery.
+- Guidance discovery reads candidate files before the Docker and Git checks.
+  Nothing is disclosed to a model or written by those reads.
+- `NOT_PRESENT` also covers unreadable files.
+- With --discover-guidance, the run reuses the discovery host and its operator
+  grants, so one operator authority (one expiry window) covers both the guidance
+  reads and the coding run.
+- The guidance summary is printed before the run header.
+- There is no commit, push or rollback. Applied changes remain in the working tree
+  on failure; the operator inspects them and decides what to retain.
+- A run produces at most two proposals.
+- Historical evaluation harness tests under `evaluation/tests` have known
+  pre-existing failures tracked as `FORGEAI-EVAL-HARNESS-TRIAGE-1`. They are not
+  part of DP qualification.
+
+### DP qualification
+
+From the repository root, on Windows with Docker Desktop running and the pinned
+image and all build/install dependencies already available locally:
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_v0_2_dp_1.py
+```
+
+The gate first checks scope, preservation, offline product tests, strict typing,
+lint, formatting and whitespace. On Windows it then checks Docker metadata,
+real integration and offline clean installation, the dedicated real-sandbox
+qualification selectors, and the accept/rework demos. Real phases require
+executed passing tests; skips do not qualify. Clean-install cache misses stop the
+gate; network access is not enabled. Acceptance demos receive two `y` answers
+for accept and four for rework, matching context confirmation plus mutation
+approval on each attempt. Their final replay reports are checked and printed.
+
+Only a successful Windows run establishes the consolidated DP qualification:
+
+```text
+FORGEAI-V0.2-DP LOCALLY QUALIFIED; REPLAY MODELS AND REAL SANDBOXED CHECKS; MODEL QUALITY UNQUALIFIED; NO LIVE MODEL EXECUTION
+```
+
+Other operating systems stop after the offline phases and print:
+
+```text
+REAL PHASES NOT RUN (requires Windows Docker Desktop)
+FORGEAI-V0.2-DP OFFLINE CHECKS PASSED; REAL PHASES NOT RUN; NOT QUALIFIED
+```
+
+**Consolidated verification: PASSED — maintainer-supplied Windows results.**
+The gate reported 555 offline product tests passed (11 deselected), clean typing,
+lint, formatting, scope, preservation and whitespace checks; 6 real end-to-end
+and offline clean-install tests passed; 5 real-Docker regressions passed; and
+the dedicated real-sandbox selectors passed 1 success, 1 check-triggered rework
+and 4 negative controls. Both acceptance demos reported `SUCCEEDED`, with replay
+model quality and the expected rework flags. No live model quality is qualified.
 
 ## ForgeAI v0.1: supervised local engineering assistant
 
