@@ -31,6 +31,7 @@ import sys
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Sequence
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Never
@@ -65,6 +66,7 @@ from legoai_engineering.sandbox.errors import SandboxFailure
 from forgeai.composition import (
     ForgeAIConfig,
     bind_remote,
+    discover_guidance,
     local_profile,
     prepare_run,
     remote_credentials,
@@ -82,6 +84,7 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.guidance import GuidanceRefusal, guidance_candidates, guidance_summary
 from forgeai.remote import BINDING, RemoteProfile, load_profile
 from forgeai.report import ModelBindingKind, encode_report, run_report
 from forgeai.repository_context import ContextPreflight, context_summary
@@ -583,6 +586,11 @@ def _target(text: str) -> CodingTarget:
 
 def _common(parser: argparse.ArgumentParser, binding: str) -> None:
     parser.add_argument(
+        "--discover-guidance",
+        action="store_true",
+        help="discover bounded repository guidance as read-only context to confirm",
+    )
+    parser.add_argument(
         "--json-report",
         action="store_true",
         help="also print one bounded machine-readable result line (schema forgeai-run-report/1); no file is written",
@@ -673,6 +681,8 @@ def main(
     `ask=None` means no operator can answer: every proposal is declined.
     """
     parser, args = _parse(list(sys.argv[1:] if argv is None else argv))
+    if args.discover_guidance and args.binding == BINDING:
+        parser.error("--discover-guidance is not yet supported with the remote binding")
     kind = {
         "replay": ModelBindingKind.REPLAY,
         "ollama": ModelBindingKind.OLLAMA,
@@ -744,6 +754,48 @@ def main(
         )
     except (TypeError, ValueError) as error:
         parser.error(f"invalid configuration: {error}")
+    if args.discover_guidance:
+        try:
+            inventory = asyncio.run(
+                discover_guidance(config, guidance_candidates(task))
+            )
+        except Exception:
+            inventory = GuidanceRefusal.UNEXPECTED_ERROR
+        if isinstance(inventory, GuidanceRefusal):
+            out(
+                "startup refused: guidance discovery "
+                + inventory.value
+                + "; no model was called and nothing was written"
+            )
+            return 2
+        out(guidance_summary(inventory))
+        try:
+            task = TaskRequest(
+                task.objective,
+                task.targets,
+                task.constraints,
+                task.context + inventory.included_paths,
+            )
+            merged = local_profile(
+                root,
+                config.editable_paths,
+                context_paths=task.context,
+                bindings=(binding,),
+                binding=args.binding,
+                git_executable=config.git_executable,
+                docker_executable=config.docker_executable,
+                now=datetime.now(UTC),
+                check_profile=config.check_profile,
+                uv_executable=config.uv_executable,
+            )
+            # Retain the exact operator authority and expiry across the rebuild.
+            config = replace(merged, host=config.host)
+        except Exception:
+            out(
+                "startup refused: guidance discovery UNEXPECTED_ERROR; "
+                "no model was called and nothing was written"
+            )
+            return 2
     if remote is not None:
         source = remote_credentials(config)
         try:

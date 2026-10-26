@@ -42,6 +42,10 @@ from legoai_engineering.analyst.authorized import (
     REPOSITORY_READ_ACTION,
     AuthorizedRepositoryEvidence,
 )
+from legoai_engineering.analyst.values import (
+    AcquisitionFailure,
+    EvidenceAcquisitionError,
+)
 from legoai_engineering.checks.authorized import (
     ENGINEERING_CHECK_ACTION,
     AuthorizedEngineeringChecks,
@@ -58,6 +62,7 @@ from legoai_engineering.checks.sandboxed import (
 from legoai_engineering.checks.values import CheckKind, CheckPolicy, CheckRequest
 from legoai_engineering.coding.api import CodingAgent
 from legoai_engineering.coding.authorized import AuthorizedCodingEvidence
+from legoai_engineering.coding.values import CodingTarget
 from legoai_engineering.git.local import (
     GitReadPolicy,
     LocalGitExecutable,
@@ -66,6 +71,11 @@ from legoai_engineering.git.local import (
 from legoai_engineering.repository.local import (
     LocalRepositoryWorkspace,
     LocalWorkspaceRoot,
+)
+from legoai_engineering.repository.mutation import (
+    ContentDigest,
+    FileChangeKind,
+    digest_text,
 )
 from legoai_engineering.repository.mutation_authorized import (
     REPOSITORY_MUTATION_ACTION,
@@ -93,6 +103,16 @@ from forgeai.domain import (
     TaskResult,
 )
 from forgeai.guard import WorkspaceGuard
+from forgeai.guidance import (
+    MAX_CANDIDATES,
+    MAX_REFERENCE_BYTES,
+    GuidanceInventory,
+    GuidanceItem,
+    GuidanceRefusal,
+    GuidanceStatus,
+    guidance_candidates,
+    select,
+)
 from forgeai.provider import (
     ProviderEvidence,
     ProviderProfile,
@@ -213,6 +233,118 @@ class ForgeAIConfig:
 class PreparedRun:
     worker: RepositoryTaskWorker
     context: ExecutionContext
+
+
+async def discover_guidance(
+    config: ForgeAIConfig,
+    candidates: tuple[RepositoryPath, ...],
+    *,
+    clock: Callable[[], datetime] = utc_now,
+) -> GuidanceInventory | GuidanceRefusal:
+    """Read metadata through one host and lazy single-path authorized readers."""
+    try:
+        if (
+            config.model_selection.get("binding") not in {"replay", "ollama"}
+            or config.remote_profile is not None
+            or config.remote_runtime is not None
+            or any(
+                getattr(binding.provider, "deployment", ModelDeployment.LOCAL)
+                is not ModelDeployment.LOCAL
+                for binding in config.host.bindings
+            )
+        ):
+            return GuidanceRefusal.UNSUPPORTED_BINDING
+        # Recompute the exact permitted names; a caller cannot expand read scope.
+        request = TaskRequest(
+            "guidance discovery",
+            tuple(
+                CodingTarget(path, FileChangeKind.UPDATE)
+                for path in config.editable_paths
+            ),
+            context=config.context_paths,
+        )
+        if candidates != guidance_candidates(request):
+            return GuidanceRefusal.BOUNDARY
+        inventory = GuidanceInventory((), len(config.context_paths), 0)
+        if not candidates or inventory.exhausted:
+            return select(
+                tuple(
+                    GuidanceItem(path, GuidanceStatus.EXCLUDED_BUDGET)
+                    for path in candidates
+                ),
+                operator_count=len(config.context_paths),
+            )
+        host = open_local_host(
+            config.host, config.model_selection, clock=clock, remote=None
+        )
+        reference = replace(
+            config.host.configuration.configuration, instance=config.workspace_scope
+        )
+        scope = config.workspace_scope
+        workspace = LocalRepositoryWorkspace(
+            LocalWorkspaceRoot(config.repository), config.workspace_policy
+        )
+        read_context = host.security_context(reference, REPOSITORY_READ_ACTION, scope)
+        tenant = read_context.tenant_context
+
+        async def metadata(path: RepositoryPath) -> tuple[int, ContentDigest]:
+            reader = AuthorizedRepositoryEvidence(
+                reference, workspace, read_context, host.authorization, (path,), clock
+            )
+            evidence = await reader.acquire((path,), tenant)
+            if len(evidence.files) != 1 or evidence.files[0].path != path.value:
+                raise ValueError("guidance evidence mismatch")
+            text = evidence.files[0].text
+            return len(text.encode("utf-8")), digest_text(text)
+
+        operator_bytes = 0
+        for path in config.context_paths:
+            try:
+                size, _ = await metadata(path)
+            except EvidenceAcquisitionError as error:
+                if error.reason is AcquisitionFailure.UNAVAILABLE:
+                    return GuidanceRefusal.OPERATOR_CONTEXT_UNAVAILABLE
+                if error.reason is AcquisitionFailure.BUDGET:
+                    return GuidanceRefusal.OPERATOR_CONTEXT_BUDGET
+                raise
+            operator_bytes += size
+            if operator_bytes > MAX_REFERENCE_BYTES:
+                return GuidanceRefusal.OPERATOR_CONTEXT_BUDGET
+        inventory = GuidanceInventory((), len(config.context_paths), operator_bytes)
+        items: list[GuidanceItem] = []
+        for index, path in enumerate(candidates):
+            if index >= MAX_CANDIDATES:
+                item = GuidanceItem(path, GuidanceStatus.NOT_CONSIDERED_LIMIT)
+            elif inventory.exhausted:
+                item = GuidanceItem(path, GuidanceStatus.EXCLUDED_BUDGET)
+            else:
+                try:
+                    size, digest = await metadata(path)
+                except EvidenceAcquisitionError as error:
+                    if error.reason is AcquisitionFailure.UNAVAILABLE:
+                        item = GuidanceItem(path, GuidanceStatus.NOT_PRESENT)
+                    elif error.reason is AcquisitionFailure.BUDGET:
+                        item = GuidanceItem(path, GuidanceStatus.EXCEEDS_FILE_BOUND)
+                    else:
+                        raise
+                else:
+                    item = GuidanceItem(path, GuidanceStatus.INCLUDED, size, digest)
+            items.append(item)
+            inventory = select(
+                tuple(items),
+                operator_count=len(config.context_paths),
+                operator_bytes=operator_bytes,
+            )
+        return inventory
+    except EvidenceAcquisitionError as error:
+        if error.reason is AcquisitionFailure.DENIED:
+            return GuidanceRefusal.DENIED
+        if error.reason is AcquisitionFailure.BOUNDARY:
+            return GuidanceRefusal.BOUNDARY
+        return GuidanceRefusal.UNEXPECTED_ERROR
+    except Exception:
+        # No exception strings, retries, model calls, mutation or sandbox effects.
+        return GuidanceRefusal.UNEXPECTED_ERROR
 
 
 def prepare_run(

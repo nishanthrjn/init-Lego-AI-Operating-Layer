@@ -1160,6 +1160,103 @@ The strict scope phase rejects every untracked file outside this slice,
 including unrelated local planning documents; preserve or relocate those
 separately before running it. Validation status: **NOT RUN — Awaiting user execution**.
 
+## Discovered repository guidance (Developer Preview)
+
+Opt in with `--discover-guidance` on either CLI form, or pass it after the
+demo scenario, for example `python demo.py accept --discover-guidance --json-report`.
+The flag is supported for replay and Ollama bindings only. Combining it with
+the remote binding is refused during argument handling, before file reads,
+credential provisioning or host opening. Without the flag, the existing flow,
+output and reads are unchanged.
+
+Discovery computes exact paths from editable targets; it does not scan directories.
+It deduplicates target ancestor directories case-insensitively, orders them by
+depth and then path, and considers:
+
+1. `AGENTS.md` in each ancestor, repository root first.
+2. `CLAUDE.md` in each ancestor, repository root first.
+3. Root `CONTRIBUTING.md`.
+4. Root `README.md`.
+
+Targets and explicit `--context` choices win: matching candidate paths are removed
+case-insensitively. Hidden components are not allowed. Discovery performs no globbing,
+recursive search, symlink following or traversal of links, ADRs or contracts mentioned
+inside guidance text. It considers at most 16 candidates, keeping metadata entries
+for the remainder as `NOT_CONSIDERED_LIMIT` without reading them.
+
+Each candidate is read through its own **single-path authorized reader** with
+`allowed_paths=(path,)`. Readers are constructed lazily in priority order, sharing
+one independent local discovery host, workspace, reference, read security context,
+authorization and clock. **Authorization is evaluated per read** by the existing
+Engineering adapter, including its release check for successful acquisitions.
+Discovery uses the existing operator grants; it mints none, calls no model and
+performs no mutation or sandbox work. The normal task subsequently opens its own
+host and retains the original grants and expiry when merging context.
+
+The guidance inventory holds relative paths, closed statuses, observed UTF-8 sizes
+and content digests only. Acquired text is discarded after computing metadata;
+it is never cached or put into the summary. Existing operator context is measured
+through authorized reads to account for the shared byte budget. If all eight
+reference slots are already occupied, guidance is excluded without any discovery
+reads. Required operator context is still checked by the existing task preflight.
+
+| Status | Meaning |
+| --- | --- |
+| `INCLUDED` | Entire file fits: at most 8,192 bytes per file, four guidance files and 12,288 guidance bytes; combined operator context plus guidance stays within eight references and 16,384 bytes. |
+| `NOT_PRESENT` | Acquisition returned `UNAVAILABLE`. The platform deliberately uses this for both missing and unreadable files; it does not prove absence. |
+| `EXCEEDS_FILE_BOUND` | Observed size exceeds 8,192 bytes, or acquisition returned `BUDGET`; unavailable sizes/digests remain unknown. |
+| `EXCLUDED_BUDGET` | File cannot fit the remaining budget, or a count/byte budget is exhausted. No truncation or summarization is performed. |
+| `NOT_CONSIDERED_LIMIT` | Candidate is beyond the first 16 and was not read. |
+
+Once a guidance or combined reference budget is exhausted, later candidates within
+the cap are marked `EXCLUDED_BUDGET` without reader construction or reads. A file
+whose observed size does not fit is excluded whole; if budget remains, a later
+smaller file can still fit. Reaching the 16-candidate cap takes precedence for
+the remainder. Selection is deterministic, but does not prove that all necessary
+guidance fits or that instructions are semantically complete or consistent.
+
+`DENIED`, `BOUNDARY` and unexpected errors stop discovery immediately; no later
+reader is constructed. The CLI exits 2 with
+`startup refused: guidance discovery <REASON>; no model was called and nothing was written`.
+Exception text is never printed. Closed additional refusal reasons cover unsupported
+bindings and unavailable or over-budget required operator context. No `TaskResult`
+exists at this point, so `--json-report` emits no result line for these refusals.
+
+On successful discovery, the header is
+`repository guidance: discovered (read-only; confirm below)` followed by metadata
+for every candidate. Included paths are appended to `TaskRequest.context` in
+priority order. They remain **repository data**, never targets, constraints, system
+instructions or authority. The existing context preflight reacquires the files and
+lists them as references for operator confirmation; the existing stale-context and
+proposal validation boundaries still apply. A proposal editing discovered guidance
+is rejected `PATH_OUT_OF_SCOPE`. Discovery metadata is not a reusable snapshot or
+permission to disclose content, and guidance cannot change grants or checks.
+
+The discovery summary and `forgeai-run-report/1` line never contain guidance text.
+The report schema is unchanged; it continues to report replay quality as
+`NOT_APPLICABLE_REPLAY` and live binding quality as `UNQUALIFIED`.
+
+From the repository root, using the existing locked Python 3.14 environments,
+Git, uv and installed development dependencies, the maintainer runs:
+
+```powershell
+git status --short
+uv run --locked --offline --no-sync python .\validate_forgeai_dp_guidance_preflight_1.py
+git diff --check
+git status --short
+```
+
+The validator retains the S1 environment sanitization, import paths, explicit Ruff
+configuration and product-only offline selection. Its focused regression phase also
+uses the existing `not real_docker and not real_sandbox` selection because the
+selected context module contains a Windows real-sandbox test. Historical
+`evaluation/tests` remain excluded, with pre-existing failures tracked separately
+as `FORGEAI-EVAL-HARNESS-TRIAGE-1`. Real-Docker and clean-install checks remain
+separate maintainer gates. No environment variables need setting, no dependencies
+are installed, and no live-model qualification is claimed.
+
+Verification: **NOT RUN — Awaiting user execution**.
+
 ## Repository context preflight
 
 Before coding, ForgeAI now inspects the explicit targets and `--context` files

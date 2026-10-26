@@ -11,7 +11,15 @@ SOURCE = PACKAGE / "src" / "forgeai"
 REPOSITORY = PACKAGE.parents[1]
 
 # Domain and application layers: values, Ports and the Coding Agent only.
-INNER = {"domain", "worker", "guard", "review", "repository_context", "report"}
+INNER = {
+    "domain",
+    "worker",
+    "guard",
+    "review",
+    "repository_context",
+    "report",
+    "guidance",
+}
 FORBIDDEN_INNER = (
     "legoai.runtime.local",
     "legoai.intelligence.model.ports",
@@ -75,6 +83,7 @@ def imports(tree: ast.Module, *, strict: bool = True) -> list[tuple[str, list[st
 def test_package_layout_is_the_expected_small_set() -> None:
     assert set(modules()) == {
         "__init__",
+        "guidance",
         "report",
         "domain",
         "repository_context",
@@ -92,6 +101,7 @@ def test_package_layout_is_the_expected_small_set() -> None:
 @pytest.mark.parametrize(
     "name",
     [
+        "guidance",
         "report",
         "domain",
         "repository_context",
@@ -121,6 +131,7 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
 @pytest.mark.parametrize(
     "name",
     [
+        "guidance",
         "report",
         "domain",
         "repository_context",
