@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "experiment", "status", "legoai_commit", "comfyui_commit", "comfyui_version", "python_client", "python_comfyui", "torch", "cuda", "gpu", "disk_free", "cuda_devices", "checkpoint", "workflow", "prompt", "seed", "image", "phase_seconds", "log_tails", "limitations"],
+  "properties": {
+    "schema": {"const": 1},
+    "experiment": {"const": "KAGGLE-COMFYUI-T2I-JOB-1"},
+    "status": {"enum": ["GENERATED", "NO_GPU", "PIN_MISSING", "BOOTSTRAP_FAILED", "DOWNLOAD_AUTH_REQUIRED", "CHECKPOINT_MISMATCH", "COMFYUI_NOT_READY", "GENERATION_FAILED", "FINISH_FAILED"]},
+    "legoai_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "comfyui_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+    "comfyui_version": {"type": ["string", "null"], "maxLength": 96},
+    "python_client": {"enum": ["3.14.5", null]},
+    "python_comfyui": {"type": ["string", "null"], "maxLength": 96},
+    "torch": {"type": ["string", "null"], "maxLength": 96},
+    "cuda": {"type": ["string", "null"], "maxLength": 96},
+    "gpu": {
+      "type": ["array", "null"], "minItems": 1, "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name", "memory_mib"],
+        "properties": {"name": {"type": "string", "maxLength": 80}, "memory_mib": {"type": "integer", "minimum": 1}}
+      }
+    },
+    "disk_free": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["tmp", "working"],
+      "properties": {"tmp": {"type": "integer", "minimum": 0}, "working": {"type": "integer", "minimum": 0}}
+    },
+    "cuda_devices": {
+      "type": ["array", "null"], "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["type", "index", "vram_total"],
+        "properties": {"type": {"const": "cuda"}, "index": {"type": "integer", "minimum": 0}, "vram_total": {"type": "integer", "minimum": 1}}
+      }
+    },
+    "checkpoint": {
+      "type": "object", "additionalProperties": false, "required": ["basename", "sha256", "bytes", "license"],
+      "properties": {
+        "basename": {"const": "v1-5-pruned-emaonly.safetensors"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "bytes": {"type": ["integer", "null"], "minimum": 1},
+        "license": {"const": "CreativeML OpenRAIL-M"}
+      }
+    },
+    "workflow": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"const": "comfyui-proof/workflow.json"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    },
+    "prompt": {"type": ["string", "null"], "minLength": 1, "maxLength": 4096},
+    "seed": {"type": ["integer", "null"], "minimum": 0, "maximum": 9223372036854775807},
+    "image": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["sha256", "bytes", "width", "height"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bytes": {"type": "integer", "minimum": 45, "maximum": 16777216},
+        "width": {"const": 512}, "height": {"const": 512}
+      }
+    },
+    "phase_seconds": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "inspect": {"type": "number", "minimum": 0}, "bootstrap": {"type": "number", "minimum": 0},
+        "start": {"type": "number", "minimum": 0}, "generate": {"type": "number", "minimum": 0}, "finish": {"type": "number", "minimum": 0}
+      }
+    },
+    "log_tails": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "freeze-before.txt": {"type": "string", "maxLength": 8192}, "freeze-after.txt": {"type": "string", "maxLength": 8192},
+        "client-stdout.txt": {"type": "string", "maxLength": 8192}, "client-stderr.txt": {"type": "string", "maxLength": 8192},
+        "comfyui.txt": {"type": "string", "maxLength": 8192}
+      }
+    },
+    "limitations": {"const": ["single run; no quality claim", "Kaggle hardware varies by session", "not a hosted service"]}
+  }
+}

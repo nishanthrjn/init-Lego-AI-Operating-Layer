@@ -1,0 +1,12 @@
+{
+  "comfyui_repo": "https://github.com/comfyanonymous/ComfyUI",
+  "comfyui_commit": "<40-hex>",
+  "checkpoint_url": "https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors",
+  "checkpoint_sha256": "<64-hex>",
+  "checkpoint_bytes": null,
+  "uv_version": "0.11.13",
+  "python_version": "3.14.5",
+  "prompt": "a watercolor illustration of a lighthouse on a rocky coast at sunrise, soft morning light",
+  "seed": 42,
+  "max_job_seconds": 1800
+}
