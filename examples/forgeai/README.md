@@ -31,6 +31,141 @@ memory.
   18/18 phases) with replay models and real sandboxed checks; live-model use is
   unqualified.
 
+## Bounded operator batches (FORGEAI-AUTOPILOT-BATCH-1)
+
+**ADR-028 Proposed; validation pending.** The separate `batch.py` operator tool
+runs a finite task list in a disposable standalone clone with its own `.git`
+directory and objects, no remotes, and a new `forgeai/batch-*` branch. Only
+SUCCEEDED tasks are committed, by the operator tool. Human review and merging
+remain separate. The attended Developer Preview below is unchanged.
+
+Review applicable repository guidance before opting in, including any separate
+check-confirmation requirements. Policy and task files must be operator-authored.
+Explicitly passing `--policy` consents to that fixed policy; no cryptographic
+signature or authentication service is claimed. Model text grants no authority.
+
+Example `policy.toml`, outside the output directory:
+
+```toml
+max_changed_files = 4
+max_total_bytes = 16384
+allow_create = true
+forbidden_names = ["credentials*"] # extends the mandatory defaults
+forbidden_prefixes = ["src/security"]
+require_review_accept = true       # false is refused
+max_tasks = 4
+max_batch_minutes = 60
+```
+
+Mandatory forbidden names are `pyproject.toml`, `uv.lock`, `poetry.lock`,
+`requirements*.txt`, `setup.py`, `setup.cfg`, `Pipfile`, `Pipfile.lock`,
+`package.json`, `package-lock.json`, `Dockerfile`, `.env*`, `.github` paths and
+`.gitlab-ci*` paths. Matching is case-insensitive at every depth; extended
+basenames support `*`. Prefixes match complete path components. Limits are
+1–8 files, 1–24576 UTF-8 payload bytes, 1–20 tasks and 1–480 minutes. CREATE
+defaults to false and independent ACCEPT review is mandatory.
+
+Example `tasks.toml` (replay paths resolve relative to this file):
+
+```toml
+base = "HEAD"
+binding = "replay"
+check_profile = "generic"
+
+[[task]]
+id = "T1"
+objective = "Add input validation and tests."
+targets = ["src/inventory/stock.py", "tests/test_stock.py"]
+context = []
+constraints = ["Keep public signatures unchanged."]
+discover_guidance = false
+replay = ["proposal.json", "review_accept.json"]
+```
+
+Repeat `[[task]]` in execution order with unique ids. `:create` declares a new
+target. Replay requires 1–4 responses per task in call order, including rework
+when needed. For `binding = "ollama"`, omit `replay` and set top-level
+`ollama_model = "qwen2.5-coder:14b"`. Only locally operated Ollama at
+`http://127.0.0.1:11434` is supported; forwarding to a remote processor is not
+admitted. REMOTE is refused. `check_profile = "project"` selects the existing
+qualified project profile; repository guidance cannot select arbitrary commands.
+
+Prerequisites: existing locked Python 3.14 environments, Git, Docker and the
+qualified checks image. PROJECT additionally requires the existing uv.exe and
+its check-environment prerequisites. The operator repository must be clean and
+committed. Output must be new, outside the repository, with an existing parent.
+From `examples/forgeai`, when you choose to execute a batch:
+
+```powershell
+uv run --locked --offline --no-sync python batch.py --repo C:\work\inventory --tasks C:\batch-inputs\tasks.toml --policy C:\batch-inputs\policy.toml --out-dir C:\batch-results\run1 --json-report
+```
+
+The tool resolves the base, clones with `--no-hardlinks --template=`, removes
+`origin`, creates the new branch, and verifies HEAD and cleanliness. No operator
+repository refs, HEAD, index or working files are written. Context confirmation
+requires the exact case-sensitive set of targets and context, plus included
+guidance when enabled. Proposal approval binds the exact identity. All existing
+mutation authorization, digest, checks, review and one-rework gates remain.
+
+`batch-report.jsonl` contains one S1 report per completed worker run, extended
+with `batch_task_id` and `policy_evaluations` (attempt, approval, per-rule results).
+`--json-report` also prints those lines. Pre-worker refusals have a summary
+reason, not a fabricated S1 report. The final summary lists branch, verified
+commits, dispositions and stop reason. Non-success stops without committing that
+task. No rollback or cleanup occurs. The deadline prevents new tasks but does
+not kill an active task. An interrupted or failed commit/report step can leave
+partial effects: inspect HEAD and files. There is no automatic retry or resume.
+
+Review commands are printed with actual paths, base SHA and branch:
+
+```powershell
+git -C <out-dir>/workspace log --oneline <base_sha>..HEAD
+git -C <out-dir>/workspace diff <base_sha>..HEAD
+# Optional human action; never executed by batch.py:
+git -C <repo> fetch <out-dir>/workspace forgeai/batch-<id>:forgeai/batch-<id>
+```
+
+Delete `<out-dir>` yourself when done. The tool never pushes, fetches, merges,
+rebases, resets, deletes branches or removes workspaces. No remotes means no
+configured push destination; it does not prohibit a human using an explicit URL.
+Local replay/FakeSandbox tests do not qualify live model quality, real Docker
+batch execution or clean installation.
+
+Maintainer checks from the repository root, using the existing locked environments
+and Git (no additional environment variables, Docker or live model required):
+
+```powershell
+git status --short
+uv run --locked --offline --no-sync python .\validate_forgeai_autopilot_batch_1.py
+git diff --check
+git status --short
+```
+
+API references for this operator composition:
+
+- [demo.py](demo.py): `git_environment`.
+- [cli.py](src/forgeai/cli.py): `ReplayModel`, `replay_binding`, `ollama_binding`, `safe`.
+- [composition.py](src/forgeai/composition.py): `local_profile`, `discover_guidance`,
+  `sandbox_readiness`, `prepare_run`, `PreparedRun`.
+- [domain.py](src/forgeai/domain.py): `TaskRequest`, `ProposalReview`,
+  `OperatorDecision`, `proposal_identity`, `TaskDisposition`, `TaskResult`, `CheckProfile`.
+- [guard.py](src/forgeai/guard.py): `WorkspaceGuard`;
+  [worker.py](src/forgeai/worker.py): `RepositoryTaskWorker.run`.
+- [guidance.py](src/forgeai/guidance.py): `GuidanceRefusal`, `guidance_candidates`,
+  `guidance_summary`, `GuidanceInventory.included_paths`.
+- [repository_context.py](src/forgeai/repository_context.py): `ContextPreflight`, `ContextOutcome`.
+- [report.py](src/forgeai/report.py): `ModelBindingKind`, `run_report`, `encode_report`.
+- [coding/values.py](../../packages/legoai-engineering/src/legoai_engineering/coding/values.py): `CodingTarget`;
+  [repository/workspace.py](../../packages/legoai-engineering/src/legoai_engineering/repository/workspace.py): `RepositoryPath`;
+  [repository/mutation.py](../../packages/legoai-engineering/src/legoai_engineering/repository/mutation.py): `FileChangeKind`;
+  [sandbox/ports.py](../../packages/legoai-engineering/src/legoai_engineering/sandbox/ports.py): `SandboxExecutionPort` (trusted test seam).
+
+`prepare_run` keywords are `approve`, `confirm_context`, `preflight`, `progress`
+and the existing `sandbox` test seam. Its returned worker runs through
+`worker.run(task, prepared.context)`. The operator tool `batch.py` sits beside
+`demo.py`; the pure INNER policy is installed as `forgeai.policy`. Existing
+package modules remain unchanged; module inventories add only `policy`.
+
 ## ForgeAI v0.2 Developer Preview
 
 ### What it is

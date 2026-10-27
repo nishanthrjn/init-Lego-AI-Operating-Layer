@@ -12,6 +12,7 @@ REPOSITORY = PACKAGE.parents[1]
 
 # Domain and application layers: values, Ports and the Coding Agent only.
 INNER = {
+    "policy",
     "domain",
     "worker",
     "guard",
@@ -83,6 +84,7 @@ def imports(tree: ast.Module, *, strict: bool = True) -> list[tuple[str, list[st
 
 def test_package_layout_is_the_expected_small_set() -> None:
     assert set(modules()) == {
+        "policy",
         "__init__",
         "guidance",
         "line_endings",
@@ -103,6 +105,7 @@ def test_package_layout_is_the_expected_small_set() -> None:
 @pytest.mark.parametrize(
     "name",
     [
+        "policy",
         "guidance",
         "line_endings",
         "report",
@@ -134,6 +137,7 @@ def test_public_legoai_only_and_no_private_names(name: str) -> None:
 @pytest.mark.parametrize(
     "name",
     [
+        "policy",
         "guidance",
         "line_endings",
         "report",

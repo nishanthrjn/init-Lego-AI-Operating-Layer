@@ -121,6 +121,18 @@ No upstream architectural blocker was found for this bounded extension.
 No production code changed. No live execution authorized.
 <!-- T2-BOUNDED-CHUNKED-RESPONSE-ACCEPTANCE-REVIEW-1 END -->
 
+### ForgeAI bounded batch proposal — 2026-10-27
+
+[ADR-028](ADR-028.md), deterministic policy approval for bounded ForgeAI
+batches, is **Proposed** under FORGEAI-AUTOPILOT-BATCH-1. It proposes unattended
+sequencing and operator-tool commits only in a disposable standalone clone
+(own `.git` directory, no remotes) on a dedicated branch. Linked worktrees are
+rejected because the Git adapter rejects `.git` files. ADR-014 composition and
+ADR-024 disclosure authority remain unchanged; REMOTE is excluded. Source work
+is authorized for review, not ADR acceptance or execution. Replay/FakeSandbox
+validation is pending; model quality unqualified. The maintainer owns acceptance
+and the later human review/import/merge decision. Historical counts are unchanged.
+
 ### Original planning record
 
 This index identifies unresolved **reference implementation choices**, not new canonical requirements. The eight accepted governing documents were reviewed in authority order. No language, framework, database, broker, vendor, deployment platform, public protocol, or isolation technology is selected. Repository inspection found the governing Markdown documents and no existing implementation or language decision to preserve.
