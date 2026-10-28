@@ -502,12 +502,12 @@ records. This change does not claim Phase A passed or any model coding quality.
 
 Suggested commit: `fix(eval): bound model tasks to one governed host event loop`.
 
-## FORGEAI-KISSKI-DEV-SCREEN-2 — separate development diagnosis
+## FORGEAI-KISSKI-DEV-SCREEN-2A — separate development diagnosis
 
 Status: IMPLEMENTED; LOCAL VALIDATION PENDING.
 Verification: **NOT RUN — Awaiting user execution**.
 Maintainer-confirmed clean BASE:
-`6786befdfd0a6542f5f3e343b18bdfc6e58dbda3`, branch
+`ae689031924504c5c95614b4d9c58ab1bec648de`, branch
 `br-LegoAI-Comfy-ForgeAI-Gemma4-KISSKI`.
 
 This is diagnosis, not admission. Admission still requires a fresh run of the
@@ -519,6 +519,24 @@ No screen result, operator candidate list or discovered model can admit a model.
 No provider call, credential prompt or live session is authorized by this change.
 
 ### Operational evidence and screen-2 changes
+
+SCREEN-2 passed maintainer-run local validation: 276 tests, strict typing, lint,
+formatting, preservation and whitespace checks. SCREEN-2A validation is pending.
+This correction preserves discovery failures as `DISCOVERY_FAILED`, retaining
+`discovery_classification`, `discovery_outcome` and `discovery_http_status` in both
+the report and final printed summary before refusing further work. Classification
+uses the existing enum's actual value (for example `KISSKI AUTHENTICATION FAILURE`),
+and outcome uses its enum value. Discovery status uses the same integer allowlist
+as chat status; unavailable or unlisted statuses are null. A successful LISTED
+result with models continues unchanged. No credential, provider text or exception
+message is included. The SCREEN-2 report identity and authorization stay unchanged.
+
+The optional `CREDENTIAL_EMPTY` check is skipped: `CredentialSource.provision`
+and the existing discovery provisioner return only `SecretRef`, without credential
+length metadata. The correction does not intercept hidden input or inspect secret
+material. Credential-source behavior remains unchanged. The validator now uses
+the SCREEN-2 commit above, preserves diagnostics and invocation, and allows only
+runner, tests, this document and its own authorized update.
 
 The maintainer's 2026-10-28 screen-1 live run completed DeepSeek's bug and refactor
 tasks in about 1.0–1.2 seconds, with all checks passing on those two completions.
@@ -732,7 +750,7 @@ git status --short
 Expected success label:
 
 ```text
-FORGEAI-KISSKI-DEV-SCREEN-2 LOCAL CHECKS PASSED; FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT
+FORGEAI-KISSKI-DEV-SCREEN-2A LOCAL CHECKS PASSED; FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT
 ```
 
 No checks, formatters, validators, workloads, live calls or commits were run during

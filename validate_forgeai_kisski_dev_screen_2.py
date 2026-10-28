@@ -12,18 +12,18 @@ from pathlib import Path
 from scripts.kisski_coding_eval.frozen import verify
 
 ROOT = Path(__file__).resolve().parent
-BASE = "6786befdfd0a6542f5f3e343b18bdfc6e58dbda3"
+BASE = "ae689031924504c5c95614b4d9c58ab1bec648de"
 DIRECTORY = "scripts/kisski_dev_screen"
 TEST = "scripts/tests/test_kisski_dev_screen.py"
 DOCUMENT = "planning/FORGEAI-KISSKI-CODING-MODEL-EVALUATION-1.md"
 TARGETS = (
-    f"{DIRECTORY}/diagnostics.py",
     f"{DIRECTORY}/runner.py",
     TEST,
     "validate_forgeai_kisski_dev_screen_2.py",
 )
 ALLOWED = frozenset((*TARGETS, DOCUMENT))
 PRESERVED = (
+    f"{DIRECTORY}/diagnostics.py",
     f"{DIRECTORY}/invocation.py",
     f"{DIRECTORY}/candidates.json",
     f"{DIRECTORY}/__init__.py",
@@ -125,7 +125,7 @@ def main() -> int:
         print(f"FAIL [{phase}]: {error}; later phases NOT RUN")
         return 1
     print(
-        "FORGEAI-KISSKI-DEV-SCREEN-2 LOCAL CHECKS PASSED; "
+        "FORGEAI-KISSKI-DEV-SCREEN-2A LOCAL CHECKS PASSED; "
         "FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT"
     )
     return 0

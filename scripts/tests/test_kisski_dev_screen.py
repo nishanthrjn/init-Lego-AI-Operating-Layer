@@ -13,6 +13,11 @@ from typing import Any
 import pytest
 
 from legoai.execution.values import ExecutionId, ExecutionState
+from legoai.intelligence.model.values import ModelId
+from legoai.runtime._composition.provider_discovery import (
+    DiscoveryOutcome,
+    ModelDiscovery,
+)
 from legoai.runtime.api import HostError, HostFailure
 from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
@@ -468,8 +473,10 @@ def test_attended_bounds_stop_only_failed_model_and_keep_loop_ownership(
 
     def discover(*args: Any) -> Any:
         events.append("discovery")
-        return SimpleNamespace(
-            models=tuple(SimpleNamespace(value=m) for m in (*models, "unlisted"))
+        return ModelDiscovery(
+            outcome=DiscoveryOutcome.LISTED,
+            status=200,
+            models=tuple(ModelId(m) for m in (*models, "unlisted")),
         )
 
     monkeypatch.setattr(legacy, "_discover", discover)
@@ -804,8 +811,10 @@ def test_status_stop_and_pacing_across_models(
 
     def discover(*args: Any) -> Any:
         events.append("discovery")
-        return SimpleNamespace(
-            models=tuple(SimpleNamespace(value=model) for model in models)
+        return ModelDiscovery(
+            outcome=DiscoveryOutcome.LISTED,
+            status=200,
+            models=tuple(ModelId(model) for model in models),
         )
 
     monkeypatch.setattr(legacy, "_discover", discover)
@@ -880,6 +889,9 @@ def test_status_stop_and_pacing_across_models(
     assert document["records"][1]["http_status"] == expected_status
     assert document["records"][0]["http_status"] == 200
     assert document["min_interval_seconds"] == interval
+    assert document["discovery_classification"] is None
+    assert document["discovery_outcome"] == "listed"
+    assert document["discovery_http_status"] == 200
     assert document["configuration"] == "FROZEN_OUTPUT_TOKENS"
     assert all(row["comparable_with_frozen"] for row in document["records"])
     assert document["admission_effect"] == "NONE"
@@ -999,3 +1011,84 @@ def test_closed_refusals_precede_credentials_and_provider_calls(
     assert output.splitlines()[-1] == reason
     assert "PRIVATE_CANARY" not in output
     assert not (tmp_path / "raw").exists()
+
+
+@pytest.mark.parametrize(
+    ("outcome", "status", "classification"),
+    [
+        ("PROVIDER_REJECTED", 401, "AUTHENTICATION_FAILURE"),
+        ("PROVIDER_REJECTED", 403, "AUTHORIZATION_FAILURE"),
+        ("PROVIDER_REJECTED", 429, "PROVIDER_AVAILABILITY_FAILURE"),
+        ("PROVIDER_REJECTED", 503, "PROVIDER_AVAILABILITY_FAILURE"),
+        ("PROVIDER_REJECTED", 404, "MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE"),
+        ("PROVIDER_REJECTED", 405, "MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE"),
+        ("PROVIDER_REJECTED", 418, "RESULT_INCONCLUSIVE"),
+        ("MALFORMED", 200, "MODEL_DISCOVERY_CONTRACT_INCOMPATIBLE"),
+        ("REFUSED", None, "LOCAL_PREFLIGHT_FAILURE"),
+        ("NOT_SENT", None, "RESULT_INCONCLUSIVE"),
+        ("UNKNOWN", None, "RESULT_INCONCLUSIVE"),
+        ("LISTED", 200, "RESULT_INCONCLUSIVE"),
+    ],
+)
+def test_discovery_refusal_keeps_closed_evidence_without_chats(
+    outcome: str,
+    status: int | None,
+    classification: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    configure_candidates(tmp_path, monkeypatch)
+    custody = tmp_path / "custody"
+    custody.mkdir()
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda **kwargs: str(custody))
+    monkeypatch.setattr(runner, "verify", lambda: "manifest")
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda _: runner.authorization("A"))
+    effects: list[str] = []
+    credential = SimpleNamespace(material="CREDENTIAL_CANARY")
+
+    def forbidden_chat(*args: Any, **kwargs: Any) -> Any:
+        effects.append("chat")
+        raise AssertionError("chat must not be reached")
+
+    source = SimpleNamespace(
+        _source=object(),
+        provision=forbidden_chat,
+        close=lambda: effects.append("closed"),
+    )
+    monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
+    monkeypatch.setattr(runner, "_provision_interactively", lambda *args: credential)
+
+    def discover(*args: Any) -> ModelDiscovery:
+        assert args[2] is credential
+        effects.append("discovery")
+        return ModelDiscovery(outcome=DiscoveryOutcome[outcome], status=status)
+
+    monkeypatch.setattr(legacy, "_discover", discover)
+    monkeypatch.setattr(runner, "invoke", forbidden_chat)
+    monkeypatch.setattr(runner, "open_local_host", forbidden_chat)
+    assert runner.main(["--live", "--min-interval-seconds", "0"]) == 2
+    assert effects == ["discovery", "closed"]
+    output = capsys.readouterr().out
+    assert output.splitlines()[-1] == "DISCOVERY_FAILED"
+    assert "DEV_SCREEN_INCONCLUSIVE" not in output
+    text = (custody / "evaluation.json").read_text(encoding="utf-8")
+    document = json.loads(text)
+    expected = {
+        "discovery_classification": legacy.Classification[classification].value,
+        "discovery_outcome": DiscoveryOutcome[outcome].value,
+        "discovery_http_status": None if status in (405, 418) else status,
+    }
+    summary = next(
+        json.loads(line)
+        for line in output.splitlines()
+        if line.startswith('{"stopped_reason":')
+    )
+    for field, value in expected.items():
+        assert document[field] == value
+        assert summary[field] == value
+    assert document["records"] == []
+    assert document["completed"] is False
+    assert "CREDENTIAL_CANARY" not in output + text

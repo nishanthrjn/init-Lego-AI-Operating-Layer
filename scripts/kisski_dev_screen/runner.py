@@ -54,6 +54,7 @@ class RefusalReason(Enum):
     TERMINAL = "NOT_INTERACTIVE"
     CUSTODY = "CUSTODY_INSIDE_REPOSITORY"
     RAW = "RAW_RETENTION_NOT_CONFIRMED"
+    DISCOVERY = "DISCOVERY_FAILED"
 
 
 class PreCallRefusal(ValueError):
@@ -164,6 +165,10 @@ def http_status(host: Any, row: dict[str, Any]) -> int | str | None:
         status = _remote_chat_http_status(host, ExecutionId(identity))
     except Exception:
         return None
+    return closed_http_status(status)
+
+
+def closed_http_status(status: object) -> int | str | None:
     if status is None:
         return None
     if type(status) is int and status in (
@@ -237,6 +242,9 @@ def live(
     stopped_reason: str | None = None
     previous_start: float | None = None
     chats_started = 0
+    discovery_classification: str | None = None
+    discovery_outcome: str | None = None
+    discovery_http_status: int | None = None
 
     def persist() -> None:
         value = report(
@@ -251,6 +259,9 @@ def live(
             min_interval_seconds=min_interval_seconds,
             stopped_reason=stopped_reason,
             chats_not_attempted=len(models) * len(tasks) - chats_started,
+            discovery_classification=discovery_classification,
+            discovery_outcome=discovery_outcome,
+            discovery_http_status=discovery_http_status,
         )
         save(custody, value)
 
@@ -266,8 +277,13 @@ def live(
             return datetime.now(UTC)
 
         discovered = legacy._discover(config, owned, ref, now(), now)
-        if legacy.classify_discovery(discovered) is not None:
-            raise ValueError("DISCOVERY_FAILED")
+        classification = legacy.classify_discovery(discovered)
+        discovery_classification = classification.value if classification else None
+        discovery_outcome = discovered.outcome.value
+        status = closed_http_status(discovered.status)
+        discovery_http_status = status if isinstance(status, int) else None
+        if classification is not None:
+            raise PreCallRefusal(RefusalReason.DISCOVERY)
         available = {m.value for m in discovered.models} & set(listed)
         print("Listed and discovered IDs: " + json.dumps(sorted(available)))
         models = selected(
@@ -368,6 +384,9 @@ def live(
                     {
                         "stopped_reason": stopped_reason,
                         "chats_not_attempted": len(models) * len(tasks) - chats_started,
+                        "discovery_classification": discovery_classification,
+                        "discovery_outcome": discovery_outcome,
+                        "discovery_http_status": discovery_http_status,
                     }
                 )
             )
