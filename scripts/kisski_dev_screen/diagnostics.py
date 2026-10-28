@@ -19,7 +19,7 @@ from scripts.kisski_coding_eval.pack import (
 )
 from scripts.kisski_coding_eval.scoring import classify, score
 
-EVALUATION = "FORGEAI-KISSKI-DEV-SCREEN-1"
+EVALUATION = "FORGEAI-KISSKI-DEV-SCREEN-2"
 NOTICE = (
     "Diagnosis, not admission. A fresh unchanged frozen evaluation "
     "(pack digest 2bab09bd...) under its unchanged all-dimensions rule, "

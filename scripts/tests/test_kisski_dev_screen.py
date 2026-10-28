@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from legoai.execution.values import ExecutionState
+from legoai.execution.values import ExecutionId, ExecutionState
 from legoai.runtime.api import HostError, HostFailure
 from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
@@ -512,7 +512,7 @@ def test_attended_bounds_stop_only_failed_model_and_keep_loop_ownership(
     monkeypatch.setattr(runner, "invoke", invoke)
     answers = iter((",".join(models), "y"))
     monkeypatch.setattr("builtins.input", lambda _: next(answers))
-    assert runner.live(phase, tmp_path, models, 2048, False, "manifest") is (
+    assert runner.live(phase, tmp_path, models, 2048, False, "manifest", 0) is (
         failure == "none"
     )
     expected = [
@@ -535,6 +535,28 @@ def test_attended_bounds_stop_only_failed_model_and_keep_loop_ownership(
         assert document["records"][1]["failure_effect"] == (
             "NONE" if failure == "exception" else "UNKNOWN"
         )
+
+
+def test_default_plan_includes_pacing_duration() -> None:
+    planned = runner.plan("A", ("one", "two", "three", "four", "five"), 1024)
+    assert planned["min_interval_seconds"] == 20
+    assert planned["estimated_minimum_duration_seconds"] == 380
+    assert planned["configuration"] == "FROZEN_OUTPUT_TOKENS"
+
+
+def test_unknown_pre_call_error_remains_suppressed(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    gate_spies(monkeypatch)
+
+    def unexpected(*, live: bool) -> tuple[str, ...]:
+        raise RuntimeError("PRIVATE_CANARY")
+
+    monkeypatch.setattr(runner, "candidates", unexpected)
+    assert runner.main(["--live"]) == 2
+    assert capsys.readouterr().out.strip() == (
+        "DEV_SCREEN_INCONCLUSIVE; no retry; raw error suppressed; retain custody"
+    )
 
 
 @pytest.mark.parametrize("success", [True, False])
@@ -634,10 +656,12 @@ def test_raw_opt_in_reaches_only_local_custody_after_both_phrases(
         tokens: int,
         retain_raw: bool,
         manifest: str,
+        min_interval_seconds: int,
     ) -> bool:
         assert phase == "B"
         assert tokens == 4096
         assert retain_raw is True
+        assert min_interval_seconds == 20
         runner.retain(custody, 0, pack.TASKS[0], "LOCAL_RAW_CANARY")
         return True
 
@@ -685,3 +709,293 @@ def test_invocation_mirror_has_only_authorized_capture_edits() -> None:
     after.body[-1] = before.body[-1]
     after.returns = before.returns
     assert ast.dump(after) == ast.dump(before)
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        (200, 200),
+        (400, 400),
+        (401, 401),
+        (403, 403),
+        (404, 404),
+        (408, 408),
+        (409, 409),
+        (413, 413),
+        (422, 422),
+        (429, 429),
+        (500, 500),
+        (502, 502),
+        (503, 503),
+        (504, 504),
+        (418, "OTHER"),
+        (True, "OTHER"),
+        ("PRIVATE_CANARY", "OTHER"),
+        (None, None),
+    ],
+)
+def test_http_status_is_closed_and_execution_scoped(
+    status: object, expected: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    host = object()
+    calls: list[ExecutionId] = []
+
+    def observe(actual_host: object, execution: ExecutionId) -> object:
+        assert actual_host is host
+        assert type(execution) is ExecutionId
+        assert execution == ExecutionId("exec-synthetic")
+        calls.append(execution)
+        return status
+
+    monkeypatch.setattr(runner, "_remote_chat_http_status", observe)
+    assert runner.http_status(host, {"execution_id": "exec-synthetic"}) == expected
+    assert len(calls) == 1
+
+
+def test_http_status_unavailable_does_not_expose_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def unavailable(*args: Any) -> None:
+        calls.append("observation")
+        raise RuntimeError("PRIVATE_CANARY")
+
+    monkeypatch.setattr(runner, "_remote_chat_http_status", unavailable)
+    assert runner.http_status(object(), {}) is None
+    assert calls == []
+    assert runner.http_status(object(), {"execution_id": "exec-test"}) is None
+    assert calls == ["observation"]
+
+
+@pytest.mark.parametrize("status", [200, 429, 503, 400, 404, 401, 418, None])
+@pytest.mark.parametrize("interval", [0, 20])
+def test_status_stop_and_pacing_across_models(
+    status: int | None,
+    interval: int,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    models = ("model-one", "model-two")
+    tasks = tuple(task for task in pack.TASKS if task.phase == "A")
+    clock = [100.0]
+    starts: list[float] = []
+    sleeps: list[float] = []
+    calls: list[tuple[str, str]] = []
+    observations: list[str] = []
+    hosts: list[Any] = []
+    events: list[str] = []
+    monkeypatch.setattr(runner, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+
+    async def sleep(seconds: float) -> None:
+        assert starts, "must not sleep before first invocation"
+        sleeps.append(seconds)
+        clock[0] += seconds
+
+    monkeypatch.setattr(asyncio, "sleep", sleep)
+    source = SimpleNamespace(
+        _source=object(),
+        provision=lambda _: object(),
+        close=lambda: events.append("closed"),
+    )
+    monkeypatch.setattr(runner, "open_credential_source", lambda _: source)
+    monkeypatch.setattr(runner, "_provision_interactively", lambda *args: object())
+
+    def discover(*args: Any) -> Any:
+        events.append("discovery")
+        return SimpleNamespace(
+            models=tuple(SimpleNamespace(value=model) for model in models)
+        )
+
+    monkeypatch.setattr(legacy, "_discover", discover)
+    monkeypatch.setattr(legacy, "classify_discovery", lambda _: None)
+    monkeypatch.setattr(saia, "host_config", lambda *args: HostConfig())
+    monkeypatch.setattr(runner, "RemoteModelRuntime", lambda *args: object())
+
+    def open_host(config: HostConfig, *args: Any, **kwargs: Any) -> Any:
+        if hosts:
+            assert hosts[-1].loop.is_closed()
+        host = SimpleNamespace(
+            model=models[len(hosts)], loop=asyncio.get_running_loop()
+        )
+        hosts.append(host)
+        return host
+
+    async def invoke(
+        host: Any, config: Any, task: pack.Task
+    ) -> tuple[dict[str, Any], str | None]:
+        assert asyncio.get_running_loop() is host.loop
+        starts.append(clock[0])
+        calls.append((host.model, task.task_id))
+        clock[0] += 1
+        host.execution = ExecutionId(f"exec-{len(calls)}")
+        host.status = status if len(calls) == 2 else 200
+        text = positive(task)
+        raw: str | None = text
+        row = scoring.score(task, text)
+        if len(calls) == 2 and status != 200:
+            row = scoring.empty(task)
+            row.update(
+                invocation_outcome="provider_or_protocol_failure",
+                failure_category="request_rejected",
+                output_tokens=None,
+            )
+            raw = None
+        else:
+            row.update(invocation_outcome="completed", output_tokens=100)
+        row["execution_id"] = host.execution.value
+        return row, raw
+
+    def observe(host: Any, execution: ExecutionId) -> int | None:
+        assert asyncio.get_running_loop() is host.loop
+        assert execution == host.execution
+        assert len(observations) + 1 == len(calls)
+        observations.append(execution.value)
+        observed: int | None = host.status
+        return observed
+
+    monkeypatch.setattr(runner, "open_local_host", open_host)
+    monkeypatch.setattr(runner, "invoke", invoke)
+    monkeypatch.setattr(runner, "_remote_chat_http_status", observe)
+    answers = iter((",".join(models), "y"))
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    result = runner.live("A", tmp_path, models, 1024, False, "manifest", interval)
+    assert result is (status == 200)
+    account_stop = status in (429, 503)
+    expected_calls = [(models[0], task.task_id) for task in tasks[:2]]
+    if status == 200:
+        expected_calls.extend((models[0], task.task_id) for task in tasks[2:])
+    if not account_stop:
+        expected_calls.extend((models[1], task.task_id) for task in tasks)
+    assert calls == expected_calls
+    assert len(calls) == len(set(calls)) == len(observations)
+    assert len(hosts) == (1 if account_stop else 2)
+    assert events == ["discovery", "closed"]
+    assert starts[0] == 100
+    assert all(b - a >= interval for a, b in zip(starts, starts[1:], strict=False))
+    assert len(sleeps) == (len(calls) - 1 if interval else 0)
+    document = json.loads((tmp_path / "evaluation.json").read_text())
+    expected_status = "OTHER" if status == 418 else status
+    assert document["records"][1]["http_status"] == expected_status
+    assert document["records"][0]["http_status"] == 200
+    assert document["min_interval_seconds"] == interval
+    assert document["configuration"] == "FROZEN_OUTPUT_TOKENS"
+    assert all(row["comparable_with_frozen"] for row in document["records"])
+    assert document["admission_effect"] == "NONE"
+    expected_reason = (
+        "RATE_LIMITED"
+        if status == 429
+        else "SERVICE_UNAVAILABLE"
+        if status == 503
+        else None
+    )
+    assert document["stopped_reason"] == expected_reason
+    assert document["chats_not_attempted"] == 8 - len(calls)
+    output = capsys.readouterr().out
+    assert f'"chats_not_attempted": {8 - len(calls)}' in output
+    assert '"stopped_reason": ' + json.dumps(expected_reason) in output
+
+
+@pytest.mark.parametrize("interval", [0, 10, 20, 30, 60])
+def test_pacing_waits_only_for_remaining_interval(
+    interval: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock = [100.0]
+    waits: list[float] = []
+    monkeypatch.setattr(runner, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+
+    async def sleep(seconds: float) -> None:
+        waits.append(seconds)
+        # Exercise an early wakeup: pace must recheck its monotonic deadline.
+        clock[0] += seconds / 2 if len(waits) == 1 else seconds
+
+    monkeypatch.setattr(asyncio, "sleep", sleep)
+    first = asyncio.run(runner.pace(None, interval))
+    assert waits == []
+    clock[0] += 3
+    second = asyncio.run(runner.pace(first, interval))
+    assert second - first >= interval
+    if interval:
+        assert sum(waits) > interval - 3
+    else:
+        assert waits == []
+    previous_waits = list(waits)
+    clock[0] += 61
+    assert asyncio.run(runner.pace(second, interval)) == clock[0]
+    assert waits == previous_waits
+    plan = runner.plan("A", ("one", "two"), 1024, interval)
+    assert plan["min_interval_seconds"] == interval
+    assert plan["estimated_minimum_duration_seconds"] == 7 * interval
+
+
+@pytest.mark.parametrize("value", ["-1", "1", "21", "61", "CANARY"])
+def test_invalid_interval_is_refused_before_io(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gate_spies(monkeypatch)
+    monkeypatch.setattr(runner, "candidates", forbidden)
+    with pytest.raises(SystemExit) as error:
+        runner.main(["--live", "--min-interval-seconds", value])
+    assert error.value.code == 2
+
+
+@pytest.mark.parametrize(
+    ("kind", "reason"),
+    [
+        ("placeholder", "CANDIDATES_NOT_SELECTED"),
+        ("empty", "CANDIDATES_NOT_SELECTED"),
+        ("invalid", "CANDIDATES_NOT_SELECTED"),
+        ("object", "CANDIDATES_NOT_SELECTED"),
+        ("missing", "CANDIDATES_NOT_SELECTED"),
+        ("authorization", "AUTHORIZATION_DECLINED"),
+        ("terminal", "NOT_INTERACTIVE"),
+        ("custody", "CUSTODY_INSIDE_REPOSITORY"),
+        ("raw", "RAW_RETENTION_NOT_CONFIRMED"),
+    ],
+)
+def test_closed_refusals_precede_credentials_and_provider_calls(
+    kind: str,
+    reason: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    configure_candidates(tmp_path, monkeypatch)
+    bodies = {
+        "placeholder": '["REPLACE_WITH_EXACT_MODEL_ID"]',
+        "empty": "[]",
+        "invalid": "PRIVATE_CANARY",
+        "object": '{"models": ["model-one"]}',
+    }
+    if kind in bodies:
+        runner.CANDIDATES.write_text(bodies[kind], encoding="utf-8")
+    if kind == "missing":
+        monkeypatch.setattr(runner, "CANDIDATES", tmp_path / "missing.json")
+    effects: list[str] = []
+
+    def effect(*args: Any, **kwargs: Any) -> Any:
+        effects.append("forbidden")
+        raise AssertionError("credential or provider boundary reached")
+
+    monkeypatch.setattr(runner, "open_credential_source", effect)
+    monkeypatch.setattr(runner, "_provision_interactively", effect)
+    monkeypatch.setattr(legacy, "_discover", effect)
+    monkeypatch.setattr(runner, "invoke", effect)
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: kind != "terminal")
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    answers = iter(
+        ("no",) if kind == "authorization" else (runner.authorization("A"), "no")
+    )
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+    monkeypatch.setattr(runner, "verify", lambda: "manifest")
+    monkeypatch.setattr(tempfile, "mkdtemp", effect)
+    if kind == "custody":
+        monkeypatch.setattr(tempfile, "gettempdir", lambda: str(runner.ROOT))
+    options = ["--live", "--retain-raw"] if kind == "raw" else ["--live"]
+    assert runner.main(options) == 2
+    assert effects == []
+    output = capsys.readouterr().out
+    assert output.splitlines()[-1] == reason
+    assert "PRIVATE_CANARY" not in output
+    assert not (tmp_path / "raw").exists()

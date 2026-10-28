@@ -5,11 +5,14 @@ import asyncio
 import json
 import sys
 import tempfile
+import time
 from dataclasses import replace
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
+from legoai.execution.values import ExecutionId
 from legoai.intelligence.model.values import ModelId
 from legoai.runtime._composition.provider_discovery import (
     discovery_consumer,
@@ -17,7 +20,11 @@ from legoai.runtime._composition.provider_discovery import (
 )
 from legoai.runtime._composition.secret import _provision_interactively
 from legoai.runtime.api import HostError, HostFailure, RemoteModelRuntime
-from legoai.runtime.local import open_credential_source, open_local_host
+from legoai.runtime.local import (
+    _remote_chat_http_status,
+    open_credential_source,
+    open_local_host,
+)
 from scripts import kisski_compatibility_probe as legacy
 from scripts import kisski_saia_qualification as saia
 from scripts.kisski_coding_eval.frozen import verify
@@ -37,6 +44,22 @@ from .invocation import invoke
 ROOT = Path(__file__).resolve().parents[2]
 CANDIDATES = Path(__file__).with_name("candidates.json")
 RAW_AUTHORIZATION = "RETAIN RAW SYNTHETIC OUTPUTS LOCALLY"
+MIN_INTERVAL_SECONDS = 20
+INTERVALS = (0, 10, 20, 30, 60)
+
+
+class RefusalReason(Enum):
+    CANDIDATES = "CANDIDATES_NOT_SELECTED"
+    AUTHORIZATION = "AUTHORIZATION_DECLINED"
+    TERMINAL = "NOT_INTERACTIVE"
+    CUSTODY = "CUSTODY_INSIDE_REPOSITORY"
+    RAW = "RAW_RETENTION_NOT_CONFIRMED"
+
+
+class PreCallRefusal(ValueError):
+    def __init__(self, reason: RefusalReason) -> None:
+        self.reason = reason
+        super().__init__(reason.value)
 
 
 def authorization(phase: str) -> str:
@@ -90,7 +113,14 @@ def selected(
     return models
 
 
-def plan(phase: str, models: tuple[str, ...], output_tokens: int) -> dict[str, Any]:
+def plan(
+    phase: str,
+    models: tuple[str, ...],
+    output_tokens: int,
+    min_interval_seconds: int = MIN_INTERVAL_SECONDS,
+) -> dict[str, Any]:
+    if type(min_interval_seconds) is not int or min_interval_seconds not in INTERVALS:
+        raise ValueError("MIN_INTERVAL_INVALID")
     tasks = [t.task_id for t in TASKS if t.phase == phase]
     if phase not in ("A", "B") or len(tasks) != 4:
         raise ValueError("PHASE_INVALID")
@@ -104,6 +134,10 @@ def plan(phase: str, models: tuple[str, ...], output_tokens: int) -> dict[str, A
         "models": models,
         "tasks": tasks,
         "maximum_chat_calls": len(models) * len(tasks),
+        "min_interval_seconds": min_interval_seconds,
+        "estimated_minimum_duration_seconds": (
+            max(0, len(models) * len(tasks) - 1) * min_interval_seconds
+        ),
         "maximum_discovery_calls": 1,
         "output_tokens": output_tokens,
         "timeout_seconds": 60,
@@ -113,9 +147,50 @@ def plan(phase: str, models: tuple[str, ...], output_tokens: int) -> dict[str, A
 
 def outside_repository(path: Path) -> Path:
     resolved = path.resolve()
-    if resolved.is_relative_to(ROOT.resolve()) or path.is_symlink():
-        raise ValueError("CUSTODY_INSIDE_REPOSITORY_OR_LINK")
+    if resolved.is_relative_to(ROOT.resolve()):
+        raise PreCallRefusal(RefusalReason.CUSTODY)
+    if path.is_symlink():
+        raise ValueError("CUSTODY_LINK")
     return resolved
+
+
+def http_status(host: Any, row: dict[str, Any]) -> int | str | None:
+    """Same execution-scoped observation as saia.chat_once; no HTTP body access."""
+    identity = row.get("execution_id")
+    if not isinstance(identity, str):
+        return None
+    try:
+        # invoke returns context.execution_id.value; reconstruct the same value.
+        status = _remote_chat_http_status(host, ExecutionId(identity))
+    except Exception:
+        return None
+    if status is None:
+        return None
+    if type(status) is int and status in (
+        200,
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        413,
+        422,
+        429,
+        500,
+        502,
+        503,
+        504,
+    ):
+        return status
+    return "OTHER"
+
+
+async def pace(previous_start: float | None, interval: int) -> float:
+    if previous_start is not None and interval:
+        while (remaining := previous_start + interval - time.monotonic()) > 0:
+            await asyncio.sleep(remaining)
+    return time.monotonic()
 
 
 def retain(custody: Path, index: int, task: Task, raw: str) -> None:
@@ -149,28 +224,35 @@ def live(
     output_tokens: int,
     retain_raw: bool,
     manifest_digest: str,
+    min_interval_seconds: int = MIN_INTERVAL_SECONDS,
 ) -> bool:
     """CLI has already checked both typed gates, TTY, candidates and integrity."""
     custody = outside_repository(custody)
-    plan(phase, listed, output_tokens)
+    plan(phase, listed, output_tokens, min_interval_seconds)
     tasks = tuple(t for t in TASKS if t.phase == phase)
     config = replace(saia.live_config(custody), max_output_tokens=output_tokens)
     rows: list[dict[str, Any]] = []
     models: tuple[str, ...] = ()
     completed = False
+    stopped_reason: str | None = None
+    previous_start: float | None = None
+    chats_started = 0
 
     def persist() -> None:
-        save(
-            custody,
-            report(
-                phase,
-                rows,
-                manifest_digest,
-                output_tokens,
-                models,
-                completed=completed,
-            ),
+        value = report(
+            phase,
+            rows,
+            manifest_digest,
+            output_tokens,
+            models,
+            completed=completed,
         )
+        value.update(
+            min_interval_seconds=min_interval_seconds,
+            stopped_reason=stopped_reason,
+            chats_not_attempted=len(models) * len(tasks) - chats_started,
+        )
+        save(custody, value)
 
     persist()
     source = open_credential_source(legacy._scope())
@@ -191,12 +273,17 @@ def live(
         models = selected(
             input("Comma-separated exact model IDs (no quotes): "), listed, available
         )
-        print(json.dumps(plan(phase, models, output_tokens), indent=2))
+        print(
+            json.dumps(
+                plan(phase, models, output_tokens, min_interval_seconds), indent=2
+            )
+        )
         if input("Approve this bounded SYNTHETIC phase? [y/N] ") != "y":
             return False
         credential = source.provision("dev-screen-chat")
 
         async def run_model(index: int, model: str) -> bool:
+            nonlocal previous_start, chats_started, stopped_reason
             model_custody = custody / f"model-{index}"
             model_custody.mkdir()
             host = open_local_host(
@@ -212,6 +299,8 @@ def live(
             )
             for task in tasks:
                 raw: str | None = None
+                previous_start = await pace(previous_start, min_interval_seconds)
+                chats_started += 1
                 try:
                     row, raw = await invoke(host, config, task)
                 except Exception as error:
@@ -231,6 +320,11 @@ def live(
                             else "UNKNOWN"
                         ),
                     )
+                row["http_status"] = http_status(host, row)
+                if row["http_status"] == 429:
+                    stopped_reason = "RATE_LIMITED"
+                elif row["http_status"] == 503:
+                    stopped_reason = "SERVICE_UNAVAILABLE"
                 row.update(
                     model_id=model,
                     configuration=configuration(output_tokens),
@@ -252,22 +346,31 @@ def live(
                         }
                     )
                 )
-                if row["invocation_outcome"] != "completed":
+                if stopped_reason or row["invocation_outcome"] != "completed":
                     return False
             return True
 
         all_completed = True
         for index, model in enumerate(models):
-            # No boolean short circuit: a failed model stops its own tasks, not
-            # the independently preapproved next model. Never retry a task.
+            # Account-level stops prevent even construction of the next host.
             model_completed = asyncio.run(run_model(index, model))
             all_completed = all_completed and model_completed
+            if stopped_reason:
+                break
         completed = all_completed
         return completed
     finally:
         try:
             source.close()
         finally:
+            print(
+                json.dumps(
+                    {
+                        "stopped_reason": stopped_reason,
+                        "chats_not_attempted": len(models) * len(tasks) - chats_started,
+                    }
+                )
+            )
             persist()
             print("Derived evidence: " + str(custody / "evaluation.json"))
 
@@ -290,24 +393,35 @@ def main(options: list[str] | None = None) -> int:
         default=OUTPUT_TOKENS,
     )
     parser.add_argument("--retain-raw", action="store_true")
+    parser.add_argument(
+        "--min-interval-seconds",
+        type=int,
+        choices=INTERVALS,
+        default=MIN_INTERVAL_SECONDS,
+    )
     args = parser.parse_args(options)
     try:
-        listed = candidates(live=args.live)
-        print(json.dumps(plan(args.phase, listed, args.output_tokens), indent=2))
+        try:
+            listed = candidates(live=args.live)
+        except OSError, ValueError:
+            raise PreCallRefusal(RefusalReason.CANDIDATES) from None
+        print(
+            json.dumps(
+                plan(args.phase, listed, args.output_tokens, args.min_interval_seconds),
+                indent=2,
+            )
+        )
         if not args.live:
             return 0
         if not sys.stdin.isatty() or not sys.stdout.isatty():
-            print("Interactive terminal required; no provider calls")
-            return 2
+            raise PreCallRefusal(RefusalReason.TERMINAL)
         if input("Type exact authorization: ") != authorization(args.phase):
-            print("Declined; no provider calls")
-            return 2
+            raise PreCallRefusal(RefusalReason.AUTHORIZATION)
         if (
             args.retain_raw
             and input("Type raw retention confirmation: ") != RAW_AUTHORIZATION
         ):
-            print("Raw retention declined; no provider calls or raw files")
-            return 2
+            raise PreCallRefusal(RefusalReason.RAW)
         manifest_digest = verify()
         outside_repository(Path(tempfile.gettempdir()))
         custody = outside_repository(
@@ -323,9 +437,13 @@ def main(options: list[str] | None = None) -> int:
                 args.output_tokens,
                 args.retain_raw,
                 manifest_digest,
+                args.min_interval_seconds,
             )
             else 2
         )
+    except PreCallRefusal as error:
+        print(error.reason.value)
+        return 2
     except Exception, KeyboardInterrupt:
         print("DEV_SCREEN_INCONCLUSIVE; no retry; raw error suppressed; retain custody")
         return 2

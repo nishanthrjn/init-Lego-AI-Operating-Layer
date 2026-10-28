@@ -502,12 +502,12 @@ records. This change does not claim Phase A passed or any model coding quality.
 
 Suggested commit: `fix(eval): bound model tasks to one governed host event loop`.
 
-## FORGEAI-KISSKI-DEV-SCREEN-1 — separate development diagnosis
+## FORGEAI-KISSKI-DEV-SCREEN-2 — separate development diagnosis
 
 Status: IMPLEMENTED; LOCAL VALIDATION PENDING.
 Verification: **NOT RUN — Awaiting user execution**.
 Maintainer-confirmed clean BASE:
-`53e8245399dac55feb6d74e5cf0459ce15e906f9`, branch
+`6786befdfd0a6542f5f3e343b18bdfc6e58dbda3`, branch
 `br-LegoAI-Comfy-ForgeAI-Gemma4-KISSKI`.
 
 This is diagnosis, not admission. Admission still requires a fresh run of the
@@ -517,6 +517,40 @@ under its unchanged all-dimensions rule, followed by a separate admission review
 Every development report repeats that requirement and has `admission_effect: NONE`.
 No screen result, operator candidate list or discovered model can admit a model.
 No provider call, credential prompt or live session is authorized by this change.
+
+### Operational evidence and screen-2 changes
+
+The maintainer's 2026-10-28 screen-1 live run completed DeepSeek's bug and refactor
+tasks in about 1.0–1.2 seconds, with all checks passing on those two completions.
+The next five chats (DeepSeek api and the first task of each other candidate)
+returned request_rejected in 144–229 ms. Seven of the twenty planned chats were
+attempted. This is development-screen operational evidence, not model-quality or
+admission evidence. An account-level rate limit or service rejection is plausible
+but unconfirmed: the old report retained no HTTP status, and the provider adapter
+maps both 429 and 503 to REQUEST_REJECTED. Historical evidence stays unchanged.
+
+Screen-2 records `http_status` after the unchanged invocation returns, using the
+same `_remote_chat_http_status` accessor as `scripts/kisski_saia_qualification.py`.
+The returned execution ID is reconstructed as an `ExecutionId` for that host's
+lookup. Values are restricted to 200, 400, 401, 403, 404, 408, 409, 413, 422, 429,
+500, 502, 503 and 504; other available values become `OTHER`, and unavailable
+observations are null. No response bodies or exception text enter this field.
+429 stops the entire screen with `stopped_reason: RATE_LIMITED`; 503 does the same
+with `SERVICE_UNAVAILABLE`. No later model is invoked. The final report and console
+summary include the stop reason (null otherwise) and `chats_not_attempted`.
+
+`--min-interval-seconds` accepts 0, 10, 20, 30 or 60, default 20. A monotonic clock
+enforces spacing between chat starts across model boundaries, without a wait
+before the first chat; zero disables sleeps. Plan and report record the interval.
+The plan's `estimated_minimum_duration_seconds` is `(chats - 1) * interval`;
+it excludes the last chat's duration and early stops may shorten the session.
+Pacing does not alter requests, frozen configuration or `comparable_with_frozen`.
+
+Known pre-call refusals print closed codes: `CANDIDATES_NOT_SELECTED`,
+`AUTHORIZATION_DECLINED`, `NOT_INTERACTIVE`, `CUSTODY_INSIDE_REPOSITORY` and
+`RAW_RETENTION_NOT_CONFIRMED`. These gates precede credential/provider access.
+Unknown errors retain the suppressed inconclusive message. The report identity
+and exact authorization phrase now identify SCREEN-2; scoring remains frozen v1.
 
 The separate `scripts/kisski_dev_screen` tooling imports frozen tasks, prompts,
 scoring, classification and contracts. It leaves the frozen directory, canonical
@@ -595,14 +629,15 @@ screening; reports explicitly record `screening_bypassed: true`. The plan prints
 the exact candidate ceiling, and after selection prints the exact selected ceiling:
 models × four tasks. There is one discovery and at most one chat per model/task.
 A non-completed invocation stops that model's remaining tasks; another already
-approved model may proceed. Each model's host is constructed and used within its
+approved model may proceed unless HTTP 429 or 503 stops the entire screen.
+Each model's host is constructed and used within its
 own event loop with capacity four. Unexpected invocation exceptions record closed
 failure metadata; effects remain UNKNOWN except the inspected WRONG_EVENT_LOOP
 guard. Interruption or failures outside an invocation stop the session without
 retry and retain the available partial report/custody.
 
 The CLI requires interactive stdin and stdout and the exact phrase
-`AUTHORIZE FORGEAI-KISSKI-DEV-SCREEN-1 PHASE <A|B> LIVE SYNTHETIC`.
+`AUTHORIZE FORGEAI-KISSKI-DEV-SCREEN-2 PHASE <A|B> LIVE SYNTHETIC`.
 Default/`--plan` reads the bounded candidate list and prints the plan only.
 Existing interactive S1 discovery/chat provisioning, purpose separation, public
 governed chat, strict completion acceptance, timeout and custody contracts are
@@ -682,9 +717,14 @@ custody, budget labels, model loop ownership and no-retry bounds. Existing tests
 are imported by pytest unchanged; the validator does not widen their old scope
 validators or rewrite historical evidence.
 
+Screen-2 adds fake-host and fake-clock coverage for closed HTTP status capture,
+account-wide stops, per-model continuation, start spacing, invalid intervals and
+pre-call refusal reasons. The validator explicitly preserves `invocation.py`
+against BASE as well as the frozen evaluation. All screen-2 verification is pending.
+
 ```powershell
 git status --short
-uv run --locked --offline --no-sync python .\validate_forgeai_kisski_dev_screen_1.py
+uv run --locked --offline --no-sync python .\validate_forgeai_kisski_dev_screen_2.py
 git diff --check
 git status --short
 ```
@@ -692,7 +732,7 @@ git status --short
 Expected success label:
 
 ```text
-FORGEAI-KISSKI-DEV-SCREEN-1 LOCAL CHECKS PASSED; FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT
+FORGEAI-KISSKI-DEV-SCREEN-2 LOCAL CHECKS PASSED; FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT
 ```
 
 No checks, formatters, validators, workloads, live calls or commits were run during
