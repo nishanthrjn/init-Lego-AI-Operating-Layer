@@ -1,0 +1,25 @@
+{
+  "adr_021_digest": "83ee329a5520de81b575e8be0371b00d811921922d757d62abfa9163a4a341e7",
+  "instructions": {
+    "coding": "8bd1dbba6b3f012accf0e325f79da73482601e0e36aabf40ff862cd888d75a9e",
+    "reviewer": "2cd5faf30e78dd6d5affa86606208629d2594d45674bbef030d7d6e4d02d22e3"
+  },
+  "sources": {
+    "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102",
+    "packages/legoai-engineering/src/legoai_engineering/coding/definition.py": "f47db2c406cdfc7782348df312bb0e5962886fb1515b1e78bc36ee9cf4bfcf64",
+    "packages/legoai-engineering/src/legoai_engineering/reviewer/definition.py": "f855125d4d24fab8017c586e6964ae8605111918f341ce5b82b5c232d682976d",
+    "planning/FORGEAI-KISSKI-CODING-MODEL-EVALUATION-2.md": "eecc1b815d4a578cbbd63f2b8cbb0d034110f4a32cb1cdcd20af7104fc1276c2",
+    "scripts/kisski_coding_eval_v2/__init__.py": "89728fe56c4fdd092b648b078d18aae591f18a85b737ab0e3c244153476810c6",
+    "scripts/kisski_coding_eval_v2/frozen.py": "be2fb56859068872b68756654899050846b2aa5716d14b596c2f6803429fc186",
+    "scripts/kisski_coding_eval_v2/invocation.py": "0110528641f80273209d55ff4dd34c9d5e015200751f7a736b3ac09f7a9da400",
+    "scripts/kisski_coding_eval_v2/pack.py": "41cf371dfe5882e485b972b6e6986a4c355cabf32d888e6f3f193a0fb4623c70",
+    "scripts/kisski_coding_eval_v2/runner.py": "c9a0334918f5f840ebba1de14b5921eb5bc9d6f4d1b9eca011b1f26f3dcfda43",
+    "scripts/kisski_coding_eval_v2/scoring.py": "76508861b5d3a07bdecf89489956fc97133e38ac2b2294b811b20d2237ccb39b",
+    "scripts/kisski_compatibility_probe.py": "541f2524e713b097c1083b3a7af104fe8d544946870097ce192f4f91eb3b6db4",
+    "scripts/kisski_dev_screen/diagnostics.py": "d2ab3360eb373bdfd19cc2b3994a62d9bcc5844617739a1223aa9d04a4a723b0",
+    "scripts/kisski_dev_screen/invocation.py": "de4a50435554ae82cd75de7b96e34000a27b6641a42da82830a3c792f8a4ef5a",
+    "scripts/kisski_dev_screen/runner.py": "2bdcf601ec0063b7adfe6ed2cf296777e43aae0af7f16a43be115f606231e093",
+    "scripts/kisski_saia_qualification.py": "9ab1268487efad59af7cae504130133837f4eec25ae3ebf297a781c806c18f74"
+  },
+  "v1_manifest_digest": "3cd0e5a14f6ff9d2beba5cb1af9bcc6ac214637a7b3858ad3282bd0e51691ef6"
+}
