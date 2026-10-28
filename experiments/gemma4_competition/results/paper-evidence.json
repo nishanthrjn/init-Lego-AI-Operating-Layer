@@ -2,9 +2,26 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p4_attempt1_and_retain_p3",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
+      "pointer": "/p4_adoption_decision",
+      "run_pointer": "/p4_attempt1",
+      "basis": "Maintainer-reported P4 results; pre-registered score gate fails despite reported runtime gate success",
+      "values": {"p4_resolved": 8, "denominator": 16, "net_gain_vs_p3_attempt1": 0, "flip_floor": 2, "elapsed_seconds": 4597, "session_timeouts": 2, "context_errors": 0, "mean_task_seconds_approx": 253, "projection_hours_approx": 8.3, "bootstrap_upper95_hours_approx": 8.7, "decision": "RETAIN_P3"}
+    },
+    {
+      "id": "per_task_solve_frequency_across_eight_runs",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
+      "pointer": "/eight_run_comparison/per_task_solve_frequency",
+      "basis": "Eight comparable runs confirmed by maintainer; P1 is restricted to dev-16v and P1b merged attempts count once. Per-task solve fractions use denominator eight when all verdicts are known; historical UNKNOWN remains distinct from unresolved.",
+      "values": {"reported_runs": 8, "identified_comparable_runs": 8, "task_count": 16, "status": "EIGHT_RUN_COHORT_CONFIRMED; HISTORICAL_UNKNOWN_VERDICTS_PRESERVED", "rich_4079_first_success_in_eight_runs": "Unsolved in the seven earlier runs; maintainer-reported"}
+    },
+    {
       "id": "p3_same_config_attempt2",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
       "pointer": "/p3_same_config_replicate",
       "basis": "Maintainer-reported same-config replicate; retained attempt2 artifacts not independently analyzed",
       "values": {
@@ -19,7 +36,7 @@
     {
       "id": "p4_decision_threshold",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
       "pointer": "/p4_decision_threshold",
       "basis": "Maintainer decision: both thresholds required; not a P4 result or statistical superiority claim",
       "values": {"minimum_resolved": 11, "denominator": 16, "maximum_bootstrap_upper95_hours": 11}
@@ -49,7 +66,7 @@
         "p1": 8,
         "denominator": 16
       },
-      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "basis": "Historical six-run comparison; P3 is attempt1. Maintainer-reported successes and retained metadata; UNKNOWN remains separate in per-task table",
       "pointer": "/six_run_task_records",
@@ -65,7 +82,7 @@
         "p3g_timeouts": 5,
         "p3_timeouts": 4
       },
-      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "basis": "Historical attempt1 values; structured errors and maintainer-reported mean projections; bootstrap upper-bound gate not executed",
       "pointer": "/runs",
@@ -78,7 +95,7 @@
         "combined_calls": 3,
         "combined_task_runs": 32
       },
-      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "sha256": "0c25f4827696b1c4fde26d76523d6c1c5e435bd6ee1dddbe4db5f0503ae31b24",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "basis": "Trace request counts, not guaranteed effects",
       "pointer": "/six_run_task_records",
@@ -124,7 +141,7 @@
   ],
   "limitations": [
     "Development subset repeatedly used for tuning; not held-out qualification.",
-    "No statistical superiority established by the historical six-run comparison or the additional P3 replicate.",
+    "No statistical superiority established by the historical six-run comparison, P3 replicate or P4 run. Eight comparable runs include P1b merged attempts as one run; historical UNKNOWN verdicts remain explicit.",
     "Two flips are the observed same-config replicate noise floor for the P4 decision, not a population bound. Mean runtime projections are not bootstrap results.",
     "Historical run artifacts unchanged.",
     "External source paths and hashes are retained in the six-run record.",
