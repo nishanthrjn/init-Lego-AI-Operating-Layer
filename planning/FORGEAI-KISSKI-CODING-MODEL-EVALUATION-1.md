@@ -501,3 +501,199 @@ commit and fresh explicit authorization. It must not reuse historical partial
 records. This change does not claim Phase A passed or any model coding quality.
 
 Suggested commit: `fix(eval): bound model tasks to one governed host event loop`.
+
+## FORGEAI-KISSKI-DEV-SCREEN-1 — separate development diagnosis
+
+Status: IMPLEMENTED; LOCAL VALIDATION PENDING.
+Verification: **NOT RUN — Awaiting user execution**.
+Maintainer-confirmed clean BASE:
+`53e8245399dac55feb6d74e5cf0459ce15e906f9`, branch
+`br-LegoAI-Comfy-ForgeAI-Gemma4-KISSKI`.
+
+This is diagnosis, not admission. Admission still requires a fresh run of the
+unchanged frozen evaluation (`scripts/kisski_coding_eval`, semantic pack digest
+`2bab09bdd0177040c67833611d67b54f56916d5a2f0366f914bb33d4f65edc57`)
+under its unchanged all-dimensions rule, followed by a separate admission review.
+Every development report repeats that requirement and has `admission_effect: NONE`.
+No screen result, operator candidate list or discovered model can admit a model.
+No provider call, credential prompt or live session is authorized by this change.
+
+The separate `scripts/kisski_dev_screen` tooling imports frozen tasks, prompts,
+scoring, classification and contracts. It leaves the frozen directory, canonical
+evaluation contracts, historical reports, production code and pilot unchanged.
+The new validator invokes `frozen.verify()` without refreshing any pins and checks
+both working-tree and staged preservation against BASE. No dependency, public
+Port, production architecture or accepted ADR changes are introduced.
+
+### Diagnostic semantics and the early-return resolution
+
+`diagnose(task, raw)` emits closed codes, booleans, counts and frozen task paths.
+Raw strings, finding messages, proposed code, free-text reasons and unknowns never
+enter the derived report. Each completed row's v1 score fields come unchanged from
+`score(task, raw)`; diagnostics cannot alter those fields.
+
+| Field | Meaning |
+| --- | --- |
+| `adherence_reasons` | `FENCED_JSON`; once the scorer reaches signature/refactor checks, `SIGNATURE_CHANGED:<task path>` and `ELSE_RETAINED` |
+| `observations` | Independent `TARGET_SET_MISMATCH`, or `REASON_EMPTY:<task path>` at the frozen rationale-check stage; never changes adherence |
+| `adherence_evaluated` | False for rejected output or absent accepted completion |
+| `rejected_category` | The frozen score's failure category, unchanged; null when no scoring rejection occurred |
+| `reviewer_references` | Found/missed for r1–r3 and flagged_clean/not_flagged for r4/r5, only after reviewer contract acceptance |
+| `false_positive_causes` | One closed cause per v1-counted false-positive finding |
+| `reviewer_rejection_causes` | Separate candidate-finding diagnostics when the contract rejects the whole review; not v1 false-positive counts |
+| `abstention_reasons` | `DECISION_NOT_INSUFFICIENT`, `UNKNOWNS_EMPTY`, `FINDINGS_PRESENT` for contract-accepted abstention responses |
+
+For every response with no frozen rejection, `adherence_reasons` is empty if and
+only if frozen `instruction_adherence` is true. Rejected responses have empty
+adherence reasons and observations, and `adherence_evaluated: false`. Their score
+is preserved, including the frozen mapping of malformed JSON to `OUTPUT_INVALID`.
+
+The missing-target case is intentional: a plain-JSON multi response containing
+only valid left.py yields frozen adherence true and patch_applies false, with no
+adherence reasons and `observations: [TARGET_SET_MISMATCH]`. Fencing that response
+adds only `FENCED_JSON` to adherence reasons. Signature and refactor diagnostics
+do not run after that early return.
+
+The current coding contract rejects an empty reason before rationale scoring.
+Consequently, `REASON_EMPTY` is reserved for the frozen rationale-check stage but
+unreachable with the present contract; tests require SCHEMA_INVALID with empty
+diagnostic lists for an empty reason. The screen does not weaken that contract to
+make a diagnostic reachable.
+
+Reviewer diagnostics apply category, severity and required-action filtering
+before matched-reference counting, then duplicate and clean-reference checks.
+For example, a correctness finding citing r1 and r3 matches only r1; merely having
+two references is not a v1 false positive. Causes are WRONG_CATEGORY, NOT_BLOCKING,
+NO_REQUIRED_ACTION, MULTIPLE_REFS, DUPLICATE_REF, CLEAN_REF and UNSUPPLIED_REF;
+unrecognized shapes map to OTHER. A supplied non-defect reference such as proposal
+matches none of r1–r3 and is also classified UNSUPPLIED_REF. Unknown reference IDs
+and missing blocking actions can be rejected before scoring: they go in
+`reviewer_rejection_causes`, with `reviewer_evaluated: false`, no scored reference
+outcomes and no invented v1 false-positive count.
+
+Per-model summaries include task outcomes, adherence counts and reviewer reference
+outcomes. `frozen_rule_would_pass` uses imported `classify()`'s unchanged coder
+all-dimensions result, not a threshold implemented here. It is informational only
+and null for incomplete evidence. Each attended screen runs one four-task phase,
+so its full frozen-rule result is normally null. The screen neither imports nor
+merges historical Phase A evidence to manufacture a full evaluation.
+
+### Candidate selection, bounds and custody
+
+`candidates.json` is an operator-edited JSON array of one to five unique exact
+model IDs, at most 256 characters each. Control characters, surrounding whitespace,
+commas and surrounding quotes are refused because selection uses comma-separated
+exact IDs. The file is bounded to 4096 bytes and symlinks are refused. The shipped
+placeholder
+is accepted for planning but refused live before discovery or credential prompts.
+Replace it with actual exact IDs before an independently authorized live session.
+Only the intersection with one fresh discovery is selectable. No aliases,
+fallback, retry, reselection or automatic candidate expansion is provided.
+
+Both phase A and B use `pack.TASKS` in frozen order. Phase B needs no Phase A
+screening; reports explicitly record `screening_bypassed: true`. The plan prints
+the exact candidate ceiling, and after selection prints the exact selected ceiling:
+models × four tasks. There is one discovery and at most one chat per model/task.
+A non-completed invocation stops that model's remaining tasks; another already
+approved model may proceed. Each model's host is constructed and used within its
+own event loop with capacity four. Unexpected invocation exceptions record closed
+failure metadata; effects remain UNKNOWN except the inspected WRONG_EVENT_LOOP
+guard. Interruption or failures outside an invocation stop the session without
+retry and retain the available partial report/custody.
+
+The CLI requires interactive stdin and stdout and the exact phrase
+`AUTHORIZE FORGEAI-KISSKI-DEV-SCREEN-1 PHASE <A|B> LIVE SYNTHETIC`.
+Default/`--plan` reads the bounded candidate list and prints the plan only.
+Existing interactive S1 discovery/chat provisioning, purpose separation, public
+governed chat, strict completion acceptance, timeout and custody contracts are
+reused. No token arguments, credential files or credential environment variables.
+
+`--output-tokens` accepts only 1024, 2048 or 4096; default is imported 1024.
+2048/4096 reports use `configuration: DEV_VARIANT_OUTPUT_TOKENS`, and every row has
+`comparable_with_frozen: false`. This diagnoses output-budget sensitivity; it does
+not normalize LENGTH to STOP, relax protocol handling or qualify a model. Actual
+output-token usage and available finish-reason categories retain v1 semantics.
+
+Custody is a fresh `tempfile.mkdtemp` directory outside the repository; the temp
+root and resulting resolved custody path are checked before credential access.
+Reports remain in that custody. `--retain-raw` additionally requires the exact
+phrase `RETAIN RAW SYNTHETIC OUTPUTS LOCALLY` before custody/credentials. It writes
+only `raw/<model-index>-<task>.txt`, using exclusive creation and no newline
+translation. Raw output is never printed or copied into the report. Links or
+repository-resolving raw destinations are refused. Protocol-rejected responses
+do not expose accepted raw completions; the screen does not bypass that boundary.
+Retention is permitted only for these wholly synthetic fixtures: it does not
+extend to real repositories or private data. Keep custody local; do not commit it.
+
+### Reuse and the sole invocation mirroring exception
+
+Source locations below refer to BASE; frozen files are unchanged:
+
+| Source / symbol | Reuse |
+| --- | --- |
+| `scripts/kisski_coding_eval/pack.py`: VERSION (12), OUTPUT_TOKENS (25), Task (40), TASKS (83), REVIEW_MATERIAL (142), prompt (152), digest (174) | Task identity, prompts, budget, semantic digest |
+| `scripts/kisski_coding_eval/scoring.py`: empty (101), score (129), classify (261) | Original fields, unavailable-response placeholders, informational frozen rule |
+| `experiments/kaggle/forgeai_model_quality_1/contracts.py`: decode (126), coding (146), review (178), Rejected (95) | Bounded framing and original document contracts |
+| `scripts/kisski_coding_eval/frozen.py`: verify (21) | Frozen source/canonical pins and manifest digest |
+| `scripts/kisski_coding_eval/runner.py`: invoke (234) | Mirrored solely to capture raw accepted completion |
+| `scripts/kisski_saia_qualification.py`: live_config (93), host_config (135) | Existing SAIA settings, grants, disclosure and binding |
+| `scripts/kisski_compatibility_probe.py`: PROBE_CONSUMER (132), BINDING (133), _scope (289), _discover (312), classify_discovery (399) | Existing trusted discovery bootstrap and outcome check |
+| `src/legoai/runtime/local.py`: open_credential_source (255), _remote_chat_contract_diagnostics (469), open_local_host (741) | Interactive source, closed diagnostics and governed host |
+| `src/legoai/runtime/_composition/secret.py`: _provision_interactively (52); `_composition/provider_discovery.py`: discovery_purpose (61), discovery_consumer (66) | Existing trusted S1/discovery bootstrap, same boundary as frozen runner |
+| `src/legoai/runtime/api.py`: HostFailure (53), HostError (82), ModelPurpose (92), RemoteModelRuntime (420), ExecutionDisclosure (507) | Existing execution/failure/disclosure contracts |
+| `src/legoai/intelligence/model/values.py`: ModelId (52), ChatRole (77), ChatMessage (88), ChatRequest (268) | Existing model identity and request values |
+| `src/legoai/execution/values.py`: ExecutionState (45); `src/legoai/governance/disclosure.py`: DisclosureClass (72), DisclosureDeclaration (515) | Completion state and synthetic disclosure values |
+| `validate_forgeai_kisski_coding_model_evaluation_1.py`: main (81) | Explicit root `sys.executable -m mypy` script/test/validator target pattern |
+
+The frozen `runner.invoke` returns only a derived row; it does not expose raw
+completion text. The permitted mirror lives in `invocation.py`. Its function-body
+diff is limited to:
+
+```diff
+-async def invoke(host: Any, config: legacy.ProbeConfig, task: Task) -> dict[str, Any]:
++async def invoke(
++    host: Any, config: legacy.ProbeConfig, task: Task
++) -> tuple[dict[str, Any], str | None]:
++    raw: str | None = None
+     ... unchanged prompt, disclosure, execution and successful-response guard ...
++        raw = result.response.content
+         row = score(task, result.response.content)
+     ... unchanged failure handling, diagnostics and row metadata ...
+-    return row
++    return row, raw
+```
+
+The new tests compare both invocation results and function ASTs after removing
+exactly these capture edits. No copied scorer, new response parser, provider
+adapter or alternate completion acceptance rule was introduced.
+
+### Maintainer-only validation
+
+Prerequisites: repository root, existing locked Python 3.14 uv environment with
+development dependencies and existing local TLS-test prerequisites installed.
+No new environment variables, packages, Docker, GPU or live-provider prerequisites.
+The validator runs synthetic tests and existing local qualification regressions;
+it does not provision credentials, discover models or send live provider calls.
+
+New tests cover all eight frozen tasks, v1-field equivalence, missing-target
+early returns, coding invariants, reviewer causes/matching precedence, abstention,
+canary non-disclosure, frozen integrity/admission isolation, exact gates, raw
+custody, budget labels, model loop ownership and no-retry bounds. Existing tests
+are imported by pytest unchanged; the validator does not widen their old scope
+validators or rewrite historical evidence.
+
+```powershell
+git status --short
+uv run --locked --offline --no-sync python .\validate_forgeai_kisski_dev_screen_1.py
+git diff --check
+git status --short
+```
+
+Expected success label:
+
+```text
+FORGEAI-KISSKI-DEV-SCREEN-1 LOCAL CHECKS PASSED; FROZEN EVALUATION UNCHANGED; NO PROVIDER CALLS; NO ADMISSION EFFECT
+```
+
+No checks, formatters, validators, workloads, live calls or commits were run during
+implementation. Paste the results before further debugging or implementation.
