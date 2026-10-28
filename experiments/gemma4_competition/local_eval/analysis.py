@@ -256,6 +256,10 @@ def read_run(path: Path) -> tuple[dict, list[dict]]:
             raise ValueError("official outcome disagreement")
         row = project(row, error=(evidence.get("error") or "") if evidence else "",
                       log=agent_log.read_text(encoding="utf-8", errors="replace") if agent_log.is_file() else "")
+        from tool_rejections import task_report
+        row["tool_argument_rejections"] = task_report(path, row["task_id"])
+        row["failure_categories"] = sorted(set(row.get("failure_categories", [])) |
+                                           set(row["tool_argument_rejections"]["failure_categories"]))
         rows.append(row)
     ids = [r["task_id"] for r in rows]
     if len(set(ids)) != len(ids) or not set(ids) <= set(meta["task_ids"]):
@@ -284,7 +288,7 @@ def projection(times: list[float], startup: float | None, complete: bool) -> dic
 
 def categories(row: dict) -> list[str]:
     if row.get("verification_status") == "HARNESS_ENVIRONMENT_ERROR":
-        return ["harness_error", "HARNESS_ENVIRONMENT_ERROR"]
+        return list(dict.fromkeys(["harness_error", "HARNESS_ENVIRONMENT_ERROR"] + row.get("failure_categories", [])))
     result = list(row.get("failure_categories", []))
     if row["patch_bytes"] == 0:
         result.append("no_edit")
@@ -303,6 +307,7 @@ def categories(row: dict) -> list[str]:
 
 
 def summarize_observations(meta: dict, rows: list[dict]) -> dict:
+    from tool_rejections import aggregate
     n = len(meta["task_ids"])
     complete = len(rows) == n and all(r["resolved"] is not None for r in rows)
     time_complete = complete and meta.get("completion_state") == "COMPLETED" and not any(r["harness_errors"] or r["stop_reason"] == "wall_guard" for r in rows)
@@ -335,7 +340,13 @@ def summarize_observations(meta: dict, rows: list[dict]) -> dict:
             "tool_call_limit_hits": sum(r["stop_reason"] == "call_budget" for r in rows),
             "observed_tokens": sum(r["tokens"] or 0 for r in rows),
             "tokens_unknown_tasks": sum(r["tokens"] is None for r in rows),
-            "per_task": [{k: r.get(k) for k in ("task_id", "repo", "resolved", "official_resolved", "verification_status", "wall_seconds", "stop_reason", "model_turns", "tool_calls", "tokens", "harness_errors")} for r in rows],
+            "per_task": [{k: r.get(k) for k in ("task_id", "repo", "resolved", "official_resolved", "verification_status", "wall_seconds", "stop_reason", "model_turns", "tool_calls", "tokens", "harness_errors", "patch_bytes", "tool_argument_rejections")} for r in rows],
+            "patch_production": {
+                "nonempty_tasks": sum((r.get("patch_bytes") or 0) > 0 for r in rows),
+                "unknown_tasks": sum(r.get("patch_bytes") is None for r in rows),
+                "share": sum((r.get("patch_bytes") or 0) > 0 for r in rows) / n
+                    if n and len(rows) == n and all(r.get("patch_bytes") is not None for r in rows) else None},
+            "tool_argument_rejections": aggregate([r.get("tool_argument_rejections", {}) for r in rows] + [{}] * max(0, n - len(rows))),
             "tool_telemetry_unknown_tasks": sum(r["tool_calls"] is None for r in rows),
             "failure_categories_nonexclusive": dict(failures), "wrong_location": "UNKNOWN: human review required",
             "time_fit": projection([r["wall_seconds"] for r in rows], meta.get("startup_seconds"), time_complete),

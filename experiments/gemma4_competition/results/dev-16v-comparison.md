@@ -81,3 +81,35 @@ P3 attempt2/P4 columns are transcribed from the reported exhaustive flips.
 | fastapi_14786 | RESOLVED | RESOLVED | 8 | 0 | 0 | 8/8 |
 | rich_3067 | RESOLVED | RESOLVED | 8 | 0 | 0 | 8/8 |
 | fastapi_15589 | UNRESOLVED | UNRESOLVED | 1 | 7 | 0 | 1/8 |
+
+## Tool argument rejection evidence and P5 preregistration
+
+Status: maintainer-reported, not recomputed here. Eight comparable dev-16v runs
+remain the cohort; P1b merged attempts count once. Rejected calls were previously
+ordinary tool calls; TOOL_ARGUMENT_REJECTED now identifies the observation text
+"mandatory input parameters are not present" separately from outcome failures.
+
+| Run | Rejected / attempted edit+write |
+|---|---:|
+| P1c | 17/40 |
+| P3 attempt1 | 25/48 |
+| P3 attempt2 | 13/36 |
+| P4 attempt1 | 30/59 |
+
+P4 rich_3934 reportedly had 27 consecutive rejections before timeout. P3 attempt1
+rich_4079 had 9/9 rejected calls and no patch. The exact identical-resend counts,
+all-tool rates, other runs and patch-production shares await maintainer analysis.
+The trailing-backtick parser explanation and run_command 0/1135 are attributed
+to the maintainer's Syurolh forum report (October 22); no causal experiment ran here.
+
+P5 changes only P3's prompt and routes source edits through a quoted Python
+heredoc in run_command. Each P5 run must have all-tool rejection rate <=5% and
+nonempty-patch task share at least the mean of the two P3 shares. Report edit/write
+rate separately (N/A with zero attempts), per-task run_command source-edit
+completion markers, and final patch bytes. Marker counts are lower bounds;
+unmarked edits require trace review, not inference from tool names.
+Across two complete P5 runs, mean solved must be >=7, and each bootstrap upper95
+projection must be <=11 hours. Report all per-task flips against both P3 runs
+and between P5 runs. Missing evidence blocks adoption; lower patch production
+fails even with zero edit/write attempts. Retain P3 until every gate passes and
+subsequent submission qualification succeeds. See local_eval/README.md for commands.

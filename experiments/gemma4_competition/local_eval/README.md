@@ -1263,3 +1263,173 @@ including per-run source hashes, control-filtered summaries and existing
 bootstrap time-fit projections. Review the 11-hour upper-bound gate before
 authorizing a future submission. Do not replace approximate reported projections
 with an unexecuted calculation. Paste maintainer results before proceeding.
+
+## FORGEAI-GEMMA4-P5-EDIT-PATH-WORKAROUND-1
+
+Authored only: **NOT RUN — Awaiting user execution**. No package, analysis,
+notebook, test or submission was executed. All eight historical runs stay intact.
+P5 copies P3's agent.yaml, eval_config.yaml and configs/sampling.yaml byte for byte;
+only prompts/system.md gains the source-edit workaround. The builder checks this
+and preservation of all original P3 prompt text against pinned bytes.
+
+Source changes use run_command with a quoted `<<'EOF'` Python heredoc, byte reads,
+a nonempty old-text uniqueness assertion, actual replacement, byte write and
+`git diff -- <file>`. The prompt forbids edit_file/write_file for source changes
+and identical resends after missing mandatory arguments. Each completed source
+file modification emits `FORGEAI_SOURCE_EDIT_COMPLETED` after the diff.
+
+The analyzer matches the rejection phrase in tool observations, not arguments,
+and reports attempted/rejected counts by tool per task, identical resends after
+rejection, maximum identical rejection streak, edit/write rejection fraction,
+and all-tool rejection fraction. A 27-call identical rejected streak contains
+26 resends. Missing/ambiguous observations and absent traces leave rates null;
+zero edit/write attempts are N/A, not 0%. Other tools remain in the all-tool gate.
+Trace file hashes accompany task metrics. Retained files are read, never rewritten.
+
+Per-task `run_command_source_edits_evidenced` counts dedicated completion-marker
+lines in observed stdout (or plain output), never command text. These are lower
+bounds, not full counts of arbitrary shell edits. Review unmarked commands and
+patch artifacts before asserting exact counts; historical absence of markers is
+not proof of zero edits. `patch_bytes` and `patch_production.share` independently
+measure final nonempty patches, so editing then reverting still yields no patch.
+Metric fields are under summary.descriptive_observations_not_control_qualified;
+per-task provenance is under summary.per_task. No model-quality claim follows.
+
+### Preregistered decision, incorporating maintainer refinement
+
+Use two independent, complete P5 dev-16v runs with identical candidate bytes,
+sampling, budgets, task subset, environment and source pins. Do not resume or
+merge attempts, cherry-pick a replicate, or tune between attempts.
+
+All conditions are required:
+
+1. **Each run**: rejected observations across ALL tools / all attempted tool calls
+   <=0.05. Report both rates and their arithmetic mean (not pooled). Report the
+   edit/write ratio separately; N/A when no edit/write calls occurred. Missing
+   traces, unmatched observations, zero total calls or incomplete tasks cannot pass.
+2. **Each run**: nonempty-patch task share >= arithmetic mean of the two P3 shares
+   (P3 attempt1 and attempt2). Missing patch bytes mean UNKNOWN. Even with zero
+   edit/write attempts, a smaller patch share FAILS: stopped editing is not avoidance.
+3. Record source edits via run_command per task, including marker counts and any
+   manual adjudication for unmarked edits. Do not promote marker lower bounds to
+   exact historical counts. Preserve trace hashes with the adjudication.
+4. Mean solved across two P5 runs >=7 (P3 baseline 8 and 6). Unknown verdicts block
+   this gate, rather than being converted to unsuccessful tasks.
+5. Each P5 run's existing bootstrap upper95 full-run time projection <=11 hours
+   (equivalently the maximum of the two bounds <=11). Preserve startup cost and
+   the existing 116-task/10,000-draw method; no new timing method after results.
+
+Report all 16 task outcomes for P3 attempt1, P3 attempt2, P5 attempt1 and P5
+attempt2: each P5 versus each P3, and P5 versus P5 flips. Retain P3 on FAIL or
+UNKNOWN. Passing creates selection eligibility only; official compiler/package
+qualification, reconciliation and explicit submission authorization remain required.
+
+### Manual offline checks and build
+
+Prerequisites: existing locked uv environment with Python; no installation or
+new environment variables. Working directory is the relocated repository
+`C:\Work\ForgeAI-Gemma4`, branch br-ForgeAI-Gemma4. The earlier repository path
+is absent on this machine. These are maintainer commands, not executed results.
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Offline tests failed; paste output and stop' }
+```
+
+Expected: offline unit tests pass, including rejection/observation matching,
+repeat interruption, zero denominator, missing evidence, marker counts, P5 prompt
+scope and distinct unauthorized config defaults. Paste results before further
+implementation. No test outcome is claimed here.
+
+Separate, maintainer-controlled build, once checks are accepted:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p5 --output 'C:\Work\Gemma4Localtest\gemma-p5-experiment-attempts1-2'
+if ($LASTEXITCODE -ne 0) { throw 'P5 package build failed; paste output and stop' }
+```
+
+Expected fresh external directory: submission.zip.bin, manifest.json,
+p5-dev16v-attempt1.json, p5-dev16v-attempt2.json. Printed state is
+EXPERIMENTAL_UNQUALIFIED with ZIP and manifest SHA256. Existing output directories
+are refused. Both generated configs contain the same real build hashes; committed
+config templates deliberately say BUILD_REQUIRED. This is experimental packaging,
+not official portable compilation. No submission package is qualified by this build.
+
+### Future P5 configs (not authorization to execute now)
+
+Use the generated configs under the build output; committed templates are
+`configs/p5-dev16v-attempt1.json` and `configs/p5-dev16v-attempt2.json`.
+Use the existing official local-evaluation Kaggle setup, model, wheelhouse and
+Internet Off. Attach current local_eval sources including tool_rejections.py,
+experimental-pins.json and the unchanged dev-16v.json, plus the new package and
+manifest. Adjust only mounted input paths to the actual attached locations.
+Keep candidate=p5, subset=dev-16v, package_mode=EXPERIMENTAL_UNQUALIFIED,
+wall_seconds=10800, all resume fields empty and separate fresh output directories.
+The six-minute per-task budget remains P3's; the wall guard is not a time-fit result.
+
+After separate operator approval, set authorization exactly to
+`AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p5 ON dev-16v` and set gpu_authorized,
+official_environment_authorized, internet_off_confirmed and experimental_authorized
+true. package_reconciled remains false for this experimental path. Templates
+remain unauthorized in git. The existing runtime positional-config interface is:
+
+```text
+python -B /actual/mounted/local_eval/runtime.py /actual/path/p5-dev16v-attempt1.json
+python -B /actual/mounted/local_eval/runtime.py /actual/path/p5-dev16v-attempt2.json
+```
+
+These are separate fresh sessions, not simultaneous jobs or a command to run now.
+Retain each complete output directory including run.json, tasks.jsonl,
+completion.json, official/task_results.jsonl, official/traces, patches and logs.
+Failures remain evidence; do not overwrite or silently retry an attempt.
+
+### Eight-run recomputation (maintainer only)
+
+Supply the actual run roots containing run.json, not an outer download folder.
+P1b must be the established merged logical run; if inherited task traces are not
+present, report missing coverage and recover their provenance separately rather
+than counting absent traces as zero. No guessed path or copied trace is substituted.
+Use a fresh external output directory. The eight labels are fixed below.
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+$gemmaRuns = @()
+foreach ($gemmaLabel in @('p1','p1b','p1c','p2','p3','p3g','p3att2','p4')) {
+    $gemmaRoot = Read-Host "Absolute retained run root containing run.json for $gemmaLabel"
+    $gemmaRuns += @('--run', ($gemmaLabel + '=' + $gemmaRoot))
+}
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/paper_evidence.py @gemmaRuns --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'C:\Work\Gemma4Localtest\p5-eight-run-rejection-review-1'
+if ($LASTEXITCODE -ne 0) { throw 'Evidence export failed; paste output and stop' }
+```
+
+Expected dev-16v-comparison.md and eight-run-analysis.json. P1 is restricted to
+P3's 16 task IDs; P1b merged attempts count once. All-tool rates, patch shares,
+per-tool and per-task rejection counts and repeat counts are newly derived only
+when this command succeeds. Compare the supplied historical counts 17/40, 25/48,
+13/36 and 30/59; investigate discrepancies, never change code to force agreement.
+Current committed comparison and paper-evidence records explicitly remain
+MAINTAINER_REPORTED / RECOMPUTATION_NOT_RUN. No complete eight-run rates invented.
+
+After both future P5 runs, use the existing summary and comparison interfaces:
+
+```powershell
+$gemmaCompare = @()
+foreach ($gemmaLabel in @('P3a1','P3a2','P5a1','P5a2')) {
+    $gemmaRoot = Read-Host "Absolute complete run root for $gemmaLabel"
+    uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $gemmaRoot --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+    if ($LASTEXITCODE -ne 0) { throw 'Summary failed; stop' }
+    $gemmaCompare += @('--run', ($gemmaLabel + '=' + $gemmaRoot))
+}
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py @gemmaCompare --same-config P3a1=P3a2 --same-config P5a1=P5a2 --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'C:\Work\Gemma4Localtest\p5-four-run-flips-1.md'
+if ($LASTEXITCODE -ne 0) { throw 'Per-task comparison failed; stop' }
+```
+
+The per-task four-column table exposes all cross-candidate flips; same-config
+sections quantify replicate flips. Apply the preregistered gates above to the
+four summaries; there is no automatic submission or adoption action.
+
+The P1 dataset-notebook ERROR record also retains the maintainer's likely
+scorer-exception-wave explanation (forum reports from approximately October 21).
+It is a hypothesis alongside the earlier dataset-input hypothesis; cause stays
+UNKNOWN, status ERROR, score null. No new causal claim or live Kaggle verification.

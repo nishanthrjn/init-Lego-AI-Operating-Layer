@@ -100,7 +100,7 @@
         "Submission description: P1 20aa090e – own procedure prompt, budget 180/28/6/80",
         "Previously SCORING; on 2026-10-22 maintainer reports ERROR (Notebook Threw Exception) during Kaggle scoring rerun, before agent scoring; public score remains null.",
         "Maintainer reports the committed Version 1 run log showed P1_PACKAGE_COPIED_UNCHANGED, ZIP SHA256 fab297b8bc6cc934a239431bc32679a0f53bfbd5caf711eef13b6079ecff43d9, 4736 bytes; interactive preparation also succeeded.",
-        "Failure cause UNKNOWN; dataset-input dependence is a hypothesis, not an established cause. This is not a model-quality failure. Observations are maintainer-reported, not independently queried Kaggle state."
+        "Maintainer additionally reports a forum scorer-exception wave from approximately October 21 as the likely cause of this dataset-notebook ERROR (hypothesis only; exact thread/log confirmation unavailable). Failure cause UNKNOWN; dataset-input dependence remains the earlier hypothesis, not an established cause. This is not a model-quality failure. Observations are maintainer-reported, not independently queried Kaggle state."
       ]
     },
     {

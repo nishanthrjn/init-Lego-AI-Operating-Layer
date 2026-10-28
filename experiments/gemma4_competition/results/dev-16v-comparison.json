@@ -1,4 +1,38 @@
 {
+  "tool_argument_rejection_evidence": {
+    "status": "MAINTAINER_REPORTED; RECOMPUTATION_NOT_RUN",
+    "category": "TOOL_ARGUMENT_REJECTED",
+    "observation_phrase": "mandatory input parameters are not present",
+    "edit_write_counts": {
+      "p1c": {"rejected": 17, "attempted": 40},
+      "p3_attempt1": {"rejected": 25, "attempted": 48},
+      "p3_attempt2": {"rejected": 13, "attempted": 36},
+      "p4_attempt1": {"rejected": 30, "attempted": 59}
+    },
+    "task_examples": {
+      "p4_rich_3934": "Maintainer reports 27 consecutive rejections followed by session timeout; identical-resend count pending trace recomputation.",
+      "p3_attempt1_rich_4079": "Maintainer reports 9/9 edit/write calls rejected and no patch; P4 later solved this task."
+    },
+    "forum_report": "Maintainer cites team Syurolh, October 22: trailing backtick swallows following edit_file/write_file argument; run_command reportedly 0/1135. Exact thread URL not supplied; parser causality is forum attribution, not independently established here.",
+    "cohort": ["p1_dev30_restricted", "p1b_merged_once", "p1c", "p2", "p3_attempt1", "p3g", "p3_attempt2", "p4_attempt1"],
+    "derived_per_task_counts": null,
+    "all_tool_rejection_rates": null,
+    "patch_production_baseline": null,
+    "pending": "Maintainer runs paper_evidence.py against all eight retained roots; missing traces/observations and patch bytes remain UNKNOWN. No retained artifacts rewritten."
+  },
+  "p5_preregistered_decision": {
+    "candidate": "P3 with prompts/system.md changed only",
+    "status": "NOT_RUN; EXPERIMENTAL_UNQUALIFIED",
+    "attempts": 2,
+    "all_tool_rejection_gate": "Each P5 run: matched rejected observations across ALL tools / all attempted tool calls <= 0.05; zero calls or incomplete trace coverage is UNKNOWN, not PASS.",
+    "edit_write_rate": "Reported separately; N/A for zero edit/write attempts.",
+    "patch_gate": "Each P5 run nonempty-patch task share >= mean of the two P3 shares; unknown patch bytes or incomplete subsets block adoption. Zero edit attempts with lower patch share FAILS.",
+    "source_edit_evidence": "Per-task run_command completion-marker counts are evidenced lower bounds, not inferred from tool name. Unmarked historical or P5 source edits require manual trace review; final patch bytes recorded separately.",
+    "solved_gate": "Mean solved over two complete P5 dev-16v runs >= 7 (P3 baseline 8 and 6).",
+    "time_gate": "Each P5 run bootstrap upper 95% projected full-run time <= 11 hours using existing projection method.",
+    "flips": "Report each P5 attempt versus each P3 attempt and P5 attempt1 versus attempt2, per task; UNKNOWN never converted to unresolved.",
+    "adoption": "All gates required. Eligibility for subsequent submission qualification only; retain P3 on FAIL or UNKNOWN."
+  },
   "schema_version": 1,
   "p4_attempt1": {
     "evidence_basis": "MAINTAINER_REPORTED; retained artifacts not independently analyzed",

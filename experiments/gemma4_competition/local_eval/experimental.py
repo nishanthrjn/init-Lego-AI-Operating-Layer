@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -55,6 +55,13 @@ def static_files(candidate):
     if data["p4"]["eval_config.yaml"] != data["p3"]["eval_config.yaml"].replace(
             b"max_time_minutes: 6\n", b"max_time_minutes: 7\n"):
         raise ValueError("P4 time cap must be the only evaluation change")
+    if {k for k in MEMBERS if data["p3"][k] != data["p5"][k]} != {"prompts/system.md"}:
+        raise ValueError("P5 must change only the P3 prompt")
+    anchor = b"\n4. Verify before submitting."
+    before, rest = data["p3"]["prompts/system.md"].split(anchor, 1)
+    prompt = data["p5"]["prompts/system.md"]
+    if not prompt.startswith(before) or not prompt.endswith(anchor + rest):
+        raise ValueError("P5 must preserve all existing P3 prompt text")
     return data[candidate]
 
 
@@ -72,7 +79,7 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
@@ -84,7 +91,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()
@@ -102,6 +109,12 @@ def main():
                 "submission_authorized": False}
     raw = (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
+    if args.candidate == "p5":
+        for attempt in (1, 2):
+            config = json.loads((HERE / "configs" / f"p5-dev16v-attempt{attempt}.json").read_bytes())
+            config.update(zip_sha256=digest(blob), manifest_sha256=digest(raw))
+            (output / f"p5-dev16v-attempt{attempt}.json").write_text(
+                json.dumps(config, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({**manifest, "manifest_sha256": digest(raw)}))
 
 
