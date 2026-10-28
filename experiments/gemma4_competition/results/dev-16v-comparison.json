@@ -1,5 +1,47 @@
 {
   "schema_version": 1,
+  "p3_same_config_replicate": {
+    "evidence_basis": "MAINTAINER_REPORTED; attempt2 artifacts not independently analyzed",
+    "candidate": "p3",
+    "subset": "dev-16v",
+    "attempt": 2,
+    "comparison_attempt": 1,
+    "configuration_relation": "SAME_CONFIG_REPLICATE_MAINTAINER_REPORTED",
+    "state": "COMPLETED",
+    "elapsed_seconds": 4935,
+    "retained_path": "C:\\Work\\Gemma4Localtest\\local_eval_p3_dev16v_attempt2",
+    "resolved": 6,
+    "verifiable": 16,
+    "attempt1_resolved": 8,
+    "outcome_flip_count": 2,
+    "outcome_flips": [
+      {"task_id": "fastapi_5624", "attempt1_resolved": true, "attempt2_resolved": false, "reported_cause": null},
+      {"task_id": "fastapi_11194", "attempt1_resolved": true, "attempt2_resolved": false, "reported_cause": "SESSION_TIMEOUT"}
+    ],
+    "context_window_exceeded_count": 0,
+    "session_timeout_count": 6,
+    "session_timeout_tasks": [
+      "rich_3934", "fastapi_14419", "rich_3471",
+      "rich_4079", "fastapi_11194", "fastapi_15589"
+    ],
+    "mean_task_seconds_approx": 273,
+    "projection_hours_approx": 8.9,
+    "attempt1_projection_hours_approx": 8.0,
+    "projection_basis": "Maintainer-reported mean extrapolation; not a bootstrap result",
+    "observed_noise_floor_flips": 2,
+    "interpretation": "Two observed flips in one same-config replicate; operational decision floor, not a population noise bound or significance estimate. Historical attempt1 and six-run records remain unchanged."
+  },
+  "p4_decision_threshold": {
+    "authority": "MAINTAINER",
+    "subset": "dev-16v",
+    "minimum_resolved": 11,
+    "verifiable": 16,
+    "maximum_bootstrap_upper95_hours": 11,
+    "runtime_metric": "bootstrap_upper95_hours",
+    "requirements_combined": "AND",
+    "basis": "Exceed the observed two-flip replicate floor relative to P3 attempt1 8/16, and satisfy the existing bootstrap runtime gate",
+    "status": "DECISION_THRESHOLD_ONLY; P4 not evaluated by this update"
+  },
   "evidence_basis": "MAINTAINER_REPORTED; run artifacts not independently re-analyzed for this record",
   "controls_sha256": "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033",
   "subset": "dev-16v",

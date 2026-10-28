@@ -2,6 +2,29 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p3_same_config_attempt2",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "pointer": "/p3_same_config_replicate",
+      "basis": "Maintainer-reported same-config replicate; retained attempt2 artifacts not independently analyzed",
+      "values": {
+        "attempt1_resolved": 8, "attempt2_resolved": 6, "denominator": 16,
+        "elapsed_seconds": 4935, "outcome_flips": 2,
+        "context_window_exceeded": 0, "session_timeouts": 6,
+        "mean_task_seconds_approx": 273,
+        "attempt1_projection_hours_approx": 8.0, "attempt2_projection_hours_approx": 8.9,
+        "observed_noise_floor_flips": 2
+      }
+    },
+    {
+      "id": "p4_decision_threshold",
+      "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
+      "pointer": "/p4_decision_threshold",
+      "basis": "Maintainer decision: both thresholds required; not a P4 result or statistical superiority claim",
+      "values": {"minimum_resolved": 11, "denominator": 16, "maximum_bootstrap_upper95_hours": 11}
+    },
+    {
       "values": {
         "dev30_verifiable": 16,
         "confirm20_verifiable": 8,
@@ -26,9 +49,9 @@
         "p1": 8,
         "denominator": 16
       },
-      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "basis": "Maintainer-reported successes and retained metadata; UNKNOWN remains separate in per-task table",
+      "basis": "Historical six-run comparison; P3 is attempt1. Maintainer-reported successes and retained metadata; UNKNOWN remains separate in per-task table",
       "pointer": "/six_run_task_records",
       "id": "six_run_table_and_task_categories"
     },
@@ -42,9 +65,9 @@
         "p3g_timeouts": 5,
         "p3_timeouts": 4
       },
-      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "basis": "Structured errors and maintainer-reported mean projections; bootstrap upper-bound gate not executed",
+      "basis": "Historical attempt1 values; structured errors and maintainer-reported mean projections; bootstrap upper-bound gate not executed",
       "pointer": "/runs",
       "id": "context_and_time"
     },
@@ -55,7 +78,7 @@
         "combined_calls": 3,
         "combined_task_runs": 32
       },
-      "sha256": "92008667650248838ded1122a2205dc95c6305bcc1dce28a6d5613b6dfff1f38",
+      "sha256": "b2f60a1001962ba6d0a4fd711a7493fee84719316bbef4213f09d4736c4d02e5",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "basis": "Trace request counts, not guaranteed effects",
       "pointer": "/six_run_task_records",
@@ -101,7 +124,8 @@
   ],
   "limitations": [
     "Development subset repeatedly used for tuning; not held-out qualification.",
-    "No statistical superiority established by six single runs.",
+    "No statistical superiority established by the historical six-run comparison or the additional P3 replicate.",
+    "Two flips are the observed same-config replicate noise floor for the P4 decision, not a population bound. Mean runtime projections are not bootstrap results.",
     "Historical run artifacts unchanged.",
     "External source paths and hashes are retained in the six-run record.",
     "Compiler and submission qualification are independent of model-quality observations."
