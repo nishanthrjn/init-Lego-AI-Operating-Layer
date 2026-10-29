@@ -276,3 +276,164 @@ task outcomes if evidenced. Keep P3 as fallback. Include E4B only if eligible,
 time-safe and worth sacrificing a general-track finalist slot; the bonus is not
 automatic. No product-branch dependency and no reusable-change proposal needed
 for this documentary slice. **Verification NOT RUN; await maintainer review.**
+
+## FORGEAI-GEMMA4-P5-SUBMISSION-QUALIFICATION-PREP-1
+
+Prepared, **NOT RUN — Awaiting user execution**. P5 attempt2 is pending;
+submission stays blocked. CPU qualification may be prepared independently of the
+development decision. No compiler, packaging, install, notebook, test, model or
+submission was executed during authoring. No commit was made.
+
+The existing candidates/p5 files are reused without changes. The shared adapter
+checks all four member hashes and the deterministic experimental ZIP identity:
+
+| Member | SHA256 |
+|---|---|
+| agent.yaml | 83a97b8a3e9a8d71efa692423ace1d0187ba65ca84655c94679b03b3eab4c3c6 |
+| eval_config.yaml | 2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8 |
+| configs/sampling.yaml | 571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926 |
+| prompts/system.md | 020704784e5e0b95fb73095fea14fd7d8670cbe18e164f6d4a52cf1adcbaa7d9 |
+
+ZIP: `6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219`,
+6501 bytes. The experimental manifest is not an official qualification manifest.
+P5 uses the P3 adapter, validator orchestration and submission preparation, backed
+by the existing M2 compiler/install/reconciliation implementation. No compiler or
+package algorithm is duplicated. Historical P3 packages and receipts remain
+historical evidence; this changed adapter requires a fresh P5 receipt.
+
+### 1. Maintainer offline checks and fresh transfer bundle
+
+Prerequisites: branch br-ForgeAI-Gemma4, existing locked uv environment and exact
+previously recovered official wheel bytes. Do not rerun recovery or install
+packages. No additional environment variables. Working directory:
+`C:\Work\ForgeAI-Gemma4`. All output paths below must be fresh; increment the
+qualification directory suffix if a previous attempt exists, preserving evidence.
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p 'test_p3_qualification.py'
+if ($LASTEXITCODE -ne 0) { throw 'Shared P3 regression tests failed; paste output and stop' }
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p5_submission_qualification_1.py --local-only --output 'C:\Work\Gemma4Localtest\p5-qualification-1\bundle'
+if ($LASTEXITCODE -ne 0) { throw 'P5 local qualification failed; paste output and stop' }
+```
+
+The local-only validator also runs M2 controls, test_p5_qualification.py and all
+submission_only/test_*.py controls, then rechecks scope and exports the bundle.
+Expected final label: `P5_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED`.
+Expected receipt: `C:\Work\Gemma4Localtest\p5-qualification-1\bundle\local-receipt.json`.
+This is not submission qualification. Paste results before debugging or changes.
+Missing wheels, changed candidate bytes, wrong branch, unrelated index/worktree
+changes, failed tests or existing outputs must stop the sequence.
+
+### 2. Maintainer Kaggle CPU compiler-only sequence
+
+Attach the entire fresh bundle directory (preserve its internal paths) and the
+official `metric/gemma-4-developer-agent-wheelhouse` dataset. Use the same official
+Python 3.12 Linux environment as the P3 workflow, Accelerator None, Internet Off,
+fresh session. Import `kaggle_compiler/p5_compiler_only.ipynb`. Adjust BUNDLE to
+its actual mount ending in /bundle. OUTPUT and LOG default respectively to
+`/kaggle/working/gemma4-p5-compiler` and `/kaggle/working/gemma4-p5-compiler.log`.
+
+After reviewing the notebook, set AUTHORIZATION exactly:
+`AUTHORIZE FORGEAI GEMMA4 P5 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY`.
+Run only these code cells, in order:
+
+1. `inputs-and-approval`: receipt verification and environment checks.
+2. `five-wheel-install`: the existing scoped, pinned five-wheel installation.
+3. `offline-compile`: isolated offline compilation and deterministic packaging.
+4. Final download ZIP cell (`9647230f`): packages the chosen receipt's results
+   with exclusive creation; never select the first unrelated receipt on a mount.
+
+Do not run official starter serving/evaluation cells. On any failure, retain the
+log and installation evidence and stop. A rerun requires a fresh/reset session;
+no overwrite or remedial package installation is authorized by this sequence.
+
+Download the compiler log and complete output directory: install-evidence.json,
+compiler-output.json, manifest.json, submission.zip. Extract the download so the
+result DIRECTORY is exactly
+`C:\Work\Gemma4Localtest\p5-qualification-1\compiler-download\gemma4-p5-compiler`.
+Expected package state is PORTABLE_COMPILE_AND_PACKAGE_PASS and the frozen P5 ZIP
+hash/size above. Portable success alone does not permit submission.
+
+### 3. Receipt-matched local reconciliation
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+$p5Receipt = 'C:\Work\Gemma4Localtest\p5-qualification-1\bundle\local-receipt.json'
+$p5Results = 'C:\Work\Gemma4Localtest\p5-qualification-1\compiler-download\gemma4-p5-compiler'
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p5_submission_qualification_1.py --receipt $p5Receipt --reconcile $p5Results
+if ($LASTEXITCODE -ne 0) { throw 'P5 reconciliation failed; paste output and stop' }
+```
+
+Expected: `P5_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED` and
+`P5_PACKAGE_VALIDATED; NO MODEL QUALITY OR SUBMISSION AUTHORIZATION`.
+CANDIDATE_PINS.p5 remains placeholder until the separate guarded preparation step.
+Never copy the experimental manifest hash into these pins. Any source edit covered
+by the receipt requires a fresh bundle and CPU compilation; do not patch evidence.
+
+### 4. Wait for attempt2 and record the two-run decision
+
+Do not mark a pass in advance. After maintainer review, dev-16v-comparison.json
+must contain `p5_adoption_decision: {"status": "PASSED"}` and both p5_attempt1
+and p5_attempt2 records. The latter must use the existing attempt1 field names:
+`candidate`, `subset`, `attempt`, `state`, `verifiable`, `retained_path`, `resolved`,
+`all_tool_attempted`, `all_tool_rejected`, `nonempty_patch_tasks`,
+`bootstrap_upper95_hours_approx`, `run_command_heredoc_edits_observed`.
+
+The guard independently requires two COMPLETED P5/dev-16v records of 16 tasks,
+attempt numbers 1 and 2, distinct retained paths, mean solved >=7, each run's
+all-tool rejection fraction <=0.05 with nonzero denominator, each patch count
+>= the mean of P3's recorded 11 and 7 (9/16), each bootstrap upper95 <=11 h,
+and observed source edits in both runs. Baselines come from
+`tool_argument_rejection_evidence.patch_production_baseline` (tasks_per_run=16).
+Null, missing, nonfinite, boolean or out-of-range metric values cannot pass.
+A bare PASSED label cannot override failed metrics. Rounded timing values near
+11 h need sufficient precision from the maintainer; do not round a failure down.
+Per-task flips and source-edit counts remain part of the evidence review.
+
+The evidence file is deliberately outside compiler receipt inputs: recording
+attempt2 does not change the candidate or invalidate a prepared CPU receipt.
+The guarded submission pins bind its SHA256, and the shared notebook generator
+rechecks that decision and hash. Evidence changed after pinning requires renewed
+preparation to a fresh external notebook path. No decision is changed by this tool.
+
+### 5. Guarded pin materialization and external self-contained notebook
+
+Only after steps 3 and 4 succeed:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+$p5Receipt = 'C:\Work\Gemma4Localtest\p5-qualification-1\bundle\local-receipt.json'
+$p5Results = 'C:\Work\Gemma4Localtest\p5-qualification-1\compiler-download\gemma4-p5-compiler'
+$p5Notebook = 'C:\Work\Gemma4Localtest\p5-qualification-1\p5-self-contained.ipynb'
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/submission_only/qualify_p5.py --receipt $p5Receipt --results $p5Results --notebook $p5Notebook
+if ($LASTEXITCODE -ne 0) { throw 'P5 preparation blocked or failed; paste output and stop' }
+```
+
+Currently expected: refusal because attempt2 and PASSED decision are absent,
+before reconciliation or writes. After all prerequisites pass, the tool reconciles
+again, materializes only P5's CANDIDATE_PINS in first_submission.ipynb, and creates
+the external notebook exclusively. Expected final label:
+`P5_SUBMISSION_PREPARATION_READY; PRE_COMMIT_CHECK_REQUIRED; NO_SUBMISSION_EXECUTED`.
+No generated self-contained notebook belongs in the repository. Its payload is
+exactly the reconciled ZIP; AUTHORIZATION remains empty pending operator action.
+
+### 6. Maintainer review and staged consistency (no commit)
+
+Review and stage only the qualification slice and any separately reviewed result
+records needed for the decision. The following command stages the authored slice,
+not unrelated files. No git commit command is part of this handoff.
+
+```powershell
+git add -- validate_forgeai_gemma4_p3_submission_qualification_1.py validate_forgeai_gemma4_p5_submission_qualification_1.py experiments/gemma4_competition/portable_p3.py experiments/gemma4_competition/portable_p5.py experiments/gemma4_competition/tests/test_p5_qualification.py experiments/gemma4_competition/kaggle_compiler/p5_compiler_only.ipynb experiments/gemma4_competition/submission_only/qualify_p3.py experiments/gemma4_competition/submission_only/qualify_p5.py experiments/gemma4_competition/submission_only/generate_self_contained.py experiments/gemma4_competition/submission_only/first_submission.ipynb experiments/gemma4_competition/submission_only/test_p5_submission.py experiments/gemma4_competition/README.md
+if ($LASTEXITCODE -ne 0) { throw 'Staging failed; stop' }
+# Stage separately reviewed decision/result records explicitly before the check.
+uv run --locked --offline --no-sync python -B .\validate_forgeai_gemma4_p5_submission_qualification_1.py --pre-commit --receipt $p5Receipt --reconcile $p5Results
+if ($LASTEXITCODE -ne 0) { throw 'P5 staged consistency failed; paste output and stop' }
+```
+
+Expected: `P5_PRE_COMMIT_STAGED_CONSISTENCY_PASSED`. Do not change receipt-bound
+sources between CPU compilation and this check. A successful qualification does
+not submit anything. Review the external self-contained notebook; any execution,
+Save Version and Kaggle submission remain explicit maintainer actions. P3 stays
+the fallback if the two-run decision fails or remains unknown.

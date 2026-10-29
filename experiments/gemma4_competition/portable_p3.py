@@ -24,46 +24,48 @@ def load_instance(path, name):
     return module
 
 
-def build_engine():
-    engine = load_instance(AREA / "portable_m2.py", "_p3_shared_engine")
+def build_engine(candidate="p3", member_pins=MEMBER_PINS, zip_sha256=EXPERIMENTAL_ZIP_SHA256, entry=None, zip_size=None):
+    engine = load_instance(AREA / "portable_m2.py", "_" + candidate + "_shared_engine")
     original_static = engine.static_candidate
     original_transfer = engine.transfer_paths
     original_verify = engine.verify_local_receipt
-    engine.CANDIDATE = AREA / "candidates/p3"
+    engine.CANDIDATE = AREA / "candidates" / candidate
     engine.EXPECTED_OUTPUT_TOKENS = 8192
-    engine.INSTALL_AUTHORIZATION = "AUTHORIZE FORGEAI GEMMA4 P3 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY"
-    engine.__file__ = str(Path(__file__).resolve())
+    engine.INSTALL_AUTHORIZATION = "AUTHORIZE FORGEAI GEMMA4 " + candidate.upper() + " KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY"
+    engine.__file__ = str(Path(entry or __file__).resolve())
 
     def expected_files():
         files = {n: (engine.CANDIDATE / n).read_bytes() for n in engine.MEMBERS}
-        engine.require({n: engine.sha(v) for n, v in files.items()} == MEMBER_PINS,
-                       "P3 differs from frozen experimental package members")
+        engine.require({n: engine.sha(v) for n, v in files.items()} == member_pins,
+                       candidate.upper() + " differs from frozen experimental package members")
         return files
 
     def static_candidate(directory):
         files = original_static(directory)
-        engine.require(engine.sha(engine.zip_bytes(files)) == EXPERIMENTAL_ZIP_SHA256,
-                       "P3 deterministic ZIP differs from retained experimental run")
+        blob = engine.zip_bytes(files)
+        engine.require(engine.sha(blob) == zip_sha256 and (zip_size is None or len(blob) == zip_size),
+                       candidate.upper() + " deterministic ZIP differs from retained experimental run")
         return files
 
     def transfer_paths():
         prefix = "experiments/gemma4_competition/"
         return sorted((set(original_transfer()) - {prefix + "kaggle_compiler/compiler_only.ipynb"}) | {
             "validate_forgeai_gemma4_p3_submission_qualification_1.py",
+            f"validate_forgeai_gemma4_{candidate}_submission_qualification_1.py",
             "validate_forgeai_gemma4_p1_procedure_prompt_1.py",
-            prefix + "portable_p1.py", prefix + "portable_p3.py",
-            prefix + "tests/test_p3_qualification.py",
+            prefix + "portable_p1.py", prefix + "portable_p3.py", prefix + f"portable_{candidate}.py",
+            prefix + "tests/test_p3_qualification.py", prefix + f"tests/test_{candidate}_qualification.py",
             prefix + "local_eval/paper_evidence.py", prefix + "local_eval/analysis.py",
             prefix + "local_eval/compare_runs.py",
-            prefix + "kaggle_compiler/p3_compiler_only.ipynb",
-            *(prefix + "candidates/p3/" + n for n in engine.MEMBERS),
+            prefix + f"kaggle_compiler/{candidate}_compiler_only.ipynb",
+            *(prefix + f"candidates/{candidate}/" + n for n in engine.MEMBERS),
         })
 
     def verify_local_receipt(path):
         receipt = original_verify(path)
-        engine.require(receipt.get("candidate") == "p3" and receipt.get("budgets") == BUDGETS
-                       and receipt.get("experimental_zip_sha256") == EXPERIMENTAL_ZIP_SHA256,
-                       "P3 receipt identity mismatch")
+        engine.require(receipt.get("candidate") == candidate and receipt.get("budgets") == BUDGETS
+                       and receipt.get("experimental_zip_sha256") == zip_sha256,
+                       candidate.upper() + " receipt identity mismatch")
         return receipt
 
     engine.expected_files = expected_files

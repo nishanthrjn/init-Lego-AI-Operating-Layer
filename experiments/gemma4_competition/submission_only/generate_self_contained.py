@@ -33,6 +33,11 @@ def load_pins(candidate):
 def build_notebook(candidate, pins, raw_manifest, payload):
     if pins.get("reconciled") is not True or pins.get("m2_result_understood") is not True:
         raise ValueError("Reconciled candidate and understood M2 result required")
+    if candidate == "p5":
+        from qualify_p5 import require_two_run_gate
+        gate_pins = require_two_run_gate()
+        if any(pins.get(key) != value for key, value in gate_pins.items()):
+            raise ValueError("P5 development evidence changed or was not qualified")
     for key in ("manifest_sha256", "zip_sha256", "receipt_sha256"):
         value = pins.get(key)
         if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):

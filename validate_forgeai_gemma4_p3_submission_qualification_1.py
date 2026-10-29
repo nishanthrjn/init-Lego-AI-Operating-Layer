@@ -10,6 +10,7 @@ import tempfile
 
 from experiments.gemma4_competition import portable_p3 as p3
 
+CANDIDATE_NAME = "p3"
 ROOT = Path(__file__).resolve().parent
 BASE = "fd801cf5ef6fe1732f2ce2b23530676c153d2cae"
 PREFIX = "experiments/gemma4_competition/"
@@ -60,8 +61,8 @@ def reconcile(receipt, remote):
                "compiler evidence must remain outside repository")
     with contextlib.redirect_stdout(io.StringIO()):
         shared_gate().reconcile(receipt, remote)
-    print("P3_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED")
-    print("P3_PACKAGE_VALIDATED; NO MODEL QUALITY OR SUBMISSION AUTHORIZATION")
+    print(CANDIDATE_NAME.upper() + "_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED")
+    print(CANDIDATE_NAME.upper() + "_PACKAGE_VALIDATED; NO MODEL QUALITY OR SUBMISSION AUTHORIZATION")
 
 
 def main():
@@ -77,30 +78,30 @@ def main():
     if args.pre_commit and not args.reconcile:
         parser.error("--pre-commit requires reconciliation")
     scope = scope_gate()
-    scope.phase("exact P3 qualification scope", scope.scope_checks)
-    scope.phase("experimental P3 member and ZIP identity", lambda: p3.static_candidate(p3.CANDIDATE))
+    scope.phase("exact " + CANDIDATE_NAME.upper() + " qualification scope", scope.scope_checks)
+    scope.phase("experimental " + CANDIDATE_NAME.upper() + " member and ZIP identity", lambda: p3.static_candidate(p3.CANDIDATE))
     if not args.pre_commit:
         scope.phase("preserved wheel pins", p3.wheel_pins)
         for directory, pattern in (("tests", "test_m2_minimal_baseline.py"),
-                                   ("tests", "test_p3_qualification.py"), ("submission_only", "test_*.py")):
+                                   ("tests", f"test_{CANDIDATE_NAME}_qualification.py"), ("submission_only", "test_*.py")):
             scope.phase("offline controls: " + pattern, lambda d=directory, p=pattern: subprocess.run(
                 [sys.executable, "-B", "-m", "unittest", "discover", "-s", PREFIX + d, "-p", p],
                 cwd=ROOT, check=True))
         scope.phase("post-control scope preservation", scope.scope_checks)
     if args.reconcile:
-        scope.phase("P3 evidence reconciliation", lambda: reconcile(args.receipt, args.reconcile))
+        scope.phase(CANDIDATE_NAME.upper() + " evidence reconciliation", lambda: reconcile(args.receipt, args.reconcile))
         if args.pre_commit:
             with contextlib.redirect_stdout(io.StringIO()):
                 scope.staged_checks()
-            print("P3_PRE_COMMIT_STAGED_CONSISTENCY_PASSED")
+            print(CANDIDATE_NAME.upper() + "_PRE_COMMIT_STAGED_CONSISTENCY_PASSED")
     else:
-        receipt = {"schema": 1, "state": "LOCAL_SCOPE_AND_STATIC_PASS", "candidate": "p3",
+        receipt = {"schema": 1, "state": "LOCAL_SCOPE_AND_STATIC_PASS", "candidate": CANDIDATE_NAME,
                    "budgets": p3.BUDGETS, "prompt_sha256": p3.PROMPT_SHA256,
                    "experimental_zip_sha256": p3.EXPERIMENTAL_ZIP_SHA256, "baseline": BASE,
                    "git_head": scope.git("rev-parse", "HEAD").decode().strip(), "inputs": p3.input_manifest()}
-        output = args.output or Path(tempfile.mkdtemp(prefix="gemma-p3-transfer-parent-")) / "bundle"
-        scope.phase("external P3 transfer bundle", lambda: shared_gate().export_bundle(output, receipt))
-        print("P3_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED")
+        output = args.output or Path(tempfile.mkdtemp(prefix=f"gemma-{CANDIDATE_NAME}-transfer-parent-")) / "bundle"
+        scope.phase("external " + CANDIDATE_NAME.upper() + " transfer bundle", lambda: shared_gate().export_bundle(output, receipt))
+        print(CANDIDATE_NAME.upper() + "_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED")
 
 
 if __name__ == "__main__":
