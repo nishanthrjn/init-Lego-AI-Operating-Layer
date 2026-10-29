@@ -149,6 +149,28 @@
       "submission_time_utc": null,
       "submission_id": null,
       "status": "SUCCEEDED"
+    },
+    {
+      "candidate": "p3",
+      "replicate_of": {"notebook_name": "p3_selfcontained", "notebook_version": "1"},
+      "receipt": "02a7f680784d0c6813fc926095dafac8db106b5ac19c53cf95bd3badd2155e85",
+      "zip_sha256": "19b4e77257004e5440e23520f05e83ab755257fd6ff43c71d38539b9d62c676f",
+      "zip_size": 5100,
+      "manifest_sha256": "4a1c32adbc614e63870b704cea476a71ae9f3f0c04dc510ff6d94ba4e596b18f",
+      "notebook_name": "Fork of p3_selfcontained",
+      "notebook_version": "2",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SUCCEEDED",
+      "public_score": 0.12,
+      "error_text": null,
+      "notes": [
+        "Maintainer reports leaderboard replicate 2 submitted 2026-10-28; exact UTC timestamp and submission ID not supplied.",
+        "Identical P3 files and ZIP (reported prefix 19b4e772); full package identity and receipt reference the existing P3 record, not a new compilation or qualification.",
+        "Replicates p3_selfcontained Version 1: public 0.15 (approximately 9/58) versus 0.12 (approximately 7/58). Task counts are maintainer-reported approximations, not exact counts inferred from rounded scores.",
+        "Observed identical-file hidden-set spread is approximately 2 tasks (public scores 0.12-0.15), matching the local same-config count spread of 8 versus 6 on dev-16v. This does not establish hidden-task flips, equal variance or a population noise bound.",
+        "Status, score, date and identical-file assertion are maintainer-reported; no live Kaggle query or evaluation executed."
+      ]
     }
   ]
 }

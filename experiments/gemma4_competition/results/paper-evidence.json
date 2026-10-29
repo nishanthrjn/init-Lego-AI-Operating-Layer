@@ -2,6 +2,29 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p3_identical_file_leaderboard_replicate2",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "sha256": "055fa708d8ae0a22163f440a849b61d2e952bb8709dedda7ad45690fb5b4cadc",
+      "pointer": "/runs/5",
+      "replicate_of_pointer": "/runs/4",
+      "basis": "Maintainer-reported identical-file P3 leaderboard replicate, submitted 2026-10-28; no evaluation or live account verification executed.",
+      "values": {
+        "public_scores": [0.15, 0.12],
+        "hidden_solved_approx": [9, 7],
+        "hidden_tasks": 58,
+        "identical_file_hidden_set_spread_tasks_approx": 2,
+        "local_same_config_solved": [8, 6],
+        "local_tasks": 16,
+        "local_same_config_spread_tasks": 2
+      },
+      "local_evidence": {
+        "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+        "sha256": "6233801599158e1ddb30b8118fc8e7f3ce9063db7edbbebf24d50dc7f0ceae85",
+        "pointer": "/p3_same_config_replicate"
+      },
+      "limitation": "Observed count spreads match in magnitude only. Hidden counts are approximate; no hidden per-task flip count, equal-variance claim, superiority claim or population noise bound follows."
+    },
+    {
       "id": "tool_argument_rejections_and_p5_preregistration",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "sha256": "6233801599158e1ddb30b8118fc8e7f3ce9063db7edbbebf24d50dc7f0ceae85",
@@ -13,7 +36,7 @@
     {
       "id": "p1_scorer_exception_wave_hypothesis",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "fecd3f4597224b6d6feaff2e3938c97900ac94c5b7d8442a55c7af7473cac36a",
+      "sha256": "055fa708d8ae0a22163f440a849b61d2e952bb8709dedda7ad45690fb5b4cadc",
       "pointer": "/runs/2/notes",
       "basis": "Maintainer-reported forum exception wave from approximately October 21; likely explanation only, no independently established cause.",
       "values": {"cause": "UNKNOWN", "status": "ERROR", "public_score": null}
@@ -137,7 +160,7 @@
         "reported_noise_tasks_plus_minus": 3,
         "m2": 0.05
       },
-      "sha256": "fecd3f4597224b6d6feaff2e3938c97900ac94c5b7d8442a55c7af7473cac36a",
+      "sha256": "055fa708d8ae0a22163f440a849b61d2e952bb8709dedda7ad45690fb5b4cadc",
       "file": "experiments/gemma4_competition/results/submissions.json",
       "basis": "Maintainer-reported Kaggle scores, including P3 p3_selfcontained v1 reported 2026-10-26; noise claim attributed observation, not independently verified replication dataset; no superiority inference",
       "pointer": "/runs",
