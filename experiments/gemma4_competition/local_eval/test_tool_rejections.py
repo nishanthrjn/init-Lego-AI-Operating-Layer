@@ -143,5 +143,42 @@ class ToolRejectionTests(unittest.TestCase):
                 with self.assertRaises(FileExistsError):
                     experimental.main()
 
+    def test_quoted_eof_heuristic_and_body_tokens(self):
+        for token in ("read_text", "write_text", "replace("):
+            call = {"function_name": "run_command", "arguments": {"command": "python - <<'EOF'\n" + token + "\nEOF\n"}}
+            self.assertEqual(t.heredoc_counts(call), (1, 1))
+        for command, expected in (
+            ("python - <<'EOF'\nprint('hello')\nEOF", (1, 0)),
+            ("cat > /tmp/repro.py <<'EOF'\np.write_text('x')\nEOF", (1, 0)),
+            ("python - <<EOF\np.write_text('x')\nEOF", (0, 0)),
+            ('python - <<"EOF"\np.write_text("x")\nEOF', (0, 0)),
+            ("python - <<'EOF'\npass\nEOF\nwrite_text", (1, 0)),
+            ("echo read_text; python - <<'EOF'\npass\nEOF", (1, 0)),
+            ("python - <<'EOF'\np.read_bytes()\np.write_bytes(b'x')\nEOF", (1, 0)),
+            ("python - <<'EOF'\np.write_text('/tmp/in-body')\nEOF", (1, 1)),
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(t.heredoc_counts({"function_name": "run_command", "arguments": {"command": command}}), expected)
+
+    def test_heredoc_counts_calls_not_echoes_and_keeps_markers_separate(self):
+        command = "python - <<'EOF'\np.write_text('x')\nEOF"
+        item = step("run_command", command + "\n" + command, {"command": command})
+        report = t.inspect_trace({"steps": [item, item]})
+        self.assertEqual(report["run_command_heredoc_calls"], 2)
+        self.assertEqual(report["run_command_heredoc_edits_observed"], 2)
+        self.assertEqual(report["run_command_source_edits_evidenced"], 0)
+        self.assertEqual(t.aggregate([report])["run_command_heredoc_edits_observed"], 2)
+        self.assertIsNone(t.aggregate([report, {"status": "MISSING"}])["run_command_heredoc_edits_observed"])
+        item["observation"] = {}
+        report = t.inspect_trace({"steps": [item]})
+        self.assertEqual(report["run_command_heredoc_edits_observed"], 1)
+        self.assertIsNone(report["all_tool_rejection_rate"])
+
+    def test_heredoc_ignores_other_tools_and_invalid_command(self):
+        for call in ({"function_name": "read_file", "arguments": {"command": "<<'EOF'\nwrite_text"}},
+                     {"function_name": "run_command", "arguments": None},
+                     {"function_name": "run_command", "arguments": {"command": 42}}):
+            self.assertEqual(t.heredoc_counts(call), (0, 0))
+
 if __name__ == "__main__":
     unittest.main()

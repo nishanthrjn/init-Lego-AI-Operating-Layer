@@ -17,6 +17,7 @@ SCOPE = {
     PREFIX + "submission_only/generate_self_contained.py",
     PREFIX + "submission_only/first_submission.ipynb",
     PREFIX + "README.md",
+    PREFIX + "local_eval/tool_rejections.py", PREFIX + "local_eval/test_tool_rejections.py",
     PREFIX + "results/dev-16v-comparison.json", PREFIX + "results/dev-16v-comparison.md",
     PREFIX + "results/paper-evidence.json", PREFIX + "results/submissions.json",
 }

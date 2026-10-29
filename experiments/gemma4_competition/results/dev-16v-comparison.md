@@ -114,7 +114,7 @@ and between P5 runs. Missing evidence blocks adoption; lower patch production
 fails even with zero edit/write attempts. Retain P3 until every gate passes and
 subsequent submission qualification succeeds. See local_eval/README.md for commands.
 
-## P5 dev-16v attempt1 — completed, attempt2 pending
+## P5 dev-16v attempt1 — completed (historical run1 report)
 
 Maintainer-reported; no traces, timing projections or evaluation recomputed here.
 Retained at `C:\Work\Gemma4Localtest\local_eval_p5_dev16v_attempt1`.
@@ -129,7 +129,7 @@ The historical eight-run cohort above is preserved; this P5 run is additional.
 P5 completed in 4448 s, with mean task time approximately 247 s and bootstrap
 upper95 time-fit approximately 8.6 h. Four session timeouts, zero context errors.
 No edit_file/write_file calls: edit/write rejection rate is N/A, not zero percent.
-The maintainer observed 35 run_command heredoc edits in traces; these are not
+The maintainer corrected attempt1 to 17 source-edit heredocs among 67 quoted-EOF run_command calls; these are not
 asserted to be completion-marker counts. Per-task edit counts and timeout task
 identities were not supplied.
 
@@ -139,7 +139,50 @@ identities were not supplied.
 | P3 attempt2 | fastapi_15589, fastapi_5624, fastapi_11194 | None |
 
 Run1 gates (a), (b), (c), and time are met as reported: 0/367 rejections;
-11/16 nonempty patches versus P3's mean 9/16; 35 observed source edits;
-approximately 8.6 h <=11 h. The two-run mean gate remains PENDING_ATTEMPT2.
-Retain P3 pending attempt2 and all adoption requirements. This is development
+11/16 nonempty patches versus P3's mean 9/16; 17 source-edit heredocs (corrected from 35);
+approximately 8.6 h <=11 h. The two-run mean gate was pending at this report; see the completed attempt2 decision below.
+The provisional retain-P3 decision is superseded by the maintainer adoption decision below. This is development
 evidence, not submission qualification or a statistical superiority claim.
+
+## P5 attempt2 and submission-candidate decision
+
+Maintainer-reported: attempt2 COMPLETED in 4654 s at
+`C:\Work\Gemma4Localtest\local_eval_p5_dev16v_attempt2`. No analysis rerun here.
+
+| Metric | P5 attempt1 | P5 attempt2 | Gate |
+|---|---:|---:|---|
+| Solved / 16 | 9 | 9 | Mean 9.0 >= P3 mean 7.0 |
+| Tool-argument rejections | 0/367 | 0/388 | Both 0% <=5% |
+| Edit/write calls | 0 | 0 | Edit/write rejection rate N/A |
+| Nonempty patches | 11 | 12 | Both >= P3 mean 9 |
+| Bootstrap upper95 hours | ~8.6 | ~9.0 | Both <=11 h |
+| Session timeouts | 4 | 3 | Descriptive |
+| Context errors | 0 | 0 | Descriptive |
+| Mean task seconds | ~247 | ~260 | Descriptive |
+
+Two flips versus attempt1: fastapi_14419 0->1 and fastapi_15589 1->0.
+Eight tasks solved in both runs, including fastapi_5624 and fastapi_11194.
+Attempt2 gains fastapi_14419 versus P3 attempt1 and additionally recovers
+fastapi_5624 and fastapi_11194 versus P3 attempt2; no P3-solved task lost.
+
+**Maintainer decision: two-run gate PASSED; P5 replaces P3 as submission candidate.**
+The missing attempt2 metric is now supplied: 23 source-edit heredocs among 76
+quoted-EOF run_command calls. Attempt1 is corrected from 35 to 17 among 67 calls;
+the earlier rough text search double-counted repeated trace text.
+
+Method QUOTED_EOF_SOURCE_EDIT_HEURISTIC_V1: parse tool-call objects, count each
+run_command call whose arguments.command contains exact <<'EOF' once. The source-edit
+subset excludes /tmp in text before the first << and requires any literal read_text,
+write_text, replace( in the body after the opener line and before standalone EOF.
+This is a heuristic lower bound, not proof of successful writes or marker counts.
+The guard is unchanged and the required values are present; execution NOT RUN.
+The maintainer will confirm analyzer outputs 67/17 and 76/23 before qualify_p5.
+
+The maintainer also reports official Kaggle CPU compilation and local reconciliation
+passed: P5_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED; P5_PACKAGE_VALIDATED.
+Receipt `e13f9b40a18f23ef2eaa2c4856342e182b567f3794fe6da9d8859e9bbe8db651`;
+ZIP `6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219`, 6501 B,
+byte-identical to the evaluated experimental package. Full identities reference
+previously supplied hashes; the official manifest hash was not supplied.
+No submission executed or new public score claimed. Historical eight-run
+frequencies remain the pre-P5 cohort, not a recomputed ten-run table.

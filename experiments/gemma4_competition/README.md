@@ -437,3 +437,50 @@ sources between CPU compilation and this check. A successful qualification does
 not submit anything. Review the external self-contained notebook; any execution,
 Save Version and Kaggle submission remain explicit maintainer actions. P3 stays
 the fallback if the two-run decision fails or remains unknown.
+
+### P5 heredoc-count correction and manual confirmation
+
+QUOTED_EOF_SOURCE_EDIT_HEURISTIC_V1 is implemented in local_eval/tool_rejections.py.
+It counts actual agent run_command tool-call objects containing literal <<'EOF',
+then counts the subset whose prefix before the first << contains no /tmp and whose
+body contains any literal read_text, write_text, replace(. The body starts after
+the opener line and ends at standalone EOF. Each call counts once; repeated actual
+calls count separately. Echoed command text in observations does not add calls.
+This deliberately narrow syntax heuristic does not prove execution or successful
+source mutation; read_bytes/write_bytes without replace( and other quoting styles
+are outside it. Existing completion-marker counts remain a separate field.
+Missing trace coverage yields null aggregate heredoc counts, not zero.
+
+Maintainer-computed expectations: attempt1 67 heredoc calls / 17 source-edit
+heredocs; attempt2 76 / 23. Attempt1's earlier 35 was a rough text-search count
+that double-counted repeated trace text. Corrected records remain
+MAINTAINER_COMPUTED / ANALYZER_CONFIRMATION_PENDING until confirmed by execution.
+The analyzer emits per-task counts and trace hashes through the existing summary.
+
+From C:\Work\ForgeAI-Gemma4 in the existing uv environment, no extra environment
+variables, execute manually (none of these commands ran during authoring):
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_tool_rejections.py'
+if ($LASTEXITCODE -ne 0) { throw 'Heredoc regression tests failed; paste output and stop' }
+foreach ($p5Attempt in @(1, 2)) {
+    $p5RunRoot = Read-Host "Actual attempt$p5Attempt run root containing run.json and official/traces"
+    uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $p5RunRoot --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+    if ($LASTEXITCODE -ne 0) { throw 'P5 summary failed; paste output and stop' }
+}
+```
+
+Inspect descriptive_observations_not_control_qualified.tool_argument_rejections:
+run_command_heredoc_calls must match 67 and 76; run_command_heredoc_edits_observed
+must match 17 and 23, with heredoc_trace_coverage_complete true. Per-task metrics
+are in per_task[].tool_argument_rejections. Do not tune the heuristic to force
+agreement: paste any discrepancy and its provenance before qualify_p5.
+
+The two new analysis paths were added explicitly to P5's qualification scope.
+This changes the receipt-bound root validator. Receipt e13f9b40 and its reported
+compiler/reconciliation passes remain historical evidence; they cannot qualify
+this updated checkout. After count confirmation, repeat the documented local-only,
+CPU compiler and reconciliation sequence with a fresh bundle/output suffix before
+qualify_p5. Candidate bytes and the frozen 6501-byte ZIP remain unchanged. No gate
+was weakened, no pins materialized, no submission executed and no commit made.
