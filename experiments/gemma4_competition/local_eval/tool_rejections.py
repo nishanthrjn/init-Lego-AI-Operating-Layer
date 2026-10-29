@@ -34,10 +34,47 @@ def heredoc_counts(call):
     source_edit = "/tmp" not in prefix and any(token in body for token in ("read_text", "write_text", "replace("))
     return 1, int(source_edit)
 
+ACI_FIELDS = ("failed_replacements", "syntax_error_observations", "large_observations",
+              "helper_creation_attempts", "helper_created", "helper_invocations",
+              "helper_ok", "helper_no_match", "helper_reverted", "syntax_error_observations_reverted")
+ACI_METHOD = "OFFICIAL_OBSERVATIONS_ACI_V1"
+
+
+def aci_observation(content):
+    """Once per observation; markers from output lines, never echoed call arguments."""
+    try:
+        response = json.loads(content)
+    except (ValueError, TypeError):
+        response = content
+    stdout = response.get("stdout", "") if isinstance(response, dict) else response
+    lines = stdout.splitlines() if isinstance(stdout, str) else []
+    return {
+        "failed_replacements": int("AssertionError" in content or "FORGE_EDIT_NO_MATCH" in content),
+        "syntax_error_observations": int("SyntaxError" in content or "IndentationError" in content),
+        "large_observations": int(len(content) > 6000),
+        "syntax_error_observations_reverted": int(("SyntaxError" in content or "IndentationError" in content)
+                                                and "FORGE_EDIT_SYNTAX_REVERTED" in lines),
+        "helper_ok": sum(line.startswith("FORGE_EDIT_OK ") for line in lines),
+        "helper_no_match": sum(line.startswith("FORGE_EDIT_NO_MATCH count=") for line in lines),
+        "helper_reverted": sum(line == "FORGE_EDIT_SYNTAX_REVERTED" for line in lines),
+    }
+
+
+def helper_command(call):
+    args = call.get("arguments")
+    command = args.get("command", "") if isinstance(args, dict) else ""
+    if call.get("function_name") != "run_command" or not isinstance(command, str):
+        return False, False
+    created = bool(re.search(r"(?m)^\s*cat\s*>\s*/tmp/forge_edit\.py\s*<<'PYEOF'", command))
+    invoked = bool(re.search(r"(?m)(?:^|[;&|])\s*python3?\s+/tmp/forge_edit\.py(?:\s|$)", command))
+    return created, invoked
+
+
 def inspect_trace(trace):
     if not isinstance(trace, dict) or not isinstance(trace.get("steps"), list):
         raise ValueError("trace steps missing")
     attempted, rejected, unknown, resends = Counter(), Counter(), Counter(), Counter()
+    aci = Counter({key: 0 for key in ACI_FIELDS})
     source_edits = 0
     heredocs = source_heredocs = 0
     previous = None
@@ -61,6 +98,8 @@ def inspect_trace(trace):
                           else call.get("function_name") == tool_name)]
         matched = candidates[0] if len(candidates) == 1 else None
         content = observation.get("content")
+        if calls and isinstance(content, str):
+            aci.update(aci_observation(content))
         for index, call in enumerate(calls):
             name = call.get("function_name")
             if not isinstance(name, str) or not name:
@@ -70,6 +109,16 @@ def inspect_trace(trace):
             heredocs += total
             source_heredocs += edits
             known = index == matched and isinstance(content, str)
+            created, invoked = helper_command(call)
+            aci["helper_creation_attempts"] += int(created)
+            aci["helper_invocations"] += int(invoked)
+            if created and known:
+                try:
+                    creation_response = json.loads(content)
+                except (ValueError, TypeError):
+                    creation_response = None
+                if isinstance(creation_response, dict) and creation_response.get("exit_code") == 0:
+                    aci["helper_created"] = 1
             is_rejected = known and PHRASE in content.lower()
             if not known:
                 unknown[name] += 1
@@ -97,7 +146,7 @@ def inspect_trace(trace):
     count = sum(attempted[t] for t in EDIT_TOOLS)
     rejected_count = sum(rejected[t] for t in EDIT_TOOLS)
     unknown_count = sum(unknown[t] for t in EDIT_TOOLS)
-    return {"status": "OBSERVED", "attempted_by_tool": dict(attempted),
+    return {"aci_metrics": dict(aci), "aci_method": ACI_METHOD, "aci_coverage_complete": not bool(unknown), "status": "OBSERVED", "attempted_by_tool": dict(attempted),
             "rejected_by_tool": dict(rejected), "unmatched_observations_by_tool": dict(unknown),
             "identical_resends_by_tool": dict(resends),
             "consecutive_identical_resends": consecutive_resends,
@@ -147,7 +196,10 @@ def aggregate(reports):
     count = sum(attempted[t] for t in EDIT_TOOLS)
     numerator = sum(rejected[t] for t in EDIT_TOOLS)
     complete = bool(reports) and len(observed) == len(reports) and not sum(unknown[t] for t in EDIT_TOOLS)
-    return {"trace_tasks": len(observed), "missing_trace_tasks": len(reports) - len(observed),
+    aci_complete = trace_complete and all(r.get("aci_coverage_complete") is True for r in observed)
+    aci = {key: sum(r["aci_metrics"][key] for r in observed) if aci_complete else None for key in ACI_FIELDS}
+    return {"aci_metrics": aci, "aci_method": ACI_METHOD, "aci_coverage_complete": aci_complete,
+            "trace_tasks": len(observed), "missing_trace_tasks": len(reports) - len(observed),
             "coverage_complete": complete, "all_tool_coverage_complete": complete and not unknown, "attempted_by_tool": dict(attempted),
             "rejected_by_tool": dict(rejected), "unmatched_observations_by_tool": dict(unknown),
             "identical_resends_by_tool": dict(resends),

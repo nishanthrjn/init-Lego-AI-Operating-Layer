@@ -1433,3 +1433,285 @@ The P1 dataset-notebook ERROR record also retains the maintainer's likely
 scorer-exception-wave explanation (forum reports from approximately October 21).
 It is a hypothesis alongside the earlier dataset-input hypothesis; cause stays
 UNKNOWN, status ERROR, score null. No new causal claim or live Kaggle verification.
+
+## FORGEAI-GEMMA4-TWO-TRACK-P6-AND-E4B-S1-1
+
+Implementation authored; **NOT RUN — Awaiting user execution**. This section
+preregisters both tracks before their first run. P5 remains the 31B submission
+candidate until P6 satisfies every condition below. S1 is an experimental E4B
+baseline, not submission-qualified. Existing candidate bytes, receipts, official
+cells, source/wheel pins and committed result records are unchanged.
+
+### Candidate controls and P6 interface
+
+P6 changes only P5's prompts/system.md. Its exact helper source lives inside
+that prompt (not as a fifth package member). The agent creates
+/tmp/forge_edit.py once on the first edit; every subsequent source edit uses
+python3 /tmp/forge_edit.py with a quoted EDIT heredoc. The helper enforces one
+separator, a relative path inside /workspace, and exactly one matching old block.
+No-match responses show the three best available windows, deterministically
+ranked by difflib ratio and then line number. Python compilation uses a temporary
+bytecode destination; failure restores exact original bytes or removes a newly
+created file. Success prints at most 80 diff lines. Empty old text is allowed
+only for a new file. Blocks retain line endings; use exact full lines. New files
+remain untracked until the harness captures them; git diff alone does not display
+their contents, so inspect them with the bounded viewer before submission.
+
+The P5 prohibition on edit_file/write_file, missing-argument resend prohibition,
+/tmp scratch rule, edit deadline, finish reserve and single submission rule
+remain. P6 replaces P5's inline edit template with the helper; retaining both
+competing edit mechanisms would contradict the every-source-edit requirement.
+Search is capped at 40 lines, views at b-a <=120, listings at 50, test/reproduction
+output at 60; never cat files longer than 200 lines. These are prompt instructions,
+not new harness-enforced limits. py_compile detects syntax, not semantic defects.
+The helper is about 60 lines and uses only Python's standard library.
+
+S1 changes only agent.yaml's model from gemma-4-31b-it-qat-w4a16-ct to
+**gemma-4-e4b-it-qat-w4a16-ct**. Prompt, sampling and evaluation config are
+byte-identical to P5. Both tracks retain the six-minute task cap and 8192 output /
+4096 thinking-token settings. The shared deterministic packager emits the same
+four members and fresh external manifests; no duplicated compiler logic.
+
+The ACI motivation is supported by the [SWE-agent paper](https://arxiv.org/abs/2405.15793)
+and its [interface ablations](https://openreview.net/pdf?id=mXpq6ut8J3): editing
+feedback and bounded file views affect performance. Those results motivate this
+experiment; they do not predict a Gemma improvement.
+
+### E4B serving evidence and limits (reviewed 2026-10-29)
+
+The retained [official starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)
+(`../docs/getting-started-gemma-4-developer-agent.ipynb`, source SHA256
+abc9ad7fbce3aa4f15983828a0528d5c1bec58cccf3f82cead6d2d2ed63a768f) and
+`../docs/HARNESS_README.md` (SHA256
+517a6ba6c38413b49c6cb14e54ab0031d3efbc7a7624c31810f8d6ef617c8601)
+list E4B. Pinned serving cell 8 uses model version 2, TP4 on four GPUs,
+max_model_len=32768 and gpu_memory_utilization=0.90. Its
+MODEL_VLLM_EXTRA_ARGS maps **12B only** to --hf-overrides with architectures
+["Gemma4ForCausalLM"] and model_type "gemma4". E4B receives an empty tuple.
+The runtime reads that pinned mapping rather than duplicating or guessing flags;
+new configs explicitly record model_variant and vllm_extra_args=[]. Package/model
+and config/official-argument mismatches stop before installation for P6/S1;
+run.json records both model_variant and actual planned serving args.
+
+The [official staff discussion](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287)
+reports a later wheelhouse fix in response to **12B** loading failures involving
+vision_embedder.patch_dense.weight after the override. It does not establish an
+E4B-specific requirement, nor provide a wheel SHA256 for that fix. Do not copy
+the 12B override to E4B or modify model weights.
+
+Our pinned versions are vllm 0.19.1, transformers 5.13.1, adk-submission 0.2.13,
+swegemma 0.2.11, adk-eval-core 0.1.0, google-adk 1.36.1, google-genai 2.11.0.
+Pinned vLLM wheel SHA256:
+73c69bafca24fbdad44690c44d6c6446514351e6f3cc9a6057cba05e66051310.
+All seven exact wheel hashes remain in source-pins.json. Version strings alone
+cannot establish whether a wheel contains the staff loading fix.
+
+The live [official wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse)
+page did not expose a readable file/version inventory during this review.
+**E4B is configured by our pinned official environment; successful serving with
+those exact bytes is NOT VERIFIED.** S1 smoke-5 is the serving check. No pin
+update is justified by the available E4B evidence. If current mounted bytes fail
+the pin check, stop; do not suppress it. A proposed update requires the exact
+new official dataset version, complete wheel SHA256 inventory, starter source
+and cell hashes, and old/new loader-source diff. Review which distributions and
+source pins changed, update them together in a separate authorized slice, and
+rerun environment controls. Retain old pins and runs as a separate environment;
+do not relabel cross-environment runs as identical-config replicates. The exact
+new version/hash is currently unknown; no invented upgrade target is supplied.
+
+### Metrics and preregistered decisions
+
+Every analysis summary now includes aci_metrics at run level and under each
+task's tool_argument_rejections. Counts are per official tool observation,
+not per occurrence or echoed command. failed_replacements counts observations
+containing AssertionError OR FORGE_EDIT_NO_MATCH; syntax_error_observations
+counts SyntaxError OR IndentationError. syntax_error_observations_reverted is
+the subset with the actual printed revert marker. large_observations counts raw
+observation content longer than 6000 characters. Helper OK/no-match/revert counts
+come from output marker lines; helper_invocations counts run_command invocations.
+helper_created counts tasks with a creation command and matched exit_code=0;
+helper_creation_attempts also exposes unconfirmed/failed attempts. Missing or
+ambiguous trace coverage yields null aggregate metrics, never an apparent zero.
+Existing rejection, patch, timeout, context and timing metrics are preserved.
+These substring/command metrics are operational proxies, not proof that every
+AssertionError was a source edit or that every invocation modified a file.
+
+Maintainer-reported P5 baselines (recomputation still required): failed
+replacements 9/7 (mean 8.0), syntax observations 2/4 (mean 3.0), large observations
+9/10, session timeouts 4/3; solved 9/9 and nonempty patches 11/12.
+The new analyzer must confirm or explain differences before a P6 decision.
+Do not alter the preregistered thresholds to fit new observations.
+
+Adopt P6 only after two independent, complete dev-16v runs with comparable pinned
+environment and full trace/patch telemetry, if ALL hold:
+
+| Measure | Required result |
+|---|---|
+| Mean solved | >=10 of 16 across the two runs |
+| Mean failed replacements | <8.0 |
+| Mean syntax error observations | <3.0 |
+| All-tool argument rejection rate | <=5% in EACH run |
+| Nonempty patches | >=11 tasks in EACH run |
+| Bootstrap upper95 total | <=11 hours in EACH run |
+
+Otherwise retain P5. Unknown/incomplete data cannot pass. Report per-task flips
+for each P6 run against BOTH P5 runs, plus within-P6 replicate flips. Time fit
+uses the existing deterministic 116-task empirical bootstrap including startup;
+its small-sample and hidden-concurrency limitations remain.
+
+S1 submission gate: complete frozen dev-16v run, zero harness errors (inspect
+both harness_errors and HARNESS_ENVIRONMENT_ERROR, not just completion label),
+all-tool argument rejection rate <=5% with complete coverage, bootstrap upper95
+<=**10.5 hours**. Do not use the generic analysis time gate's 11-hour PASS label
+for this stricter decision. smoke-5 does not qualify S1. No solved-count floor
+is added to this baseline gate; compare E4B candidates separately from 31B.
+If time fit fails, do not submit: propose S2's shorter max_time_minutes only
+after examining measured per-task agent and total durations, cap-hit frequency,
+startup and harness overhead. A capped-duration bootstrap is a planning estimate,
+not measured S2 evidence: shorter caps can change behavior and success. Choose
+and preregister a conservative cap with <=10.5h projected fit, then rerun S2;
+no numeric cap is guessed before S1 measurements exist.
+
+### Maintainer commands: offline checks, then builds
+
+Prerequisites: repository C:\Work\ForgeAI-Gemma4 on br-ForgeAI-Gemma4, existing
+locked uv environment/cache; no new dependencies, credentials or environment
+variables required for offline tests. These tests execute the helper extracted
+from the prompt against temporary fixture files; they do not run agents or GPU
+workloads. Tests mock git diff and remap only /workspace to a temporary directory.
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected: all tests OK, including test_two_track.py helper success/revert/no-match/
+separator/path/new-file controls, observation metrics, model mismatch and narrow
+S1 smoke authorization. STOP and paste results before advancing. No tests have
+been run by the coding agent. After review of passing output, build to fresh
+external directories (existing destinations deliberately fail):
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p6 --output 'C:\Work\Gemma4Localtest\gemma-p6-experiment-attempts1-2'
+if ($LASTEXITCODE -ne 0) { throw 'P6 build failed; stop' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py s1 --output 'C:\Work\Gemma4Localtest\gemma-s1-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'S1 build failed; stop' }
+```
+
+Expected per directory: submission.zip.bin, manifest.json, and two generated
+configs with actual ZIP/manifest hashes. Output reports EXPERIMENTAL_UNQUALIFIED
+and submission_authorized=false. ZIP hashes/sizes are deliberately not invented
+before the maintainer builds. Source configs remain unapproved with BUILD_REQUIRED
+hashes; use the generated external configs, not those placeholders.
+
+| Config | Model | Frozen subset | Independent output directory under /kaggle/working |
+|---|---|---|---|
+| p6-dev16v-attempt1.json | 31B | dev-16v | forgeai-local-eval-p6-dev-16v-attempt1 |
+| p6-dev16v-attempt2.json | 31B | dev-16v | forgeai-local-eval-p6-dev-16v-attempt2 |
+| s1-smoke5.json | E4B | smoke-5 | forgeai-local-eval-s1-smoke-5-attempt1 |
+| s1-dev16v.json | E4B | dev-16v | forgeai-local-eval-s1-dev-16v-attempt1 |
+
+### Kaggle run order and teammate account
+
+Run S1 smoke-5 FIRST, retain startup/timing/serving evidence, and stop on model
+load, wheel mismatch or harness failure. Only after review run S1 dev-16v.
+Schedule P6 attempt1 and attempt2 as independent sessions with empty resume
+fields; both must use identical model/package/wheel/tooling dataset versions.
+Coordinate allocation within the shared ~30 L4x4-hours/week budget; measure
+actual session setup, work and idle usage, stop sessions promptly, and avoid
+simultaneous duplicate experiments. The 10800-second watchdog in each config
+is an evaluation-session guard, not a hidden-set time prediction.
+
+For each account, use Copy & Edit of the official starter, import local_eval.ipynb
+into that copy, L4x4, Internet Off. Attach the public competition data, exact
+pinned official wheelhouse, the selected official model Other/version 2, the
+reviewed local_eval tooling directory as a private dataset, and the matching
+external experiment directory as another private dataset. Do not attach hidden
+data. Keep the same pinned dataset versions for both maintainers.
+
+Grant the teammate collaborator access to the private tooling/package datasets
+and the notebook. Each teammate must have their own competition/model access.
+Dataset owner slugs in mounted paths stay those of the dataset owner; they do
+not automatically become the teammate's username. The teammate uses Copy & Edit
+and Save Version -> Save & Run All from THEIR account. They must explicitly
+approve the config for their run and record account, notebook/version and dataset
+versions with the retained outputs. No quota is consumed by merely sharing inputs.
+
+In the first code cell, retain the notebook's imports and safety checks, set TOOLS
+to the actual private tooling mount, and replace the hardcoded CONFIG dictionary
+with loading the generated selected config. Example for S1 smoke (substitute
+OWNER and actual dataset slugs; other runs use the table's matching config):
+
+```python
+TOOLS = Path('/kaggle/input/datasets/OWNER/local-eval/local_eval')
+CONFIG = json.loads(Path('/kaggle/input/datasets/OWNER/s1-experiment/s1-smoke5.json').read_text())
+CONFIG['package'] = '/kaggle/input/datasets/OWNER/s1-experiment/submission.zip.bin'
+CONFIG['manifest'] = '/kaggle/input/datasets/OWNER/s1-experiment/manifest.json'
+CONFIG['subset_file'] = str(TOOLS / ('subsets.json' if CONFIG['subset'] == 'smoke-5' else 'dev-16v.json'))
+# Set only after the operator approves this exact candidate/subset and GPU session:
+CONFIG['authorization'] = 'AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s1 ON smoke-5'
+CONFIG['gpu_authorized'] = True
+CONFIG['official_environment_authorized'] = True
+CONFIG['internet_off_confirmed'] = True
+CONFIG['experimental_authorized'] = True
+```
+
+For S1 dev use authorization `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s1 ON dev-16v`;
+for both P6 runs `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p6 ON dev-16v`.
+Keep generated hash pins, model_path, model_variant, vllm_extra_args=[] and output
+identity intact. Do not turn package_reconciled on: these are experiments.
+Run only the local_eval notebook's two code cells in order: config recording,
+then gated runtime. The worker executes pinned official install cell 2 and serving
+cell 8, then selected public tasks; do not run original starter sample-eval,
+compiler or submission cells. No new self-contained submission notebook is created.
+
+Retain the complete output folder, including environment.json, run.json,
+tasks.jsonl, events.jsonl, completion.json, worker.log and all official traces,
+patches and task results. Preserve failures as failures. Store S1 outputs at
+C:\Work\Gemma4Localtest\local_eval_s1_smoke5 and local_eval_s1_dev16v; P6 at
+local_eval_p6_dev16v_attempt1 and local_eval_p6_dev16v_attempt2. These directories
+must directly contain run.json (remove an extra extraction nesting by choosing
+the correct root, not by editing evidence). No scores are expected or promised.
+
+### Recompute retained metrics without overwriting evidence
+
+After offline tests pass, the following exports all ten retained comparable
+runs (eight earlier plus two P5). Enter the real run root for each label; P1b
+is the merged run, once. P1's dev-30 is restricted to the frozen dev-16v IDs by
+the existing exporter. Missing old traces yield null metrics and need recovery,
+not invented zeros. Historical results files are not rewritten by these commands.
+
+```powershell
+$aciRuns = @()
+foreach ($aciLabel in @('p1','p1b','p1c','p2','p3','p3g','p3att2','p4','p5att1','p5att2')) {
+    $aciRoot = Read-Host "Exact retained run root for $aciLabel (contains run.json)"
+    $aciRuns += @('--run', ($aciLabel + '=' + $aciRoot))
+}
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/paper_evidence.py @aciRuns --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'C:\Work\Gemma4Localtest\p6-retained-aci-review-1'
+if ($LASTEXITCODE -ne 0) { throw 'ACI export failed; paste output and stop' }
+```
+
+Expected external dev-16v-comparison.md and run-analysis.json with per-task and
+aggregate ACI metrics, trace hashes and rejection rates. Compare P5 9/7 replacement
+and 2/4 syntax counts; investigate rather than adjust data/code to force agreement.
+Recomputation is NOT RUN. Reviewed derived values can be promoted to committed
+comparison/paper evidence in a later authorized results slice.
+
+After future runs, summarize each root using this interface (change the root for
+each run). The summary includes mean time, bootstrap upper95, patch production,
+rejections, ACI counts, timeout/context categories and per-task outcomes:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\local_eval_s1_dev16v' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+if ($LASTEXITCODE -ne 0) { throw 'Summary failed; stop' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/compare_runs.py --run 'P5a1=C:\Work\Gemma4Localtest\local_eval_p5_dev16v_attempt1' --run 'P5a2=C:\Work\Gemma4Localtest\local_eval_p5_dev16v_attempt2' --run 'P6a1=C:\Work\Gemma4Localtest\local_eval_p6_dev16v_attempt1' --run 'P6a2=C:\Work\Gemma4Localtest\local_eval_p6_dev16v_attempt2' --same-config P6a1=P6a2 --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 --output 'C:\Work\Gemma4Localtest\p6-vs-p5-flips-1.md'
+if ($LASTEXITCODE -ne 0) { throw 'Flip comparison failed; stop' }
+```
+
+Apply the preregistered thresholds to complete metrics, not labels. Keep best 31B
+and best eligible E4B as separate final picks; never mix variants within one
+submission. The [official prize rules](https://www.kaggle.com/competitions/gemma-4-developer-agent/overview/prizes)
+place the E2B/E4B bonus among the final two selections. Passing public-development
+gates still requires separate official compilation, byte-identity reconciliation
+and submission qualification; it does not predict hidden scores or award eligibility.

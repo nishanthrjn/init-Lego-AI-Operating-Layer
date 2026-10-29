@@ -31,8 +31,10 @@ def main():
         if not separator or name in supplied:
             raise ValueError("unique CANDIDATE=FOLDER required")
         supplied[name] = Path(folder)
-    if set(supplied) not in ({"p1", "p1b", "p1c", "p2", "p3", "p3g"}, {"p1", "p1b", "p1c", "p2", "p3", "p3g", "p3att2", "p4"}):
-        raise ValueError("exact six historical or eight comparable runs required")
+    historical = {"p1", "p1b", "p1c", "p2", "p3", "p3g"}
+    later = {"p3att2", "p4", "p5att1", "p5att2", "p6att1", "p6att2", "s1"}
+    if not historical <= set(supplied) or not set(supplied) <= historical | later:
+        raise ValueError("six historical runs plus named retained dev-16v runs required")
     loaded = {name: read_run(path) for name, path in supplied.items()}
     ids = set(loaded["p3"][0]["task_ids"])
     if len(ids) != 16:
@@ -63,9 +65,16 @@ def main():
                      f"{metric['rejection_rate']} | {metric['all_tool_rejected']}/{metric['all_tool_attempted']} | "
                      f"{metric['all_tool_rejection_rate']} | {summary['patch_production']['share']} |\n")
     rendered += "\nNull means unknown/incomplete or zero denominator, never zero rejections. Per-task tool counts, resend streaks, source-edit marker counts and trace hashes are in the JSON.\n"
+    rendered += "\n\n## ACI observations\n\n"
+    rendered += "| Run | Failed replacements | Syntax errors | Large observations | Helper-created tasks | Invocations | OK | No match | Reverted |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|\n"
+    for name, record in records.items():
+        metric = record["summary"]["descriptive_observations_not_control_qualified"]["aci_metrics"]
+        keys = ("failed_replacements", "syntax_error_observations", "large_observations", "helper_created",
+                "helper_invocations", "helper_ok", "helper_no_match", "helper_reverted")
+        rendered += "| " + name + " | " + " | ".join(str(metric[key]) for key in keys) + " |\n"
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / "dev-16v-comparison.md").write_text(rendered, encoding="utf-8")
-    (args.output / ("eight-run-analysis.json" if len(records) == 8 else "six-run-analysis.json")).write_text(json.dumps({
+    (args.output / ("eight-run-analysis.json" if len(records) == 8 else "six-run-analysis.json" if len(records) == 6 else "run-analysis.json")).write_text(json.dumps({
         "controls_sha256": args.controls_sha256, "runs": records,
         "limitations": "Development evidence; P1 restricted, P1b merged once, P3 repeats separate; missing traces/patch telemetry stay unknown; no superiority claim."
     }, indent=2) + "\n", encoding="utf-8")

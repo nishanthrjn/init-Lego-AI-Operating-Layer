@@ -64,6 +64,25 @@ def check_environment() -> dict:
     return pins
 
 
+def check_model_contract(config: dict, model: str) -> list[str]:
+    """Read pinned official arguments without executing the serving cell."""
+    import ast
+    cells = official_cells()
+    tree = ast.parse(cells["cells"]["8"]["source"])
+    mappings = [ast.literal_eval(node.value) for node in tree.body
+                if isinstance(node, ast.Assign) and any(
+                    isinstance(target, ast.Name) and target.id == "MODEL_VLLM_EXTRA_ARGS"
+                    for target in node.targets)]
+    if len(mappings) != 1:
+        raise ValueError("official serving argument mapping missing or ambiguous")
+    args = list(mappings[0].get(model, ()))
+    if (config.get("model_variant", model) != model
+            or config.get("model_path") != f"/kaggle/input/models/google/gemma-4/other/{model}/2"
+            or config.get("vllm_extra_args", args) != args):
+        raise ValueError("package/model/official serving arguments mismatch")
+    return args
+
+
 def prepare(config: dict) -> tuple[dict, list[dict], dict]:
     candidate, subset = config["candidate"], config["subset"]
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", candidate):
@@ -352,6 +371,7 @@ def worker(config: dict, output: Path) -> None:
     if len(declared) != 1 or not declared <= allowed:
         raise ValueError("one official quantized model required")
     model = next(iter(declared))
+    serving_args = check_model_contract(config, model)
     model_path = Path(config["model_path"])
     if not model_path.is_dir() or model_path.parent.name != model:
         raise ValueError("model path must be the attached official model/version directory")
@@ -377,7 +397,8 @@ def worker(config: dict, output: Path) -> None:
             "official_cell_sha256": OFFICIAL_CELL_HASHES,
             "installation_seconds": evidence["installation_seconds"],
             "runtime_pins": pins["versions"], "source_pins_sha256": sha(HERE / "source-pins.json"),
-            "python": sys.version, "model": model, "model_input": str(model_path),
+            "python": sys.version, "model": model, "model_variant": model,
+            "model_input": str(model_path), "vllm_extra_args": serving_args,
             "torch_version": torch.__version__, "cuda_version": torch.version.cuda,
             "gpu_names": [torch.cuda.get_device_name(i) for i in range(4)],
             "concurrency": 1, "hidden_scorer_concurrency": "UNKNOWN",

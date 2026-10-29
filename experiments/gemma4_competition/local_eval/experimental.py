@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -62,12 +62,20 @@ def static_files(candidate):
     prompt = data["p5"]["prompts/system.md"]
     if not prompt.startswith(before) or not prompt.endswith(anchor + rest):
         raise ValueError("P5 must preserve all existing P3 prompt text")
+    if {k for k in MEMBERS if data["p5"][k] != data["p6"][k]} != {"prompts/system.md"}:
+        raise ValueError("P6 must change only the P5 prompt")
+    if {k for k in MEMBERS if data["p5"][k] != data["s1"][k]} != {"agent.yaml"}:
+        raise ValueError("S1 must change only the P5 model")
+    if data["s1"]["agent.yaml"] != data["p5"]["agent.yaml"].replace(
+            b"gemma-4-31b-it-qat-w4a16-ct", b"gemma-4-e4b-it-qat-w4a16-ct"):
+        raise ValueError("S1 model-only control failed")
     return data[candidate]
 
 
 def verify(config):
-    if config.get("experimental_authorized") is not True or config.get("subset") != "dev-16v":
-        raise ValueError("explicit dev-16v experimental approval required")
+    subsets = {"smoke-5", "dev-16v"} if config.get("candidate") == "s1" else {"dev-16v"}
+    if config.get("experimental_authorized") is not True or config.get("subset") not in subsets:
+        raise ValueError("explicit supported-subset experimental approval required")
     manifest_bytes = Path(config["manifest"]).read_bytes()
     if digest(manifest_bytes) != config["manifest_sha256"]:
         raise ValueError("experimental manifest hash mismatch")
@@ -79,19 +87,25 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
             raise ValueError("experimental archive members mismatch")
         if any(digest(archive.read(name)) != expected[name] for name in MEMBERS):
             raise ValueError("experimental archive bytes mismatch")
+    if config["candidate"] in {"p6", "s1"}:
+        from runtime import check_model_contract
+        model = "gemma-4-e4b-it-qat-w4a16-ct" if config["candidate"] == "s1" else "gemma-4-31b-it-qat-w4a16-ct"
+        if config.get("model_variant") != model or "vllm_extra_args" not in config:
+            raise ValueError("explicit experimental model/serving contract required")
+        check_model_contract(config, model)
     return manifest
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()
@@ -109,12 +123,10 @@ def main():
                 "submission_authorized": False}
     raw = (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
-    if args.candidate == "p5":
-        for attempt in (1, 2):
-            config = json.loads((HERE / "configs" / f"p5-dev16v-attempt{attempt}.json").read_bytes())
-            config.update(zip_sha256=digest(blob), manifest_sha256=digest(raw))
-            (output / f"p5-dev16v-attempt{attempt}.json").write_text(
-                json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    for template in sorted((HERE / "configs").glob(args.candidate + "-*.json")):
+        config = json.loads(template.read_bytes())
+        config.update(zip_sha256=digest(blob), manifest_sha256=digest(raw))
+        (output / template.name).write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({**manifest, "manifest_sha256": digest(raw)}))
 
 

@@ -311,6 +311,7 @@ def summarize_observations(meta: dict, rows: list[dict]) -> dict:
     n = len(meta["task_ids"])
     complete = len(rows) == n and all(r["resolved"] is not None for r in rows)
     time_complete = complete and meta.get("completion_state") == "COMPLETED" and not any(r["harness_errors"] or r["stop_reason"] == "wall_guard" for r in rows)
+    trace_metrics = aggregate([r.get("tool_argument_rejections", {}) for r in rows] + [{}] * max(0, n - len(rows)))
     passed = sum(r["resolved"] is True for r in rows)
     tools, failures = Counter(), Counter()
     repos = {}
@@ -346,7 +347,7 @@ def summarize_observations(meta: dict, rows: list[dict]) -> dict:
                 "unknown_tasks": sum(r.get("patch_bytes") is None for r in rows),
                 "share": sum((r.get("patch_bytes") or 0) > 0 for r in rows) / n
                     if n and len(rows) == n and all(r.get("patch_bytes") is not None for r in rows) else None},
-            "tool_argument_rejections": aggregate([r.get("tool_argument_rejections", {}) for r in rows] + [{}] * max(0, n - len(rows))),
+            "tool_argument_rejections": trace_metrics, "aci_metrics": trace_metrics["aci_metrics"],
             "tool_telemetry_unknown_tasks": sum(r["tool_calls"] is None for r in rows),
             "failure_categories_nonexclusive": dict(failures), "wrong_location": "UNKNOWN: human review required",
             "time_fit": projection([r["wall_seconds"] for r in rows], meta.get("startup_seconds"), time_complete),

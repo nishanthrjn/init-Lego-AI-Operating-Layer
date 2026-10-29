@@ -46,5 +46,17 @@
     "eval_config.yaml": "2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8",
     "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
     "prompts/system.md": "020704784e5e0b95fb73095fea14fd7d8670cbe18e164f6d4a52cf1adcbaa7d9"
+  },
+  "p6": {
+    "agent.yaml": "83a97b8a3e9a8d71efa692423ace1d0187ba65ca84655c94679b03b3eab4c3c6",
+    "eval_config.yaml": "2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8",
+    "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+    "prompts/system.md": "4f1e32b32091d9bc0a51c827c9f865893171ddfd70d8371bceec7f802f7c5030"
+  },
+  "s1": {
+    "agent.yaml": "b060349f8d6780ed21f2efbe40ac4b09dba0ecc352ac164dc6b395f7eea9c544",
+    "eval_config.yaml": "2c8a983a1926aadfeca826bc90936ebc00329f6440e44a41369d01eed909d1a8",
+    "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+    "prompts/system.md": "020704784e5e0b95fb73095fea14fd7d8670cbe18e164f6d4a52cf1adcbaa7d9"
   }
 }
