@@ -171,6 +171,27 @@
         "Observed identical-file hidden-set spread is approximately 2 tasks (public scores 0.12-0.15), matching the local same-config count spread of 8 versus 6 on dev-16v. This does not establish hidden-task flips, equal variance or a population noise bound.",
         "Status, score, date and identical-file assertion are maintainer-reported; no live Kaggle query or evaluation executed."
       ]
+    },
+    {
+      "candidate": "p5",
+      "receipt": "e20a608df0a5cd3b95c269890359d3be7b4ab423719bb0888ba1768b18374f05",
+      "zip_sha256": "6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219",
+      "manifest_sha256": "7fc5008c8e3faae3ed9e9e5cc231336b6bfc9d680303dcdfc64f1b3b57eff01d",
+      "zip_size": 6501,
+      "budget_values": {"timeout_seconds": 180, "max_tool_calls": 28, "max_time_minutes": 6, "max_turns": 80},
+      "notebook_name": "p5_selfcontained",
+      "notebook_version": null,
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SCORING",
+      "public_score": "PENDING",
+      "error_text": null,
+      "notes": [
+        "Maintainer reports submission on 2026-10-29 local (Europe/Berlin); notebook version and approximate local time were left as <n> and <time>, so no version or UTC timestamp is inferred. Submission ID not supplied.",
+        "Maintainer reports self-contained package preparation status CREATED and submission status SCORING; no final score or success is claimed.",
+        "Full receipt, manifest and ZIP identities read from the existing reconciled CANDIDATE_PINS.p5 entry in submission_only/first_submission.ipynb; receipt prefix e20a608d and ZIP prefix 6db4109a match the maintainer report.",
+        "Submission status is maintainer-reported, not independently queried live Kaggle state. No test, compiler, reconciliation or submission execution performed for this record update."
+      ]
     }
   ]
 }
