@@ -84,7 +84,7 @@ P3 attempt2/P4 columns are transcribed from the reported exhaustive flips.
 
 ## Tool argument rejection evidence and P5 preregistration
 
-Status: maintainer-reported, not recomputed here. Eight comparable dev-16v runs
+Historical baseline: maintainer-reported, not recomputed here. Eight comparable dev-16v runs
 remain the cohort; P1b merged attempts count once. Rejected calls were previously
 ordinary tool calls; TOOL_ARGUMENT_REJECTED now identifies the observation text
 "mandatory input parameters are not present" separately from outcome failures.
@@ -98,7 +98,7 @@ ordinary tool calls; TOOL_ARGUMENT_REJECTED now identifies the observation text
 
 P4 rich_3934 reportedly had 27 consecutive rejections before timeout. P3 attempt1
 rich_4079 had 9/9 rejected calls and no patch. The exact identical-resend counts,
-all-tool rates, other runs and patch-production shares await maintainer analysis.
+other-run all-tool rates and per-task breakdowns await maintainer analysis. P3 all-tool counts and patch-production baselines are now reported in the P5 attempt1 section below.
 The trailing-backtick parser explanation and run_command 0/1135 are attributed
 to the maintainer's Syurolh forum report (October 22); no causal experiment ran here.
 
@@ -113,3 +113,33 @@ projection must be <=11 hours. Report all per-task flips against both P3 runs
 and between P5 runs. Missing evidence blocks adoption; lower patch production
 fails even with zero edit/write attempts. Retain P3 until every gate passes and
 subsequent submission qualification succeeds. See local_eval/README.md for commands.
+
+## P5 dev-16v attempt1 — completed, attempt2 pending
+
+Maintainer-reported; no traces, timing projections or evaluation recomputed here.
+Retained at `C:\Work\Gemma4Localtest\local_eval_p5_dev16v_attempt1`.
+The historical eight-run cohort above is preserved; this P5 run is additional.
+
+| Metric | P3 attempt1 | P3 attempt2 | P5 attempt1 |
+|---|---:|---:|---:|
+| Solved / 16 | 8 | 6 | 9 |
+| Tool-argument rejections / all tool calls | 25/357 | 13/386 | 0/367 |
+| Nonempty-patch tasks / 16 | 11 | 7 | 11 |
+
+P5 completed in 4448 s, with mean task time approximately 247 s and bootstrap
+upper95 time-fit approximately 8.6 h. Four session timeouts, zero context errors.
+No edit_file/write_file calls: edit/write rejection rate is N/A, not zero percent.
+The maintainer observed 35 run_command heredoc edits in traces; these are not
+asserted to be completion-marker counts. Per-task edit counts and timeout task
+identities were not supplied.
+
+| Baseline | P5 gains | P5 losses |
+|---|---|---|
+| P3 attempt1 | fastapi_15589 | None |
+| P3 attempt2 | fastapi_15589, fastapi_5624, fastapi_11194 | None |
+
+Run1 gates (a), (b), (c), and time are met as reported: 0/367 rejections;
+11/16 nonempty patches versus P3's mean 9/16; 35 observed source edits;
+approximately 8.6 h <=11 h. The two-run mean gate remains PENDING_ATTEMPT2.
+Retain P3 pending attempt2 and all adoption requirements. This is development
+evidence, not submission qualification or a statistical superiority claim.
