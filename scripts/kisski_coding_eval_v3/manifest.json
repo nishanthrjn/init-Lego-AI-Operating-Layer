@@ -1,0 +1,41 @@
+{
+  "adr_021_digest": "83ee329a5520de81b575e8be0371b00d811921922d757d62abfa9163a4a341e7",
+  "instructions": {
+    "coding": "8bd1dbba6b3f012accf0e325f79da73482601e0e36aabf40ff862cd888d75a9e",
+    "reviewer": "d12f7ae2931040b7a02112cfb235575720fe6c5948d7d0e97249c4d7f53f859b"
+  },
+  "sources": {
+    "experiments/kaggle/forgeai_model_quality_1/contract-baseline.json": "dc95e8c6a82157d19f515e258b3f178cfb92744ec3e6d828f0d46cca29286c69",
+    "experiments/kaggle/forgeai_model_quality_1/contracts.py": "3d5c9911fa92b948ca9a75b87166dd38b7124e74440f815df74b01d546d8c6ea",
+    "experiments/kaggle/forgeai_model_quality_1/safety.py": "4afed22209da55b934145d57768a129f7de1c68ea6452e68f0cb2c15adc7bcb2",
+    "packages/legoai-engineering/src/legoai_engineering/_json_document.py": "bb44631226614415c8c8754f05d77592afb85fd74a486d862b7493c7b81fb102",
+    "packages/legoai-engineering/src/legoai_engineering/coding/definition.py": "f47db2c406cdfc7782348df312bb0e5962886fb1515b1e78bc36ee9cf4bfcf64",
+    "packages/legoai-engineering/src/legoai_engineering/reviewer/definition.py": "46265ca7281c0414488d87f0ac536deab4664460c9f8b4014cabea6f32672876",
+    "planning/FORGEAI-KISSKI-CODING-MODEL-EVALUATION-2.md": "eecc1b815d4a578cbbd63f2b8cbb0d034110f4a32cb1cdcd20af7104fc1276c2",
+    "planning/FORGEAI-KISSKI-CODING-MODEL-EVALUATION-3.md": "6833be3fa41135595771f04841545c9d6f7f71fb978156dbef28ebe053f81f67",
+    "scripts/kisski_coding_eval/__init__.py": "2bc2b8c630d6988f7867d7a5680fb5fd08c585584c3ac697e34ed8aec45b9027",
+    "scripts/kisski_coding_eval/frozen.py": "fa7fd31ad2af76ce57b85274bb7a67fb0f9e011a8a94068b522ca2bb7c247922",
+    "scripts/kisski_coding_eval/pack.py": "082ef4a5d97f4316a427a7e2bbe32ac78201b054f4b85287ce78fc4b6a262cf2",
+    "scripts/kisski_coding_eval/runner.py": "a56b64d170ddf0772a8d8ae6e47af14d8b99c99c5bdf78040f6fbd313e113937",
+    "scripts/kisski_coding_eval/scoring.py": "325d6349562908202681d33168ccf195132305990e74fa085a485177d7a235af",
+    "scripts/kisski_coding_eval_v2/__init__.py": "89728fe56c4fdd092b648b078d18aae591f18a85b737ab0e3c244153476810c6",
+    "scripts/kisski_coding_eval_v2/frozen.py": "be2fb56859068872b68756654899050846b2aa5716d14b596c2f6803429fc186",
+    "scripts/kisski_coding_eval_v2/invocation.py": "0110528641f80273209d55ff4dd34c9d5e015200751f7a736b3ac09f7a9da400",
+    "scripts/kisski_coding_eval_v2/pack.py": "41cf371dfe5882e485b972b6e6986a4c355cabf32d888e6f3f193a0fb4623c70",
+    "scripts/kisski_coding_eval_v2/runner.py": "c9a0334918f5f840ebba1de14b5921eb5bc9d6f4d1b9eca011b1f26f3dcfda43",
+    "scripts/kisski_coding_eval_v2/scoring.py": "76508861b5d3a07bdecf89489956fc97133e38ac2b2294b811b20d2237ccb39b",
+    "scripts/kisski_coding_eval_v3/__init__.py": "da3f533db7976daad06ef4bbb9c25bfddac36ae65e4be19c9ad24916bf8492fb",
+    "scripts/kisski_coding_eval_v3/frozen.py": "da3a6d8ebc75799cf669207582932850e0834caa3ecfe627d71e7bc830177991",
+    "scripts/kisski_coding_eval_v3/invocation.py": "dd3ac7fd2feacccb1bb8a40c8154e700ff10618ce21b1cb0120bcc119e5d7eee",
+    "scripts/kisski_coding_eval_v3/pack.py": "b551917173b82cd7ae0d8eee83bf4675726b72808244fc44c0ccf7e335cd9f4f",
+    "scripts/kisski_coding_eval_v3/runner.py": "5581865a27cd4b01d7e4213a2a740abf71d03a98cfa1448b6a9f25a2a2e72373",
+    "scripts/kisski_coding_eval_v3/scoring.py": "ac735ddef7ea734ad799378581e4963233bf1996b82c39dc7639cbc42fe4f1ba",
+    "scripts/kisski_compatibility_probe.py": "541f2524e713b097c1083b3a7af104fe8d544946870097ce192f4f91eb3b6db4",
+    "scripts/kisski_dev_screen/__init__.py": "9926baf2e79c8823510787efaeedf9c312a2a8804e875fec4671508b64f46bf6",
+    "scripts/kisski_dev_screen/diagnostics.py": "d2ab3360eb373bdfd19cc2b3994a62d9bcc5844617739a1223aa9d04a4a723b0",
+    "scripts/kisski_dev_screen/invocation.py": "de4a50435554ae82cd75de7b96e34000a27b6641a42da82830a3c792f8a4ef5a",
+    "scripts/kisski_dev_screen/runner.py": "2bdcf601ec0063b7adfe6ed2cf296777e43aae0af7f16a43be115f606231e093",
+    "scripts/kisski_saia_qualification.py": "9ab1268487efad59af7cae504130133837f4eec25ae3ebf297a781c806c18f74"
+  },
+  "v2_manifest_digest": "a5038d5a7a357c06f9ae0c3487b71a0663ffc0430dae06b9eeab56825920a1e9"
+}
