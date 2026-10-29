@@ -23,7 +23,9 @@ Known consequence: v1's contract-baseline.json pins reviewer/definition.py;
 v2 pins both that source and the instruction digest. V1, v2 and the dev screen
 fail verification at the changed HEAD by design. Do not refresh their pins.
 Historical v2 reproduction commit: `3aa7ee0780092266a63c7a16462523e694724624`
-(maintainer supplied). Historical v1 reproduction commit: awaiting maintainer.
+(maintainer supplied). The maintainer also confirms this same commit reproduces
+v1 and the dev screen: their files are unchanged from SCREEN-2A through this
+commit, which only added v2 files.
 The v2 verdict remains final; see the separate v2 results document.
 
 ### R1' — Current production instructions
@@ -128,8 +130,9 @@ single-sentence insertion, all remaining UTF-8 bytes and behavior_version 1.1.0.
 The validator runs the unchanged Engineering reviewer suite as well.
 
 The separate v2 results record contains the maintainer's per-task outcomes.
-Historical v1/dev-screen reproduction hash is still pending: the follow-up
-contained `<paste full hash>`. Resolve this metadata before freezing this document.
+The maintainer confirmed `3aa7ee0780092266a63c7a16462523e694724624` as the
+historical reproduction commit for v1, v2 and the dev screen. Their historical
+pins remain unchanged.
 
 ## Maintainer commands
 

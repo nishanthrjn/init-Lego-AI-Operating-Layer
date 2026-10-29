@@ -7,8 +7,10 @@ not alter the pinned v2 preregistration, scoring or manifest.
 - V2 manifest: `a5038d5a7a357c06f9ae0c3487b71a0663ffc0430dae06b9eeab56825920a1e9`.
 - Pack: `92c43f68…a7bf` (abbreviated as supplied; full digest not supplied).
 - Historical v2 commit: `3aa7ee0780092266a63c7a16462523e694724624`.
-- Historical v1/dev-screen reproduction commit: pending explicit full hash;
-  the maintainer's follow-up contains the literal placeholder `<paste full hash>`.
+- Historical v1/dev-screen reproduction commit:
+  `3aa7ee0780092266a63c7a16462523e694724624` (maintainer confirmed).
+  V1 and dev-screen files are unchanged from SCREEN-2A through that commit;
+  the commit only added v2 files. It reproduces all three historical evaluations.
 - Phase A custody: `kisski-eval-v2-fv91olhs`.
 - Phase B custody: `kisski-eval-v2-_h2a2pi8`.
 - Reported run total: 36 chats, all completed, HTTP 200, no rate-limit stops.
