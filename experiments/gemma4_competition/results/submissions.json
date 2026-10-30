@@ -1,4 +1,13 @@
 {
+  "p6_local_selection": {
+    "candidate": "p6", "status": "NOT_SUBMITTED",
+    "decision": "REJECTED", "retained_submission_candidate": "p5",
+    "local_gate": "FAILED", "dev16v_attempt1_resolved": 7,
+    "dev16v_attempt1_nonempty_patches": 7, "attempt2_status": "CANCELLED",
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+    "evidence_pointer": "/p6_adoption_decision",
+    "notes": "Maintainer-reported negative ACI experiment. This is a local selection decision, not a Kaggle submission or leaderboard result; existing submission statuses are unchanged."
+  },
   "schema_version": 1,
   "record_schema": {
     "candidate": "string",

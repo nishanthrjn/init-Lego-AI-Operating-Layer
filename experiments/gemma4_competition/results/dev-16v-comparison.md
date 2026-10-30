@@ -186,3 +186,28 @@ byte-identical to the evaluated experimental package. Full identities reference
 previously supplied hashes; the official manifest hash was not supplied.
 No submission executed or new public score claimed. Historical eight-run
 frequencies remain the pre-P5 cohort, not a recomputed ten-run table.
+
+## P6 dev-16v attempt1: negative ACI result
+
+Maintainer-reported **COMPLETED**, 4840 s including reported startup 377 s;
+retained externally (exact path not supplied). Solved **7/16**, versus P5 **9/16
+in both runs**. Nonempty patches: **7**. No edit_file/write_file calls.
+
+| Failure category | Tasks |
+|---|---|
+| time_budget, NO_PATCH (5) | fastapi_5624, rich_3934, fastapi_14419, rich_4076, fastapi_15589 |
+| Tool-cap, empty submission (4) | fastapi_15800, rich_4075, rich_3471, rich_4079 |
+
+The maintainer attributes the regression to creating forge_edit.py anew for
+every task with a 63-line heredoc, consuming budget and context. The model
+repeatedly used the helper before creating it, sometimes noticing only at
+300-360 s: "I forgot to create the forge_edit.py helper". This is a reported
+trace interpretation, not a measured causal decomposition or evidence that
+ACI guardrails generally fail.
+
+**Gate FAILED; P6 REJECTED; P5 retained. Attempt2 CANCELLED.** Seven solved is
+below the mean target of 10; a second run would need 13/16 to reach mean 10.
+Independently, attempt1's 7 patches fail the required >=11 in EACH run, so even
+that second result could not rescue adoption. No two-run P6 mean is reported.
+Unreported rejection rates, replacement/syntax counts and bootstrap upper95
+remain unknown. No analysis or workload was executed for this record update.

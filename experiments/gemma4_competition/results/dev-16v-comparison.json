@@ -1,4 +1,31 @@
 {
+  "p6_attempt1": {
+    "evidence_basis": "MAINTAINER_REPORTED; no independent analysis executed",
+    "candidate": "p6", "subset": "dev-16v", "attempt": 1,
+    "state": "COMPLETED", "verifiable": 16, "resolved": 7,
+    "retained_externally": true, "retained_path": null,
+    "elapsed_seconds": 4840, "startup_seconds": 377,
+    "nonempty_patch_tasks": 7,
+    "time_budget_no_patch_tasks": ["fastapi_5624", "rich_3934", "fastapi_14419", "rich_4076", "fastapi_15589"],
+    "tool_cap_empty_submission_tasks": ["fastapi_15800", "rich_4075", "rich_3471", "rich_4079"],
+    "edit_file_calls": 0, "write_file_calls": 0,
+    "all_tool_rejection_rate": null,
+    "failed_replacements": null, "syntax_error_observations": null,
+    "bootstrap_upper95_hours": null,
+    "p5_resolved_reference": [9, 9],
+    "reported_failure_mechanism": "Per-task recreation of forge_edit.py via a 63-line heredoc consumed budget and context. Model repeatedly invoked the helper before creating it, sometimes noticing at 300-360 seconds.",
+    "trace_quote_maintainer_reported": "I forgot to create the forge_edit.py helper",
+    "limitation": "Negative result for this prompt-delivered helper design; causality is maintainer interpretation of retained traces, not an isolated overhead measurement or a general result against ACI. Unreported metrics remain unknown."
+  },
+  "p6_adoption_decision": {
+    "status": "FAILED", "decision": "REJECT_P6_RETAIN_P5",
+    "evidence_basis": "MAINTAINER_REPORTED",
+    "attempt2_status": "CANCELLED",
+    "solved_attempt1": 7, "two_run_mean_solved_required": 10,
+    "attempt2_solved_needed_for_mean": 13,
+    "patches_attempt1": 7, "patches_required_each_run": 11,
+    "reason": "Attempt1 patches 7 < 11 irreversibly fail the per-run gate. Solved 7 is below the 10-task mean target; attempt2 would need 13/16 to reach that mean, but cannot repair the patch-gate failure. No second run or two-run mean is claimed."
+  },
   "p5_heredoc_count_method": {
     "id": "QUOTED_EOF_SOURCE_EDIT_HEURISTIC_V1",
     "basis": "MAINTAINER_COMPUTED; ANALYZER_CONFIRMATION_PENDING",
