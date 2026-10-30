@@ -89,8 +89,8 @@ def structure() -> None:
     if not re.search(r"^#{1,6}\s+.*Follow-up slices", text, re.MULTILINE):
         raise ValueError("Missing follow-up slices heading")
     adr = (ROOT / ADR).read_text(encoding="utf-8")
-    if not re.search(r"^Status: Proposed\s*$", adr, re.MULTILINE):
-        raise ValueError("ADR-029 must remain Proposed")
+    if not re.search(r"^Status: (?:Proposed\s*|Accepted(?: — [^\r\n]*)?)$", adr, re.MULTILINE):
+        raise ValueError("ADR-029 must be Proposed or Accepted")
     if "ADR-014 §14.2" not in adr:
         raise ValueError("ADR-029 must reference ADR-014 §14.2")
 
