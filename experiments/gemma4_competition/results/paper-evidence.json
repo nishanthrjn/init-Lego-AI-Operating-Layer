@@ -50,6 +50,24 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p5_public_result_frozen_31b",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "sha256": "1f602d3ac228db0000ba3b62a82b0659679fcd119dc9e57e24bbcade04e24ce0", "pointer": "/runs/6",
+      "basis": "MAINTAINER_REPORTED; no live Kaggle query or independent analysis",
+      "values": {
+        "notebook_name": "p5_selfcontained", "notebook_version": "2",
+        "scriptVersionId": 363609276,
+        "zip_sha256": "6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219",
+        "status": "SUCCEEDED", "public_score": 0.13,
+        "public_solved_approx_range": [7, 8], "public_tasks_reported": 58,
+        "reported_noise_plus_minus_tasks_range": [2, 3],
+        "local_dev16v_resolved": [9, 9], "local_tasks_per_run": 16,
+        "decision": "FREEZE_P5_AS_31B_ENTRY"
+      },
+      "interpretation": "Local dev-16v is verifiable-only; the public set includes unsound/environment-broken tasks per maintainer report. Local 9/16 twice versus public 0.13 describes different cohorts, not a controlled performance regression.",
+      "limitation": "Public solved counts are approximate; +/-2-3 tasks is maintainer-reported informal noise, not a measured confidence interval. No public per-task results or exact UTC submission timestamp supplied."
+    },
+    {
       "id": "s2_dev16v_patch_production_without_correctness",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "sha256": "6962ee69d75954ccafd51f368ed010f464d050e7b064ce97c325411a31207396", "pointer": "/s2_dev16v_attempt1",
