@@ -135,7 +135,7 @@ and the later human review/import/merge decision. Historical counts are unchange
 
 ### Role-specific model bindings design proposal — 2026-10-30
 
-[ADR-029](ADR-029.md) is **Proposed** under
+[ADR-029](ADR-029.md) is **Accepted** under
 LEGOAI-ROLE-MODEL-BINDINGS-DESIGN-REVIEW-1. The
 [design review](../planning/LEGOAI-ROLE-MODEL-BINDINGS-DESIGN-REVIEW-1.md)
 recommends Option C: one governed host per ForgeAI role first (Option A),
