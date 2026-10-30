@@ -1,4 +1,52 @@
 {
+  "s1_smoke5": {
+    "evidence_basis": "MAINTAINER_REPORTED; no independent trace or timing recomputation",
+    "candidate": "s1",
+    "subset": "smoke-5",
+    "state": "COMPLETED",
+    "retained_externally": true,
+    "retained_path": null,
+    "model_variant": "gemma-4-e4b-it-qat-w4a16-ct",
+    "serving_status": "SUCCEEDED_MAINTAINER_REPORTED",
+    "vllm_extra_args": [],
+    "elapsed_seconds": 1113,
+    "startup_seconds": 333,
+    "mean_task_seconds_approx": 136,
+    "task_seconds_range": [21, 271],
+    "projected_116_task_hours_approx": 4.5,
+    "projection_basis": "Maintainer-reported mean-time projection; not a bootstrap upper95 bound",
+    "bootstrap_upper95_hours": null,
+    "controls_sha256": "05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033",
+    "verifiable_tasks": 1,
+    "verifiable_resolved": 0,
+    "verifiable_outcomes": {
+      "fastapi_14492": {
+        "outcome": "FAILED",
+        "failure": "Edited LICENSE instead of the docs_src tutorial file"
+      }
+    },
+    "other_task_controls": "Other tasks reported unsound or environment-broken; per-task control classifications not supplied",
+    "empty_patch_after_claiming_fix_tasks": ["rich_3130", "fastapi_12942"],
+    "write_file_observations": {
+      "prompt_violation": true,
+      "argument_loss_rejections": 2
+    },
+    "edit_file_observations": {
+      "prompt_violation": true,
+      "successful_calls": 3
+    },
+    "failed_heredoc_edits": {
+      "httpx_3672": {
+        "count": 7,
+        "reported_causes": ["bytes/str mismatch", "non-unique match"]
+      }
+    },
+    "all_tool_attempted": null,
+    "all_tool_rejection_rate": null,
+    "submission_gate": "PENDING_DEV16V; smoke-5 does not qualify S1",
+    "next_step": "S1 dev-16v",
+    "limitations": "External artifacts, package/wheel hashes and per-task traces were not supplied or inspected for this record. Serving success applies to the maintainer's reported run; exact environment identity is not independently verified. Do not treat excluded tasks as ordinary solved/failed evidence, infer zero harness errors, or treat the mean-time projection as passing the 10.5-hour bootstrap gate."
+  },
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
