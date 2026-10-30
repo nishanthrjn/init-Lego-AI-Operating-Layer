@@ -54,7 +54,11 @@ from scripts.forgeai_kisski_bounded_live_pilot import projection
 def shared_fields(actual: Any, pilot: Any) -> None:
     """Compare shared leaves recursively: attempt schemas intentionally differ."""
     if isinstance(actual, dict) and isinstance(pilot, dict):
-        for key in actual.keys() & pilot.keys() - {"status", "no_change"}:
+        for key in actual.keys() & pilot.keys() - {
+            "status",
+            "no_change",
+            "test_strength",
+        }:
             shared_fields(actual[key], pilot[key])
     elif isinstance(actual, list) and isinstance(pilot, list):
         assert len(actual) == len(pilot)
@@ -105,6 +109,7 @@ def test_success_complete_schema(tmp_path: Path) -> None:
                 "model_effect": "COMPLETED",
                 "proposal_valid": True,
                 "no_change": False,
+                "test_strength": "NOT_RUN",
                 "mutation_approval": True,
                 "changed_paths": [
                     {"path": "src/inventory/stock.py", "kind": "UPDATE"},

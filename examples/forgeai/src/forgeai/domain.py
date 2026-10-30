@@ -162,6 +162,7 @@ class TaskFailure(Enum):
     CHECK_DENIED = "check execution was not authorized"
     CHECK_ERROR = "a check could not complete (infrastructure)"
     CHECKS_FAILED = "a configured check reported findings"
+    TESTS_NOT_DISCRIMINATING = "the changed tests pass against the original code"
     FINAL_STATE_UNAVAILABLE = "final Git state could not be observed"
     HEAD_CHANGED = "HEAD changed during the run"
     UNEXPECTED_CHANGES = "working tree differs from the applied changes"
@@ -205,7 +206,15 @@ class ReworkTrigger(Enum):
     """What consumed the run's single rework budget (at most one per run)."""
 
     CHECK_FINDINGS = "deterministic checks reported code findings"
+    TEST_STRENGTH = "the changed tests pass against the original code"
     REVIEW_CHANGES_REQUIRED = "the independent review required changes"
+
+
+class TestStrength(Enum):
+    NOT_RUN = "NOT_RUN"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+    DISCRIMINATING = "DISCRIMINATING"
+    NOT_DISCRIMINATING = "NOT_DISCRIMINATING"
 
 
 class RunStage(Enum):
@@ -359,10 +368,14 @@ class AttemptEvidence:
     review_materials: tuple[tuple[str, RepositoryPath], ...] = ()
     review: ReviewResult | None = field(default=None, repr=False)
     no_change: bool = False
+    test_strength: TestStrength = TestStrength.NOT_RUN
+    strength_check: CheckRecord | None = None
 
     def __post_init__(self) -> None:
         if type(self.number) is not int or not 1 <= self.number <= MAX_ATTEMPTS:
             raise ValueError("attempt number must be 1 or 2")
+        if type(self.test_strength) is not TestStrength:
+            raise TypeError("test strength requires TestStrength")
         if self.coding_diagnostic is not None and (
             type(self.coding_diagnostic) is not OutputDiagnostic
             or self.coding_status is not CodingStatus.OUTPUT_INVALID
@@ -488,6 +501,14 @@ class TaskEvidence:
             and self.attempts[0].review is None
         ):
             raise ValueError("check rework requires attempt-1 code findings")
+        if trigger is ReworkTrigger.TEST_STRENGTH and not (
+            self.attempts
+            and self.attempts[0].test_strength is TestStrength.NOT_DISCRIMINATING
+            and self.attempts[0].review is None
+        ):
+            raise ValueError(
+                "test-strength rework requires a non-discriminating attempt"
+            )
 
     @property
     def latest(self) -> AttemptEvidence:
@@ -519,6 +540,16 @@ class TaskEvidence:
             and bool(self.planned_checks)
             and len(item.checks) == len(self.planned_checks)
             and all(record.passed for record in item.checks)
+            and item.test_strength is not TestStrength.NOT_DISCRIMINATING
+            and (
+                item.strength_check is None
+                or (
+                    item.strength_check.result is not None
+                    and item.strength_check.result.outcome
+                    in {CheckOutcome.FAILED, CheckOutcome.INTERRUPTED}
+                    and item.test_strength is TestStrength.DISCRIMINATING
+                )
+            )
             and item.final.head == self.start.head
             and {entry.path for entry in item.final.entries}
             == set(self.changed_through(attempt))
@@ -687,6 +718,7 @@ class TaskResult:
             or (
                 evidence.latest.review_decision is not ReviewDecision.CHANGES_REQUIRED
                 and not evidence.findings_reworkable_for(1)
+                and evidence.latest.test_strength is not TestStrength.NOT_DISCRIMINATING
             )
         ):
             raise ValueError("rework input failure follows attempt 1 only")

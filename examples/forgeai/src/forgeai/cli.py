@@ -463,7 +463,9 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
         )
         decision = first.review_decision
         lines.append(
-            "attempts: 2 (one rework after attempt 1 checks reported findings)"
+            "attempts: 2 (one rework after non-discriminating tests)"
+            if evidence.rework_trigger is ReworkTrigger.TEST_STRENGTH
+            else "attempts: 2 (one rework after attempt 1 checks reported findings)"
             if evidence.rework_trigger is ReworkTrigger.CHECK_FINDINGS
             else "attempts: 2 (one rework after review #1 required changes)"
         )
@@ -628,6 +630,7 @@ def _common(parser: argparse.ArgumentParser, binding: str) -> None:
         ),
     )
     parser.add_argument("--constraint", action="append", default=[])
+    parser.add_argument("--test-strength", action="store_true", default=False)
     parser.add_argument(
         "--binding", choices=("replay", "ollama", BINDING), default=binding
     )
@@ -759,6 +762,7 @@ def main(
             docker_executable=args.docker.resolve(),
             now=datetime.now(UTC),
             check_profile=CheckProfile(args.check_profile),
+            test_strength=args.test_strength,
             uv_executable=Path(uv_executable) if uv_executable else None,
         )
     except (TypeError, ValueError) as error:
@@ -795,6 +799,7 @@ def main(
                 docker_executable=config.docker_executable,
                 now=datetime.now(UTC),
                 check_profile=config.check_profile,
+                test_strength=config.test_strength,
                 uv_executable=config.uv_executable,
             )
             # Retain the exact operator authority and expiry across the rebuild.

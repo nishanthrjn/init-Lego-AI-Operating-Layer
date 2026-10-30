@@ -68,6 +68,7 @@ from legoai_engineering.git.local import (
     LocalGitExecutable,
     LocalGitRepository,
 )
+from legoai_engineering.repository.errors import WorkspaceError, WorkspaceFailure
 from legoai_engineering.repository.local import (
     LocalRepositoryWorkspace,
     LocalWorkspaceRoot,
@@ -82,7 +83,13 @@ from legoai_engineering.repository.mutation_authorized import (
     AuthorizedRepositoryMutation,
 )
 from legoai_engineering.repository.mutation_local import LocalRepositoryMutation
-from legoai_engineering.repository.workspace import RepositoryPath, WorkspacePolicy
+from legoai_engineering.repository.ports import RepositoryWorkspacePort
+from legoai_engineering.repository.values import RepositoryText
+from legoai_engineering.repository.workspace import (
+    RepositoryPath,
+    WorkspaceEntry,
+    WorkspacePolicy,
+)
 from legoai_engineering.reviewer.api import IndependentReviewer
 from legoai_engineering.sandbox.docker import (
     DockerSandbox,
@@ -159,8 +166,11 @@ class ForgeAIConfig:
     remote_runtime: RemoteModelRuntime | None = field(default=None, repr=False)
     remote_profile: RemoteProfile | None = field(default=None, repr=False)
     remote_task: TaskRequest | None = field(default=None, repr=False)
+    test_strength: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.test_strength) is not bool:
+            raise TypeError("test strength requires bool")
         for remote_value, remote_type in (
             (self.remote_profile, RemoteProfile),
             (self.remote_runtime, RemoteModelRuntime),
@@ -347,6 +357,32 @@ async def discover_guidance(
         return GuidanceRefusal.UNEXPECTED_ERROR
 
 
+@dataclass(frozen=True, slots=True)
+class OriginalSourceOverlay:
+    """Read-only public workspace adapter; never mutates the real repository."""
+
+    workspace: RepositoryWorkspacePort
+    originals: Mapping[RepositoryPath, str | None]
+
+    def list_entries(
+        self, directory: RepositoryPath | None
+    ) -> tuple[WorkspaceEntry, ...]:
+        return tuple(
+            entry
+            for entry in self.workspace.list_entries(directory)
+            if entry.path not in self.originals
+            or self.originals[entry.path] is not None
+        )
+
+    def read_text(self, path: RepositoryPath) -> RepositoryText:
+        if path not in self.originals:
+            return self.workspace.read_text(path)
+        text = self.originals[path]
+        if text is None:
+            raise WorkspaceError(WorkspaceFailure.EXCLUDED)
+        return RepositoryText(path.value, text)
+
+
 def prepare_run(
     config: ForgeAIConfig,
     guard: WorkspaceGuard,
@@ -434,16 +470,19 @@ def prepare_run(
         host.authorization,
         clock,
     )
+    active_sandbox = (
+        sandbox
+        if sandbox is not None
+        else DockerSandbox(
+            DockerSandboxConfig(config.docker_executable, config.sandbox_image),
+            config.sandbox_policy,
+        )
+    )
     checks = AuthorizedEngineeringChecks(
         reference,
         SandboxedEngineeringChecks(
             workspace,
-            sandbox
-            if sandbox is not None
-            else DockerSandbox(
-                DockerSandboxConfig(config.docker_executable, config.sandbox_image),
-                config.sandbox_policy,
-            ),
+            active_sandbox,
             config.check_inputs,
             config.check_policy,
         ),
@@ -453,6 +492,7 @@ def prepare_run(
     )
 
     def project_checks() -> EngineeringCheckPort:
+        nonlocal active_sandbox
         # Runs under WorkspaceGuard, after a clean committed Git start.
         if config.uv_executable is None:
             raise PreparationError(PreparationFailure.PREPARATION_TOOL_FAILED)
@@ -470,6 +510,7 @@ def prepare_run(
             config.sandbox_policy,
         )
         prepared_sandbox.verify_ready()
+        active_sandbox = prepared_sandbox
         preflight("dependency environment: prepared " + environment.image[:23])
         preflight("checks: Ruff, mypy, pytest; check network: disabled")
         return AuthorizedEngineeringChecks(
@@ -478,6 +519,22 @@ def prepare_run(
                 workspace, prepared_sandbox, config.check_inputs, config.check_policy
             ),
             host.security_context(reference, ENGINEERING_CHECK_ACTION, scope),
+            host.authorization,
+            clock,
+        )
+
+    def strength_checker(
+        originals: dict[RepositoryPath, str | None],
+    ) -> EngineeringCheckPort:
+        return AuthorizedEngineeringChecks(
+            reference,
+            SandboxedEngineeringChecks(
+                OriginalSourceOverlay(workspace, dict(originals)),
+                active_sandbox,
+                config.check_inputs,
+                config.check_policy,
+            ),
+            checks.security_context,
             host.authorization,
             clock,
         )
@@ -530,6 +587,7 @@ def prepare_run(
         project_checks if config.check_profile is CheckProfile.PROJECT else None,
         admit_model if remote else None,
         confirm_context,
+        strength_checker if config.test_strength else None,
     )
     return PreparedRun(
         worker,
@@ -670,6 +728,7 @@ def local_profile(
     context_paths: tuple[RepositoryPath, ...] = (),
     check_profile: CheckProfile = CheckProfile.GENERIC,
     uv_executable: Path | None = None,
+    test_strength: bool = False,
 ) -> ForgeAIConfig:
     """The ForgeAI-1 local operator profile for a src/tests Python repository.
 
@@ -737,6 +796,7 @@ def local_profile(
         context_paths=context_paths,
         check_profile=check_profile,
         uv_executable=uv_executable,
+        test_strength=test_strength,
     )
 
 

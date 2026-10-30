@@ -729,6 +729,8 @@ exactly one of these, and only on attempt 1:
   pass reported code findings (`FAILED`). The reviewer never sees this
   candidate.
 - **Review #1 `CHANGES_REQUIRED`**, after all attempt-1 checks passed.
+- **Opt-in test strength `NOT_DISCRIMINATING`**, after configured checks
+  passed. The reviewer does not see this candidate; see the optional gate below.
 
 Every other outcome is terminal, with no rework:
 
@@ -737,7 +739,7 @@ Every other outcome is terminal, with no rework:
 - a review model failure (including an `UNKNOWN` effect) or denial;
 - invalid coding or review output;
 - review-input failure;
-- a check that couldn't complete (Docker or sandbox failure, timeout, tool
+- a configured check that couldn't complete (Docker or sandbox failure, timeout, tool
   error, interrupted collection, no tests);
 - any mutation, authorization or Git failure;
 - the operator declining a proposal.
@@ -783,14 +785,71 @@ decides: `ACCEPT` means success. `CHANGES_REQUIRED`,
 because the budget is spent. There is no second rework, whichever trigger
 used the first.
 
+## Optional test-strength gate
+
+`--test-strength` enables one additional authorized sandbox pytest execution
+after an attempt's configured checks pass, before model review. The overlay
+keeps candidate tests and restores source paths changed by the run to their
+exact run-start text; newly created source files are absent. The checkout is
+never rewritten for this check. Both `tests/` and `src/` paths must be present
+in the attempt's applied changes, and the plan must contain pytest; otherwise
+the gate is `NOT_APPLICABLE` and runs no extra execution.
+
+FAILED or INTERRUPTED overlay pytest is `DISCRIMINATING`; the candidate's own
+pytest already passed. PASSED or NO_TESTS is `NOT_DISCRIMINATING`. Attempt 1
+uses the single rework budget with `TEST_STRENGTH` and fixed bounded feedback;
+attempt 2 stops with `TESTS_NOT_DISCRIMINATING`. Neither candidate is reviewed
+when its tests are non-discriminating. Infrastructure errors or denied check
+authorization are terminal. Applied changes remain; there is no rollback.
+This differential observation is not proof of test completeness or correctness.
+
+Batch policy can opt in with `require_test_strength = true` (default false).
+The existing check grant, input policy, limits and active sandbox are reused,
+including the prepared sandbox under the project check profile.
+
+Every attempt in `forgeai-run-report/1` always includes `test_strength`, one of
+`NOT_RUN`, `NOT_APPLICABLE`, `DISCRIMINATING`, `NOT_DISCRIMINATING`. `NOT_RUN`
+means disabled or stopped before the gate produced an outcome. This additive
+field is an explicit compatibility exception, like `no_change`; the schema
+name stays unchanged. With the flag off, everything else remains unchanged:
+human output, prompts, exit codes, dispositions, existing evidence and sandbox
+execution counts. Reports differ only by this key per attempt.
+
+Implementation reuses these public APIs (paths relative to the repository root):
+
+- `packages/legoai-engineering/src/legoai_engineering/repository/ports.py::RepositoryWorkspacePort`
+  and `repository/workspace.py::RepositoryPath`, `WorkspaceEntry`: read-only overlay boundary.
+- `packages/legoai-engineering/src/legoai_engineering/repository/values.py::RepositoryText`
+  and `repository/errors.py::WorkspaceError`, `WorkspaceFailure`: exact text and absent-file refusal.
+- `packages/legoai-engineering/src/legoai_engineering/checks/sandboxed.py::SandboxedEngineeringChecks`
+  and `CheckInputPolicy`: existing bounded selection and sandbox staging.
+- `packages/legoai-engineering/src/legoai_engineering/checks/authorized.py::AuthorizedEngineeringChecks`
+  and `ENGINEERING_CHECK_ACTION`: current authorization under the existing grant.
+- `packages/legoai-engineering/src/legoai_engineering/checks/ports.py::EngineeringCheckPort`
+  and `checks/values.py::CheckRequest`, `CheckKind`, `CheckOutcome`, `CheckPolicy`:
+  injected check contract, fixed pytest request and closed result interpretation.
+- `packages/legoai-engineering/src/legoai_engineering/checks/errors.py::CheckError`,
+  `authorization.py::EffectAuthorizationError`: existing terminal error handling.
+- `examples/forgeai/src/forgeai/review.py::finding_lines`: existing bounded feedback excerpt.
+- `examples/forgeai/src/forgeai/domain.py::CheckRecord` and
+  `examples/forgeai/src/forgeai/composition.py::prepare_run`: evidence and adapter ownership.
+
+Short paths in this list refer to the same Engineering package directory.
+No Engineering implementation, grant kind or sandbox image was added.
+
 ## Exact ceilings
 
-| Path | Model calls | Applies | Check batches | Reviews |
-| --- | --- | --- | --- | --- |
-| No rework (review #1 `ACCEPT`) | 2: coding, review | 1 | 1 | 1 |
-| Check rework (attempt-1 findings, then review of attempt 2) | 3: coding, coding, review | 2 | 2 | 1 |
-| Review rework (`CHANGES_REQUIRED`, then review #2) | 4: coding, review, coding, review | 2 | 2 | 2 |
-| Maximum, per run | **4** | **2** | **2** | **2** |
+| Path | Model calls | Applies | Check batches | Reviews | Extra strength executions (opt-in) |
+| --- | --- | --- | --- | --- | --- |
+| No rework (review #1 `ACCEPT`) | 2: coding, review | 1 | 1 | 1 | at most 1 |
+| Check rework (attempt-1 findings, then review of attempt 2) | 3: coding, coding, review | 2 | 2 | 1 | at most 1 |
+| Test-strength rework | 3: coding, coding, review | 2 | 2 | 1 | at most 2 |
+| Review rework (`CHANGES_REQUIRED`, then review #2) | 4: coding, review, coding, review | 2 | 2 | 2 | at most 2 |
+| Maximum, per run | **4** | **2** | **2** | **2** | **2** |
+
+The configured plan has 1–8 checks per batch; total sandbox check executions
+are at most 16 with the flag off, or 18 with it on (the default three-check
+plan gives 6 or 8). Strength checks do not add a model call or a rework budget.
 
 Each apply also needs one explicit operator approval, so there are at most 2
 approvals.

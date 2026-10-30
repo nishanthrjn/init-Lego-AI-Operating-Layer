@@ -50,6 +50,7 @@ def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, objec
                 "model_effect": item.model_effect.name if item.model_effect else None,
                 "proposal_valid": item.proposal is not None,
                 "no_change": item.no_change,
+                "test_strength": item.test_strength.value,
                 "mutation_approval": item.approval,
                 "changed_paths": [
                     {"path": change.path.value, "kind": change.kind.name}

@@ -40,6 +40,7 @@ class ApprovalPolicy:
     require_review_accept: bool = True
     max_tasks: int = 20
     max_batch_minutes: int = 60
+    require_test_strength: bool = False
 
     def __post_init__(self) -> None:
         for value, maximum in (
@@ -52,6 +53,7 @@ class ApprovalPolicy:
                 raise ValueError("policy limit outside its closed range")
         if (
             type(self.allow_create) is not bool
+            or type(self.require_test_strength) is not bool
             or self.require_review_accept is not True
         ):
             raise ValueError("boolean create permission and mandatory review required")

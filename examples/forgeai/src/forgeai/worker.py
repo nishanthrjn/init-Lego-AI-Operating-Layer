@@ -34,7 +34,7 @@ from legoai_engineering.analyst.values import (
 from legoai_engineering.authorization import EffectAuthorizationError
 from legoai_engineering.checks.errors import CheckError
 from legoai_engineering.checks.ports import EngineeringCheckPort
-from legoai_engineering.checks.values import CheckOutcome, CheckRequest
+from legoai_engineering.checks.values import CheckKind, CheckOutcome, CheckRequest
 from legoai_engineering.coding.api import CodingAgent
 from legoai_engineering.coding.values import (
     CodingProposal,
@@ -75,6 +75,7 @@ from forgeai.domain import (
     TaskFailure,
     TaskRequest,
     TaskResult,
+    TestStrength,
     proposal_identity,
 )
 from forgeai.guard import WorkspaceGuard
@@ -99,6 +100,7 @@ from forgeai.review import (
     render_proposal,
     rework_constraints,
     rework_targets,
+    strength_rework_constraints,
 )
 
 
@@ -129,6 +131,9 @@ class RepositoryTaskWorker:
     confirm_context: Callable[[ContextPreflight], bool] | None = field(
         default=None, repr=False
     )
+    strength_checker: (
+        Callable[[dict[RepositoryPath, str | None]], EngineeringCheckPort] | None
+    ) = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if type(self.workspace) is not str or not self.workspace:
@@ -170,6 +175,8 @@ class RepositoryTaskWorker:
             raise TypeError("context confirmation must be a trusted callback")
         if self.admit_model is not None and not callable(self.admit_model):
             raise TypeError("model admission must be a trusted composition callback")
+        if self.strength_checker is not None and not callable(self.strength_checker):
+            raise TypeError("strength checker must be a trusted composition callback")
 
     async def run(self, task: TaskRequest, context: ExecutionContext) -> TaskResult:
         if type(task) is not TaskRequest:
@@ -279,6 +286,7 @@ class RepositoryTaskWorker:
                 return _rejected(task, TaskFailure.REPOSITORY_UNAVAILABLE, evidence)
         if self.admit_model is not None and not self.admit_model(task):
             return _rejected(task, TaskFailure.MODEL_DISCLOSURE_REFUSED, evidence)
+        originals: dict[RepositoryPath, str | None] = {}
         first = await worker._attempt(
             task,
             CodingRequest(
@@ -286,15 +294,20 @@ class RepositoryTaskWorker:
             ),
             context,
             evidence,
+            originals,
         )
         if isinstance(first, TaskResult):
             return first
         # Attempt 1 consumed the single rework budget (check findings or
         # review #1 CHANGES_REQUIRED): exactly one rework.
-        return await worker._rework(task, context, first)
+        return await worker._rework(task, context, first, originals)
 
     async def _rework(
-        self, task: TaskRequest, context: ExecutionContext, evidence: TaskEvidence
+        self,
+        task: TaskRequest,
+        context: ExecutionContext,
+        evidence: TaskEvidence,
+        originals: dict[RepositoryPath, str | None],
     ) -> TaskResult:
         trigger = evidence.rework_trigger
         assert trigger is not None
@@ -304,7 +317,11 @@ class RepositoryTaskWorker:
             # evidence reader, never reused. Feedback is text only: it can
             # never add a target or a context file.
             targets = rework_targets(task.targets, evidence.changed_paths)
-            if trigger is ReworkTrigger.CHECK_FINDINGS:
+            if trigger is ReworkTrigger.TEST_STRENGTH:
+                constraints = strength_rework_constraints(
+                    task.constraints, evidence.latest.strength_check
+                )
+            elif trigger is ReworkTrigger.CHECK_FINDINGS:
                 constraints = check_rework_constraints(
                     task.constraints, evidence.latest.checks
                 )
@@ -326,7 +343,7 @@ class RepositoryTaskWorker:
             return self._stop(task, TaskFailure.MODEL_FAILED, reworked)
         self.progress(
             RunStage.CHECK_REWORK_STARTED
-            if trigger is ReworkTrigger.CHECK_FINDINGS
+            if trigger in {ReworkTrigger.CHECK_FINDINGS, ReworkTrigger.TEST_STRENGTH}
             else RunStage.REWORK_STARTED,
             2,
         )
@@ -337,6 +354,7 @@ class RepositoryTaskWorker:
             ),
             context,
             evidence,
+            originals,
         )
         # Attempt 2 is terminal by construction: it never returns evidence.
         assert isinstance(second, TaskResult)
@@ -348,6 +366,7 @@ class RepositoryTaskWorker:
         request: CodingRequest,
         context: ExecutionContext,
         evidence: TaskEvidence,
+        originals: dict[RepositoryPath, str | None],
     ) -> TaskResult | TaskEvidence:
         """One attempt. Returns evidence (not a result) only when this is
         attempt 1 and it consumed the rework budget: its checks reported only
@@ -483,6 +502,10 @@ class RepositoryTaskWorker:
             file.target.path: file.current.text if file.current else None
             for file in coding.evidence.files
         }
+        if self.strength_checker is not None:
+            originals.update(
+                {path: text for path, text in current.items() if path not in originals}
+            )
         proposal = match_line_endings(coding.proposal, current)
         item = replace(item, proposal=proposal)
         evidence = _set(evidence, item)
@@ -597,10 +620,78 @@ class RepositoryTaskWorker:
                 return replace(evidence, rework_trigger=ReworkTrigger.CHECK_FINDINGS)
             return self._stop(task, TaskFailure.CHECKS_FAILED, evidence)
         # Independent review, only after every deterministic gate passed.
+        if self.strength_checker is not None:
+            strength = self._test_strength(task, evidence, originals)
+            if isinstance(strength, TaskResult):
+                return strength
+            evidence = strength
+            if evidence.latest.test_strength is TestStrength.NOT_DISCRIMINATING:
+                if number == 1:
+                    return replace(evidence, rework_trigger=ReworkTrigger.TEST_STRENGTH)
+                return self._stop(task, TaskFailure.TESTS_NOT_DISCRIMINATING, evidence)
         assert evidence.gates_passed
         return await self._review(
             task, context, proposal, agent.definition.agent_id, evidence
         )
+
+    def _test_strength(
+        self,
+        task: TaskRequest,
+        evidence: TaskEvidence,
+        originals: dict[RepositoryPath, str | None],
+    ) -> TaskResult | TaskEvidence:
+        item = evidence.latest
+        assert item.applied is not None and self.strength_checker is not None
+        paths = tuple(change.path for change in item.applied.applied)
+        tests = tuple(path for path in paths if path.value.startswith("tests/"))
+        if not (
+            tests
+            and any(path.value.startswith("src/") for path in paths)
+            and any(check.kind is CheckKind.PYTEST for check in self.check_plan)
+        ):
+            return _set(
+                evidence, replace(item, test_strength=TestStrength.NOT_APPLICABLE)
+            )
+        request = CheckRequest(CheckKind.PYTEST, tests)
+        # Restore all source paths touched by this run, including candidate 1.
+        sources = {
+            path: originals[path]
+            for path in evidence.changed_paths
+            if path.value.startswith("src/")
+        }
+        try:
+            result = self.strength_checker(sources).check(request)
+        except EffectAuthorizationError as error:
+            record = CheckRecord(request, None, error.reason)
+            return self._finish(
+                task,
+                TaskFailure.CHECK_DENIED,
+                _set(evidence, replace(item, strength_check=record)),
+            )
+        except CheckError as error:
+            record = CheckRecord(request, None, error.reason)
+            return self._finish(
+                task,
+                TaskFailure.CHECK_ERROR,
+                _set(evidence, replace(item, strength_check=record)),
+            )
+        except WorkspaceError:
+            record = CheckRecord(request, None, workspace_error=True)
+            return self._finish(
+                task,
+                TaskFailure.CHECK_ERROR,
+                _set(evidence, replace(item, strength_check=record)),
+            )
+        record = CheckRecord(request, result)
+        item = replace(item, strength_check=record)
+        if result.outcome is CheckOutcome.ERROR:
+            return self._finish(task, TaskFailure.CHECK_ERROR, _set(evidence, item))
+        status = (
+            TestStrength.DISCRIMINATING
+            if result.outcome in {CheckOutcome.FAILED, CheckOutcome.INTERRUPTED}
+            else TestStrength.NOT_DISCRIMINATING
+        )
+        return _set(evidence, replace(item, test_strength=status))
 
     async def _review(
         self,

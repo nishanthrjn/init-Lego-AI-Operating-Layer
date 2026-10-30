@@ -116,6 +116,7 @@ def load_policy(path: Path) -> ApprovalPolicy:
         "require_review_accept",
         "max_tasks",
         "max_batch_minutes",
+        "require_test_strength",
     }:
         raise ValueError("unknown policy field")
     return ApprovalPolicy(
@@ -128,6 +129,7 @@ def load_policy(path: Path) -> ApprovalPolicy:
         require_review_accept=_boolean(data.get("require_review_accept", True)),
         max_tasks=_integer(data.get("max_tasks", 20)),
         max_batch_minutes=_integer(data.get("max_batch_minutes", 60)),
+        require_test_strength=_boolean(data.get("require_test_strength", False)),
     )
 
 
@@ -430,6 +432,7 @@ async def run_batch(
                     now=datetime.now(UTC),
                     context_paths=request.context,
                     check_profile=task_list.check_profile,
+                    test_strength=policy.require_test_strength,
                     uv_executable=uv,
                 )
                 if task.discover_guidance:
