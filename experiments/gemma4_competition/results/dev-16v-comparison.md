@@ -211,3 +211,22 @@ Independently, attempt1's 7 patches fail the required >=11 in EACH run, so even
 that second result could not rescue adoption. No two-run P6 mean is reported.
 Unreported rejection rates, replacement/syntax counts and bootstrap upper95
 remain unknown. No analysis or workload was executed for this record update.
+
+## S1 dev-16v attempt1 and S2 preregistration
+
+Maintainer-reported COMPLETED: 1599 s, startup 343 s, retained externally (path
+not supplied). Solved 3/16: rich_3905, rich_3454, fastapi_14786. Eight empty-patch
+submissions: fastapi_14492, fastapi_5624, rich_3934, rich_4075, fastapi_14419,
+fastapi_11194, rich_3067, fastapi_15589. Five wrong patches; zero time_budget.
+Mean 78 s/task and 8/28 tool calls. Two edit_file rejections (~1.6%, exact
+denominator not supplied). Operational gate PASSED as reported; S1 is retained
+as the E4B bonus fallback, not recorded as a completed Kaggle submission.
+
+Failure modes: claims without edits in diff, stopping on missing test-only
+inline_snapshot/dirty_equals dependencies, premature submission and non-unique
+edit_file targets. Exact bootstrap bound and harness-error count not supplied;
+no independent analysis executed.
+
+S2 changes only S1's prompt. Preregistered: complete dev-16v, solved >=5/16,
+empty patches <=3, projected <=10.5 h (existing bootstrap upper95 time-fit),
+all required; otherwise keep S1. Existing operational controls still apply.

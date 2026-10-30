@@ -1715,3 +1715,52 @@ submission. The [official prize rules](https://www.kaggle.com/competitions/gemma
 place the E2B/E4B bonus among the final two selections. Passing public-development
 gates still requires separate official compilation, byte-identity reconciliation
 and submission qualification; it does not predict hidden scores or award eligibility.
+
+## S2 E4B prompt-only follow-up
+
+S1 dev-16v attempt1 is recorded in results: 3/16 solved, eight empty submissions,
+five wrong patches, no time_budget, mean 78 s and eight calls; operational gate
+PASSED as reported by the maintainer. S1 remains the E4B fallback. Reported ~1.6%
+rejections does not supply the exact denominator; bootstrap upper95 was not supplied.
+No independent operational qualification or submission was executed here.
+
+S2 copies S1's agent.yaml, eval_config.yaml and configs/sampling.yaml byte for
+byte. Only prompts/system.md changes, from 5553 to 4056 bytes. Its priority rules
+require an actual source edit and diff before submission, continue with a small
+Python reproduction after missing test-only dependencies, explain the 28-call /
+six-minute budget, search exact issue identifiers first, and recover non-unique
+edit targets by rereading more context. The edit_file recovery rule is conditional
+on accidental use; the inherited run_command-only source-edit rule remains.
+S2 is a shorter prompt revision, not an isolated single-rule ablation.
+
+Preregistered S2 gate, before execution: complete dev-16v; solved >=5/16 AND
+empty patches <=3 AND projected time <=10.5 hours, using the existing bootstrap
+upper95 time-fit for consistency with S1. Existing E4B operational controls remain
+prerequisites. Unknown metrics cannot establish a pass. Otherwise keep S1.
+
+No tests/builds executed. Use the existing locked environment from repository root;
+no additional environment variables or dependencies. First run tests and paste
+results; stop before building until those results are reviewed:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected OK including S2 prompt-only/shorter-prompt and E4B model/subset checks.
+After review, build with the shared packager to a fresh external directory:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py s2 --output 'C:\Work\Gemma4Localtest\gemma-s2-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'S2 build failed; stop' }
+```
+
+Expected EXPERIMENTAL_UNQUALIFIED, submission_authorized=false, submission.zip.bin,
+manifest.json and s2-dev16v.json with real ZIP/manifest hashes. The printed JSON
+reports zip_sha256, manifest_sha256 and files['prompts/system.md']; no hashes
+are invented for unbuilt artifacts. Upload this fresh directory as the private
+s2-experiment dataset. Use the existing local_eval notebook and generated config,
+E4B version 2, pinned wheelhouse, empty extra args, dev-16v, and authorization
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s2 ON dev-16v only when approving the run.
+Keep the S1 fallback and all historical evidence intact.

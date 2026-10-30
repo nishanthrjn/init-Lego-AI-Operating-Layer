@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -69,6 +69,8 @@ def static_files(candidate):
     if data["s1"]["agent.yaml"] != data["p5"]["agent.yaml"].replace(
             b"gemma-4-31b-it-qat-w4a16-ct", b"gemma-4-e4b-it-qat-w4a16-ct"):
         raise ValueError("S1 model-only control failed")
+    if {k for k in MEMBERS if data["s1"][k] != data["s2"][k]} != {"prompts/system.md"}:
+        raise ValueError("S2 must change only the S1 prompt")
     return data[candidate]
 
 
@@ -87,16 +89,16 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
             raise ValueError("experimental archive members mismatch")
         if any(digest(archive.read(name)) != expected[name] for name in MEMBERS):
             raise ValueError("experimental archive bytes mismatch")
-    if config["candidate"] in {"p6", "s1"}:
+    if config["candidate"] in {"p6", "s1", "s2"}:
         from runtime import check_model_contract
-        model = "gemma-4-e4b-it-qat-w4a16-ct" if config["candidate"] == "s1" else "gemma-4-31b-it-qat-w4a16-ct"
+        model = "gemma-4-e4b-it-qat-w4a16-ct" if config["candidate"] in {"s1", "s2"} else "gemma-4-31b-it-qat-w4a16-ct"
         if config.get("model_variant") != model or "vllm_extra_args" not in config:
             raise ValueError("explicit experimental model/serving contract required")
         check_model_contract(config, model)
@@ -105,7 +107,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()

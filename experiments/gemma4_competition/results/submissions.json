@@ -1,4 +1,12 @@
 {
+  "s1_local_selection": {
+    "candidate": "s1", "status": "NOT_SUBMITTED",
+    "operational_gate": "PASSED_MAINTAINER_REPORTED",
+    "decision": "E4B_BONUS_FALLBACK", "dev16v_resolved": 3,
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+    "evidence_pointer": "/s1_dev16v_attempt1",
+    "notes": "Maintainer declares valid operational fallback. Separate package qualification/submission not reported; P5 remains the 31B candidate."
+  },
   "p6_local_selection": {
     "candidate": "p6", "status": "NOT_SUBMITTED",
     "decision": "REJECTED", "retained_submission_candidate": "p5",
