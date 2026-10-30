@@ -133,6 +133,19 @@ is authorized for review, not ADR acceptance or execution. Replay/FakeSandbox
 validation is pending; model quality unqualified. The maintainer owns acceptance
 and the later human review/import/merge decision. Historical counts are unchanged.
 
+### Role-specific model bindings design proposal — 2026-10-30
+
+[ADR-029](ADR-029.md) is **Proposed** under
+LEGOAI-ROLE-MODEL-BINDINGS-DESIGN-REVIEW-1. The
+[design review](../planning/LEGOAI-ROLE-MODEL-BINDINGS-DESIGN-REVIEW-1.md)
+recommends Option C: one governed host per ForgeAI role first (Option A),
+with multi-binding Core composition (Option B) conditional on demonstrated
+need and an accepted superseding decision for ADR-014 §14.2. Role-quality,
+Plugin, disclosure and credential authority remain separate. REMOTE batches
+remain excluded; no retrospective model admission is proposed. Documentary
+validation is pending. No production change or implementation is authorized.
+Existing accepted ADRs and historical counts are unchanged.
+
 ### Original planning record
 
 This index identifies unresolved **reference implementation choices**, not new canonical requirements. The eight accepted governing documents were reviewed in authority order. No language, framework, database, broker, vendor, deployment platform, public protocol, or isolation technology is selected. Repository inspection found the governing Markdown documents and no existing implementation or language decision to preserve.
