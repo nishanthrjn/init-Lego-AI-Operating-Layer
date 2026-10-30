@@ -1657,3 +1657,107 @@ if ($LASTEXITCODE -ne 0) { throw 'ForgeAI v0.2 real-sandbox qualification failed
 This command runs real Docker workloads only when executed by the maintainer.
 The pinned qualified image must already be present. Success would qualify the
 bounded replay workflow with real checks, not live model quality or deployment.
+
+## Role models (experimental, ADR-029)
+
+`forgeai run --models models.toml` selects a coder and reviewer independently.
+This implements the separately authorized local/replay slice of
+[ADR-029](../../adrs/ADR-029.md), D6 row 2. Without `--models`, the existing
+single-host CLI, approval flow and report remain unchanged.
+
+The operator file is UTF-8 TOML, at most 16 KiB, with a closed schema:
+
+```toml
+schema = "forgeai-models/1"
+revision = "operator-r1"
+
+[roles.coder]
+binding = "ollama"
+ollama_model = "qwen2.5-coder:14b"
+ollama_url = "http://127.0.0.1:11434" # optional; this is the default
+ollama_timeout = 300.0              # optional; seconds
+
+[roles.reviewer]
+binding = "ollama"
+ollama_model = "qwen2.5-coder:7b"
+```
+
+Model names above are configuration examples, not quality recommendations.
+Both roles are required. Unknown keys, duplicate TOML keys, unknown roles,
+empty values and remote bindings are refused before hosts open. Model and
+revision identifiers are bounded ASCII labels; timeout must be positive and
+at most 3600 seconds. Ollama URLs must be loopback HTTP origins, with no
+credentials, query or fragment. No provider is selected by task or model text.
+`--models` cannot accompany explicit `--binding`, `--remote-profile`,
+`--remote-custody`, `--replay` or any `--ollama-*` option.
+
+For offline replay, replace each role table with its own ordered recordings:
+
+```toml
+[roles.coder]
+binding = "replay"
+replay = ["proposal.json", "proposal_rework.json"]
+
+[roles.reviewer]
+binding = "replay"
+replay = ["review_changes_required.json", "review_accept.json"]
+```
+
+Keep the same top-level `schema` and `revision`. Paths are relative to
+`models.toml`; absolute paths, parent traversal and duplicate paths are refused.
+Coder recordings supply attempt 1 then rework; reviewer recordings supply
+review 1 then review 2. A missing output fails; recordings are never recycled.
+The existing task, target, context, approval and sandbox requirements still apply.
+
+Composition opens exactly two run hosts, each with one pinned binding and a
+lifetime capacity of two Chat executions. Both are opened and used sequentially
+on the same thread and event loop. The coder has Chat, repository read, mutation
+and check authority. The reviewer has only Chat and bounded read authority for
+changed editable targets, never the coder's read-only context. Each runtime
+receives only contexts minted by its own host; correlation and causation are
+attribution, not shared authority. One workspace guard and exact proposal
+approval still cover the run. The ceilings remain four chats, two applies,
+two check batches, two reviews and one rework; opt-in test-strength executions
+retain their documented additional checks. Guidance discovery retains its
+separate bounded read-only preflight.
+
+The header lists both roles. With `--json-report`, role mode adds top-level
+`roles.coder` and `roles.reviewer`, each containing `binding`, `model` and
+`model_quality`. Recordings, file paths and endpoint URLs are not included in
+that attribution. The key is absent in legacy reports. Replay quality is
+`NOT_APPLICABLE_REPLAY`; local live models remain `UNQUALIFIED`. Separate hosts
+do not prove model independence or correctness, and do not admit either model.
+Role reports describe the review-opinion limitation as using a separately
+configured role host; legacy reports retain the original same-binding wording.
+
+REMOTE role mode needs separate D6 row 3 authorization and disclosure/custody
+work. Batch role mode, role admission registers and evaluations are not part
+of this slice. Existing batch and remote paths remain unchanged.
+
+Maintainer validation (repository root, existing locked environments and Git):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_role_hosts_local_1.py
+git diff --check
+```
+
+Validation is pending. The validator uses replay models and `FakeSandbox` only;
+it excludes the same integration, real-Docker and clean-install cases as the
+previous offline gate. Optional real-Docker replay qualification requires the
+already qualified checks image and Docker Desktop Linux engine. It runs a
+pytest check plus the test-strength overlay, without any live model:
+
+```powershell
+$previousPythonPath = $env:PYTHONPATH
+$previousRoleQualification = $env:LEGOAI_QUALIFY_ROLE_HOSTS
+$env:PYTHONPATH = (Get-Location).Path
+Push-Location .\examples\forgeai
+$env:LEGOAI_QUALIFY_ROLE_HOSTS = "1"
+try {
+    uv run --locked --offline --no-sync python -m pytest -q -p no:cacheprovider tests/test_role_hosts.py::test_real_docker_role_hosts
+} finally {
+    Pop-Location
+    $env:PYTHONPATH = $previousPythonPath
+    $env:LEGOAI_QUALIFY_ROLE_HOSTS = $previousRoleQualification
+}
+```

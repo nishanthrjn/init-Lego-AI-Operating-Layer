@@ -118,7 +118,10 @@ class RepositoryTaskWorker:
     reviewer: IndependentReviewer = field(repr=False)
     reader: RepositoryEvidencePort = field(repr=False)
     review_criteria: tuple[str, ...]
-    fresh_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
+    coding_context: Callable[[ExecutionContext | None], ExecutionContext] = field(
+        repr=False
+    )
+    review_context: Callable[[ExecutionContext], ExecutionContext] = field(repr=False)
     approve: Callable[[ProposalReview], OperatorDecision] = field(repr=False)
     progress: Callable[[RunStage, int], None] = field(
         default=lambda stage, attempt: None, repr=False
@@ -165,7 +168,7 @@ class RepositoryTaskWorker:
             or any(type(item) is not str for item in self.review_criteria)
         ):
             raise ValueError("worker requires one to eight review criteria")
-        if not callable(self.fresh_context):
+        if not callable(self.coding_context) or not callable(self.review_context):
             raise TypeError("worker requires a fresh Chat context factory")
         if not callable(self.approve) or not callable(self.progress):
             raise TypeError("worker requires an operator approver and progress")
@@ -335,7 +338,7 @@ class RepositoryTaskWorker:
         except ValueError:
             return self._stop(task, TaskFailure.REWORK_INPUT_FAILED, evidence)
         try:
-            rework_context = self.fresh_context(context)
+            rework_context = self.coding_context(context)
         except HostError:
             reworked = replace(
                 evidence, attempts=(*evidence.attempts, AttemptEvidence(2))
@@ -762,7 +765,7 @@ class RepositoryTaskWorker:
             )
         # A fresh governed Chat execution; no earlier context is reused.
         try:
-            review_context = self.fresh_context(context)
+            review_context = self.review_context(context)
         except HostError:
             return self._stop(task, TaskFailure.REVIEW_FAILED, evidence)
         result = await self.reviewer.review(

@@ -6,7 +6,8 @@ from enum import Enum
 
 from legoai_engineering.reviewer.values import FindingSeverity
 
-from forgeai.domain import TaskFailure, TaskResult
+from forgeai.domain import LIMITATIONS, TaskFailure, TaskResult
+from forgeai.roles import RoleModels
 
 REPORT_SCHEMA = "forgeai-run-report/1"
 MAX_REPORT_BYTES = 65536
@@ -34,7 +35,9 @@ def failure_name(failure: TaskFailure | None) -> str | None:
     return failure.name if failure is not None else None
 
 
-def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, object]:
+def run_report(
+    result: TaskResult, binding: ModelBindingKind, roles: RoleModels | None = None
+) -> dict[str, object]:
     """Project explicit safe fields, mirroring the bounded pilot's derivations."""
     evidence = result.evidence
     attempts = []
@@ -81,7 +84,7 @@ def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, objec
                 else None,
             }
         )
-    return {
+    report: dict[str, object] = {
         "schema": REPORT_SCHEMA,
         "run_id": evidence.run_id,
         "disposition": result.disposition.name,
@@ -108,6 +111,26 @@ def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, objec
         "attempts": attempts,
         "limitations": list(evidence.limitations),
     }
+    if roles is not None:
+        report["limitations"] = [
+            "The independent review is a model opinion from a distinct Agent "
+            "definition on a separately configured role host; it is not proof of "
+            "correctness, independence of model weights, or authorization."
+            if item == LIMITATIONS[-1]
+            else item
+            for item in evidence.limitations
+        ]
+        report["roles"] = {
+            name: {
+                "binding": role.binding,
+                "model": role.model,
+                "model_quality": model_quality(
+                    ModelBindingKind[role.binding.upper()]
+                ).value,
+            }
+            for name, role in (("coder", roles.coder), ("reviewer", roles.reviewer))
+        }
+    return report
 
 
 def encode_report(report: Mapping[str, object]) -> str:

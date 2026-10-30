@@ -64,6 +64,7 @@ def test_clean_install_runs_the_fixture_task_outside_the_checkout(
                 "guidance",
                 "line_endings",
                 "policy",
+                "roles",
                 "report",
                 "domain",
                 "repository_context",

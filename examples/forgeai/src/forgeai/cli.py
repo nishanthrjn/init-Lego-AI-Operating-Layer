@@ -28,7 +28,9 @@ import hashlib
 import json
 import shutil
 import sys
+import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import replace
@@ -66,6 +68,7 @@ from legoai_engineering.sandbox.errors import SandboxFailure
 from forgeai.composition import (
     ForgeAIConfig,
     bind_remote,
+    bind_roles,
     discover_guidance,
     local_profile,
     prepare_run,
@@ -89,6 +92,7 @@ from forgeai.line_endings import is_consistent_crlf
 from forgeai.remote import BINDING, RemoteProfile, load_profile
 from forgeai.report import ModelBindingKind, encode_report, run_report
 from forgeai.repository_context import ContextPreflight, context_summary
+from forgeai.roles import RoleModel, RoleModels, parse_models
 
 _MAX_LISTED = 20
 _PATCH_LINES = 800  # the whole patch is shown or approval is refused
@@ -178,6 +182,45 @@ def ollama_ready(url: str, model: str, timeout: float = 5.0) -> str | None:
     return None
 
 
+def load_models(
+    path: Path,
+) -> tuple[RoleModels, ModelBindingConfig, ModelBindingConfig]:
+    """Load bounded operator TOML; all settings and recordings precede host creation."""
+    with path.open("rb") as stream:
+        raw = stream.read(16_385)
+    if len(raw) > 16_384:
+        raise ValueError("models file exceeds 16 KiB")
+    roles = parse_models(tomllib.loads(raw.decode("utf-8")))
+
+    def binding(role: RoleModel) -> ModelBindingConfig:
+        if role.binding == "replay":
+            paths = tuple(Path(value) for value in role.replay)
+            if any(p.is_absolute() or p.drive or ".." in p.parts for p in paths):
+                raise ValueError("replay paths must be relative to models.toml")
+            resolved = tuple((path.parent / p).resolve() for p in paths)
+            if len(set(resolved)) != len(resolved):
+                raise ValueError("duplicate replay paths")
+            outputs = tuple(p.read_bytes().decode("utf-8") for p in resolved)
+            if any(not output.strip() for output in outputs):
+                raise ValueError("empty replay recording")
+            return replay_binding(ReplayModel(*outputs))
+        url = urllib.parse.urlsplit(role.url)
+        if (
+            url.scheme != "http"
+            or url.hostname not in {"localhost", "127.0.0.1", "::1"}
+            or url.username is not None
+            or url.password is not None
+            or url.path not in {"", "/"}
+            or url.query
+            or url.fragment
+            or (url.port is not None and url.port == 0)
+        ):
+            raise ValueError("role Ollama URL must be a loopback HTTP origin")
+        return ollama_binding(role.url, role.model, role.timeout)
+
+    return roles, binding(roles.coder), binding(roles.reviewer)
+
+
 def readiness_message(failure: SandboxFailure) -> str:
     """One readable startup failure with one next action; no traceback."""
     if failure is SandboxFailure.RUNTIME_UNAVAILABLE:
@@ -231,7 +274,14 @@ def header(config: ForgeAIConfig, task: TaskRequest, model: str) -> str:
         else "prepared project environment"
     )
     lines.append(f"checks: {checks} (sandboxed, image {image})")
-    lines.append(f"model: {model}")
+    if config.roles is None:
+        lines.append(f"model: {model}")
+    else:
+        for name, role in (
+            ("coder", config.roles.coder),
+            ("reviewer", config.roles.reviewer),
+        ):
+            lines.append(f"model {name}: {role.binding} {role.model}")
     lines.append("Nothing is written until you approve the proposal.")
     return "\n".join(lines)
 
@@ -597,6 +647,9 @@ def _target(text: str) -> CodingTarget:
 
 def _common(parser: argparse.ArgumentParser, binding: str) -> None:
     parser.add_argument(
+        "--models", type=Path, help="closed local/replay role models TOML"
+    )
+    parser.add_argument(
         "--discover-guidance",
         action="store_true",
         help="discover bounded repository guidance as read-only context to confirm",
@@ -692,7 +745,36 @@ def main(
     An empty or closed stdin (EOF) declines, so unattended runs never approve.
     `ask=None` means no operator can answer: every proposal is declined.
     """
-    parser, args = _parse(list(sys.argv[1:] if argv is None else argv))
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    parser, args = _parse(arguments)
+    roles: RoleModels | None = None
+    reviewer_binding: ModelBindingConfig | None = None
+    role_binding: ModelBindingConfig | None = None
+    if args.models is not None:
+        exclusive = (
+            "--binding",
+            "--remote-profile",
+            "--remote-custody",
+            "--replay",
+            "--ollama-url",
+            "--ollama-model",
+            "--ollama-timeout",
+        )
+        options = tuple(
+            arg.split("=", 1)[0] for arg in arguments if arg.startswith("--")
+        )
+        # Include argparse's unambiguous abbreviations, not just exact spellings.
+        if any(
+            any(flag.startswith(option) for flag in exclusive) for option in options
+        ):
+            parser.error("--models cannot be combined with binding/provider flags")
+        if sum("--models".startswith(option) for option in options) != 1:
+            parser.error("--models must be supplied exactly once")
+        try:
+            roles, role_binding, reviewer_binding = load_models(args.models)
+        except OSError, TypeError, ValueError:
+            parser.error("invalid local/replay models configuration")
+        args.binding = roles.coder.binding
     if args.discover_guidance and args.binding == BINDING:
         parser.error("--discover-guidance is not yet supported with the remote binding")
     kind = {
@@ -710,7 +792,10 @@ def main(
     remote: RemoteProfile | None = None
     if args.binding != BINDING and (args.remote_profile or args.remote_custody):
         parser.error("remote options require the explicit remote binding")
-    if args.binding == "replay":
+    if role_binding is not None:
+        binding = role_binding
+        model = "role models"
+    elif args.binding == "replay":
         if not args.replay:
             parser.error("--replay is required for the replay binding")
         outputs = [path.read_text(encoding="utf-8") for path in args.replay]
@@ -847,6 +932,12 @@ def main(
             )
         finally:
             source.close()
+    if roles is not None:
+        assert reviewer_binding is not None
+        try:
+            config = bind_roles(config, roles, reviewer_binding, now=datetime.now(UTC))
+        except HostError, TypeError, ValueError:
+            parser.error("invalid local/replay role host configuration")
     return _execute(
         config,
         task,
@@ -913,7 +1004,7 @@ def _execute(
     out(summarize(result, root))
     if json_report:
         try:
-            encoded = encode_report(run_report(result, kind))
+            encoded = encode_report(run_report(result, kind, config.roles))
         except ValueError:
             out("forgeai-report: REPORT_UNAVAILABLE (bound exceeded)")
         else:

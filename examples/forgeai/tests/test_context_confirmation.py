@@ -153,7 +153,7 @@ def test_binding_covers_real_task_repository_head_and_run(
     assert confirmation_mismatch(original, changed_head) is (
         ConfirmationReason.REPOSITORY
     )
-    fresh = replace(request, context=worker.fresh_context(prepared.context))
+    fresh = replace(request, context=worker.coding_context(prepared.context))
     assert confirmation_mismatch(original, binding(prepared, fresh, inventory)) is (
         ConfirmationReason.STALE
     )

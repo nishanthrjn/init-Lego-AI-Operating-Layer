@@ -1,8 +1,8 @@
 """ForgeAI composition root: operator configuration to one run's adapters.
 
 The only ForgeAI module that names concrete LegoAI adapters or opens the
-public governed host. Each run opens its own host, binds exactly one
-workspace and gets a fresh ExecutionContext. Checks always run in the
+public governed host. Each run opens one legacy host or two local role hosts,
+binds exactly one workspace and mints contexts on their owning host. Checks run in the
 sandbox on the qualified checks base or a trusted prepared derivative; there is
 no host check adapter here.
 """
@@ -33,9 +33,11 @@ from legoai.runtime.api import (
     ModelBindingConfig,
     ModelDeployment,
     ModelPurpose,
+    OllamaSettings,
     OpenAICompatibleSettings,
     OperatorGrant,
     RemoteModelRuntime,
+    TrustedModelContribution,
 )
 from legoai.runtime.local import open_credential_source, open_local_host
 from legoai_engineering.analyst.authorized import (
@@ -128,6 +130,7 @@ from forgeai.provider import (
 )
 from forgeai.remote import BINDING, RemoteProfile, disclosure_preview
 from forgeai.repository_context import ContextPreflight
+from forgeai.roles import RoleModels
 from forgeai.worker import RepositoryTaskWorker
 
 
@@ -167,8 +170,50 @@ class ForgeAIConfig:
     remote_profile: RemoteProfile | None = field(default=None, repr=False)
     remote_task: TaskRequest | None = field(default=None, repr=False)
     test_strength: bool = False
+    roles: RoleModels | None = None
+    reviewer_host: LocalHostConfig | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
+        if (self.roles is None) != (self.reviewer_host is None):
+            raise ValueError("role configuration requires both hosts")
+        if self.roles is not None:
+            if type(self.roles) is not RoleModels or self.remote_runtime is not None:
+                raise ValueError("role mode is local or replay only")
+            assert self.reviewer_host is not None
+            for role, host in (
+                (self.roles.coder, self.host),
+                (self.roles.reviewer, self.reviewer_host),
+            ):
+                if (
+                    type(host) is not LocalHostConfig
+                    or host.max_executions != 2
+                    or len(host.bindings) != 1
+                    or host.bindings[0].binding_id != role.binding
+                    or not isinstance(
+                        host.bindings[0].provider,
+                        (OllamaSettings, TrustedModelContribution),
+                    )
+                ):
+                    raise ValueError(
+                        "role host requires one local binding and capacity two"
+                    )
+                provider = host.bindings[0].provider
+                if role.binding == "ollama":
+                    if not isinstance(provider, OllamaSettings) or (
+                        provider.chat_model != role.model
+                        or provider.base_url != role.url
+                        or provider.timeout_seconds != role.timeout
+                    ):
+                        raise ValueError(
+                            "role selection differs from the local binding"
+                        )
+                elif not isinstance(provider, TrustedModelContribution):
+                    raise ValueError("replay requires a trusted replay contribution")
+            if {grant.action for grant in self.reviewer_host.grants} != {
+                "invoke-capability",
+                REPOSITORY_READ_ACTION,
+            }:
+                raise ValueError("reviewer authority must be Chat and read only")
         if type(self.test_strength) is not bool:
             raise TypeError("test strength requires bool")
         for remote_value, remote_type in (
@@ -434,6 +479,16 @@ def prepare_run(
     host = open_local_host(
         config.host, config.model_selection, clock=clock, remote=config.remote_runtime
     )
+    reviewer_host = host
+    if config.reviewer_host is not None:
+        reviewer_host = open_local_host(
+            config.reviewer_host,
+            {
+                "revision": config.reviewer_host.configuration.revision,
+                "binding": config.reviewer_host.bindings[0].binding_id,
+            },
+            clock=clock,
+        )
     reference = replace(
         config.host.configuration.configuration, instance=config.workspace_scope
     )
@@ -539,11 +594,40 @@ def prepare_run(
             clock,
         )
 
-    runtime = host.agent_runtime()
+    coding_runtime = host.agent_runtime()
+    runtime = (
+        reviewer_host.agent_runtime() if config.roles is not None else coding_runtime
+    )
+    review_reads = reads
+    if config.reviewer_host is not None:
+        review_reference = replace(
+            config.reviewer_host.configuration.configuration,
+            instance=config.workspace_scope,
+        )
+        review_reads = AuthorizedRepositoryEvidence(
+            review_reference,
+            workspace,
+            reviewer_host.security_context(
+                review_reference, REPOSITORY_READ_ACTION, scope
+            ),
+            reviewer_host.authorization,
+            config.editable_paths,
+            clock,
+        )
 
-    def fresh_context(coding: ExecutionContext) -> ExecutionContext:
-        # A fresh Chat execution per later model call, correlated with the run.
+    def coding_context(previous: ExecutionContext | None) -> ExecutionContext:
         return host.model_execution(
+            ModelPurpose.CHAT,
+            correlation=previous.correlation_id if previous else None,
+            causation=previous.operation if previous else None,
+            disclosure=remote.disclosure(derived=previous is not None)
+            if remote
+            else None,
+        )
+
+    def review_context(coding: ExecutionContext) -> ExecutionContext:
+        # Correlation and causation are attribution, never cross-host authority.
+        return reviewer_host.model_execution(
             ModelPurpose.CHAT,
             correlation=coding.correlation_id,
             causation=coding.operation,
@@ -574,14 +658,15 @@ def prepare_run(
         LocalGitRepository(
             root, LocalGitExecutable(config.git_executable), config.git_policy
         ),
-        CodingAgent(AuthorizedCodingEvidence(reads, context_reads), runtime),
+        CodingAgent(AuthorizedCodingEvidence(reads, context_reads), coding_runtime),
         mutation,
         checks,
         config.check_plan,
         IndependentReviewer(runtime),
-        reads,
+        review_reads,
         config.review_criteria,
-        fresh_context,
+        coding_context,
+        review_context,
         approve,
         progress,
         project_checks if config.check_profile is CheckProfile.PROJECT else None,
@@ -589,11 +674,44 @@ def prepare_run(
         confirm_context,
         strength_checker if config.test_strength else None,
     )
-    return PreparedRun(
-        worker,
-        host.model_execution(
-            ModelPurpose.CHAT,
-            disclosure=remote.disclosure(derived=False) if remote else None,
+    return PreparedRun(worker, coding_context(None))
+
+
+def bind_roles(
+    config: ForgeAIConfig,
+    roles: RoleModels,
+    reviewer_binding: ModelBindingConfig,
+    *,
+    now: datetime,
+) -> ForgeAIConfig:
+    """Two local profiles, one workspace; reviewer never receives effect grants."""
+    reviewer = local_profile(
+        config.repository,
+        config.editable_paths,
+        bindings=(reviewer_binding,),
+        binding=roles.reviewer.binding,
+        git_executable=config.git_executable,
+        docker_executable=config.docker_executable,
+        now=now,
+    )
+    return replace(
+        config,
+        roles=roles,
+        host=replace(
+            config.host,
+            configuration=replace(config.host.configuration, revision=roles.revision),
+            max_executions=2,
+        ),
+        model_selection={"revision": roles.revision, "binding": roles.coder.binding},
+        reviewer_host=replace(
+            reviewer.host,
+            configuration=replace(reviewer.host.configuration, revision=roles.revision),
+            grants=tuple(
+                grant
+                for grant in reviewer.host.grants
+                if grant.action in {"invoke-capability", REPOSITORY_READ_ACTION}
+            ),
+            max_executions=2,
         ),
     )
 
