@@ -1,4 +1,11 @@
 {
+  "s2_local_selection": {
+    "candidate": "s2", "status": "NOT_SUBMITTED", "local_gate": "FAILED",
+    "decision": "REJECT_S2_RETAIN_S1", "resolved": 3, "required_resolved": 5,
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+    "evidence_pointer": "/s2_dev16v_attempt1",
+    "notes": "Maintainer-reported local result, not a Kaggle submission. S1 remains E4B fallback. S3 is the final planned E4B iteration; if its gate fails, freeze S1 and stop iteration."
+  },
   "s1_local_selection": {
     "candidate": "s1", "status": "NOT_SUBMITTED",
     "operational_gate": "PASSED_MAINTAINER_REPORTED",

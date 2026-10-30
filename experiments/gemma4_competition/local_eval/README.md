@@ -1764,3 +1764,52 @@ s2-experiment dataset. Use the existing local_eval notebook and generated config
 E4B version 2, pinned wheelhouse, empty extra args, dev-16v, and authorization
 AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s2 ON dev-16v only when approving the run.
 Keep the S1 fallback and all historical evidence intact.
+
+## S3: final E4B prompt iteration after S2 failure
+
+S2 attempt1 is recorded in results: 3/16 solved, two empty patches, eleven wrong
+patches, zero harness errors; 1927 s including reported startup 338 s. It failed
+the solved >=5 gate, so S1 remains the fallback. The reported rich_3454 regression
+involved sed -i regex corruption of rich/highlighter.py, a 115366-byte patch and
+submission despite recognizing the damage. No independent trace analysis ran.
+
+S3 changes ONLY S2's prompts/system.md. The other three members are byte-identical.
+Prompt length is 4304 bytes versus S2's 4056 (+248, within the +400-byte cap).
+It prohibits sed -i/regex edits, permits edit_file or python3 exact-string edits,
+requires reverting damaged edits with git checkout -- <file> and redoing them,
+and requires a nonempty, small, intended-source-only diff before submission.
+Unrelated pre-existing changes must be preserved before a file restore. This is
+an instruction for the evaluated agent, not a checkout performed in this repo.
+The contradictory S2 run_command-only restriction is removed; missing-argument
+errors still require switching to run_command without resending the failed call.
+
+Preregistered S3 gate: completed dev-16v with solved >=5/16 AND empty patches <=3
+AND no task patch >20000 bytes (20 KB, decimal) AND bootstrap upper95 <=10.5 h.
+All metrics must be known; existing E4B operational prerequisites still apply.
+Otherwise freeze S1 as the E4B entry and STOP E4B iteration. No threshold tuning
+or another E4B candidate after a failed S3 gate is authorized by this slice.
+
+NOT RUN — Awaiting user execution. From C:\Work\ForgeAI-Gemma4 in the existing
+locked uv environment, no new dependencies or environment variables:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected OK, including S3 prompt-only, size, corruption-rule and E4B model/subset
+controls. Paste results and stop before building until they are reviewed.
+After successful review, the shared experimental builder command is:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py s3 --output 'C:\Work\Gemma4Localtest\gemma-s3-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'S3 build failed; stop' }
+```
+
+Expected fresh external submission.zip.bin, manifest.json, s3-dev16v.json with
+actual hashes; state EXPERIMENTAL_UNQUALIFIED and submission_authorized=false.
+No bundle or ZIP/manifest hash has been generated here. Use the same reviewed
+local-eval workflow, E4B version 2 and pinned wheelhouse with no extra vLLM args.
+The generated config remains unapproved until the maintainer approves its GPU
+run with AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s3 ON dev-16v and the existing flags.

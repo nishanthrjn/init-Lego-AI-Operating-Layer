@@ -230,3 +230,24 @@ no independent analysis executed.
 S2 changes only S1's prompt. Preregistered: complete dev-16v, solved >=5/16,
 empty patches <=3, projected <=10.5 h (existing bootstrap upper95 time-fit),
 all required; otherwise keep S1. Existing operational controls still apply.
+
+## S2 dev-16v attempt1: more patches, no solved-count gain
+
+Maintainer-reported COMPLETED, 1927 s, startup 338 s; externally retained, path
+not supplied. ZIP d5a6b30c matches the supplied S2 build SHA256. Solved 3/16:
+fastapi_14492, rich_3905, fastapi_14786. Empty patches 2: rich_4075, rich_4076;
+wrong patches 11. Mean 92 s/task, 11.4 calls; zero harness errors.
+**Gate FAILED (3 < 5 solved); S1 retained per preregistration.** Bootstrap bound
+not supplied; no timing pass inferred.
+
+Empty submissions fell 8 -> 2 and wrong patches rose 5 -> 11, with solved count
+unchanged. This supports the intended patch-production effect, not improved
+correctness or an isolated causal claim. Gained fastapi_14492, lost rich_3454.
+In rich_3454, sed -i with a * regex reportedly corrupted rich/highlighter.py,
+producing a 115366-byte patch. The agent noticed damage and still submitted.
+
+S3 changes only S2's prompt: exact-string edits, revert damaged edits, inspect
+small intended-source diffs. Preregistered: solved >=5/16 AND empty <=3 AND every
+task patch <=20000 bytes (20 KB) AND bootstrap upper95 <=10.5 h; all metrics known
+on a complete dev-16v run, existing operational controls still apply. Otherwise
+freeze S1 as E4B entry and stop E4B iteration. No execution performed here.
