@@ -54,7 +54,7 @@ from scripts.forgeai_kisski_bounded_live_pilot import projection
 def shared_fields(actual: Any, pilot: Any) -> None:
     """Compare shared leaves recursively: attempt schemas intentionally differ."""
     if isinstance(actual, dict) and isinstance(pilot, dict):
-        for key in actual.keys() & pilot.keys() - {"status"}:
+        for key in actual.keys() & pilot.keys() - {"status", "no_change"}:
             shared_fields(actual[key], pilot[key])
     elif isinstance(actual, list) and isinstance(pilot, list):
         assert len(actual) == len(pilot)
@@ -104,6 +104,7 @@ def test_success_complete_schema(tmp_path: Path) -> None:
                 "model_attempt": "SUCCEEDED",
                 "model_effect": "COMPLETED",
                 "proposal_valid": True,
+                "no_change": False,
                 "mutation_approval": True,
                 "changed_paths": [
                     {"path": "src/inventory/stock.py", "kind": "UPDATE"},
@@ -215,13 +216,18 @@ def test_canary_content_is_never_reported(tmp_path: Path) -> None:
     for change in coding["changes"]:
         change["reason"] = canary
         change["content"] += f"\n# {canary}\n"
+    rework_coding = json.loads(json.dumps(coding))  # Deep copy of the JSON fixture.
+    rework_coding["changes"][0]["content"] += f"\n# {canary} rework\n"
     review = json.loads(REVIEW_CHANGES)
     review["summary"] = canary
     review["findings"][0]["message"] = canary
     review["findings"][0]["required_action"] = canary
     request = replace(task(), objective=canary, constraints=(canary,))
     model = cli.ReplayModel(
-        json.dumps(coding), json.dumps(review), json.dumps(coding), json.dumps(review)
+        json.dumps(coding),
+        json.dumps(review),
+        json.dumps(rework_coding),
+        json.dumps(review),
     )
     prepared = prepare_run(
         config(root, model),
@@ -239,6 +245,7 @@ def test_canary_content_is_never_reported(tmp_path: Path) -> None:
     value = projected(result)
     encoded = encode_report(value)
     assert value["attempts"][0]["blocking_findings"] == 1
+    assert all(attempt["no_change"] is False for attempt in value["attempts"])
     assert canary not in encoded
     assert str(tmp_path) not in encoded
     assert json.dumps(str(tmp_path))[1:-1] not in encoded

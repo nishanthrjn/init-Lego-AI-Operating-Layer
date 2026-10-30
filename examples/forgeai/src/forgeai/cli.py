@@ -453,6 +453,8 @@ def summarize(result: TaskResult, repository: Path | None = None) -> str:
     lines.append(f"attempt count: {len(evidence.attempts)}")
     if evidence.proposal is not None:
         lines.append(f"proposal: {evidence.proposal.summary[:200]}")
+    if result.failure is TaskFailure.PROPOSAL_NO_CHANGE:
+        lines.append("proposal claim: unverified; this attempt changes no file")
     if evidence.reworked:
         first = evidence.attempts[0]
         outcomes = ", ".join(

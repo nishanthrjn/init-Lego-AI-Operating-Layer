@@ -597,6 +597,9 @@ triggered by exactly one of these:
 There is never a third proposal. ForgeAI never runs `ruff --fix` or any
 other auto-fix, and changes code only through approved proposals.
 
+A proposal that changes nothing is refused before approval, with its claimed fix
+shown as unverified; earlier approved changes remain in the working tree.
+
 A check that **could not complete** is never "repaired" by the model:
 Docker or sandbox failure, timeout, a tool error, interrupted pytest
 collection, or no tests collected. The run stops. A check finding can't
@@ -935,6 +938,9 @@ attempts. The evidence holds no exceptions, environment, host paths or
 runtime objects.
 
 ## Known limitations
+
+- A proposal that changes nothing is refused before approval, with its claimed
+  fix shown as unverified.
 
 - **Passes are not proof.** Neither a sandboxed `PASSED` nor a review `ACCEPT`
   proves correctness. A rework accepted by the same Agent definitions on the

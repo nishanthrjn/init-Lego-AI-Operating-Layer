@@ -488,6 +488,16 @@ class RepositoryTaskWorker:
         evidence = _set(evidence, item)
         self.progress(RunStage.PROPOSAL_GENERATED, number)
 
+        if all(
+            current[change.path] is not None
+            and current[change.path] == (change.text or "")
+            for change in proposal.changeset.changes
+        ):
+            item = replace(item, no_change=True)
+            return self._stop(
+                task, TaskFailure.PROPOSAL_NO_CHANGE, _set(evidence, item)
+            )
+
         # Operator approval of this exact proposal before any effect.
         identity = proposal_identity(proposal)
         before = tuple(current[change.path] for change in proposal.changeset.changes)

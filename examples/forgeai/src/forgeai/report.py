@@ -6,7 +6,7 @@ from enum import Enum
 
 from legoai_engineering.reviewer.values import FindingSeverity
 
-from forgeai.domain import TaskResult
+from forgeai.domain import TaskFailure, TaskResult
 
 REPORT_SCHEMA = "forgeai-run-report/1"
 MAX_REPORT_BYTES = 65536
@@ -29,6 +29,11 @@ def model_quality(binding: ModelBindingKind) -> ModelQuality:
     return ModelQuality.UNQUALIFIED
 
 
+def failure_name(failure: TaskFailure | None) -> str | None:
+    """Expose only the closed failure name, including PROPOSAL_NO_CHANGE."""
+    return failure.name if failure is not None else None
+
+
 def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, object]:
     """Project explicit safe fields, mirroring the bounded pilot's derivations."""
     evidence = result.evidence
@@ -44,6 +49,7 @@ def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, objec
                 "model_attempt": item.agent_status.name if item.agent_status else None,
                 "model_effect": item.model_effect.name if item.model_effect else None,
                 "proposal_valid": item.proposal is not None,
+                "no_change": item.no_change,
                 "mutation_approval": item.approval,
                 "changed_paths": [
                     {"path": change.path.value, "kind": change.kind.name}
@@ -78,7 +84,7 @@ def run_report(result: TaskResult, binding: ModelBindingKind) -> dict[str, objec
         "schema": REPORT_SCHEMA,
         "run_id": evidence.run_id,
         "disposition": result.disposition.name,
-        "failure": result.failure.name if result.failure else None,
+        "failure": failure_name(result.failure),
         "model_binding": binding.value,
         "model_quality": model_quality(binding).value,
         "start_head": evidence.start.head.commit.value

@@ -134,7 +134,9 @@ def test_sandbox_finding_fails_the_task(tmp_path: Path) -> None:
     changes = proposal_with_wrong_test()
     # v0.1: the real finding consumes the single rework; the scripted rework
     # repeats the wrong test, so the real checks fail again and the run stops.
-    model = ReplayModel(changes, changes)
+    rework_coding = json.loads(changes)
+    rework_coding["changes"][0]["content"] += "\n# Rework retains the wrong test.\n"
+    model = ReplayModel(changes, json.dumps(rework_coding))
     result, sandbox, _ = run(config(root, model, docker=docker()))
     assert result.disposition is TaskDisposition.FAILED
     assert result.failure is TaskFailure.CHECKS_FAILED

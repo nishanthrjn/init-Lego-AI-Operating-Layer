@@ -586,8 +586,10 @@ def test_task_context_requires_repository_paths() -> None:
 
 def test_check_feedback_rework_keeps_the_same_context(tmp_path: Path) -> None:
     root = repository(tmp_path)
+    rework_coding = json.loads(created("update"))
+    rework_coding["changes"][0]["content"] += "\n# Rework preserves context.\n"
     result, model, mutation, _ = run(
-        root, created(), created("update"), exits=(1, 0, 0)
+        root, created(), json.dumps(rework_coding), exits=(1, 0, 0)
     )
     assert result.evidence.rework_trigger is ReworkTrigger.CHECK_FINDINGS
     assert result.failure is TaskFailure.CHECKS_FAILED  # the script fails again
@@ -620,8 +622,15 @@ def test_review_feedback_cannot_add_context_and_reviewer_sees_none(
             "unknowns": [],
         }
     )
+    rework_coding = json.loads(created("update"))
+    rework_coding["changes"][0]["content"] += "\n# Rework preserves context.\n"
     result, model, _, _ = run(
-        root, created(), review, created("update"), REVIEW_ACCEPT, context=context
+        root,
+        created(),
+        review,
+        json.dumps(rework_coding),
+        REVIEW_ACCEPT,
+        context=context,
     )
     assert result.disposition is TaskDisposition.SUCCEEDED, result
     assert result.evidence.rework_trigger is ReworkTrigger.REVIEW_CHANGES_REQUIRED

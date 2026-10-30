@@ -152,6 +152,7 @@ class TaskFailure(Enum):
     CONTEXT_STALE = "confirmed repository context no longer matches"
     MODEL_FAILED = "the model call did not complete"
     PROPOSAL_INVALID = "the model output was not a valid proposal"
+    PROPOSAL_NO_CHANGE = "the proposal changes no file; nothing written"
     # The operator did not approve the validated proposal (or could not be
     # asked); nothing was written, checked or reviewed.
     PROPOSAL_DECLINED = "the operator did not approve the proposal; nothing written"
@@ -357,6 +358,7 @@ class AttemptEvidence:
     review_input_failure: ReviewInputFailure | None = None
     review_materials: tuple[tuple[str, RepositoryPath], ...] = ()
     review: ReviewResult | None = field(default=None, repr=False)
+    no_change: bool = False
 
     def __post_init__(self) -> None:
         if type(self.number) is not int or not 1 <= self.number <= MAX_ATTEMPTS:
