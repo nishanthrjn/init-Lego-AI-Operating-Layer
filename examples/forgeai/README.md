@@ -1661,8 +1661,8 @@ bounded replay workflow with real checks, not live model quality or deployment.
 ## Role models (experimental, ADR-029)
 
 `forgeai run --models models.toml` selects a coder and reviewer independently.
-This implements the separately authorized local/replay slice of
-[ADR-029](../../adrs/ADR-029.md), D6 row 2. Without `--models`, the existing
+This implements the separately authorized local/replay and attended remote slices of
+[ADR-029](../../adrs/ADR-029.md), D6 rows 2 and 3. Without `--models`, the existing
 single-host CLI, approval flow and report remain unchanged.
 
 The operator file is UTF-8 TOML, at most 16 KiB, with a closed schema:
@@ -1684,8 +1684,8 @@ ollama_model = "qwen2.5-coder:7b"
 
 Model names above are configuration examples, not quality recommendations.
 Both roles are required. Unknown keys, duplicate TOML keys, unknown roles,
-empty values and remote bindings are refused before hosts open. Model and
-revision identifiers are bounded ASCII labels; timeout must be positive and
+empty values are refused before hosts open. Local model and
+revision identifiers are bounded ASCII labels; local timeout must be positive and
 at most 3600 seconds. Ollama URLs must be loopback HTTP origins, with no
 credentials, query or fragment. No provider is selected by task or model text.
 `--models` cannot accompany explicit `--binding`, `--remote-profile`,
@@ -1713,7 +1713,8 @@ Composition opens exactly two run hosts, each with one pinned binding and a
 lifetime capacity of two Chat executions. Both are opened and used sequentially
 on the same thread and event loop. The coder has Chat, repository read, mutation
 and check authority. The reviewer has only Chat and bounded read authority for
-changed editable targets, never the coder's read-only context. Each runtime
+changed editable targets, never the coder's read-only context. Each remote host
+additionally has Secret-use authority for its own credential only. Each runtime
 receives only contexts minted by its own host; correlation and causation are
 attribution, not shared authority. One workspace guard and exact proposal
 approval still cover the run. The ceilings remain four chats, two applies,
@@ -1730,9 +1731,87 @@ do not prove model independence or correctness, and do not admit either model.
 Role reports describe the review-opinion limitation as using a separately
 configured role host; legacy reports retain the original same-binding wording.
 
-REMOTE role mode needs separate D6 row 3 authorization and disclosure/custody
-work. Batch role mode, role admission registers and evaluations are not part
-of this slice. Existing batch and remote paths remain unchanged.
+Attended remote roles use the same closed `forgeai-models/1` schema:
+
+```toml
+schema = "forgeai-models/1"
+revision = "operator-remote-r1"
+
+[roles.coder]
+binding = "openai-compatible-remote"
+profile = "remote-coder.toml"
+custody = "D:/Work/forgeai-sandbox/custody-coder"
+
+[roles.reviewer]
+binding = "openai-compatible-remote"
+profile = "remote-reviewer.toml"
+custody = "D:/Work/forgeai-sandbox/custody-reviewer"
+```
+
+Either role can instead use local Ollama or replay. Remote profile and custody
+paths are absolute or relative to `models.toml`. Profiles use the unchanged
+remote profile format above, with independent admissions of at most one hour
+and the same repository identity. Both custody directories must already exist
+outside the repository; shared or nested custody directories are refused.
+All profiles and custody paths are validated before any credential prompt.
+
+For each remote role, in coder then reviewer order, the CLI prints only the
+operator's role/provider/model identifiers through terminal-safe rendering:
+
+```text
+Credential for coder (provider kisski-saia, model gemma-4-31b-it)
+Credential (input hidden):
+Credential for reviewer (provider kisski-saia, model gemma-4-31b-it)
+Credential (input hidden):
+```
+
+The second line of each pair is the unchanged S1 hidden prompt. Each role owns
+a separate source and credential identity, even for the same provider/model.
+All sources close on every exit, including partial setup failure. There is no
+credential flag, environment, file or pipe input, caching or deduplication.
+
+Before the first model call, remote disclosure approvals are requested in coder
+then reviewer order, default No. Declining either, EOF or Ctrl+C stops the run
+without model calls or mutation. Local/replay roles have neither credential nor
+disclosure prompts. Coder disclosure includes editable files and read-only
+context; reviewer disclosure includes changed files, proposal and derived check
+summaries, never coder-only context. Each preview identifies its destination and
+admission revision/expiry. Each invocation still passes its own host's disclosure
+gate; approval cannot override expiry or authorize a changed task/profile.
+
+Remote headers show binding, provider and model; remote `roles` report objects
+also contain `provider`, without URLs, custody paths or credentials. Both remote
+roles remain `UNQUALIFIED`. This mode is attended only: batch remote remains
+excluded, and `--discover-guidance` is refused when either role is remote.
+Role admission registers and evaluations are outside this slice.
+
+Remote-role validation (synthetic TLS and `FakeSandbox`, no live provider):
+
+```powershell
+uv run --locked --offline --no-sync python .\validate_forgeai_role_hosts_remote_1.py
+git diff --check
+```
+
+Verification status: **NOT RUN — Awaiting user execution**.
+
+Optional real-Docker remote-role qualification uses only the local synthetic TLS
+server. It requires the already qualified checks image and Docker Desktop Linux
+engine; it uses no live model or provider credential. From the repository root:
+
+```powershell
+$previousPythonPath = $env:PYTHONPATH
+$previousRemoteRoles = $env:LEGOAI_QUALIFY_REMOTE_ROLES
+$env:PYTHONPATH = (Get-Location).Path
+Push-Location .\examples\forgeai
+$env:LEGOAI_QUALIFY_REMOTE_ROLES = "1"
+try {
+    uv run --locked --offline --no-sync python -m pytest -q -p no:cacheprovider tests/test_remote_role_hosts.py::test_real_docker_remote_roles
+} finally {
+    Pop-Location
+    $env:PYTHONPATH = $previousPythonPath
+    $env:LEGOAI_QUALIFY_REMOTE_ROLES = $previousRemoteRoles
+}
+```
 
 Maintainer validation (repository root, existing locked environments and Git):
 

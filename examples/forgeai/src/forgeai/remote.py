@@ -290,3 +290,38 @@ def disclosure_preview(profile: RemoteProfile, task: TaskRequest) -> str:
             f"admission: {admission.admission_id}/{admission.revision}; expires: {admission.not_after.isoformat()}"
         )
     return "\n".join(lines)
+
+
+def role_disclosure_preview(
+    role: str, profile: RemoteProfile, task: TaskRequest
+) -> str:
+    """Role-specific payload facts; reviewer never receives coder-only paths."""
+    if role not in ("coder", "reviewer"):
+        raise ValueError("unknown remote role")
+    parts = endpoint_parts(profile.base_url)
+    assert parts is not None
+    lines = [
+        f"REMOTE {role} disclosure (separate from mutation approval)",
+        f"provider: {profile.provider.value}; model: {profile.model}",
+        f"API origin: {parts[0]}; API root: {parts[1]}",
+        f"task text and constraints: yes; task digest: {task_digest(task)}",
+        "fixed platform instructions: yes",
+    ]
+    if role == "coder":
+        lines += [
+            "editable target contents: "
+            + ", ".join(t.path.value for t in task.targets),
+            "read-only context: "
+            + (", ".join(p.value for p in task.context) or "none"),
+            "rework diagnostics: possible only during one bounded rework",
+        ]
+    else:
+        lines += [
+            "changed-file contents, proposal rendering and check summaries (derived diagnostics)",
+            "coder read-only context: not disclosed",
+        ]
+    lines += [
+        f"admission: {a.admission_id}/{a.revision}; expires: {a.not_after.isoformat()}"
+        for a in profile.policy.admissions
+    ]
+    return "\n".join(lines)

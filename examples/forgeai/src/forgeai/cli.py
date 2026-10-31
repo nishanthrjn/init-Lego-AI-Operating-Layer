@@ -73,6 +73,7 @@ from forgeai.composition import (
     local_profile,
     prepare_run,
     remote_credentials,
+    remote_role_session,
     sandbox_readiness,
 )
 from forgeai.domain import (
@@ -192,7 +193,30 @@ def load_models(
         raise ValueError("models file exceeds 16 KiB")
     roles = parse_models(tomllib.loads(raw.decode("utf-8")))
 
+    def resolve_remote(role: RoleModel) -> RoleModel:
+        if role.binding != BINDING:
+            return role
+        profile_path = (path.parent / role.profile).resolve()
+        custody = (path.parent / role.custody).resolve()
+        profile = load_profile(profile_path)
+        profile.validate(datetime.now(UTC))
+        return replace(
+            role,
+            profile=str(profile_path),
+            custody=str(custody),
+            model=profile.model,
+            provider=profile.provider.value,
+        )
+
+    roles = replace(
+        roles,
+        coder=resolve_remote(roles.coder),
+        reviewer=resolve_remote(roles.reviewer),
+    )
+
     def binding(role: RoleModel) -> ModelBindingConfig:
+        if role.binding == BINDING:
+            return load_profile(Path(role.profile)).binding()
         if role.binding == "replay":
             paths = tuple(Path(value) for value in role.replay)
             if any(p.is_absolute() or p.drive or ".." in p.parts for p in paths):
@@ -281,7 +305,12 @@ def header(config: ForgeAIConfig, task: TaskRequest, model: str) -> str:
             ("coder", config.roles.coder),
             ("reviewer", config.roles.reviewer),
         ):
-            lines.append(f"model {name}: {role.binding} {role.model}")
+            if role.binding == BINDING:
+                lines.append(
+                    safe(f"model {name}: {role.binding} {role.provider} {role.model}")
+                )
+            else:
+                lines.append(f"model {name}: {role.binding} {role.model}")
     lines.append("Nothing is written until you approve the proposal.")
     return "\n".join(lines)
 
@@ -297,6 +326,15 @@ def safe(text: str) -> str:
         if char == "\t" or (char.isprintable() and char not in _BIDI)
         else f"\\u{ord(char):04x}"
         for char in text
+    )
+
+
+def role_credential_label(role: str, profile: RemoteProfile, out: Out) -> None:
+    """Only operator identifiers; S1 itself owns the following hidden prompt."""
+    out(
+        safe(
+            f"Credential for {role} (provider {profile.provider.value}, model {profile.model})"
+        )
     )
 
 
@@ -775,7 +813,10 @@ def main(
         except OSError, TypeError, ValueError:
             parser.error("invalid local/replay models configuration")
         args.binding = roles.coder.binding
-    if args.discover_guidance and args.binding == BINDING:
+    if args.discover_guidance and (
+        args.binding == BINDING
+        or (roles is not None and roles.reviewer.binding == BINDING)
+    ):
         parser.error("--discover-guidance is not yet supported with the remote binding")
     kind = {
         "replay": ModelBindingKind.REPLAY,
@@ -934,6 +975,44 @@ def main(
             source.close()
     if roles is not None:
         assert reviewer_binding is not None
+        if BINDING in (roles.coder.binding, roles.reviewer.binding):
+            try:
+                profiles = tuple(
+                    (name, load_profile(Path(role.profile)))
+                    for name, role in (
+                        ("coder", roles.coder),
+                        ("reviewer", roles.reviewer),
+                    )
+                    if role.binding == BINDING
+                )
+                with remote_role_session(
+                    config,
+                    roles,
+                    reviewer_binding,
+                    task,
+                    profiles,
+                    now=datetime.now(UTC),
+                    label=lambda name, profile: role_credential_label(
+                        name, profile, out
+                    ),
+                ) as configured:
+                    return _execute(
+                        configured,
+                        task,
+                        model,
+                        ask=ask,
+                        out=out,
+                        ready=ready,
+                        kind=kind,
+                        json_report=args.json_report,
+                    )
+            except Exception, KeyboardInterrupt:
+                # No provisioning exception or provider/credential text is rendered.
+                out(
+                    "remote role failed: credential, policy, custody or execution unavailable; "
+                    "inspect the working tree and custody before retrying"
+                )
+                return 2
         try:
             config = bind_roles(config, roles, reviewer_binding, now=datetime.now(UTC))
         except HostError, TypeError, ValueError:
@@ -995,7 +1074,7 @@ def _execute(
     except (OSError, TypeError, ValueError) as error:
         out(
             "configuration error: invalid remote configuration"
-            if config.remote_profile
+            if config.remote_profile or config.remote_roles
             else f"configuration error: {error}"
         )
         return 1

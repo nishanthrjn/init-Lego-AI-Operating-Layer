@@ -1,7 +1,7 @@
 """ForgeAI composition root: operator configuration to one run's adapters.
 
 The only ForgeAI module that names concrete LegoAI adapters or opens the
-public governed host. Each run opens one legacy host or two local role hosts,
+public governed host. Each run opens one legacy host or two independent role hosts,
 binds exactly one workspace and mints contexts on their owning host. Checks run in the
 sandbox on the qualified checks base or a trusted prepared derivative; there is
 no host check adapter here.
@@ -9,13 +9,14 @@ no host check adapter here.
 
 import os
 from collections.abc import Callable, Iterator, Mapping
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
 from legoai.execution.values import ExecutionContext
+from legoai.governance.secret import SecretRef
 from legoai.governance.values import GrantId, PolicyRef
 from legoai.intelligence.model.routing import ModelRequirement
 from legoai.kernel.identity import ApplicationId, PrincipalId, TenantId
@@ -128,7 +129,12 @@ from forgeai.provider import (
     ProviderSession,
     ReadOnlyApproval,
 )
-from forgeai.remote import BINDING, RemoteProfile, disclosure_preview
+from forgeai.remote import (
+    BINDING,
+    RemoteProfile,
+    disclosure_preview,
+    role_disclosure_preview,
+)
 from forgeai.repository_context import ContextPreflight
 from forgeai.roles import RoleModels
 from forgeai.worker import RepositoryTaskWorker
@@ -136,6 +142,25 @@ from forgeai.worker import RepositoryTaskWorker
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+@dataclass(frozen=True, slots=True)
+class RemoteRole:
+    """Captured composition association; runtime participants are never operator data."""
+
+    role: str
+    profile: RemoteProfile = field(repr=False)
+    runtime: RemoteModelRuntime = field(repr=False)
+    source: CredentialSource = field(repr=False)
+    credential: SecretRef = field(repr=False)
+
+    def __post_init__(self) -> None:
+        if (
+            self.role not in ("coder", "reviewer")
+            or self.runtime.credentials is not self.source
+            or self.credential.exact.identity != "forgeai-" + self.role
+        ):
+            raise ValueError("remote role association mismatch")
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,33 +197,87 @@ class ForgeAIConfig:
     test_strength: bool = False
     roles: RoleModels | None = None
     reviewer_host: LocalHostConfig | None = field(default=None, repr=False)
+    remote_roles: tuple[RemoteRole, ...] = field(default=(), repr=False)
+    role_task: TaskRequest | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
+        if type(self.remote_roles) is not tuple or any(
+            type(item) is not RemoteRole for item in self.remote_roles
+        ):
+            raise TypeError("remote roles require captured composition associations")
+        if self.role_task is not None and type(self.role_task) is not TaskRequest:
+            raise TypeError("remote role task must be typed")
         if (self.roles is None) != (self.reviewer_host is None):
             raise ValueError("role configuration requires both hosts")
         if self.roles is not None:
             if type(self.roles) is not RoleModels or self.remote_runtime is not None:
-                raise ValueError("role mode is local or replay only")
+                raise ValueError("role mode cannot reuse legacy remote configuration")
             assert self.reviewer_host is not None
-            for role, host in (
-                (self.roles.coder, self.host),
-                (self.roles.reviewer, self.reviewer_host),
+            expected_roles = tuple(
+                name
+                for name, role in (
+                    ("coder", self.roles.coder),
+                    ("reviewer", self.roles.reviewer),
+                )
+                if role.binding == BINDING
+            )
+            if tuple(item.role for item in self.remote_roles) != expected_roles:
+                raise ValueError("each remote role requires its own association")
+            if bool(expected_roles) != (self.role_task is not None):
+                raise ValueError("remote roles require the exact task")
+            validate_role_profiles(
+                self.repository,
+                tuple(
+                    (item.profile, item.runtime.custody) for item in self.remote_roles
+                ),
+            )
+            if (
+                len(self.remote_roles) == 2
+                and self.remote_roles[0].source is self.remote_roles[1].source
+            ):
+                raise ValueError("remote roles require separate sources")
+            for name, role, host in (
+                ("coder", self.roles.coder, self.host),
+                ("reviewer", self.roles.reviewer, self.reviewer_host),
             ):
                 if (
                     type(host) is not LocalHostConfig
                     or host.max_executions != 2
                     or len(host.bindings) != 1
                     or host.bindings[0].binding_id != role.binding
-                    or not isinstance(
-                        host.bindings[0].provider,
-                        (OllamaSettings, TrustedModelContribution),
-                    )
                 ):
                     raise ValueError(
                         "role host requires one local binding and capacity two"
                     )
                 provider = host.bindings[0].provider
-                if role.binding == "ollama":
+                if role.binding == BINDING:
+                    association = next(
+                        item for item in self.remote_roles if item.role == name
+                    )
+                    profile = association.profile
+                    expected_binding = profile.binding()
+                    assert isinstance(
+                        expected_binding.provider, OpenAICompatibleSettings
+                    )
+                    expected_binding = replace(
+                        expected_binding,
+                        provider=replace(
+                            expected_binding.provider,
+                            bearer_credential=association.credential,
+                        ),
+                    )
+                    if (
+                        host.bindings[0] != expected_binding
+                        or host.disclosure is not profile.policy
+                        or role.model != profile.model
+                        or role.provider != profile.provider.value
+                        or Path(role.custody).resolve()
+                        != association.runtime.custody.resolve()
+                    ):
+                        raise ValueError(
+                            "remote binding, custody or policy cross-wired"
+                        )
+                elif role.binding == "ollama":
                     if not isinstance(provider, OllamaSettings) or (
                         provider.chat_model != role.model
                         or provider.base_url != role.url
@@ -209,11 +288,18 @@ class ForgeAIConfig:
                         )
                 elif not isinstance(provider, TrustedModelContribution):
                     raise ValueError("replay requires a trusted replay contribution")
-            if {grant.action for grant in self.reviewer_host.grants} != {
+            reviewer_actions = {
                 "invoke-capability",
                 REPOSITORY_READ_ACTION,
-            }:
+            }
+            if self.roles.reviewer.binding == BINDING:
+                reviewer_actions.add("secret-use")
+            if {
+                grant.action for grant in self.reviewer_host.grants
+            } != reviewer_actions:
                 raise ValueError("reviewer authority must be Chat and read only")
+        elif self.remote_roles or self.role_task is not None:
+            raise ValueError("remote role associations require role mode")
         if type(self.test_strength) is not bool:
             raise TypeError("test strength requires bool")
         for remote_value, remote_type in (
@@ -300,6 +386,7 @@ async def discover_guidance(
     try:
         if (
             config.model_selection.get("binding") not in {"replay", "ollama"}
+            or bool(config.remote_roles)
             or config.remote_profile is not None
             or config.remote_runtime is not None
             or any(
@@ -447,6 +534,19 @@ def prepare_run(
     mutation. It is required; there is no automatic approval."""
     if type(config) is not ForgeAIConfig:
         raise TypeError("prepare_run requires ForgeAIConfig")
+    coder_remote = next(
+        (item for item in config.remote_roles if item.role == "coder"), None
+    )
+    reviewer_remote = next(
+        (item for item in config.remote_roles if item.role == "reviewer"), None
+    )
+    for association in config.remote_roles:
+        association.profile.validate(clock())
+    if config.role_task is not None and (
+        tuple(t.path for t in config.role_task.targets) != config.editable_paths
+        or config.role_task.context != config.context_paths
+    ):
+        raise ValueError("remote role task scope differs from configured scope")
     remote = config.remote_profile
     if remote is not None:
         remote.validate(clock())
@@ -477,7 +577,10 @@ def prepare_run(
     elif config.remote_runtime is not None:
         raise ValueError("remote runtime requires a disclosure profile")
     host = open_local_host(
-        config.host, config.model_selection, clock=clock, remote=config.remote_runtime
+        config.host,
+        config.model_selection,
+        clock=clock,
+        remote=coder_remote.runtime if coder_remote else config.remote_runtime,
     )
     reviewer_host = host
     if config.reviewer_host is not None:
@@ -488,6 +591,7 @@ def prepare_run(
                 "binding": config.reviewer_host.bindings[0].binding_id,
             },
             clock=clock,
+            remote=reviewer_remote.runtime if reviewer_remote else None,
         )
     reference = replace(
         config.host.configuration.configuration, instance=config.workspace_scope
@@ -616,28 +720,49 @@ def prepare_run(
         )
 
     def coding_context(previous: ExecutionContext | None) -> ExecutionContext:
+        profile = coder_remote.profile if coder_remote else remote
         return host.model_execution(
             ModelPurpose.CHAT,
             correlation=previous.correlation_id if previous else None,
             causation=previous.operation if previous else None,
-            disclosure=remote.disclosure(derived=previous is not None)
-            if remote
+            disclosure=profile.disclosure(derived=previous is not None)
+            if profile
             else None,
         )
 
     def review_context(coding: ExecutionContext) -> ExecutionContext:
         # Correlation and causation are attribution, never cross-host authority.
+        profile = reviewer_remote.profile if reviewer_remote else remote
         return reviewer_host.model_execution(
             ModelPurpose.CHAT,
             correlation=coding.correlation_id,
             causation=coding.operation,
-            disclosure=remote.disclosure(derived=True) if remote else None,
+            disclosure=profile.disclosure(derived=True) if profile else None,
         )
 
     used = False
 
     def admit_model(task: TaskRequest) -> bool:
         nonlocal used
+        if config.remote_roles:
+            if used or task != config.role_task or confirm_disclosure is None:
+                return False
+            used = True
+            try:
+                for association in config.remote_roles:
+                    association.profile.validate(clock())
+                    if (
+                        confirm_disclosure(
+                            role_disclosure_preview(
+                                association.role, association.profile, task
+                            )
+                        )
+                        is not True
+                    ):
+                        return False
+                return True
+            except ValueError, EOFError, KeyboardInterrupt:
+                return False
         if (
             used
             or task != config.remote_task
@@ -670,7 +795,7 @@ def prepare_run(
         approve,
         progress,
         project_checks if config.check_profile is CheckProfile.PROJECT else None,
-        admit_model if remote else None,
+        admit_model if remote or config.remote_roles else None,
         confirm_context,
         strength_checker if config.test_strength else None,
     )
@@ -714,6 +839,169 @@ def bind_roles(
             max_executions=2,
         ),
     )
+
+
+def validate_role_profiles(
+    repository: Path,
+    profiles: tuple[tuple[RemoteProfile, Path], ...],
+    *,
+    now: datetime | None = None,
+) -> None:
+    """Validate the entire remote plan before opening any source or host."""
+    root = repository.resolve()
+    directories = tuple(custody.resolve() for _, custody in profiles)
+    for profile, custody in profiles:
+        if now is not None:
+            profile.validate(now)
+        if not custody.is_dir() or custody.resolve().is_relative_to(root):
+            raise ValueError("remote custody must exist outside the repository")
+    if len(profiles) == 2:
+        left, right = directories
+        if left.is_relative_to(right) or right.is_relative_to(left):
+            raise ValueError("role custody must be separate and non-nested")
+        if profiles[0][0].repository != profiles[1][0].repository:
+            raise ValueError("role repository identities differ")
+
+
+@contextmanager
+def remote_role_session(
+    config: ForgeAIConfig,
+    roles: RoleModels,
+    reviewer_binding: ModelBindingConfig,
+    task: TaskRequest,
+    profiles: tuple[tuple[str, RemoteProfile], ...],
+    *,
+    now: datetime,
+    label: Callable[[str, RemoteProfile], None],
+    trust_anchor: Path | None = None,
+) -> Iterator[ForgeAIConfig]:
+    """Own all sources through setup, execution and every failure/exit path."""
+    selections = (("coder", roles.coder), ("reviewer", roles.reviewer))
+    expected = tuple(name for name, role in selections if role.binding == BINDING)
+    if not expected or tuple(name for name, _ in profiles) != expected:
+        raise ValueError("remote profiles must match role order exactly")
+    selected = dict(selections)
+    if (
+        tuple(target.path for target in task.targets) != config.editable_paths
+        or task.context != config.context_paths
+        or config.roles is not None
+        or config.remote_runtime is not None
+    ):
+        raise ValueError("remote role setup requires an unbound exact task scope")
+    for role, binding in (
+        (roles.coder, config.host.bindings[0]),
+        (roles.reviewer, reviewer_binding),
+    ):
+        if binding.binding_id != role.binding:
+            raise ValueError("role binding differs from the selection")
+        provider = binding.provider
+        if role.binding == "ollama" and (
+            not isinstance(provider, OllamaSettings)
+            or (provider.chat_model, provider.base_url, provider.timeout_seconds)
+            != (role.model, role.url, role.timeout)
+        ):
+            raise ValueError("role local provider differs from the selection")
+        if role.binding == "replay" and not isinstance(
+            provider, TrustedModelContribution
+        ):
+            raise ValueError("role replay requires a trusted contribution")
+    validate_role_profiles(
+        config.repository,
+        tuple((profile, Path(selected[name].custody)) for name, profile in profiles),
+        now=now,
+    )
+    if "coder" in expected and config.host.bindings != (
+        dict(profiles)["coder"].binding(),
+    ):
+        raise ValueError("coder profile changed after loading")
+    if (
+        "reviewer" in expected
+        and reviewer_binding != dict(profiles)["reviewer"].binding()
+    ):
+        raise ValueError("reviewer profile changed after loading")
+    for name, profile in profiles:
+        role = selected[name]
+        if (role.model, role.provider) != (profile.model, profile.provider.value):
+            raise ValueError("role attribution changed after loading")
+    reviewer = local_profile(
+        config.repository,
+        config.editable_paths,
+        bindings=(reviewer_binding,),
+        binding=roles.reviewer.binding,
+        git_executable=config.git_executable,
+        docker_executable=config.docker_executable,
+        now=now,
+    )
+    hosts = {
+        "coder": replace(config.host, max_executions=2),
+        "reviewer": replace(
+            reviewer.host,
+            max_executions=2,
+            grants=tuple(
+                g
+                for g in reviewer.host.grants
+                if g.action in {"invoke-capability", REPOSITORY_READ_ACTION}
+            ),
+        ),
+    }
+    sources: list[CredentialSource] = []
+    associations: list[RemoteRole] = []
+    with ExitStack() as cleanup:
+        for name, profile in profiles:
+            source = remote_credentials(config)
+            cleanup.callback(source.close)
+            if any(source is previous for previous in sources):
+                raise ValueError("remote roles require separate sources")
+            sources.append(source)
+            label(name, profile)
+            credential = source.provision("forgeai-" + name)
+            runtime = RemoteModelRuntime(
+                source,
+                Path(selected[name].custody),
+                timedelta(minutes=5),
+                trust_anchor,
+            )
+            associations.append(RemoteRole(name, profile, runtime, source, credential))
+            binding = profile.binding()
+            assert isinstance(binding.provider, OpenAICompatibleSettings)
+            binding = replace(
+                binding,
+                provider=replace(binding.provider, bearer_credential=credential),
+            )
+            hosts[name] = replace(
+                hosts[name],
+                bindings=(binding,),
+                disclosure=profile.policy,
+                grants=hosts[name].grants
+                + (
+                    OperatorGrant(
+                        GrantId("forgeai-" + name + "-secret"),
+                        "secret-use",
+                        credential.exact.identity,
+                        now,
+                        min(a.not_after for a in profile.policy.admissions),
+                    ),
+                ),
+            )
+        hosts = {
+            name: replace(
+                host,
+                configuration=replace(host.configuration, revision=roles.revision),
+            )
+            for name, host in hosts.items()
+        }
+        yield replace(
+            config,
+            roles=roles,
+            host=hosts["coder"],
+            reviewer_host=hosts["reviewer"],
+            model_selection={
+                "revision": roles.revision,
+                "binding": roles.coder.binding,
+            },
+            remote_roles=tuple(associations),
+            role_task=task,
+        )
 
 
 def bind_remote(

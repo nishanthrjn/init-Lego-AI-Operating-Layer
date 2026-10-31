@@ -25,8 +25,26 @@ class RoleModel:
     url: str = field(default="http://127.0.0.1:11434", repr=False)
     timeout: float = 300.0
     replay: tuple[str, ...] = field(default=(), repr=False)
+    profile: str = field(default="", repr=False)
+    custody: str = field(default="", repr=False)
+    provider: str = ""
 
     def __post_init__(self) -> None:
+        if self.binding == "openai-compatible-remote":
+            if (
+                any(
+                    type(value) is not str or not value.strip()
+                    for value in (self.profile, self.custody)
+                )
+                or self.replay
+                or type(self.model) is not str
+                or len(self.model) > 256
+                or type(self.provider) is not str
+            ):
+                raise ValueError("remote role requires profile and custody")
+            return
+        if self.profile or self.custody or self.provider:
+            raise ValueError("local roles cannot include remote settings")
         if self.binding not in ("replay", "ollama"):
             raise ValueError("role bindings must be local or replay")
         label(self.model)
@@ -63,6 +81,15 @@ class RoleModels:
 def parse_role(value: object) -> RoleModel:
     if type(value) is not dict:
         raise ValueError("role must be a table")
+    if value.get("binding") == "openai-compatible-remote":
+        if set(value) != {"binding", "profile", "custody"}:
+            raise ValueError("remote requires only binding, profile and custody")
+        return RoleModel(
+            "openai-compatible-remote",
+            "",
+            profile=value["profile"],
+            custody=value["custody"],
+        )
     if value.get("binding") == "replay":
         if set(value) != {"binding", "replay"} or type(value["replay"]) is not list:
             raise ValueError("replay requires only binding and files")

@@ -125,8 +125,15 @@ def run_report(
                 "binding": role.binding,
                 "model": role.model,
                 "model_quality": model_quality(
-                    ModelBindingKind[role.binding.upper()]
+                    ModelBindingKind.OPENAI_COMPATIBLE_REMOTE
+                    if role.binding == "openai-compatible-remote"
+                    else ModelBindingKind[role.binding.upper()]
                 ).value,
+                **(
+                    {"provider": role.provider}
+                    if role.binding == "openai-compatible-remote"
+                    else {}
+                ),
             }
             for name, role in (("coder", roles.coder), ("reviewer", roles.reviewer))
         }
