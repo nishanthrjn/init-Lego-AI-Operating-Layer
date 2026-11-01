@@ -1,4 +1,14 @@
 {
+  "p7_preregistered_gate": {
+    "state": "PREREGISTERED_NOT_RUN", "candidates": ["p7a", "p7b"],
+    "subset": "dev-16v", "public_score_target": 0.20,
+    "screening_minimum_resolved": 11, "maximum_empty_patches_each_run": 3,
+    "maximum_bootstrap_upper95_hours_each_run": 11,
+    "selection": "Among candidates passing all screening gates, select higher solved; ties use fewer empty patches, then lower bootstrap upper95, then P7a. Select before confirmation.",
+    "confirmation": "One fresh independent dev-16v run of the selected unchanged package/config/environment; not a held-out confirm-20 run. Mean solved across its screening and confirmation runs must be >=10.5/16. Empty-patch and time gates must also hold in confirmation.",
+    "fallback": "Otherwise retain P5; no switching candidates after failed confirmation without a new preregistration",
+    "limitation": "Complete runs and known metrics required. Public >=0.20 is an objective, not implied by these local gates. S3 is paused and not built."
+  },
   "s2_dev16v_attempt1": {
     "evidence_basis": "MAINTAINER_REPORTED; no independent recomputation",
     "state": "COMPLETED", "candidate": "s2", "subset": "dev-16v", "attempt": 1,
@@ -21,7 +31,7 @@
     "finding": "Empty submissions fell from 8 to 2, but wrong patches rose from 5 to 11 and solved remained 3. Consistent with the nonempty-diff rule affecting patch production without improving correctness; one run each, not an isolated causal test."
   },
   "s3_preregistered_gate": {
-    "state": "PREREGISTERED_NOT_RUN", "candidate": "s3", "subset": "dev-16v",
+    "state": "PAUSED_NOT_BUILT", "candidate": "s3", "subset": "dev-16v",
     "minimum_resolved": 5, "maximum_empty_patches": 3,
     "maximum_patch_bytes_each_task": 20000,
     "patch_size_definition": "20 KB = 20000 bytes; complete per-task patch byte telemetry required",

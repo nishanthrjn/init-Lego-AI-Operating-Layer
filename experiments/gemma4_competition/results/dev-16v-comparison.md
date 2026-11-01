@@ -251,3 +251,21 @@ small intended-source diffs. Preregistered: solved >=5/16 AND empty <=3 AND ever
 task patch <=20000 bytes (20 KB) AND bootstrap upper95 <=10.5 h; all metrics known
 on a complete dev-16v run, existing operational controls still apply. Otherwise
 freeze S1 as E4B entry and stop E4B iteration. No execution performed here.
+
+## P7 preregistration; S3 paused
+
+P5 public 0.13, p5_selfcontained v2, scriptVersionId 363609276, ZIP
+6db4109a...e219 is already recorded; no duplicate result is added. P5 remains
+the frozen 31B fallback. Public >=0.20 is the new target, not a predicted result.
+S3 is PAUSED_NOT_BUILT; its conditional gate is preserved for possible later use.
+
+P7a changes only P5's prompt; its exact run_command edit workaround is preserved.
+P7b shares P7a's prompt and changes only thinking_budget 4096 -> 2048. Both use
+unchanged P5 31B agent/evaluation budgets. Screen each on dev-16v: solved >=11/16,
+empty patches <=3, bootstrap upper95 <=11 h. Select the best passing candidate
+by solved count, then fewer empty patches, then lower bootstrap upper95, then
+P7a. Fix selection before one independent same-config dev-16v confirmation.
+Mean solved across selected screening plus confirmation must be >=10.5/16;
+confirmation must also satisfy empty/time gates. Otherwise retain P5; do not
+switch to the other candidate after failed confirmation without preregistration.
+This repeat is not held-out confirm-20. No builds, tests or evaluations executed.

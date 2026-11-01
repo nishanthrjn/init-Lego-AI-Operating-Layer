@@ -1813,3 +1813,74 @@ No bundle or ZIP/manifest hash has been generated here. Use the same reviewed
 local-eval workflow, E4B version 2 and pinned wheelhouse with no extra vLLM args.
 The generated config remains unapproved until the maintainer approves its GPU
 run with AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL s3 ON dev-16v and the existing flags.
+
+## P7a/P7b: 31B commit-early experiments; S3 paused
+
+P5 public 0.13 is already recorded: p5_selfcontained v2, scriptVersionId 363609276,
+ZIP 6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219.
+P5 remains the frozen 31B fallback. Public >=0.20 is a target, not a prediction.
+S3 is PAUSED_NOT_BUILT by maintainer instruction: do not build or run it. Its
+previous gate and source remain historical preparation, not an active run request.
+
+P7a changes only P5's prompt. It adds top-priority exact-identifier localization
+in the first ~5 calls, first source edit by call ~12/minute 3, a nonempty/small/
+intended diff requirement, no sed -i/regex code edits, damaged-file recovery and
+submission of the best current valid diff near budget limits. The old call-10 /
+150-second edit deadline is replaced by call-12 / 180 seconds to avoid conflicting
+instructions. The entire P5 run_command edit workaround is byte-identical; no
+helper creation is introduced. Commit early means edit source, not git commit.
+P7b has exactly the P7a prompt and changes only thinking_budget 4096 -> 2048.
+Both retain P5 agent.yaml (83a97b8a...), eval_config (2c8a983a...), output cap8192,
+temperature, tools, finish reserve and six-minute task budget.
+
+### Preregistered gate
+
+Run one complete frozen dev-16v screening run for each candidate. A candidate
+must solve >=11/16, have <=3 empty patches and bootstrap upper95 <=11 h. Select
+among passing candidates by highest solved, then fewer empty patches, then lower
+bootstrap upper95, then P7a. This deterministic tie-break is recorded before runs.
+Fix the winner before confirmation; run that unchanged package/config/environment
+once more independently on dev-16v. Mean solved across the selected screening run
+and its confirmation must be >=10.5/16; confirmation must also meet <=3 empty
+patches and <=11 h upper95. Complete, known metrics are required. Otherwise keep
+P5; do not switch to the runner-up after a failed confirmation without a separate
+preregistration. This confirmation is a same-config dev-16v repeat, not held-out
+confirm-20. Passing does not imply public >=0.20 or authorize submission.
+
+### Maintainer sequence (NOT RUN)
+
+Existing locked uv environment at C:\Work\ForgeAI-Gemma4; no new dependencies
+or environment variables. First run tests and paste output; stop pending review:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected OK, including exact P7 ablations, preserved workaround, rejection of
+extra sampling changes even with updated pins, and model/subset/authorization
+controls. After successful review, build to fresh external directories:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p7a --output 'C:\Work\Gemma4Localtest\gemma-p7a-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P7a build failed; stop' }
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p7b --output 'C:\Work\Gemma4Localtest\gemma-p7b-experiment'
+if ($LASTEXITCODE -ne 0) { throw 'P7b build failed; stop' }
+```
+
+Expected each directory: submission.zip.bin, manifest.json and matching
+p7a-dev16v.json or p7b-dev16v.json with actual ZIP/manifest pins. State remains
+EXPERIMENTAL_UNQUALIFIED; submission_authorized=false. ZIP/manifest hashes are
+pending because no build ran. Configs use official 31B Other/version 2 and empty
+extra serving args, frozen dev-16v and independent attempt1 outputs, with every
+authorization false and resume fields empty. Use the existing private-dataset /
+local_eval notebook workflow, reviewed tooling, pinned wheelhouse, L4x4 and
+Internet Off; set real dataset mounts without changing generated hashes.
+Approve only the exact desired run using
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p7a ON dev-16v or
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p7b ON dev-16v and existing approval flags.
+For the selected confirmation, reuse identical package/config settings and pins,
+change only output to a fresh ...-attempt2 directory, and leave resume fields
+empty. Do not merge or resume attempt1 as a confirmation. Retain all raw outputs,
+traces and environment identities. Subsequent qualification is a separate step.

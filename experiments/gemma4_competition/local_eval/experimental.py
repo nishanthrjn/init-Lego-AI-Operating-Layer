@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2", "s3"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "s1", "s2", "s3"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2", "s3"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "s1", "s2", "s3"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -75,6 +75,18 @@ def static_files(candidate):
         raise ValueError("S3 must change only the S2 prompt")
     if len(data["s3"]["prompts/system.md"]) > len(data["s2"]["prompts/system.md"]) + 400:
         raise ValueError("S3 prompt exceeds S2 + 400 bytes")
+    if {k for k in MEMBERS if data["p5"][k] != data["p7a"][k]} != {"prompts/system.md"}:
+        raise ValueError("P7a must change only the P5 prompt")
+    if {k for k in MEMBERS if data["p7a"][k] != data["p7b"][k]} != {"configs/sampling.yaml"}:
+        raise ValueError("P7b must change only P7a thinking budget")
+    if data["p7b"]["configs/sampling.yaml"] != data["p7a"]["configs/sampling.yaml"].replace(
+            b"thinking_budget: 4096", b"thinking_budget: 2048"):
+        raise ValueError("P7b thinking budget must be the only sampling change")
+    workaround = data["p5"]["prompts/system.md"].split(b"Source-edit path workaround:", 1)[1].split(
+        b"\n4. Verify before submitting.", 1)[0]
+    if data["p7a"]["prompts/system.md"].split(b"Source-edit path workaround:", 1)[1].split(
+            b"\n4. Verify before submitting.", 1)[0] != workaround:
+        raise ValueError("P7 must preserve the exact P5 edit workaround")
     return data[candidate]
 
 
@@ -93,14 +105,14 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2", "s3"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "s1", "s2", "s3"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
             raise ValueError("experimental archive members mismatch")
         if any(digest(archive.read(name)) != expected[name] for name in MEMBERS):
             raise ValueError("experimental archive bytes mismatch")
-    if config["candidate"] in {"p6", "s1", "s2", "s3"}:
+    if config["candidate"] in {"p6", "p7a", "p7b", "s1", "s2", "s3"}:
         from runtime import check_model_contract
         model = "gemma-4-e4b-it-qat-w4a16-ct" if config["candidate"] in {"s1", "s2", "s3"} else "gemma-4-31b-it-qat-w4a16-ct"
         if config.get("model_variant") != model or "vllm_extra_args" not in config:
@@ -111,7 +123,7 @@ def verify(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "s1", "s2", "s3"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "s1", "s2", "s3"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve()
