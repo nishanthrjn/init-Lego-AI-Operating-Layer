@@ -220,6 +220,30 @@
         "Full receipt, manifest and ZIP identities read from the existing reconciled CANDIDATE_PINS.p5 entry in submission_only/first_submission.ipynb; receipt prefix e20a608d and ZIP prefix 6db4109a match the maintainer report.",
         "Submission status is maintainer-reported, not independently queried live Kaggle state. No test, compiler, reconciliation or submission execution performed for this record update."
       ]
+    },
+    {
+      "candidate": "p5",
+      "replicate_of": {"notebook_name": "p5_selfcontained", "notebook_version": "2", "scriptVersionId": 363609276},
+      "receipt": "e20a608df0a5cd3b95c269890359d3be7b4ab423719bb0888ba1768b18374f05",
+      "zip_sha256": "6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219",
+      "manifest_sha256": "7fc5008c8e3faae3ed9e9e5cc231336b6bfc9d680303dcdfc64f1b3b57eff01d",
+      "zip_size": 6501,
+      "budget_values": {"timeout_seconds": 180, "max_tool_calls": 28, "max_time_minutes": 6, "max_turns": 80},
+      "notebook_name": "p5_selfcontained atempt2",
+      "notebook_version": "2",
+      "scriptVersionId": 364559449,
+      "selection_status": "FROZEN_31B_ENTRY",
+      "submission_time_utc": null,
+      "submission_id": null,
+      "status": "SUCCEEDED",
+      "public_score": 0.15,
+      "error_text": null,
+      "notes": [
+        "Maintainer-reported identical-ZIP P5 leaderboard rerun; notebook spelling atempt2 preserved as supplied. No live Kaggle query or execution.",
+        "Receipt, manifest and package metadata reference the original identical P5 package, not a new compilation or receipt. Exact submission timestamp and submission ID not supplied; scriptVersionId is not a submission ID.",
+        "Run1 public 0.13 (scriptVersionId 363609276), run2 public 0.15: mean 0.14 (approximately 8/58); observed identical-submission spread 0.02 (approximately one task).",
+        "Two-run spread is descriptive leaderboard noise evidence, not a confidence interval, population bound or exact task-flip count. P5 remains the frozen 31B entry."
+      ]
     }
   ]
 }

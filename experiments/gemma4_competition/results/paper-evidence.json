@@ -50,9 +50,25 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p5_identical_submission_public_replicate2",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "sha256": "d6b839dc1ee0daefc1dc619927cbc7e59cad7f94eb9ff5d19d2939d5b248498c", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
+      "basis": "MAINTAINER_REPORTED; identical ZIP and leaderboard results, no independent execution",
+      "values": {
+        "scriptVersionIds": [363609276, 364559449],
+        "zip_sha256": "6db4109a73cfea1c803c17e86f498406461141904dac58efe441f10cca1fe219",
+        "public_scores": [0.13, 0.15], "mean_public_score": 0.14,
+        "mean_public_solved_approx": 8, "public_tasks_reported": 58,
+        "observed_public_score_spread": 0.02, "observed_task_count_spread_approx": 1,
+        "decision": "KEEP_P5_FROZEN_31B_ENTRY"
+      },
+      "interpretation": "Two identical-submission runs exhibit a 0.02 public-score spread. This is a direct descriptive leaderboard noise observation; the earlier +/-2-3 task estimate remains historical informal context, not this pair's measured spread.",
+      "limitation": "Only two runs and rounded public scores. Approximate task counts do not establish exact task flips, a confidence interval or population noise bound. Local dev-16v is verifiable-only; public includes unsound/environment-broken tasks per maintainer report."
+    },
+    {
       "id": "p5_public_result_frozen_31b",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "1f602d3ac228db0000ba3b62a82b0659679fcd119dc9e57e24bbcade04e24ce0", "pointer": "/runs/6",
+      "sha256": "d6b839dc1ee0daefc1dc619927cbc7e59cad7f94eb9ff5d19d2939d5b248498c", "pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; no live Kaggle query or independent analysis",
       "values": {
         "notebook_name": "p5_selfcontained", "notebook_version": "2",
