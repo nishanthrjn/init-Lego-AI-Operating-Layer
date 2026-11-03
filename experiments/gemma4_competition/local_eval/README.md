@@ -1940,3 +1940,68 @@ traces and task results from both runs; do not overwrite or merge them.
 
 Verification: NOT RUN — awaiting maintainer execution. No tests, builds,
 validators, notebooks or evaluations executed for this slice.
+
+## P9a/P9b: state on disk and thinking budget (preregistered, not run)
+
+P8 is final REJECTED; attempt2 CANCELLED per maintainer. P5 remains frozen.
+P9a adds only a concise state-on-disk block to the entire P7a prompt:
+/tmp/repro.py and /tmp/notes.md preserve the target, reproduction, edits and next
+step across summarized history. All writes remain via run_command; source-edit
+workaround and existing P7a rules remain intact. P9b changes only thinking_budget
+4096->512 relative to P9a. Both keep P7a's28 calls,6 minutes and8192 output tokens;
+this is not a continuation of P8's40-call setting.
+
+Two fresh full dev-16v runs per variant (four total), fixed package/environment
+within each pair, distinct output directories, no resume. A variant passes only
+if pooled solved>=21/32 AND pooled empty<=6 AND BOTH authoritative repo bootstrap
+upper95<=11 h. All outcomes/patch/time metrics must be known. If one passes, select
+it; if both pass, higher pooled solved wins. Equal pooled solved retains P5
+(conservative tie policy); neither passing also retains P5. Do not choose from
+single-run results. Submission qualification remains a separate step.
+
+Compaction investigation: runtime.py:250-251 reconstructs the same15/2/14336/5
+settings as official starter cell index10(id1b3f20ba), source-lines68-72, and
+HARNESS_README.md:568-575. Cell8 is server setup, not the evaluation cell.
+No compaction-only LOCAL_EVAL_DIVERGENCE established; exact deployed scorer
+parity remains unverified. There is no documented agent.yaml/eval_config.yaml
+submission override for compaction. Summary model, prompt and token settings
+are UNKNOWN from available pinned bytes: Google ADK defaults are delegated and
+the registered1.36.1 wheel is absent. Do not infer that512 applies to summary
+calls. Positive thinking_budget is mapped per ordinary agent request to vLLM
+extra_body.thinking_token_budget; it is not a task-wide quota. Compaction is not
+guaranteed exactly every15 tool calls; thresholds also apply. See paper-evidence
+source review and maintainer-measurement limitations.
+
+Manual controls, existing locked offline environment, repository root:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected OK including P9 static controls, extra-sampling-change rejection,
+four independent configs, and model/subset/authorization checks. Paste results
+before proceeding. After successful tests and review, build commands are:
+
+```powershell
+$p9aOutput = 'C:\Work\Gemma4Localtest\gemma-p9a-experiment-' + [guid]::NewGuid().ToString('N')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p9a --output $p9aOutput
+if ($LASTEXITCODE -ne 0) { throw 'P9a build failed; stop' }
+$p9bOutput = 'C:\Work\Gemma4Localtest\gemma-p9b-experiment-' + [guid]::NewGuid().ToString('N')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p9b --output $p9bOutput
+if ($LASTEXITCODE -ne 0) { throw 'P9b build failed; stop' }
+```
+
+Each output: submission.zip.bin, manifest.json and variant-dev16v-attempt1.json /
+attempt2.json with generated package/manifest hashes; EXPERIMENTAL_UNQUALIFIED,
+submission_authorized=false. ZIP/manifest hashes await maintainer builds.
+Use shared private datasets and the existing local_eval notebook with the pinned
+31B Other/version2 model, wheelhouse, L4x4 and Internet Off. Each account gets
+its assigned fresh config; replace dataset mount placeholders only, preserve
+hashes, and review the existing approval flags. Exact approval phrases:
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p9a ON dev-16v
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p9b ON dev-16v
+Keep all four raw run directories distinct and retain traces/environment metadata.
+No runtime, compaction, compiler or package implementation was changed.
+Verification NOT RUN — awaiting maintainer execution.

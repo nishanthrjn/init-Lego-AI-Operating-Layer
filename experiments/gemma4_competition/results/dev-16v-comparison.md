@@ -335,3 +335,28 @@ Maintainer interpretation: raising the call cap shifts failures to the time cap,
 with per-turn latency binding. Nine time-budget stops are consistent with this
 hypothesis; a single run does not establish causal conversion or isolate latency.
 P7a's separate exploratory public-measurement amendment remains unchanged.
+
+## P8 final; P9 replicated protocol
+
+Maintainer now confirms P8 REJECTED and attempt2 CANCELLED. P8 attempt1 is final;
+P5 retained. Raw attempt1 is extracted under
+C:\Work\Gemma4Localtest\local_eval_p8_dev16v_attempt1\forgeai-local-eval-p8-dev-16v-attempt1.
+This supersedes the earlier unknown cancellation state, not the early-stop
+arithmetic correction. No cancellation command was executed by the agent.
+
+P9a adds only a state-on-disk prompt block to P7a. P9b shares that prompt and
+changes only thinking_budget4096->512. Agent,28-call/6-minute evaluation and
+other sampling fields stay unchanged. Each variant gets2 fresh dev-16v runs.
+Adopt only with pooled solved>=21/32, pooled empty<=6, each repo upper95<=11 h.
+If one passes select it; if both pass select higher pooled solved; tied passing
+variants conservatively retain P5. If neither passes retain P5. Four complete
+runs with known metrics required; no one-run selection or resume.
+
+Maintainer trace measurements: ~35 tok/s decode; ~85% of step time in completion
+generation; median130 completion tokens/step(p90~680); compaction median29 s(n88).
+Compaction-present task-runs solved35/76 vs18/20 without. Thirteen-run31B matrix:
+7 always-solved,5 coin-flip,4 never-solved (rich_3934,fastapi_15800,rich_3471,
+rich_4076);3 of these4 have<=86-character issue statements (identities unspecified).
+Cohort/run membership not supplied; these are maintainer measurements, not agent
+recomputations. Difficulty and trajectory duration confound the compaction
+association. See paper-evidence.json for source-review limits and denominators.

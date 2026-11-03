@@ -1,8 +1,19 @@
 {
+  "p9_preregistered_gate": {
+    "state": "PREREGISTERED_NOT_RUN", "candidates": ["p9a", "p9b"], "subset": "dev-16v",
+    "attempts_each_variant": [1, 2], "required_complete_runs": 4,
+    "controls": "P9a=P7a plus state-on-disk prompt block only; P9b=P9a with thinking_budget4096->512 only. Both retain28 calls and6 minutes, not P8's40 calls.",
+    "minimum_pooled_resolved_each_variant": 21, "pooled_tasks_each_variant": 32,
+    "maximum_pooled_empty_each_variant": 6, "maximum_bootstrap_upper95_hours_each_run": 11,
+    "timing_method": "REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1",
+    "completeness": "Two fresh independent full16-task runs per variant; known patch/time metrics and unchanged package/environment within each pair. No resume, cherry-picking or one-run selection.",
+    "selection": "If only one variant passes all gates, select it. If both pass, higher pooled solved wins; if tied, retain P5 (conservative tie policy). If neither passes, retain P5.",
+    "submission": "Local adoption gate only; official qualification still required. Existing P7a exploratory amendment and final selection rules unchanged."
+  },
   "p8_attempt1": {
     "candidate": "p8", "subset": "dev-16v", "attempt": 1,
     "state": "COMPLETED", "evidence_basis": "MAINTAINER_REPORTED; no independent analysis",
-    "retained_externally": true, "retained_path": null,
+    "retained_externally": true, "retained_path": "C:\\Work\\Gemma4Localtest\\local_eval_p8_dev16v_attempt1\\forgeai-local-eval-p8-dev-16v-attempt1",
     "elapsed_seconds": 5057, "startup_seconds": 374,
     "zip_sha256": "495470eb4530bca7cfdb45aefb4679edc606e277e4d7237cb1a0fe812dd3de5a",
     "manifest_sha256": "17a2f7438617479b6184aeb7add95fce18fc0448d05b7087c20bf0d268cdd186",
@@ -17,8 +28,8 @@
   "p8_decision": {
     "decision": "REJECT_P8_RETAIN_P5", "selection_status": "REJECTED",
     "decision_basis": "MAINTAINER_DIRECTED_EARLY_STOP", "pooled_gate_status": "NOT_EVALUABLE_SECOND_RUN_ABSENT",
-    "attempt2_policy": "Cancel if not completed; if already completed, retain as replicate only, not adoption evidence",
-    "attempt2_completion_state": "UNKNOWN", "attempt2_cancellation_executed_by_agent": false,
+    "attempt2_policy": "CANCELLED; final maintainer decision",
+    "attempt2_completion_state": "CANCELLED", "final": true, "cancellation_basis": "MAINTAINER_REPORTED", "attempt2_cancellation_executed_by_agent": false,
     "required_attempt2_resolved_for_original_gate": 14,
     "arithmetic_correction": "7+14=21 and14<=16, so the pooled solved threshold remains mathematically reachable (maximum23/32). Rejection is an early-stop decision, not proven futility or a completed two-run gate failure.",
     "finding_maintainer_interpretation": "Raising the call cap converts call-cap failures into time-cap failures; per-turn latency appears binding",
