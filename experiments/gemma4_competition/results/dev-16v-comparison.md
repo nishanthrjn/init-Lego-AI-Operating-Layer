@@ -270,7 +270,7 @@ confirmation must also satisfy empty/time gates. Otherwise retain P5; do not
 switch to the other candidate after failed confirmation without preregistration.
 This repeat is not held-out confirm-20. No builds, tests or evaluations executed.
 
-## P7 screening: P7a selected, confirmation pending
+## P7 screening history (superseded by completed confirmation below)
 
 Maintainer reports P7a COMPLETED in 4475 s (startup393), solved11/16, empty1
 (rich_3471), four time_budget (rich_3934, rich_3471, rich_4076, fastapi_15589),
@@ -288,5 +288,32 @@ and full build identities are recorded in JSON; supplied run roots were unavaila
 Thinking4096->2048 showed no material speed gain and worse empty/format outcomes;
 one run each does not isolate causality. See JSON for exact package identities.
 
-Unchanged P7a confirmation is pending: >=10/16 yields mean>=10.5 with11/16, with
+At screening, unchanged P7a confirmation was pending: >=10/16 yields mean>=10.5 with11/16, with
 <=3 empty and bootstrap upper95<=11 h still required. P5 remains retained.
+
+## P7a confirmation completed; P5 retained
+
+P7a attempt2 COMPLETED4477 s(startup364), solved7/16, empty5:
+fastapi_5624, rich_4075, fastapi_14419, rich_4079, rich_4076.
+Six time_budget; zero tool rejections and zero sed -i uses (maintainer report).
+Same ZIP68f68585/manifest2b982fc8 as attempt1. Confirmation FAILED:
+mean(11+7)/2=9.0<10.5; empty5>3. P7a is not adopted.
+Authoritative repo bootstrap upper95: attempt1=8.575124150066948 h,
+attempt2=8.698791686732777 h. Both pass timing. Maintainer estimates9.35/9.56 h
+remain separately labeled; they do not replace the repo analyzer results.
+
+Pooled P7a18/32 equals P5's18/32 descriptively. The same-ZIP11 vs7 spread is a
+key finding: a single dev-16v run cannot establish +/-2-task improvements here.
+This pair is not a confidence interval; equal totals do not prove equivalence.
+Across32 task-runs,10 hit the six-minute cap(all failed),7 hit28-call cap(4 failed).
+These cap counts are maintainer-reported and may overlap.
+
+## P8 replicated screening preregistration
+
+P8 changes only P7a evaluation.max_tool_calls28->40. Prompt, sampling, agent,
+six-minute limit and other evaluation values stay unchanged. Two fresh dev-16v
+runs, attempts1/2, may run concurrently on separate maintainer accounts using
+identical packages/environments and distinct output paths. Adopt only if pooled
+solved>=21/32 AND pooled empty<=6 AND each repo bootstrap upper95<=11 h.
+Both runs must be complete with known metrics. Otherwise retain P5. No selection
+from one run; official submission qualification remains separate.

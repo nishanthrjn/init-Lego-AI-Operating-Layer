@@ -1884,3 +1884,59 @@ For the selected confirmation, reuse identical package/config settings and pins,
 change only output to a fresh ...-attempt2 directory, and leave resume fields
 empty. Do not merge or resume attempt1 as a confirmation. Retain all raw outputs,
 traces and environment identities. Subsequent qualification is a separate step.
+
+## P8: replicated tool-budget screening (preregistered, not run)
+
+P7a confirmation failed (11+7)/2=9.0<10.5 and attempt2 had5 empty patches.
+P5 remains the frozen31B entry. P8 changes ONLY P7a eval_config.yaml:
+max_tool_calls28->40. Six minutes,80 turns,180-second command timeout, agent,
+prompt and sampling remain byte-identical. No compiler/package logic is duplicated.
+
+Local official-source review: [HARNESS_README section7.1](../docs/HARNESS_README.md#71-default-budgets-evaluationbudget-eval_configyaml--harness-limits-harnesslimits)
+documents configurable tool calls and default100 (not a maximum).
+The pinned [starter notebook](../docs/getting-started-gemma-4-developer-agent.ipynb)
+reads `int(eval_section.get('max_tool_calls', 100))` and forwards it unchanged.
+Archived `swegemma-0.2.11-py3-none-any.whl`, `swegemma/budget.py` and
+`config.py`, define an optional integer budget and pass the override through.
+No hard upper maximum was found in these pinned sources;40 is below the
+starter default100. This is a pinned-source finding, not a claim about later rules.
+
+Protocol: both fresh dev-16v attempts are required; run concurrently on the two
+maintainer accounts with the same package, model, controls, wheelhouse and
+settings. No resume or shared output directory. Adopt only if pooled solved>=21/32,
+pooled empty<=6, AND each authoritative repo bootstrap upper95<=11 h. Require
+complete16-task runs and known metrics. Otherwise keep P5. No one-run selection.
+Report account/environment identities and per-task flips; local gate success
+alone does not authorize a submission. S3 remains paused.
+
+Maintainer commands (existing locked offline environment, repository root):
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+```
+
+Expected OK including P8 budget-only control, rejection of extra changes even
+with new pins, two independent configs and experimental model/approval checks.
+Paste results before progressing. After successful checks, the build command is:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p8 --output 'C:\Work\Gemma4Localtest\gemma-p8-experiment-attempts1-2'
+if ($LASTEXITCODE -ne 0) { throw 'P8 build failed; stop' }
+```
+
+Expected: submission.zip.bin, manifest.json, p8-dev16v-attempt1.json and
+p8-dev16v-attempt2.json; EXPERIMENTAL_UNQUALIFIED, submission_authorized=false.
+ZIP/manifest hashes await the maintainer build. Output directory must not exist.
+Upload the single package and current local_eval tooling to shared private datasets;
+give both accounts access. Each account uses its own Copy & Edit + Save & Run All
+with the corresponding generated config in the existing local_eval notebook,
+31B Other/version2 model, pinned wheelhouse, L4x4 and Internet Off. Replace dataset
+mount placeholders, preserve generated hashes, review existing authorization
+flags and use `AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p8 ON dev-16v` for each run.
+Output folders end in p8-dev-16v-attempt1/attempt2. Retain run.json, completion,
+traces and task results from both runs; do not overwrite or merge them.
+
+Verification: NOT RUN — awaiting maintainer execution. No tests, builds,
+validators, notebooks or evaluations executed for this slice.

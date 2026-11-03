@@ -1,9 +1,51 @@
 {
+  "p7a_attempt2": {
+    "evidence_basis": "Maintainer report plus successful repo analysis output supplied by maintainer; no agent recomputation",
+    "candidate": "p7a", "subset": "dev-16v", "attempt": 2,
+    "state": "COMPLETED", "verifiable": 16, "resolved": 7,
+    "elapsed_seconds": 4477, "startup_seconds": 364,
+    "retained_externally": true,
+    "retained_path": "C:\\Work\\Gemma4Localtest\\p7a-review-bfb39d7b84234182b77ec9cd9c24aad1\\attempt2\\forgeai-local-eval-p7a-dev-16v-attempt2",
+    "zip_sha256": "68f685853161c0a3c0653e6c2a42655f53fc03b9f3ed8702b80c681390ef0c34",
+    "manifest_sha256": "2b982fc8bcfd01f60d505b0d41958370b7b617412315d029e002eb9f05f7d7f7",
+    "zip_size": 7359, "model": "gemma-4-31b-it-qat-w4a16-ct",
+    "empty_patches": 5, "nonempty_patches": 11, "unknown_patches": 0,
+    "empty_patch_tasks": ["fastapi_5624", "rich_4075", "fastapi_14419", "rich_4079", "rich_4076"],
+    "time_budget_count": 6, "all_tool_rejected": 0, "sed_in_place_uses": 0,
+    "bootstrap_upper95_hours": 8.698791686732777,
+    "bootstrap_method": "REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1",
+    "maintainer_bootstrap_upper95_hours": 9.56,
+    "maintainer_bootstrap_method": "Separate maintainer estimate; not authoritative repo bound"
+  },
+  "p7a_confirmation_decision": {
+    "status": "FAILED", "decision": "RETAIN_P5", "submission_authorized": false,
+    "resolved": [11, 7], "mean_resolved": 9.0, "required_mean": 10.5,
+    "empty_patches": [1, 5], "maximum_empty_each_run": 3,
+    "pooled_resolved": 18, "pooled_tasks": 32, "p5_pooled_resolved": 18,
+    "same_zip_verified": true,
+    "reason": "Mean9.0<10.5; attempt2 empty5>3. Both authoritative time bounds pass.",
+    "budget_observations_maintainer_reported": {
+      "task_runs": 32, "six_minute_cap_hits": 10, "six_minute_cap_failed": 10,
+      "twenty_eight_call_cap_hits": 7, "twenty_eight_call_cap_failed": 4,
+      "overlap": "UNKNOWN; do not sum cap-hit counts as disjoint tasks"
+    },
+    "variance_finding": "Identical ZIP yielded11 vs7: four-task observed spread. A single dev-16v run cannot establish a +/-2-task improvement here; this pair is not a confidence interval or population variance estimate. Equal pooled totals do not establish equivalence."
+  },
+  "p8_preregistered_gate": {
+    "state": "PREREGISTERED_NOT_RUN", "candidate": "p8", "subset": "dev-16v",
+    "control": "P7a with only max_tool_calls28->40; six-minute limit and all other members unchanged",
+    "attempts": [1, 2], "execution": "Concurrent independent runs on two maintainer accounts using identical package and pinned environment; distinct output folders; no resume",
+    "minimum_pooled_resolved": 21, "pooled_tasks": 32, "maximum_pooled_empty_patches": 6,
+    "maximum_bootstrap_upper95_hours_each_run": 11,
+    "timing_method": "REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1",
+    "completeness": "Both fresh dev-16v runs must be complete with 16 verifiable outcomes and known patch/time metrics; missing metrics do not pass",
+    "decision": "Adopt only if all gates pass; otherwise retain P5. No single-run selection. Submission still requires official qualification."
+  },
   "p7a_attempt1": {
     "evidence_basis": "MAINTAINER_REPORTED; package identity read from retained build artifacts",
     "candidate": "p7a", "subset": "dev-16v", "attempt": 1,
     "state": "COMPLETED", "verifiable": 16, "resolved": 11,
-    "retained_externally": true, "retained_path": "C:\\Work\\Gemma4Localtest\\runs\\forgeai-local-eval-p7a-dev-16v-attempt1",
+    "retained_externally": true, "retained_path": "C:\\Work\\Gemma4Localtest\\p7a-review-bfb39d7b84234182b77ec9cd9c24aad1\\attempt1\\forgeai-local-eval-p7a-dev-16v-attempt1",
     "zip_sha256": "68f685853161c0a3c0653e6c2a42655f53fc03b9f3ed8702b80c681390ef0c34",
     "manifest_sha256": "2b982fc8bcfd01f60d505b0d41958370b7b617412315d029e002eb9f05f7d7f7",
     "zip_size": 7359, "model": "gemma-4-31b-it-qat-w4a16-ct",
@@ -15,13 +57,13 @@
     "time_budget_with_nonempty_diff": 3,
     "all_tool_rejected": 0, "harness_errors": 0,
     "mean_task_seconds": 248, "mean_projected_116_task_hours_approx": 8.1,
-    "bootstrap_upper95_hours": 9.35, "bootstrap_upper97_5_hours": 9.58,
-    "bootstrap_method": "MAINTAINER_16_TASK_RESAMPLING_20000_SEED0",
-    "bootstrap_method_detail": "Resample 16 per-task wall seconds, project mean*116+startup; 20000 draws, seed0; not repo analysis.py",
+    "bootstrap_upper95_hours": 8.575124150066948, "maintainer_bootstrap_upper95_hours": 9.35, "maintainer_bootstrap_upper97_5_hours": 9.58,
+    "bootstrap_method": "REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1",
+    "bootstrap_method_detail": "Authoritative repo analyzer output supplied by maintainer; predictive 116-task bootstrap, 10000 draws, seed20261022. Earlier maintainer estimate retained separately.",
     "maintainer_mean_projected_hours": 8.11,
     "sed_in_place_uses": 1, "reported_edit_damage": false,
     "screening": "PASSED_MAINTAINER_REPORTED",
-    "limitation": "Retained path and 9.35 h bound are maintainer-reported; artifacts at the supplied run path were not available for inspection here. Repo 116-task predictive bootstrap and source-pins identity remain required for qualification."
+    "limitation": "Maintainer supplied successful repo analysis: pinned controls, complete, verifiable16, solved11, nonempty15, unknown0. Original unavailable run path replaced with actual extraction path; no analysis executed by agent."
   },
   "p7b_attempt1": {
     "evidence_basis": "MAINTAINER_REPORTED; package identity read from retained build manifests",
@@ -42,9 +84,9 @@
   },
   "p7_selection": {
     "selected_candidate": "p7a", "screening_status": "PASSED_MAINTAINER_REPORTED",
-    "confirmation_status": "PENDING", "minimum_confirmation_resolved": 10,
+    "confirmation_status": "FAILED", "minimum_confirmation_resolved": 10,
     "required_two_run_mean_resolved": 10.5, "submission_authorized": false,
-    "fallback": "P5 retained until unchanged P7a confirmation passes all preregistered gates",
+    "fallback": "P5 retained; P7a not adopted: two-run mean9.0<10.5 and attempt2 empty5>3",
     "ablation_interpretation": "Thinking 4096 -> 2048 showed no material speed gain (4475 vs 4389 total seconds; startup 393 vs 429), with worse empty/format outcomes as reported. One run each; no causal or statistical superiority claim."
   },
   "p7_preregistered_gate": {
