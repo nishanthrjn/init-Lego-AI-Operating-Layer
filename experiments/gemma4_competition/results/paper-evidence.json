@@ -73,7 +73,7 @@
     {
       "id": "p5_identical_submission_public_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "ca022543ba36d259fcb14bf8da91a5bfa27944b251de3162d20b0f5cefd9c825", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
+      "sha256": "e64703cea721c4a4d7a4247964b5fb9666377581b9009fb355ac3e32ee2b8bdf", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; identical ZIP and leaderboard results, no independent execution",
       "values": {
         "scriptVersionIds": [363609276, 364559449],
@@ -89,7 +89,7 @@
     {
       "id": "p5_public_result_frozen_31b",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "ca022543ba36d259fcb14bf8da91a5bfa27944b251de3162d20b0f5cefd9c825", "pointer": "/runs/6",
+      "sha256": "e64703cea721c4a4d7a4247964b5fb9666377581b9009fb355ac3e32ee2b8bdf", "pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; no live Kaggle query or independent analysis",
       "values": {
         "notebook_name": "p5_selfcontained", "notebook_version": "2",
@@ -185,7 +185,7 @@
     {
       "id": "p3_identical_file_leaderboard_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "ca022543ba36d259fcb14bf8da91a5bfa27944b251de3162d20b0f5cefd9c825",
+      "sha256": "e64703cea721c4a4d7a4247964b5fb9666377581b9009fb355ac3e32ee2b8bdf",
       "pointer": "/runs/5",
       "replicate_of_pointer": "/runs/4",
       "basis": "Maintainer-reported identical-file P3 leaderboard replicate, submitted 2026-10-28; no evaluation or live account verification executed.",
@@ -217,7 +217,7 @@
     {
       "id": "p1_scorer_exception_wave_hypothesis",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "ca022543ba36d259fcb14bf8da91a5bfa27944b251de3162d20b0f5cefd9c825",
+      "sha256": "e64703cea721c4a4d7a4247964b5fb9666377581b9009fb355ac3e32ee2b8bdf",
       "pointer": "/runs/2/notes",
       "basis": "Maintainer-reported forum exception wave from approximately October 21; likely explanation only, no independently established cause.",
       "values": {"cause": "UNKNOWN", "status": "ERROR", "public_score": null}
