@@ -1,4 +1,30 @@
 {
+  "p8_attempt1": {
+    "candidate": "p8", "subset": "dev-16v", "attempt": 1,
+    "state": "COMPLETED", "evidence_basis": "MAINTAINER_REPORTED; no independent analysis",
+    "retained_externally": true, "retained_path": null,
+    "elapsed_seconds": 5057, "startup_seconds": 374,
+    "zip_sha256": "495470eb4530bca7cfdb45aefb4679edc606e277e4d7237cb1a0fe812dd3de5a",
+    "manifest_sha256": "17a2f7438617479b6184aeb7add95fce18fc0448d05b7087c20bf0d268cdd186",
+    "identity_basis": "Reported prefixes expanded from maintainer-supplied P8 build output",
+    "max_tool_calls": 40, "resolved": 7, "verifiable": 16,
+    "time_budget_count": 9, "time_budget_with_nonempty_diff": 5,
+    "empty_patches": 4, "all_tool_rejected": 1,
+    "maintainer_bootstrap_upper95_hours": 10.69,
+    "bootstrap_upper95_hours": null, "bootstrap_method": "REPO_ANALYSIS_NOT_SUPPLIED",
+    "timing_note": "Maintainer estimate10.69 h is below11 h; do not substitute it for the preregistered authoritative repo bootstrap"
+  },
+  "p8_decision": {
+    "decision": "REJECT_P8_RETAIN_P5", "selection_status": "REJECTED",
+    "decision_basis": "MAINTAINER_DIRECTED_EARLY_STOP", "pooled_gate_status": "NOT_EVALUABLE_SECOND_RUN_ABSENT",
+    "attempt2_policy": "Cancel if not completed; if already completed, retain as replicate only, not adoption evidence",
+    "attempt2_completion_state": "UNKNOWN", "attempt2_cancellation_executed_by_agent": false,
+    "required_attempt2_resolved_for_original_gate": 14,
+    "arithmetic_correction": "7+14=21 and14<=16, so the pooled solved threshold remains mathematically reachable (maximum23/32). Rejection is an early-stop decision, not proven futility or a completed two-run gate failure.",
+    "finding_maintainer_interpretation": "Raising the call cap converts call-cap failures into time-cap failures; per-turn latency appears binding",
+    "limitation": "One P8 run with9 time-budget stops is consistent with this hypothesis but does not establish causal conversion or isolate per-turn latency; matched traces/timing and replication would be needed. No P8 call-cap count or per-task flips supplied.",
+    "p7a_exploratory_amendment": "UNCHANGED; separate public measurement remains pending"
+  },
   "p7a_attempt2": {
     "evidence_basis": "Maintainer report plus successful repo analysis output supplied by maintainer; no agent recomputation",
     "candidate": "p7a", "subset": "dev-16v", "attempt": 2,
@@ -32,7 +58,7 @@
     "variance_finding": "Identical ZIP yielded11 vs7: four-task observed spread. A single dev-16v run cannot establish a +/-2-task improvement here; this pair is not a confidence interval or population variance estimate. Equal pooled totals do not establish equivalence."
   },
   "p8_preregistered_gate": {
-    "state": "PREREGISTERED_NOT_RUN", "candidate": "p8", "subset": "dev-16v",
+    "state": "STOPPED_EARLY_BY_MAINTAINER", "candidate": "p8", "subset": "dev-16v",
     "control": "P7a with only max_tool_calls28->40; six-minute limit and all other members unchanged",
     "attempts": [1, 2], "execution": "Concurrent independent runs on two maintainer accounts using identical package and pinned environment; distinct output folders; no resume",
     "minimum_pooled_resolved": 21, "pooled_tasks": 32, "maximum_pooled_empty_patches": 6,

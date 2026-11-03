@@ -1,4 +1,13 @@
 {
+  "p8_local_selection": {
+    "candidate": "p8", "status": "NOT_SUBMITTED", "decision": "REJECTED",
+    "retained_submission_candidate": "p5", "decision_basis": "MAINTAINER_DIRECTED_EARLY_STOP",
+    "dev16v_attempt1_resolved": 7, "pooled_gate": "NOT_EVALUABLE_SECOND_RUN_ABSENT",
+    "attempt2_policy": "Cancel unless already completed; completed result is replicate-only",
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+    "evidence_pointer": "/p8_decision",
+    "notes": "14/16 would reach21/32; not mathematically impossible. No cancellation or evaluation executed. P7a exploratory public measurement and final selection rules unchanged."
+  },
   "p7a_exploratory_authorization": {
     "amendment_id": "P7A-EXPLORATORY-LB-1",
     "candidate": "p7a", "purpose": "EXPLORATORY_LB_MEASUREMENT",

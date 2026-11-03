@@ -317,3 +317,21 @@ identical packages/environments and distinct output paths. Adopt only if pooled
 solved>=21/32 AND pooled empty<=6 AND each repo bootstrap upper95<=11 h.
 Both runs must be complete with known metrics. Otherwise retain P5. No selection
 from one run; official submission qualification remains separate.
+
+## P8 attempt1 and maintainer-directed early stop
+
+Maintainer reports COMPLETED5057 s, startup374 s; ZIP495470eb...de5a,
+manifest17a2f743...d186, max_tool_calls40. Solved7/16;9 time_budget stops,
+5 with nonempty diffs;4 empty patches;1 tool rejection. Maintainer bootstrap
+upper95=10.69 h; authoritative repo bound and retained path not supplied.
+
+Decision: P8 REJECTED, P5 retained. Attempt2 is to be cancelled if not completed;
+if already completed, retain as replicate only. Completion/cancellation is not
+verified here. The original gate remains recorded unchanged, but is not evaluated
+with only one run. Attempt2 would need14/16: this is possible (7+14=21; maximum23),
+so this is a maintainer-directed early stop, not mathematical impossibility.
+
+Maintainer interpretation: raising the call cap shifts failures to the time cap,
+with per-turn latency binding. Nine time-budget stops are consistent with this
+hypothesis; a single run does not establish causal conversion or isolate latency.
+P7a's separate exploratory public-measurement amendment remains unchanged.
