@@ -4,7 +4,7 @@ import sys
 from experiments.gemma4_competition import portable_p7a as p7a
 
 ROOT = Path(__file__).resolve().parent
-BASE = "1f1084d4cef7effe58eb8fbb1a4795376d5259a2"
+BASE = "0fe7dd32152a9e3fdcee6f5db6905aa6eefa0613"
 PREFIX = "experiments/gemma4_competition/"
 SCOPE = {
     "validate_forgeai_gemma4_p7a_submission_qualification_1.py",
@@ -58,13 +58,13 @@ _original_reconcile = GATE.reconcile
 
 
 def reconcile(receipt, remote):
-    _development.require_confirmation_gate()
+    _development.require_qualification_gate()
     return _original_reconcile(receipt, remote)
 
 
 def main():
     # Block before scope commands, tests, installations, compilation or writes.
-    _development.require_confirmation_gate()
+    _development.require_qualification_gate()
     return GATE.main()
 
 

@@ -11,12 +11,19 @@ import validate_forgeai_gemma4_p7a_submission_qualification_1 as gate
 
 class P7AQualificationTests(unittest.TestCase):
     def test_confirmation_guard_precedes_local_validator_work(self):
-        with patch.object(gate._development, "require_confirmation_gate", side_effect=ValueError("pending confirmation")), \
+        with patch.object(gate._development, "require_qualification_gate", side_effect=ValueError("pending confirmation")), \
                 patch.object(gate.GATE, "main") as shared:
             with self.assertRaisesRegex(ValueError, "pending confirmation"):
                 gate.main()
             shared.assert_not_called()
 
+    def test_portable_receipt_rechecks_exploratory_authority(self):
+        from types import SimpleNamespace
+        revoked = SimpleNamespace(require_qualification_gate=lambda: (_ for _ in ()).throw(ValueError('consumed')))
+        with patch.object(p7a, '_original_verify', return_value={'candidate': 'p7a'}), \
+                patch.object(p7a, 'load_instance', return_value=revoked):
+            with self.assertRaisesRegex(ValueError, 'consumed'):
+                p7a.verify_local_receipt(Path('receipt.json'))
     def test_exact_experimental_package(self):
         files = p7a.static_candidate(p7a.CANDIDATE)
         self.assertEqual({k: hashlib.sha256(v).hexdigest() for k, v in files.items()}, p7a.MEMBER_PINS)
@@ -53,8 +60,9 @@ class P7AQualificationTests(unittest.TestCase):
             self.assertIn("experiments/gemma4_competition/" + name, paths)
         self.assertIn("validate_forgeai_gemma4_p7a_submission_qualification_1.py", paths)
         self.assertEqual(len(paths), len(set(paths)))
-        # Development evidence can arrive after CPU qualification without changing candidate receipts.
-        self.assertNotIn("experiments/gemma4_competition/results/dev-16v-comparison.json", paths)
+        # Exploratory authority and local failure evidence are receipt-bound.
+        self.assertIn("experiments/gemma4_competition/results/dev-16v-comparison.json", paths)
+        self.assertIn("experiments/gemma4_competition/results/submissions.json", paths)
 
     def test_notebook_inert_and_receipt_specific(self):
         nb = json.loads((p7a.AREA / "kaggle_compiler/p7a_compiler_only.ipynb").read_bytes())

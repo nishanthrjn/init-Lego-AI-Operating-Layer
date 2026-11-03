@@ -1,4 +1,22 @@
 {
+  "p7a_exploratory_authorization": {
+    "amendment_id": "P7A-EXPLORATORY-LB-1",
+    "candidate": "p7a", "purpose": "EXPLORATORY_LB_MEASUREMENT",
+    "status": "AUTHORIZED_PENDING_QUALIFICATION", "execution_status": "NOT_SUBMITTED",
+    "recorded_before_any_p7a_public_score": true,
+    "pre_score_basis": "Explicit maintainer declaration before any P7a public score; no live leaderboard query",
+    "local_adoption": "NOT_ADOPTED", "local_confirmation": "FAILED",
+    "zip_sha256": "68f685853161c0a3c0653e6c2a42655f53fc03b9f3ed8702b80c681390ef0c34",
+    "experimental_manifest_sha256": "2b982fc8bcfd01f60d505b0d41958370b7b617412315d029e002eb9f05f7d7f7",
+    "zip_size": 7359, "maximum_submissions": 1, "submissions_used": 0,
+    "submission_ids": [], "public_score": null,
+    "receipt_sha256": null, "notebook_version": null,
+    "adopt_public_score_at_least": 0.17, "p5_mean_public_score": 0.14,
+    "otherwise": "RETAIN_P5", "final_selection_rules": "UNCHANGED",
+    "rationale": "Same-ZIP dev-16v spread11 vs7 exceeds the target effect; P5 identical-submission public spread0.02 (0.13/0.15). One exploratory leaderboard measurement, not a retroactive local gate pass.",
+    "interpretation": "Replace P5 as frozen31B entry only if this P7a public score>=0.17; otherwise retain P5. Approximate task-count interpretation only; rounded scores and small-n noise do not establish statistical significance.",
+    "consumption": "On the single manual submission, record its ID/version/receipt, set submissions_used=1 and execution_status=SCORING, and append the actual run. No automatic submission or retry is authorized."
+  },
   "s2_local_selection": {
     "candidate": "s2", "status": "NOT_SUBMITTED", "local_gate": "FAILED",
     "decision": "REJECT_S2_RETAIN_S1", "resolved": 3, "required_resolved": 5,

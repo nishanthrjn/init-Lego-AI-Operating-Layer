@@ -39,8 +39,8 @@ def build_notebook(candidate, pins, raw_manifest, payload):
         if any(pins.get(key) != value for key, value in gate_pins.items()):
             raise ValueError("P5 development evidence changed or was not qualified")
     if candidate == "p7a":
-        from qualify_p7a import require_confirmation_gate, ZIP_SHA256
-        gate_pins = require_confirmation_gate()
+        from qualify_p7a import require_qualification_gate, ZIP_SHA256
+        gate_pins = require_qualification_gate()
         if any(pins.get(key) != value for key, value in gate_pins.items()):
             raise ValueError("P7A development evidence changed or was not qualified")
         if pins.get("zip_sha256") != ZIP_SHA256 or pins.get("zip_size") != 7359:
@@ -72,6 +72,8 @@ def build_notebook(candidate, pins, raw_manifest, payload):
             "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}},
             "cells": [{"cell_type": "markdown", "id": "scope", "metadata": {}, "source": [
                 "# Self-contained " + candidate.upper() + " package preparation\n",
+                ("EXPLORATORY_LB_MEASUREMENT: one manual submission only; local adoption FAILED/NOT ADOPTED. Public threshold >=0.17; otherwise retain P5.\n"
+                 if pins.get("qualification_purpose") == "EXPLORATORY_LB_MEASUREMENT" else ""),
                 "Set Accelerator None; Internet Off. No input datasets required. Only submission.zip is written.\n",
                 "Set AUTHORIZATION in the final cell and save that version for reruns. Package preparation does not authorize submission.\n",
                 "Expected authorization: `" + pins["authorization"] + "`.\n"]},

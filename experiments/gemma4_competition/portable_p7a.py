@@ -18,6 +18,32 @@ ENGINE = adapter.build_engine("p7a", MEMBER_PINS, EXPERIMENTAL_ZIP_SHA256,
                               __file__, EXPERIMENTAL_ZIP_SIZE)
 
 
+_original_transfer = ENGINE.transfer_paths
+_original_verify = ENGINE.verify_local_receipt
+
+
+def transfer_paths():
+    prefix = 'experiments/gemma4_competition/'
+    return sorted(set(_original_transfer()) | {
+        prefix + 'results/submissions.json',
+        prefix + 'results/dev-16v-comparison.json',
+        prefix + 'submission_only/qualify_p7a.py',
+        prefix + 'submission_only/generate_self_contained.py',
+        prefix + 'submission_only/embedded_payload.py',
+        prefix + 'local_eval/source-pins.json',
+    })
+
+
+def verify_local_receipt(path):
+    receipt = _original_verify(path)
+    guard = load_instance(AREA / 'submission_only/qualify_p7a.py', '_p7a_receipt_authority')
+    guard.require_qualification_gate()
+    return receipt
+
+
+ENGINE.transfer_paths = transfer_paths
+ENGINE.verify_local_receipt = verify_local_receipt
+
 def __getattr__(name):
     return getattr(ENGINE, name)
 
