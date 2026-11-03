@@ -269,3 +269,24 @@ Mean solved across selected screening plus confirmation must be >=10.5/16;
 confirmation must also satisfy empty/time gates. Otherwise retain P5; do not
 switch to the other candidate after failed confirmation without preregistration.
 This repeat is not held-out confirm-20. No builds, tests or evaluations executed.
+
+## P7 screening: P7a selected, confirmation pending
+
+Maintainer reports P7a COMPLETED in 4475 s (startup393), solved11/16, empty1
+(rich_3471), four time_budget (rich_3934, rich_3471, rich_4076, fastapi_15589),
+three with nonempty diffs, zero tool rejections/harness errors. Mean248 s/task,
+~8.1 h mean projection; one sed -i violation, no reported damage. Screening
+PASSED as reported. Maintainer later supplied upper95=9.35 h (upper97.5=9.58),
+using 20000 draws of 16 tasks, seed0; repo116-task bootstrap remains pending.
+
+P7b COMPLETED4389 s (startup429), solved10/16, empty5, two TOOL_CALL_FORMAT_FAILURE,
+three rejections: screening FAILED. Its output/attempt_id was mistakenly
+forgeai-local-eval-s2-dev-16v-attempt1. Candidate=p7b, model31B and package/manifest
+identity establish P7b attempt1. Do not relabel as S2 or modify retained artifacts.
+Maintainer P7b upper95=9.12 h uses the same non-repo method. Exact retained paths
+and full build identities are recorded in JSON; supplied run roots were unavailable here.
+Thinking4096->2048 showed no material speed gain and worse empty/format outcomes;
+one run each does not isolate causality. See JSON for exact package identities.
+
+Unchanged P7a confirmation is pending: >=10/16 yields mean>=10.5 with11/16, with
+<=3 empty and bootstrap upper95<=11 h still required. P5 remains retained.

@@ -484,3 +484,172 @@ this updated checkout. After count confirmation, repeat the documented local-onl
 CPU compiler and reconciliation sequence with a fresh bundle/output suffix before
 qualify_p5. Candidate bytes and the frozen 6501-byte ZIP remain unchanged. No gate
 was weakened, no pins materialized, no submission executed and no commit made.
+
+## P7a qualification preparation: confirmation required
+
+P7a screening is maintainer-reported PASSED (11/16, one empty, no rejections or
+harness errors); P7b FAILED (10/16, five empty, two format failures, three
+rejections). P7b's internal S2 attempt_id is an operator output-label error;
+run.json candidate/model and P7b package identity take precedence. Preserve raw
+artifacts. S3 stays paused; P5 remains the frozen 31B entry until confirmation.
+
+P7a package pinned from retained build artifacts and matching maintainer output:
+ZIP 68f685853161c0a3c0653e6c2a42655f53fc03b9f3ed8702b80c681390ef0c34,
+7359 bytes; experimental manifest
+2b982fc8bcfd01f60d505b0d41958370b7b617412315d029e002eb9f05f7d7f7;
+prompt 622ef9503338228212386f7ef967844c601d1ce06c35d6dccf3c36ba1c43fa31.
+Candidate files are already exactly the evaluated experimental members; no copies
+or prompt changes are made in this qualification slice. portable_p7a.py configures
+portable_p3.build_engine and the M2 compiler/package engine. Root validator reuses
+P3 orchestration with explicit P7a scope/index guards based at
+1f1084d4cef7effe58eb8fbb1a4795376d5259a2 on br-ForgeAI-Gemma4. No compiler/package
+algorithms are duplicated. The compiler notebook is the inert P5 workflow with
+P7a-specific paths/authorization; previous candidates' pins remain unchanged.
+
+### First: maintainer tests and authoritative timing
+
+NOT RUN — Awaiting user execution. Existing locked uv environment, repository
+C:\Work\ForgeAI-Gemma4, no additional environment variables. Offline tests do
+not start serving or official compilation:
+
+```powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p 'test_p7a_qualification.py'
+if ($LASTEXITCODE -ne 0) { throw 'P7a qualification controls failed; paste output and stop' }
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/submission_only -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Submission controls failed; paste output and stop' }
+```
+
+Expected OK, including exact 7359-byte ZIP, shared-engine isolation, stage/scope
+controls, inert notebook, guard-before-work, metric/identity checks and generator
+bypass prevention. Paste results before further implementation.
+
+The maintainer's P7a upper95=9.35 h (upper97.5=9.58; mean8.11), P7b upper95=9.12 h
+(mean7.86) used 20000 draws of 16 task times, seed0, then projected their mean to
+116 tasks. Repo analysis uses 10000 draws of 116 task times per projected run,
+seed20261022, plus startup. These distributions differ. The reported 12.07 h
+all-tasks-at-cap estimate is also not a bootstrap bound. Run the authoritative
+repo command on the retained P7a root; neither command nor raw runs were executed
+or available for inspection by the coding agent:
+
+```powershell
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary 'C:\Work\Gemma4Localtest\runs\forgeai-local-eval-p7a-dev-16v-attempt1' --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033
+if ($LASTEXITCODE -ne 0) { throw 'P7a analysis failed; paste output and stop' }
+```
+
+Paste the full summary (including control qualification and time_fit) and the
+run.json source_pins_sha256. Run the same command against the retained unchanged
+confirmation root once completed. Do not replace raw evidence to change labels.
+
+### Required recorded confirmation (currently BLOCKED)
+
+qualify_p7a.require_confirmation_gate reads results/dev-16v-comparison.json.
+Both p7a_attempt1 and p7a_attempt2 must record candidate=p7a, subset=dev-16v,
+attempt1/2 respectively, state=COMPLETED, verifiable=16, resolved, empty_patches,
+distinct retained_path, exact experimental zip_sha256 and manifest_sha256 above,
+model=gemma-4-31b-it-qat-w4a16-ct, and the matching source_pins_sha256 from each
+retained environment. Each requires numeric bootstrap_upper95_hours <=11 from
+the repo output and bootstrap_method=REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1.
+Preserve the earlier maintainer estimate/method as historical evidence when the
+repo result is recorded; never relabel the estimate as repo output.
+
+p7_selection.selected_candidate must be p7a. After checking an independent,
+unchanged package/config/environment repeat, record p7a_confirmation_decision
+with status=PASSED and same_config_verified=true. That label alone cannot pass:
+the guard requires screening solved>=11, mean over both runs>=10.5, <=3 empty
+in EACH run and repo upper95<=11 in EACH run. With screening11, confirmation
+needs >=10. No second attempt or passing decision is invented now. Unknown
+metrics/identities block. Otherwise retain P5.
+
+The local-only validator, reconciliation wrapper, qualify_p7a and shared
+self-contained generator all check the confirmation gate. P7a CANDIDATE_PINS is
+a placeholder until successful preparation; no authorization or receipt is
+fabricated. Remaining instructions are for AFTER passing evidence is recorded.
+
+### Fresh local-only transfer bundle
+
+The validator runs offline tests when invoked. The packaging overlay below is
+the previously used cached packaging==26.3 prerequisite; --offline refuses a
+cache miss rather than changing project dependencies. Do not rerun wheel recovery.
+Use the preserved official compiler wheels; stop on any missing/mismatched pin.
+
+```powershell
+$p7aBundle = 'C:\Work\Gemma4Localtest\p7a-qualification-' + [guid]::NewGuid().ToString('N') + '\bundle'
+uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_p7a_submission_qualification_1.py --local-only --output $p7aBundle
+if ($LASTEXITCODE -ne 0) { throw 'P7a local qualification failed; paste output and stop' }
+$p7aReceipt = Join-Path $p7aBundle 'local-receipt.json'
+$p7aReceiptSha = (Get-FileHash -LiteralPath $p7aReceipt -Algorithm SHA256).Hash.ToLowerInvariant()
+Write-Host "Bundle: $p7aBundle"
+Write-Host "Receipt SHA256: $p7aReceiptSha"
+```
+
+Expected P7A_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED. Preserve
+that exact bundle/receipt and full SHA. Do not edit receipt-bound files after
+export; any such change requires a new bundle, CPU compile and reconciliation.
+
+### Kaggle CPU compiler-only sequence
+
+Use a fresh copy of the official starter for its Python3.12 Linux image, replace
+its content with kaggle_compiler/p7a_compiler_only.ipynb; Accelerator None,
+Internet Off. Attach the exact fresh bundle as a private input and official pinned
+wheelhouse. Set BUNDLE to the actual mounted bundle path and AUTHORIZATION to:
+AUTHORIZE FORGEAI GEMMA4 P7A KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY.
+Run ONLY notebook code cells in this order: inputs-and-approval,
+five-wheel-install, offline-compile, then the final export cell9647230f.
+Do not run starter installation, model serving, evaluation or submission cells.
+Use a fresh session/output each attempt. Download the receipt-labelled export
+ZIP and retain the complete gemma4-p7a-compiler directory: install-evidence.json,
+compiler-output.json, manifest.json, submission.zip, plus gemma4-p7a-compiler.log.
+Compare the export cell's full receipt hash to $p7aReceiptSha. Stop on mismatch
+or failed evidence; no successful compilation is claimed here.
+
+### Receipt-matched reconciliation and self-contained notebook
+
+Extract downloaded results to a fresh external root (use the compiler directory,
+not its parent). Keep the original receipt, not a different bundle's receipt:
+
+```powershell
+$p7aResults = 'C:\Work\Gemma4Localtest\p7a-compiler-results-1\gemma4-p7a-compiler'
+uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_p7a_submission_qualification_1.py --receipt $p7aReceipt --reconcile $p7aResults
+if ($LASTEXITCODE -ne 0) { throw 'P7a reconciliation failed; stop' }
+$p7aNotebook = 'C:\Work\Gemma4Localtest\p7a_selfcontained.ipynb'
+uv run --locked --offline --no-sync --with 'packaging==26.3' python -B experiments/gemma4_competition/submission_only/qualify_p7a.py --receipt $p7aReceipt --results $p7aResults --notebook $p7aNotebook
+if ($LASTEXITCODE -ne 0) { throw 'P7a submission preparation failed; stop' }
+```
+
+Expected P7A_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED;
+P7A_PACKAGE_VALIDATED, then P7A_SUBMISSION_PREPARATION_READY.
+qualify_p7a reuses qualify_p3 and generate_self_contained: it checks eligibility,
+reconciles, updates ONLY the P7a pin entry and writes a fresh external notebook
+embedding the reconciled bytes. Existing notebook destinations refuse overwrite.
+The resulting CPU-only notebook needs no datasets and has empty AUTHORIZATION.
+No submission action is executed or authorized automatically.
+
+Review and stage only this qualification slice and its reviewed result updates
+before the pre-commit check. Do not commit as part of these instructions:
+
+```powershell
+$p7aFiles = @(
+ 'validate_forgeai_gemma4_p7a_submission_qualification_1.py',
+ 'experiments/gemma4_competition/portable_p7a.py',
+ 'experiments/gemma4_competition/tests/test_p7a_qualification.py',
+ 'experiments/gemma4_competition/kaggle_compiler/p7a_compiler_only.ipynb',
+ 'experiments/gemma4_competition/submission_only/qualify_p7a.py',
+ 'experiments/gemma4_competition/submission_only/test_p7a_submission.py',
+ 'experiments/gemma4_competition/submission_only/generate_self_contained.py',
+ 'experiments/gemma4_competition/submission_only/first_submission.ipynb',
+ 'experiments/gemma4_competition/README.md',
+ 'experiments/gemma4_competition/results/dev-16v-comparison.json',
+ 'experiments/gemma4_competition/results/dev-16v-comparison.md',
+ 'experiments/gemma4_competition/results/paper-evidence.json'
+)
+git add -- @p7aFiles
+if ($LASTEXITCODE -ne 0) { throw 'Staging failed; stop' }
+uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_p7a_submission_qualification_1.py --pre-commit --receipt $p7aReceipt --reconcile $p7aResults
+if ($LASTEXITCODE -ne 0) { throw 'P7a pre-commit check failed; stop' }
+```
+
+Expected P7A_PRE_COMMIT_STAGED_CONSISTENCY_PASSED. Freeze receipt-bound and scope
+files through submission; later edits belong to a separate slice. Compilation
+and local qualification establish packaging/identity, not hidden quality or the
+public>=0.20 objective. Await explicit maintainer submission action.

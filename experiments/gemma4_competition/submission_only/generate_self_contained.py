@@ -38,6 +38,13 @@ def build_notebook(candidate, pins, raw_manifest, payload):
         gate_pins = require_two_run_gate()
         if any(pins.get(key) != value for key, value in gate_pins.items()):
             raise ValueError("P5 development evidence changed or was not qualified")
+    if candidate == "p7a":
+        from qualify_p7a import require_confirmation_gate, ZIP_SHA256
+        gate_pins = require_confirmation_gate()
+        if any(pins.get(key) != value for key, value in gate_pins.items()):
+            raise ValueError("P7A development evidence changed or was not qualified")
+        if pins.get("zip_sha256") != ZIP_SHA256 or pins.get("zip_size") != 7359:
+            raise ValueError("P7A package must match evaluated experimental identity")
     for key in ("manifest_sha256", "zip_sha256", "receipt_sha256"):
         value = pins.get(key)
         if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
