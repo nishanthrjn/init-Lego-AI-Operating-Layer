@@ -1,10 +1,10 @@
 {
   "p9_local_selection": {
     "candidates": ["p9a", "p9b"], "status": "NOT_SUBMITTED", "decision": "REJECTED",
-    "retained_submission_candidate": "p5", "basis": "MAINTAINER_DIRECTED_EARLY_STOP",
-    "p9a_attempt2": "COMPLETED_ARCHIVE_OBSERVED_EXCLUDED_FROM_ADOPTION", "p9b_attempt2": "COMPLETED_ARCHIVE_OBSERVED_REPLICATE_ONLY",
+    "retained_submission_candidate": "p5", "basis": "COMPLETED_TWO_RUN_POOLED_GATES_FAILED",
+    "p9a_attempt2": "COMPLETED", "p9b_attempt2": "COMPLETED", "pooled_resolved": {"p9a": 15, "p9b": 16, "tasks_each": 32}, "pooled_empty": {"p9a": 9, "p9b": 4}, "gate": "FAILED",
     "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json", "evidence_pointer": "/p9_decision",
-    "notes": "Original pooled gates remain mathematically reachable; early-stop decision honored. P7a exploratory rule and final selection rules unchanged."
+    "notes": "Final results supersede cancellation/exclusion reports: both runs included per variant. Neither reaches21/32; P9a also exceeds6 empty patches. P7a exploratory rule and final selection rules unchanged."
   },
   "p8_local_selection": {
     "candidate": "p8", "status": "NOT_SUBMITTED", "decision": "REJECTED",

@@ -363,20 +363,39 @@ association. See paper-evidence.json for source-review limits and denominators.
 
 ## P9 rejected; S1 bonus-entry preparation
 
-P9a attempt1: COMPLETED4576 s(startup360),8/16,empty4,time_budget3,rejection1,
-16 compactions. /tmp/notes.md referenced in one tool call across16 tasks, never
-read after compaction: intervention NOT ADOPTED BY MODEL per maintainer analysis.
-P9a attempt2 was reported cancelled; later ZIP metadata shows COMPLETED (see below). P9b attempt1: COMPLETED4221 s(startup421),7/16,empty1,
-no time_budget or rejections,mean230 s/task,~0.94 compactions/task. Completion
-max1158 vs P9a4378 is consistent with shorter generations but is not an isolated
-reasoning count proving exact512 enforcement. Maintainer interpretation: fewer
-timeouts/empty patches became incorrect patches; one run each does not establish
-causal task transitions. Both authoritative bootstrap bounds remain unknown.
+Final maintainer results supersede the cancellation and replicate-only reports.
+Both attempt2 runs completed and are included in the pooled decisions.
 
-P9 REJECTED by maintainer early stop; P5 retained. Second-run13/16 and14/16
-remain mathematically possible, so the pooled gates are incomplete, not unreachable.
-P9b attempt2 is optional replicate only, not adoption evidence. P7a exploratory
-public score remains pending;>=0.17 rule unchanged.
+| Variant / attempt | Wall / startup (s) | Solved | Empty | Time budget | Exact-phrase rejections | Compactions | Maintainer upper95 (h) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P9a / 1 | 4576 / 360 | 8/16 | 4 | 3 | 0 | 16 | 9.57 |
+| P9a / 2 | 4469 / 377 | 7/16 | 5 | 4 | 0 | 18 | 9.36 |
+| P9b / 1 | 4221 / 421 | 7/16 | 1 | 0 | 0 | ~15 (0.94/task) | 8.63 |
+| P9b / 2 | 3861 / 368 | 9/16 | 3 | 1 | 0 | 16 | 7.93 |
+
+P9a attempt1's earlier rejection count1 is corrected to0 under the exact
+mandatory-input-parameters phrase definition. All values are maintainer-reported;
+no analyzer executed for this update.
+
+P9a pooled15/32, empty9: FAILED solved>=21 and empty<=6.
+P9b pooled16/32, empty4: FAILED solved>=21; empty threshold passed.
+All supplied upper95 estimates are <=11 h; the preregistered repo-estimator
+results remain unconfirmed. Solved failures independently settle rejection.
+Reference P5 and P7a each18/32. P9 REJECTED; P5 retained.
+
+Disk-state rule not adopted in practice: notes.md referenced in one call in
+attempt1, zero in attempt2, covering1/32 P9a task-runs; no read-back after
+compaction reported. P9b's512 thinking setting has0-1 timeouts versus P9a3-4
+(broader maintainer baseline3-6) and roughly one hour lower projected runtime,
+without accuracy gain over reference18/32 (P9b16/32).
+Timeout failures becoming wrong patches and accuracy limiting coin-flip tasks
+are maintainer interpretations; paired transitions were not supplied to establish
+causality. Completion maxima1158/4378 alone do not prove exact reasoning-token
+cap enforcement.
+
+Retained archive: C:\Work\Gemma4Localtest\archive\gemma4-all-local-eval-runs.zip;
+SHA256SUMS.txt inside (maintainer-reported; archive/checksums not inspected here).
+P7a exploratory public score remains pending; >=0.17 rule unchanged.
 
 S1 E4B_BONUS_ENTRY preparation reuses shared compilation/reconciliation. Exact
 6501-byte package6f38e73c...a36a and experimental manifest219369b4...72a0 are read
@@ -384,10 +403,6 @@ from retained build artifacts. Numeric operational metrics are now recorded;
 tests and compilation await maintainer execution. A pass label alone cannot
 supply missing metrics.
 
-Read-only archive reconciliation: Downloads/results (4).zip identifies P9a
-attempt2 and completion COMPLETED(exit0,4469.243743263 s); results (3).zip identifies
-P9b attempt2 and completion COMPLETED(exit0,3861.043532574 s). Outcomes not analyzed.
-Both remain excluded from adoption under the maintainer's P9 rejection decision.
 S1 follow-up supplies0 harness errors,147 requested/126 budget-counted calls,
 2 invocation rejections and8 total worker errors; these are distinct categories.
 Read-only inspection confirmed two exact phrase-matched observations in
