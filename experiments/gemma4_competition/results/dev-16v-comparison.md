@@ -360,3 +360,38 @@ rich_4076);3 of these4 have<=86-character issue statements (identities unspecifi
 Cohort/run membership not supplied; these are maintainer measurements, not agent
 recomputations. Difficulty and trajectory duration confound the compaction
 association. See paper-evidence.json for source-review limits and denominators.
+
+## P9 rejected; S1 bonus-entry preparation
+
+P9a attempt1: COMPLETED4576 s(startup360),8/16,empty4,time_budget3,rejection1,
+16 compactions. /tmp/notes.md referenced in one tool call across16 tasks, never
+read after compaction: intervention NOT ADOPTED BY MODEL per maintainer analysis.
+P9a attempt2 was reported cancelled; later ZIP metadata shows COMPLETED (see below). P9b attempt1: COMPLETED4221 s(startup421),7/16,empty1,
+no time_budget or rejections,mean230 s/task,~0.94 compactions/task. Completion
+max1158 vs P9a4378 is consistent with shorter generations but is not an isolated
+reasoning count proving exact512 enforcement. Maintainer interpretation: fewer
+timeouts/empty patches became incorrect patches; one run each does not establish
+causal task transitions. Both authoritative bootstrap bounds remain unknown.
+
+P9 REJECTED by maintainer early stop; P5 retained. Second-run13/16 and14/16
+remain mathematically possible, so the pooled gates are incomplete, not unreachable.
+P9b attempt2 is optional replicate only, not adoption evidence. P7a exploratory
+public score remains pending;>=0.17 rule unchanged.
+
+S1 E4B_BONUS_ENTRY preparation reuses shared compilation/reconciliation. Exact
+6501-byte package6f38e73c...a36a and experimental manifest219369b4...72a0 are read
+from retained build artifacts. Numeric operational metrics are now recorded;
+tests and compilation await maintainer execution. A pass label alone cannot
+supply missing metrics.
+
+Read-only archive reconciliation: Downloads/results (4).zip identifies P9a
+attempt2 and completion COMPLETED(exit0,4469.243743263 s); results (3).zip identifies
+P9b attempt2 and completion COMPLETED(exit0,3861.043532574 s). Outcomes not analyzed.
+Both remain excluded from adoption under the maintainer's P9 rejection decision.
+S1 follow-up supplies0 harness errors,147 requested/126 budget-counted calls,
+2 invocation rejections and8 total worker errors; these are distinct categories.
+Read-only inspection confirmed two exact phrase-matched observations in
+trace_rich_3454.json, calls call_6 and call_9: 2/147 = 1.36%. Maintainer upper95
+2.88 h uses16-task resampling(20000,seed0), unlike the repo predictive116-task
+bootstrap. Supplied run path is present and run identity matches the retained
+S1 package; no authoritative analyzer was run.

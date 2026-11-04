@@ -1,4 +1,11 @@
 {
+  "p9_local_selection": {
+    "candidates": ["p9a", "p9b"], "status": "NOT_SUBMITTED", "decision": "REJECTED",
+    "retained_submission_candidate": "p5", "basis": "MAINTAINER_DIRECTED_EARLY_STOP",
+    "p9a_attempt2": "COMPLETED_ARCHIVE_OBSERVED_EXCLUDED_FROM_ADOPTION", "p9b_attempt2": "COMPLETED_ARCHIVE_OBSERVED_REPLICATE_ONLY",
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json", "evidence_pointer": "/p9_decision",
+    "notes": "Original pooled gates remain mathematically reachable; early-stop decision honored. P7a exploratory rule and final selection rules unchanged."
+  },
   "p8_local_selection": {
     "candidate": "p8", "status": "NOT_SUBMITTED", "decision": "REJECTED",
     "retained_submission_candidate": "p5", "decision_basis": "MAINTAINER_DIRECTED_EARLY_STOP",
@@ -36,7 +43,8 @@
     "notes": "Maintainer-reported local result, not a Kaggle submission. S1 remains E4B fallback. S3 is the final planned E4B iteration; if its gate fails, freeze S1 and stop iteration."
   },
   "s1_local_selection": {
-    "candidate": "s1", "status": "NOT_SUBMITTED",
+    "candidate": "s1", "status": "NOT_SUBMITTED", "purpose": "E4B_BONUS_ENTRY",
+    "qualification_status": "PREPARED_AWAITING_MAINTAINER_VALIDATION_AND_COMPILATION",
     "operational_gate": "PASSED_MAINTAINER_REPORTED",
     "decision": "E4B_BONUS_FALLBACK", "dev16v_resolved": 3,
     "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
