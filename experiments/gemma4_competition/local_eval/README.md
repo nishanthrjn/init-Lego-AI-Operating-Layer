@@ -2005,3 +2005,67 @@ AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p9b ON dev-16v
 Keep all four raw run directories distinct and retain traces/environment metadata.
 No runtime, compaction, compiler or package implementation was changed.
 Verification NOT RUN — awaiting maintainer execution.
+
+## P10: P5 eight-minute timing screen (preregistered, not run)
+
+P10 preserves all P5 bytes except evaluation.max_time_minutes6->8.
+Tool cap28, agent, prompt and sampling are unchanged. The exact P5 prompt still
+describes6 minutes and an edit deadline at300 seconds: this experiment changes
+the harness allowance, not the prompt deadline. P4 previously tested7 minutes
+on P3; the claim that no time-cap experiment ever occurred is not supported.
+
+Pinned-source review: docs/HARNESS_README.md:542-554 explicitly permits
+max_time_minutes overrides (default60 minutes). Official starter code cell10
+converts this value to float; OFFICIAL-CONTRACT-REGISTER.md:358-361 records
+that conversion and cautions that it alone does not prove ranges.
+docs/archive/swegemma-0.2.11-py3-none-any.whl!swegemma/config.py:107,149-177
+accepts int/float and forwards it to EvaluationBudget; swegemma/budget.py:15-18
+declares a float time_minutes with default60.0. No numerical min/max range
+or prohibition on8 was found in these pinned sources. Eight is compatible with
+the pinned configuration path; this does not remove the total platform limit.
+
+One complete dev-16v timing run, no resume. Record accuracy, but do not gate on
+it. Eligibility requires COMPLETED with16 results, zero harness errors,
+exact-phrase tool-argument rejections/all requested calls<=5%, and repo
+bootstrap upper95<=11.0 h. Unknown metrics block eligibility. Then, and only
+after separate official package qualification, permit ONE exploratory public
+submission. Adopt P10 only if public>=0.17; otherwise retain P5.
+If upper95>11.0 h, prepare P10b with7 minutes; do not build it speculatively.
+All other failures block submission. Neither public submission nor qualification
+is performed by the experimental builder.
+
+Forum claims (including staff's whole-submission failure above12 h and exclusion
+of queue time) and projected mean9.0-9.4 h / upper95 10.8-11.4 h are recorded in
+paper-evidence.json as maintainer reports, not independently verified rules.
+The6->8-minute projection holds other task durations fixed; it is not an absolute
+worst case. All116 tasks at8 minutes take15.47 h before startup.
+
+Manual prerequisites: C:\Work\ForgeAI-Gemma4, branch br-ForgeAI-Gemma4,
+existing locked offline uv environment. No new environment variables required.
+
+~~~powershell
+Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Local evaluation tests failed; paste output and stop' }
+~~~
+
+Expected OK, including time-only identity, refusal of extra changes even after
+repinning, authorization refusal and wrong-model/package rejection. Paste the
+results before proceeding. Verification: NOT RUN — Awaiting user execution.
+
+Subsequent maintainer build (not executed here):
+
+~~~powershell
+$p10Output = 'C:\Work\Gemma4Localtest\gemma-p10-experiment-' + [guid]::NewGuid().ToString('N')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py p10 --output $p10Output
+if ($LASTEXITCODE -ne 0) { throw 'P10 build failed; paste output and stop' }
+~~~
+
+Expected EXPERIMENTAL_UNQUALIFIED, candidate p10, submission_authorized false;
+submission.zip.bin, manifest.json and p10-dev16v-attempt1.json externally.
+ZIP and manifest hashes are build outputs, not claimed before execution.
+Use the generated config with the existing local-evaluation notebook workflow:
+replace mounted dataset paths, preserve31B model path, supply the exact
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p10 ON dev-16v phrase and explicitly enable
+the existing operator authorization flags only when launching the timing run.
+P9 final attempt2 results are already recorded; P9 remains rejected.

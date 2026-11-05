@@ -1,4 +1,23 @@
 {
+  "p10_preregistered_gate": {
+    "state": "PREREGISTERED_NOT_RUN", "candidate": "p10", "subset": "dev-16v",
+    "attempts": [1], "purpose": "TIMING_SCREEN_THEN_ONE_EXPLORATORY_PUBLIC_SUBMISSION",
+    "control": "P5 exact members except eval_config.yaml max_time_minutes6->8;28 calls unchanged.",
+    "required_state": "COMPLETED", "required_tasks": 16, "maximum_harness_errors": 0,
+    "maximum_all_tool_rejection_rate": 0.05,
+    "rejection_definition": "mandatory input parameters are not present",
+    "rejection_denominator": "All requested tool calls; unknown counts block eligibility.",
+    "maximum_bootstrap_upper95_hours": 11.0,
+    "timing_method": "REPO_ANALYSIS_116_TASK_BOOTSTRAP_V1",
+    "accuracy_gate": false, "accuracy": "Record solved count; no local accuracy threshold.",
+    "maximum_public_submissions_after_gate": 1, "submissions_used": 0,
+    "public_submission_state": "BLOCKED_PENDING_TIMING_GATE_AND_OFFICIAL_QUALIFICATION",
+    "adopt_public_score_at_least": 0.17, "otherwise": "RETAIN_P5",
+    "if_upper95_exceeds_11_hours": "Prepare P10b=P5 with only max_time_minutes7; not created before timing result.",
+    "missing_or_failed_metrics": "No public submission; do not interpret unknown values as passing.",
+    "prompt_limitation": "Exact P5 prompt still says6 minutes and stops new repairs at300 seconds; preserved as requested.",
+    "prior_time_cap_test": "P4 tested7 minutes on P3; P10 is the P5-specific8-minute test."
+  },
     "p9a_attempt1":  {
                          "candidate":  "p9a",
                          "subset":  "dev-16v",

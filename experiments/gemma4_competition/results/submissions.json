@@ -1,4 +1,12 @@
 {
+  "p10_local_selection": {
+    "candidate": "p10", "status": "NOT_SUBMITTED", "purpose": "TIMING_SCREEN_THEN_EXPLORATORY_LB",
+    "gate": "PENDING", "maximum_submissions_after_gate": 1, "submissions_used": 0,
+    "public_submission_state": "BLOCKED_PENDING_TIMING_GATE_AND_OFFICIAL_QUALIFICATION",
+    "adopt_public_score_at_least": 0.17, "retained_submission_candidate": "p5",
+    "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
+    "evidence_pointer": "/p10_preregistered_gate"
+  },
   "p9_local_selection": {
     "candidates": ["p9a", "p9b"], "status": "NOT_SUBMITTED", "decision": "REJECTED",
     "retained_submission_candidate": "p5", "basis": "COMPLETED_TWO_RUN_POOLED_GATES_FAILED",
