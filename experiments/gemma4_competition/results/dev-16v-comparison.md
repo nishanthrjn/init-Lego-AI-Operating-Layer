@@ -422,3 +422,16 @@ and a lower observed public score (0.12 vs0.13/0.15).
 Equal local totals do not establish statistical equivalence; one P7a public
 measurement does not establish a causal prompt effect. No further submission
 is authorized by the consumed amendment. No tests or analysis executed.
+
+## P10 friend-account timing run (attempt2)
+
+Maintainer reports COMPLETED4900 s, startup420 s; solved7/16 (not a gate),
+empty3, one time-budget task (rich_3934,487 s), nine28-call-cap tasks,
+zero harness errors, exact-phrase rejections0/386. Mean8.91 h,
+bootstrap upper95 10.40 h, upper97.5 10.69 h: reported timing gate PASSED.
+Full evaluated ZIP89a84bf7...33d6 and manifest06324d20...579a are recorded
+from retained run metadata. Full archive SHA256 is unknown; supplied5b81b16a...cf63
+is an abbreviation, not an integrity pin.
+The original protocol named attempt1 and repo bootstrap; the friend-attempt2
+and maintainer-estimator amendment is recorded separately, pending confirmation.
+Attempt1 will be recorded only after both submissions.
