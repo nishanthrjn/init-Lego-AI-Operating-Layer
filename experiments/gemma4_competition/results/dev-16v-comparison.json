@@ -165,7 +165,7 @@
                         "retained_archive":  "C:\\Work\\Gemma4Localtest\\archive\\gemma4-all-local-eval-runs.zip",
                         "checksum_manifest_member":  "SHA256SUMS.txt",
                         "archive_status":  "MAINTAINER_REPORTED; archive and checksums not inspected in this update",
-                        "p7a_exploratory_rule":  "UNCHANGED; public score pending; \u003e=0.17 replaces P5, otherwise retain P5"
+                        "p7a_exploratory_rule":  "SCORED public0.12 <0.17; P7a NOT ADOPTED; retain frozen P5; one of one submissions consumed"
                     },
   "p9_preregistered_gate": {
     "state": "COMPLETED_BOTH_VARIANTS_FAILED", "candidates": ["p9a", "p9b"], "subset": "dev-16v",
@@ -202,7 +202,7 @@
     "arithmetic_correction": "7+14=21 and14<=16, so the pooled solved threshold remains mathematically reachable (maximum23/32). Rejection is an early-stop decision, not proven futility or a completed two-run gate failure.",
     "finding_maintainer_interpretation": "Raising the call cap converts call-cap failures into time-cap failures; per-turn latency appears binding",
     "limitation": "One P8 run with9 time-budget stops is consistent with this hypothesis but does not establish causal conversion or isolate per-turn latency; matched traces/timing and replication would be needed. No P8 call-cap count or per-task flips supplied.",
-    "p7a_exploratory_amendment": "UNCHANGED; separate public measurement remains pending"
+    "p7a_exploratory_amendment": "SCORED public0.12 <0.17; P7a NOT ADOPTED; retain frozen P5"
   },
   "p7a_attempt2": {
     "evidence_basis": "Maintainer report plus successful repo analysis output supplied by maintainer; no agent recomputation",

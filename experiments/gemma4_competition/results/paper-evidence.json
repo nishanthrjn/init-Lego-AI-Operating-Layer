@@ -88,9 +88,22 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "p7a_exploratory_public_final",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "sha256": "400a256f59761d7ab546b5083e687c9d2b7e6e2e56cfc72069fa45213f9cc777", "pointer": "/runs/8",
+      "basis": "MAINTAINER_REPORTED_FINAL_PUBLIC_RESULT; no live query or independent execution",
+      "values": {"notebook": "p7a_exploratory", "version": 1, "scriptVersionId": 365424451,
+        "public_score": 0.12, "p5_public_scores": [0.13, 0.15], "p5_public_mean": 0.14,
+        "pooled_local_p7a": "18/32", "pooled_local_p5": "18/32",
+        "adoption_threshold": 0.17, "submissions_used": 1, "maximum_submissions": 1,
+        "execution_status": "SCORED", "decision": "NOT_ADOPTED_RETAIN_P5"},
+      "interpretation": "Commit-early prompt has equal observed pooled local solves and no observed public improvement over P5.0.12 <0.17 fails the preregistered exploratory adoption rule; P5 remains frozen31B entry.",
+      "limitations": "Equal local totals are not statistical equivalence. One P7a public result versus two P5 results, rounded scores and observed replicate noise do not establish a causal prompt effect."
+    },
+    {
       "id": "p9_disk_state_and_512_thinking_final",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/p9_decision",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/p9_decision",
       "run_pointers": ["/p9a_attempt1", "/p9a_attempt2", "/p9b_attempt1", "/p9b_attempt2"],
       "basis": "MAINTAINER_REPORTED_FINAL_RESULTS_AND_TRACE_ANALYSIS; no independent execution",
       "values": {
@@ -112,7 +125,7 @@
     {
       "id": "p8_tool_cap_increase_early_stop",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/p8_decision", "run_pointers": ["/p8_attempt1"],
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/p8_decision", "run_pointers": ["/p8_attempt1"],
       "basis": "MAINTAINER_REPORTED; no independent trace/timing analysis",
       "values": {"resolved": 7, "tasks": 16, "max_tool_calls": 40, "time_budget": 9, "time_budget_nonempty": 5, "empty_patches": 4, "rejections": 1, "maintainer_upper95_hours": 10.69},
       "interpretation": "P8 rejected by maintainer-directed early stop; retain P5. More calls appear to shift failures to time-budget exhaustion; per-turn latency is the maintainer's proposed binding constraint.",
@@ -121,7 +134,7 @@
     {
       "id": "p7a_failed_confirmation_and_within_config_variance",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/p7a_confirmation_decision",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/p7a_confirmation_decision",
       "run_pointers": ["/p7a_attempt1", "/p7a_attempt2"],
       "basis": "Maintainer reports and supplied successful pinned-controls repo analyzer outputs; no agent execution",
       "values": {"resolved": [11, 7], "empty_patches": [1, 5], "pooled_p7a": "18/32", "pooled_p5": "18/32", "repo_bootstrap_upper95_hours": [8.575124150066948, 8.698791686732777], "maintainer_upper95_hours": [9.35, 9.56]},
@@ -132,7 +145,7 @@
     {
       "id": "p7_screening_and_thinking_ablation",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/p7_selection",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/p7_selection",
       "run_pointers": ["/p7a_attempt1", "/p7b_attempt1"],
       "basis": "MAINTAINER_REPORTED; retained build identities inspected, no analysis executed",
       "values": {"resolved": [11, 10], "empty_patches": [1, 5], "elapsed_seconds": [4475, 4389], "startup_seconds": [393, 429], "rejections": [0, 3], "p7b_format_failures": 2},
@@ -142,7 +155,7 @@
     {
       "id": "p5_identical_submission_public_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "75c5570152036bad8a88f817524c79a1a6eae5e57a8853d3554dd3f050eec63f", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
+      "sha256": "400a256f59761d7ab546b5083e687c9d2b7e6e2e56cfc72069fa45213f9cc777", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; identical ZIP and leaderboard results, no independent execution",
       "values": {
         "scriptVersionIds": [363609276, 364559449],
@@ -158,7 +171,7 @@
     {
       "id": "p5_public_result_frozen_31b",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "75c5570152036bad8a88f817524c79a1a6eae5e57a8853d3554dd3f050eec63f", "pointer": "/runs/6",
+      "sha256": "400a256f59761d7ab546b5083e687c9d2b7e6e2e56cfc72069fa45213f9cc777", "pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; no live Kaggle query or independent analysis",
       "values": {
         "notebook_name": "p5_selfcontained", "notebook_version": "2",
@@ -176,7 +189,7 @@
     {
       "id": "s2_dev16v_patch_production_without_correctness",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/s2_dev16v_attempt1",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/s2_dev16v_attempt1",
       "basis": "MAINTAINER_REPORTED; no independent analysis",
       "values": {"resolved": 3, "tasks": 16, "empty_patches_s1_s2": [8, 2], "wrong_patches_s1_s2": [5, 11], "elapsed_seconds": 1927, "startup_seconds": 338, "mean_task_seconds": 92, "mean_tool_calls": 11.4, "harness_errors": 0, "rich_3454_patch_bytes": 115366},
       "decision": "S2 gate FAILED: solved 3 < 5; retain S1",
@@ -186,7 +199,7 @@
     {
       "id": "s1_dev16v_attempt1_operational_fallback",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946", "pointer": "/s1_dev16v_attempt1",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb", "pointer": "/s1_dev16v_attempt1",
       "basis": "MAINTAINER_REPORTED; no independent analysis",
       "values": {"resolved": 3, "tasks": 16, "empty_patch_submissions": 8, "wrong_patches": 5, "elapsed_seconds": 1599, "startup_seconds": 343, "mean_task_seconds": 78, "mean_tool_calls": 8, "time_budget": 0, "edit_file_rejections": 2, "reported_rejection_percent_approx": 1.6},
       "decision": "S1 operational gate PASSED as reported; retain as E4B bonus fallback while testing prompt-only S2",
@@ -195,7 +208,7 @@
     {
       "id": "p6_negative_aci_attempt1",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p6_attempt1", "decision_pointer": "/p6_adoption_decision",
       "basis": "Maintainer-reported completed dev-16v run and trace interpretation; no independent recomputation",
       "values": {
@@ -212,7 +225,7 @@
     {
       "id": "p5_attempt2_adoption_and_qualification",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p5_attempt2",
       "decision_pointer": "/p5_adoption_decision",
       "qualification_pointer": "/p5_qualification",
@@ -235,7 +248,7 @@
     {
       "id": "p5_dev16v_attempt1",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p5_attempt1",
       "basis": "Maintainer-reported completed run and trace observations; no independent recomputation executed.",
       "values": {
@@ -254,7 +267,7 @@
     {
       "id": "p3_identical_file_leaderboard_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "75c5570152036bad8a88f817524c79a1a6eae5e57a8853d3554dd3f050eec63f",
+      "sha256": "400a256f59761d7ab546b5083e687c9d2b7e6e2e56cfc72069fa45213f9cc777",
       "pointer": "/runs/5",
       "replicate_of_pointer": "/runs/4",
       "basis": "Maintainer-reported identical-file P3 leaderboard replicate, submitted 2026-10-28; no evaluation or live account verification executed.",
@@ -269,7 +282,7 @@
       },
       "local_evidence": {
         "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-        "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+        "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
         "pointer": "/p3_same_config_replicate"
       },
       "limitation": "Observed count spreads match in magnitude only. Hidden counts are approximate; no hidden per-task flip count, equal-variance claim, superiority claim or population noise bound follows."
@@ -277,7 +290,7 @@
     {
       "id": "tool_argument_rejections_and_p5_preregistration",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/tool_argument_rejection_evidence",
       "decision_pointer": "/p5_preregistered_decision",
       "basis": "Maintainer-reported trace counts and forum attribution; all-run/per-task recomputation NOT RUN. All-tool rejection gate and patch-preservation guard supersede original edit-only rejection gate.",
@@ -286,7 +299,7 @@
     {
       "id": "p1_scorer_exception_wave_hypothesis",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "75c5570152036bad8a88f817524c79a1a6eae5e57a8853d3554dd3f050eec63f",
+      "sha256": "400a256f59761d7ab546b5083e687c9d2b7e6e2e56cfc72069fa45213f9cc777",
       "pointer": "/runs/2/notes",
       "basis": "Maintainer-reported forum exception wave from approximately October 21; likely explanation only, no independently established cause.",
       "values": {"cause": "UNKNOWN", "status": "ERROR", "public_score": null}
@@ -294,7 +307,7 @@
     {
       "id": "p4_attempt1_and_retain_p3",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p4_adoption_decision",
       "run_pointer": "/p4_attempt1",
       "basis": "Maintainer-reported P4 results; pre-registered score gate fails despite reported runtime gate success",
@@ -303,7 +316,7 @@
     {
       "id": "per_task_solve_frequency_across_eight_runs",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/eight_run_comparison/per_task_solve_frequency",
       "basis": "Eight comparable runs confirmed by maintainer; P1 is restricted to dev-16v and P1b merged attempts count once. Per-task solve fractions use denominator eight when all verdicts are known; historical UNKNOWN remains distinct from unresolved.",
       "values": {"reported_runs": 8, "identified_comparable_runs": 8, "task_count": 16, "status": "EIGHT_RUN_COHORT_CONFIRMED; HISTORICAL_UNKNOWN_VERDICTS_PRESERVED", "rich_4079_first_success_in_eight_runs": "Unsolved in the seven earlier runs; maintainer-reported"}
@@ -311,7 +324,7 @@
     {
       "id": "p3_same_config_attempt2",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p3_same_config_replicate",
       "basis": "Maintainer-reported same-config replicate; retained attempt2 artifacts not independently analyzed",
       "values": {
@@ -326,7 +339,7 @@
     {
       "id": "p4_decision_threshold",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-      "sha256": "0174bf947d1b2f6e0ec99e0baf125a53732cd8d863bdb6ad87a8e8bb095ca946",
+      "sha256": "dd4ef9090eadd6c35bcea4b819ca4413442d14419e3483e40ea7f77e0b95afcb",
       "pointer": "/p4_decision_threshold",
       "basis": "Maintainer decision: both thresholds required; not a P4 result or statistical superiority claim",
       "values": {"minimum_resolved": 11, "denominator": 16, "maximum_bootstrap_upper95_hours": 11}

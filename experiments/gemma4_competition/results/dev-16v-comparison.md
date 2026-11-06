@@ -395,7 +395,7 @@ cap enforcement.
 
 Retained archive: C:\Work\Gemma4Localtest\archive\gemma4-all-local-eval-runs.zip;
 SHA256SUMS.txt inside (maintainer-reported; archive/checksums not inspected here).
-P7a exploratory public score remains pending; >=0.17 rule unchanged.
+P7a exploratory public score0.12 <0.17: NOT ADOPTED; P5 remains frozen.
 
 S1 E4B_BONUS_ENTRY preparation reuses shared compilation/reconciliation. Exact
 6501-byte package6f38e73c...a36a and experimental manifest219369b4...72a0 are read
@@ -410,3 +410,15 @@ trace_rich_3454.json, calls call_6 and call_9: 2/147 = 1.36%. Maintainer upper95
 2.88 h uses16-task resampling(20000,seed0), unlike the repo predictive116-task
 bootstrap. Supplied run path is present and run identity matches the retained
 S1 package; no authoritative analyzer was run.
+
+## P7a exploratory public result (final, maintainer-reported)
+
+p7a_exploratory Version1, scriptVersionId365424451: Succeeded, public0.12.
+ZIP68f68585...0c34 and receipt e3244ee6... retain their existing full identities.
+P7A-EXPLORATORY-LB-1 is SCORED with submissions_used1/1:0.12 <0.17,
+so P7a is NOT ADOPTED. P5 remains frozen31B entry (0.13,0.15; mean0.14).
+Commit-early prompt has equal observed local totals (P7a18/32, P5 18/32)
+and a lower observed public score (0.12 vs0.13/0.15).
+Equal local totals do not establish statistical equivalence; one P7a public
+measurement does not establish a causal prompt effect. No further submission
+is authorized by the consumed amendment. No tests or analysis executed.

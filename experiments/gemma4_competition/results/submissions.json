@@ -26,22 +26,22 @@
   "p7a_exploratory_authorization": {
     "amendment_id": "P7A-EXPLORATORY-LB-1",
     "candidate": "p7a", "purpose": "EXPLORATORY_LB_MEASUREMENT",
-    "status": "CONSUMED", "execution_status": "SCORING",
+    "status": "CONSUMED", "execution_status": "SCORED",
     "recorded_before_any_p7a_public_score": true,
     "pre_score_basis": "Explicit maintainer declaration before any P7a public score; no live leaderboard query",
     "local_adoption": "NOT_ADOPTED", "local_confirmation": "FAILED",
     "zip_sha256": "68f685853161c0a3c0653e6c2a42655f53fc03b9f3ed8702b80c681390ef0c34",
     "experimental_manifest_sha256": "2b982fc8bcfd01f60d505b0d41958370b7b617412315d029e002eb9f05f7d7f7",
     "zip_size": 7359, "maximum_submissions": 1, "submissions_used": 1,
-    "submission_ids": [], "public_score": null,
-    "receipt_sha256": "e3244ee63510eb639e5afb785beedcfa6769157e83d252e655b03625e26164a6", "notebook_version": null,
-    "notebook_name": "p7a_exploratory", "scriptVersionId": null, "submission_date_local": "2026-11-04",
+    "submission_ids": [], "public_score": 0.12, "selection_status": "NOT_ADOPTED_RETAIN_P5",
+    "receipt_sha256": "e3244ee63510eb639e5afb785beedcfa6769157e83d252e655b03625e26164a6", "notebook_version": 1,
+    "notebook_name": "p7a_exploratory", "scriptVersionId": 365424451, "submission_date_local": "2026-11-04",
     "submission_timezone": "Europe/Berlin", "submission_record_pointer": "/runs/8",
     "adopt_public_score_at_least": 0.17, "p5_mean_public_score": 0.14,
     "otherwise": "RETAIN_P5", "final_selection_rules": "UNCHANGED",
     "rationale": "Same-ZIP dev-16v spread11 vs7 exceeds the target effect; P5 identical-submission public spread0.02 (0.13/0.15). One exploratory leaderboard measurement, not a retroactive local gate pass.",
-    "interpretation": "Replace P5 as frozen31B entry only if this P7a public score>=0.17; otherwise retain P5. Approximate task-count interpretation only; rounded scores and small-n noise do not establish statistical significance.",
-    "consumption": "On the single manual submission, record its ID/version/receipt, set submissions_used=1 and execution_status=SCORING, and append the actual run. No automatic submission or retry is authorized."
+    "interpretation": "Final public0.12 < preregistered0.17: P7a NOT ADOPTED; P5 remains frozen31B entry (0.13/0.15, mean0.14). Descriptive comparison, not statistical significance.",
+    "consumption": "One of one authorized submissions consumed and scored. Notebook v1/scriptVersionId365424451 recorded; submission ID remains unknown. No retry authorized."
   },
   "s2_local_selection": {
     "candidate": "s2", "status": "NOT_SUBMITTED", "local_gate": "FAILED",
@@ -299,19 +299,19 @@
       "manifest_sha256": "abc59e63d348317a5bec1222c373d019a6300eb97ee6d99c2bf8c562f7d86281",
       "zip_size": 7359,
       "budget_values": {"timeout_seconds": 180, "max_tool_calls": 28, "max_time_minutes": 6, "max_turns": 80},
-      "notebook_name": "p7a_exploratory", "notebook_version": null, "scriptVersionId": null,
+      "notebook_name": "p7a_exploratory", "notebook_version": 1, "scriptVersionId": 365424451,
       "submission_date_local": "2026-11-04", "submission_timezone": "Europe/Berlin",
       "submission_time_utc": null, "submission_id": null,
-      "status": "SCORING", "public_score": null, "error_text": null,
+      "status": "SUCCEEDED", "execution_status": "SCORED", "public_score": 0.12, "error_text": null,
       "notebook_log_state": "CREATED", "local_adoption": "NOT_ADOPTED",
-      "selection_status": "PENDING_PUBLIC_SCORE_RETAIN_P5",
+      "selection_status": "NOT_ADOPTED_RETAIN_P5",
       "adopt_public_score_at_least": 0.17,
       "notes": [
         "Maintainer reports exactly one exploratory submission on2026-11-04; authorization consumed. No repeat submission authorized.",
-        "Notebook version and scriptVersionId were placeholders, not supplied values; both remain null. Exact time and submission ID are unknown.",
+        "Maintainer supplied notebook Version1 and scriptVersionId365424451 with final score. Exact submission time and submission ID remain unknown.",
         "Full receipt read from reconciled CANDIDATE_PINS.p7a; supplied abbreviated suffix6a6 differs from the recorded full hash suffix4a6. Prefix, ZIP and full manifest match; retain this discrepancy without inventing a receipt.",
-        "P7a failed local adoption and remains NOT ADOPTED. Public>=0.17 replaces P5 as frozen31B entry; otherwise retain P5. Score pending; final selection rules unchanged.",
-        "SCORING and CREATED are maintainer-reported; no live Kaggle query, test, build, validation or submission executed for this record."
+        "P7a failed local adoption and remains NOT ADOPTED: final public0.12 <0.17. P5 remains frozen31B entry; final selection rules unchanged.",
+        "Final Succeeded and public0.12 are maintainer-reported; prior notebook log state CREATED preserved. No live Kaggle query or execution for this update."
       ]
     }
   ]
