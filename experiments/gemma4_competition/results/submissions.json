@@ -1,11 +1,11 @@
 {
   "p10_local_selection": {
-    "candidate": "p10", "status": "NOT_SUBMITTED", "purpose": "TIMING_SCREEN_THEN_EXPLORATORY_LB",
-    "gate": "PENDING", "maximum_submissions_after_gate": 1, "submissions_used": 0,
-    "public_submission_state": "BLOCKED_PENDING_TIMING_GATE_AND_OFFICIAL_QUALIFICATION",
+    "candidate": "p10", "status": "NOT_SUBMITTED", "purpose": "EXPLORATORY_LB_MEASUREMENT",
+    "gate": "PASSED", "eligibility_attempt": 2, "bootstrap_upper95_hours": 9.462469815737775, "maximum_submissions_after_gate": 1, "submissions_used": 0,
+    "public_submission_state": "BLOCKED_PENDING_OFFICIAL_QUALIFICATION", "public_score": null,
     "adopt_public_score_at_least": 0.17, "retained_submission_candidate": "p5",
     "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
-    "evidence_pointer": "/p10_preregistered_gate"
+    "evidence_pointer": "/p10_attempt2", "amendment_pointer": "/p10_timing_amendment", "attempt1_recording": "DEFERRED_UNTIL_AFTER_BOTH_SUBMISSIONS"
   },
   "p9_local_selection": {
     "candidates": ["p9a", "p9b"], "status": "NOT_SUBMITTED", "decision": "REJECTED",

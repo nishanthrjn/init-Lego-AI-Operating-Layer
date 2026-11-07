@@ -29,6 +29,8 @@ _original_verify = ENGINE.verify_local_receipt
 def transfer_paths():
     prefix = 'experiments/gemma4_competition/'
     return sorted(set(_original_transfer()) | {
+        prefix + 'qualification_pair.py',
+        prefix + 'submission_only/qualify_p3.py',
         prefix + 'results/submissions.json',
         prefix + 'results/dev-16v-comparison.json',
         prefix + 'submission_only/qualify_s1.py',

@@ -45,6 +45,13 @@ def build_notebook(candidate, pins, raw_manifest, payload):
             raise ValueError("S1 operational evidence changed or was not qualified")
         if pins.get("zip_sha256") != ZIP_SHA256 or pins.get("zip_size") != 6501:
             raise ValueError("S1 package must match evaluated E4B experimental identity")
+    if candidate == "p10":
+        from qualify_p10 import require_qualification_gate, ZIP_SHA256
+        gate_pins = require_qualification_gate()
+        if any(pins.get(key) != value for key, value in gate_pins.items()):
+            raise ValueError("P10 operational evidence changed or was not qualified")
+        if pins.get("zip_sha256") != ZIP_SHA256 or pins.get("zip_size") != 6501:
+            raise ValueError("P10 package must match evaluated experimental identity")
     if candidate == "p7a":
         from qualify_p7a import require_qualification_gate, ZIP_SHA256
         gate_pins = require_qualification_gate()
@@ -79,7 +86,7 @@ def build_notebook(candidate, pins, raw_manifest, payload):
             "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}},
             "cells": [{"cell_type": "markdown", "id": "scope", "metadata": {}, "source": [
                 "# Self-contained " + candidate.upper() + " package preparation\n",
-                ("EXPLORATORY_LB_MEASUREMENT: one manual submission only; local adoption FAILED/NOT ADOPTED. Public threshold >=0.17; otherwise retain P5.\n"
+                ("EXPLORATORY_LB_MEASUREMENT: one manual submission only; local adoption NOT ADOPTED. Public threshold >=0.17; otherwise retain P5.\n"
                  if pins.get("qualification_purpose") == "EXPLORATORY_LB_MEASUREMENT" else ""),
                 "Set Accelerator None; Internet Off. No input datasets required. Only submission.zip is written.\n",
                 "Set AUTHORIZATION in the final cell and save that version for reruns. Package preparation does not authorize submission.\n",
@@ -93,8 +100,21 @@ def main():
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--pins-file", type=Path)
     args = parser.parse_args()
-    pins = load_pins(args.candidate)
+    if args.pins_file is not None:
+        import sys
+        sys.path.insert(0, str(HERE.parents[2]))
+        from experiments.gemma4_competition import qualification_pair as pair
+        qualified = json.loads(args.pins_file.read_bytes())
+        if (qualified.get("schema") != 1 or qualified.get("candidate") != args.candidate
+                or qualified.get("baseline") != pair.require_frozen()):
+            raise ValueError("External pins candidate/common baseline mismatch")
+        pins = qualified["pins"]
+    else:
+        pins = load_pins(args.candidate)
+    if args.output.resolve().is_relative_to(HERE.parents[2]):
+        raise ValueError("Self-contained notebook must remain external")
     notebook = build_notebook(args.candidate, pins, args.manifest.read_bytes(), args.package.read_bytes())
     with args.output.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write(json.dumps(notebook, indent=2, ensure_ascii=False) + "\n")

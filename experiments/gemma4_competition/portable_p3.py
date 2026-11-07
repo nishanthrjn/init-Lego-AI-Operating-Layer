@@ -24,7 +24,8 @@ def load_instance(path, name):
     return module
 
 
-def build_engine(candidate="p3", member_pins=MEMBER_PINS, zip_sha256=EXPERIMENTAL_ZIP_SHA256, entry=None, zip_size=None):
+def build_engine(candidate="p3", member_pins=MEMBER_PINS, zip_sha256=EXPERIMENTAL_ZIP_SHA256, entry=None, zip_size=None, budgets=None):
+    receipt_budgets = dict(BUDGETS if budgets is None else budgets)
     engine = load_instance(AREA / "portable_m2.py", "_" + candidate + "_shared_engine")
     original_static = engine.static_candidate
     original_transfer = engine.transfer_paths
@@ -63,7 +64,7 @@ def build_engine(candidate="p3", member_pins=MEMBER_PINS, zip_sha256=EXPERIMENTA
 
     def verify_local_receipt(path):
         receipt = original_verify(path)
-        engine.require(receipt.get("candidate") == candidate and receipt.get("budgets") == BUDGETS
+        engine.require(receipt.get("candidate") == candidate and receipt.get("budgets") == receipt_budgets
                        and receipt.get("experimental_zip_sha256") == zip_sha256,
                        candidate.upper() + " receipt identity mismatch")
         return receipt

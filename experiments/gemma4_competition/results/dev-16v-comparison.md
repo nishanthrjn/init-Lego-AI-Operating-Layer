@@ -433,5 +433,10 @@ Full evaluated ZIP89a84bf7...33d6 and manifest06324d20...579a are recorded
 from retained run metadata. Full archive SHA256 is unknown; supplied5b81b16a...cf63
 is an abbreviation, not an integrity pin.
 The original protocol named attempt1 and repo bootstrap; the friend-attempt2
-and maintainer-estimator amendment is recorded separately, pending confirmation.
+run-identity amendment is AUTHORIZED; repository estimator remains mandatory.
 Attempt1 will be recorded only after both submissions.
+P10 timing report subsequently supplied: PINNED_CONTROLS_APPLIED, complete True,
+verifiable16, solved7, repo upper95 9.462469815737775 h, time_fit PASS.
+Only run identity is amended: attempt2 is eligibility, attempt1 deferred until
+both submissions. Maintainer10.40 h is a cross-check, not the gate input.
+Original preregistration text remains intact; effective eligibility is PASSED.

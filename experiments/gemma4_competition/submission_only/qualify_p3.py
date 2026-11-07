@@ -22,14 +22,19 @@ def replace_entry(source, pins, candidate="p3"):
     return source[:start] + repr(pins) + source[end:]
 
 
-def main(candidate="p3", guard=None):
+def main(candidate="p3", guard=None, external_only=False):
     parser = argparse.ArgumentParser()
     parser.add_argument("--receipt", required=True, type=Path)
     parser.add_argument("--results", required=True, type=Path)
-    parser.add_argument("--notebook", required=True, type=Path)
+    output = parser.add_mutually_exclusive_group(required=True)
+    output.add_argument("--notebook", type=Path)
+    output.add_argument("--pins-output", type=Path)
     args = parser.parse_args()
-    if args.notebook.resolve().is_relative_to(ROOT) or args.notebook.exists():
-        raise ValueError("fresh external notebook path required")
+    target_output = args.pins_output or args.notebook
+    if external_only and args.pins_output is None:
+        raise ValueError("This candidate requires --pins-output; no repository pin mutation")
+    if target_output.resolve().is_relative_to(ROOT) or target_output.exists():
+        raise ValueError("fresh external output path required")
     sys.path.insert(0, str(ROOT))
     # Check development eligibility before reconciliation or any file mutation.
     evidence_pins = guard() if guard is not None else {}
@@ -48,6 +53,14 @@ def main(candidate="p3", guard=None):
     pins.update(evidence_pins)
     from generate_self_contained import build_notebook
     generated = build_notebook(candidate, pins, raw, (args.results / "submission.zip").read_bytes())
+    if args.pins_output is not None:
+        from experiments.gemma4_competition import qualification_pair as pair
+        baseline = pair.require_frozen(args.receipt)
+        qualified = {"schema": 1, "candidate": candidate, "baseline": baseline, "pins": pins}
+        with args.pins_output.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps(qualified, indent=2) + "\n")
+        print(candidate.upper() + "_EXTERNAL_PINS_READY; NO_REPOSITORY_WRITES; NO_SUBMISSION_EXECUTED")
+        return
     target = HERE / "first_submission.ipynb"
     notebook = json.loads(target.read_bytes())
     cell = next(c for c in notebook["cells"] if c["id"] == "copy-helper")

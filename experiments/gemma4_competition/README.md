@@ -635,150 +635,217 @@ The offline notebook cannot enforce an account-wide Kaggle submission count;
 the maintainer must enforce the single-submission limit. No automatic submission,
 commit, test, install or compilation was executed for this amendment.
 
-## S1 E4B bonus-entry qualification (prepared; execution pending)
 
-Purpose E4B_BONUS_ENTRY. S1 agent remains gemma-4-e4b-it-qat-w4a16-ct;
-6501-byte ZIP6f38e73cbd441b9c55a5c04e25d2350fdf1deb3fccbd8b1631fcbee7af4ca36a,
-experimental manifest219369b4ed0f7e62f28a125c5e6cabac9031012aa41964179ca5c293c92272a0.
-All candidate members are preserved. portable_s1 configures an isolated shared
-P3/M2 engine with MODEL=E4B, so the inert compiler registry cannot silently use31B.
-No compiler/package logic is duplicated. Root scope baseline is committed
-slice a46674ce4e77eed7ef2c315185a8a3f53df5fb15; no branch switch or commit required.
+## Joint S1 + P10 qualification — one committed baseline
 
-Eligibility checks require completed16-task S1, exact package/model, S2 gateFAILED,
-zero harness errors, exact tool-argument rejections/all requested calls<=5%,
-and finite bootstrap upper95<=10.5 h. Purpose and evidence files are receipt-bound.
-S1 has two phrase-matched rejections / 147 reported calls = 1.36%; eight total worker errors
-are NOT the rejection numerator. The existing analyzer counts only observation
-text containing `mandatory input parameters are not present` (case-insensitive).
-Read-only trace inspection confirmed both in rich_3454, calls call_6 and call_9.
-Qualification checks numeric metrics; a pass label cannot bypass missing values.
+This sequence supersedes the earlier standalone S1 baseline and write-to-repository
+handoff. P10's final repo timing upper95 is9.462469815737775 h (PASS).
+The explicit amendment changes only eligibility run identity to attempt2;
+maintainer10.40 h remains cross-check only. Original protocol text is preserved.
+P10 attempt1 is deferred until after BOTH submissions. S1 uses its recorded
+operational gate (including its explicitly attributed maintainer bootstrap).
 
-The supplied bootstrap2.88 h is maintainer-reported,16-task resampling20000 times,
-seed0. The repo instead samples116 tasks per replicate10000 times,seed20261022.
-The original S1 gate did not specify the P7 authoritative-method restriction;
-provenance is preserved, not silently relabeled. Obtain the repo report when the
-retained run is available. The supplied path is now present; run identity and
-the two rejection observations were inspected without executing the analyzer.
+Both validators use FORGEAI_GEMMA4_QUALIFICATION_BASELINE, set ONCE to the commit
+containing this entire reviewed change. A future commit hash cannot be embedded
+in its own source. The shared guard requires exact HEAD equality, clean index
+and working tree, no untracked files, and receipt baseline/git_head equality.
+Reviewed allowlist: qualification_pair.py:SCOPE. Never substitute an arbitrary
+old commit or change the environment variable between candidates.
 
-Manual command for the exact retained run (restore/extract it first if missing):
+S1 ZIP6f38e73cbd441b9c55a5c04e25d2350fdf1deb3fccbd8b1631fcbee7af4ca36a,
+P10 ZIP89a84bf709b52858b3a3ce39f33d713501dec1fe00e0fb04164f271158f333d6;
+both6501 B. S1 E4B model is preserved. P10 remains NOT ADOPTED pending one
+exploratory public measurement; adopt only at public>=0.17, otherwise retain P5.
 
-```powershell
+Prerequisites: branch br-ForgeAI-Gemma4, existing locked offline environment,
+cached packaging26.3 and preserved official pinned wheels. No package recovery
+or root dependency edits. All paths below are external except reviewed source.
+Use the same PowerShell session, or restore the EXACT saved baseline/path values.
+No commands below have been executed by the agent.
+
+1. Run tests; stop and paste results before proceeding.
+
+~~~powershell
 Set-Location 'C:\Work\ForgeAI-Gemma4'
-$s1Run = 'C:\Work\Gemma4Localtest\runs\forgeai-local-eval-s1-dev-16v-attempt1'
-if (-not (Test-Path -LiteralPath (Join-Path $s1Run 'run.json'))) { throw 'S1 run is absent; supply the actual extracted run path' }
-$s1Summary = 'C:\Work\Gemma4Localtest\s1-summary-' + [guid]::NewGuid().ToString('N') + '.json'
-uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/analysis.py summary $s1Run --controls experiments/gemma4_competition/local_eval/evidence/controls-05706c6a.json --controls-sha256 05706c6a948a67bfaf991ed0282d11308aac79865a614a68c6c582fe01f67033 | Out-File -LiteralPath $s1Summary -Encoding utf8
-if ($LASTEXITCODE -ne 0) { throw 'S1 analysis failed; stop' }
-Write-Host "Saved report: $s1Summary"
-```
-
-Expected complete pinned-controls summary with per-task outcomes, exact rejection
-metrics and time_fit.bootstrap_upper95_hours; no numerical result assumed here.
-Record confirmed metrics BEFORE exporting the receipt. All source/evidence edits
-must be finished before CPU compilation; a later change requires a fresh bundle.
-
-1. Maintainer controls, existing locked offline environment (no environment changes):
-
-```powershell
-Set-Location 'C:\Work\ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'local_eval tests failed; stop' }
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p 'test_s1_qualification.py'
 if ($LASTEXITCODE -ne 0) { throw 'S1 qualification tests failed; stop' }
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p 'test_p10_qualification.py'
+if ($LASTEXITCODE -ne 0) { throw 'P10 qualification tests failed; stop' }
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/tests -p 'test_qualification_pair.py'
+if ($LASTEXITCODE -ne 0) { throw 'Common baseline tests failed; stop' }
 uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/submission_only -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'Submission tests failed; stop' }
-```
+~~~
 
-Expected OK, including exact E4B ZIP/member identity, independent31B engine,
-receipt/purpose guards, wrong model/hash refusal, missing metrics and threshold
-boundaries. Paste output before progressing. Tests use fixtures, not fabricated
-operational evidence in the real record.
+Expected all suites OK; test fixtures do not require a real baseline commit.
+Tests cover guards, package identity, six-vs-eight-minute receipt refusal,
+metric thresholds, consumed authorizations and both external qualifications
+without repository writes. Verification: NOT RUN — Awaiting user execution.
 
-2. Fresh local-only bundle, after evidence is complete. Cached packaging26.3 and
-preserved official wheels are prerequisites; --offline stops on cache misses.
-Do not rerun recovery or change root dependencies.
+2. After tests pass, review and commit exactly this slice. The commit includes
+the final record and both pipelines. Freeze repository files from this point
+through both submissions; even a new commit with identical files is refused.
 
-```powershell
-$s1Bundle = 'C:\Work\Gemma4Localtest\s1-qualification-' + [guid]::NewGuid().ToString('N') + '\bundle'
-uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_s1_submission_qualification_1.py --local-only --output $s1Bundle
-if ($LASTEXITCODE -ne 0) { throw 'S1 local qualification failed; stop' }
-$s1Receipt = Join-Path $s1Bundle 'local-receipt.json'
-$s1ReceiptSha = (Get-FileHash -LiteralPath $s1Receipt -Algorithm SHA256).Hash.ToLowerInvariant()
-Write-Host "Bundle: $s1Bundle"
-Write-Host "Receipt SHA256: $s1ReceiptSha"
-```
-
-Expected S1_LOCAL_SCOPE_AND_STATIC_PASS; PORTABLE COMPILATION REQUIRED.
-The validator runs offline controls. Freeze receipt-bound inputs from this point.
-
-3. Kaggle CPU: use kaggle_compiler/s1_compiler_only.ipynb in the official
-Python3.12 Linux image; Accelerator None,Internet Off. Attach the exact bundle
-and pinned official wheelhouse. Set BUNDLE to the actual mounted bundle folder
-and AUTHORIZATION to AUTHORIZE FORGEAI GEMMA4 S1 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY.
-Run code cells in order: inputs-and-approval, five-wheel-install, offline-compile,
-9647230f(export). Never run starter GPU/model/evaluation cells. Expected successful
-install evidence and PORTABLE_COMPILE_AND_PACKAGE_PASS; ZIP identity must remain
-6f38e73c...a36a/6501 B. Export full receipt hash must equal $s1ReceiptSha.
-Download gemma4-s1-compiler-<receipt-prefix>.zip, retaining install-evidence.json,
-compiler-output.json,manifest.json,submission.zip and gemma4-s1-compiler.log.
-
-4. Receipt-matched extraction and reconciliation (same PowerShell session):
-
-```powershell
-$s1Download = Join-Path 'C:\Users\gayat\Downloads' ('gemma4-s1-compiler-' + $s1ReceiptSha.Substring(0,8) + '.zip')
-$s1Extract = 'C:\Work\Gemma4Localtest\s1-compiler-' + [guid]::NewGuid().ToString('N')
-Expand-Archive -LiteralPath $s1Download -DestinationPath $s1Extract -ErrorAction Stop
-$s1Results = Join-Path $s1Extract 'gemma4-s1-compiler'
-uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_s1_submission_qualification_1.py --receipt $s1Receipt --reconcile $s1Results
-if ($LASTEXITCODE -ne 0) { throw 'S1 reconciliation failed; stop' }
-```
-
-Expected S1_OFFICIAL_COMPILER_VALIDATED; BYTE_IDENTITY_VERIFIED; S1_PACKAGE_VALIDATED.
-The compiler manifest is distinct from the experimental manifest and is pinned
-only after this reconciliation.
-
-5. Qualify and generate a fresh EXTERNAL self-contained notebook:
-
-```powershell
-$s1Notebook = 'C:\Work\Gemma4Localtest\s1_selfcontained_' + [guid]::NewGuid().ToString('N') + '.ipynb'
-uv run --locked --offline --no-sync --with 'packaging==26.3' python -B experiments/gemma4_competition/submission_only/qualify_s1.py --receipt $s1Receipt --results $s1Results --notebook $s1Notebook
-if ($LASTEXITCODE -ne 0) { throw 'S1 submission preparation failed; stop' }
-```
-
-Expected S1_SUBMISSION_PREPARATION_READY; PRE_COMMIT_CHECK_REQUIRED;
-NO_SUBMISSION_EXECUTED. Only S1's placeholder entry is materialized in the shared
-notebook. Generated pins carry E4B_BONUS_ENTRY, model_variant=E4B, evidence hashes.
-Other candidates retain their pins; P5 remains31B entry and P7a exploratory rule
-is unchanged. Self-contained output has empty AUTHORIZATION until maintainer sets it.
-
-6. Review/stage only this slice, then pre-commit; do not commit automatically:
-
-```powershell
-$s1Files = @(
+~~~powershell
+$pairFiles = @(
  'validate_forgeai_gemma4_s1_submission_qualification_1.py',
+ 'validate_forgeai_gemma4_p10_submission_qualification_1.py',
+ 'experiments/gemma4_competition/qualification_pair.py',
+ 'experiments/gemma4_competition/portable_p3.py',
  'experiments/gemma4_competition/portable_s1.py',
- 'experiments/gemma4_competition/kaggle_compiler/s1_compiler_only.ipynb',
- 'experiments/gemma4_competition/tests/test_s1_qualification.py',
- 'experiments/gemma4_competition/submission_only/qualify_s1.py',
- 'experiments/gemma4_competition/submission_only/test_s1_submission.py',
+ 'experiments/gemma4_competition/portable_p10.py',
+ 'experiments/gemma4_competition/kaggle_compiler/p10_compiler_only.ipynb',
+ 'experiments/gemma4_competition/tests/test_p10_qualification.py',
+ 'experiments/gemma4_competition/tests/test_qualification_pair.py',
+ 'experiments/gemma4_competition/submission_only/qualify_p3.py',
+ 'experiments/gemma4_competition/submission_only/qualify_p10.py',
  'experiments/gemma4_competition/submission_only/generate_self_contained.py',
- 'experiments/gemma4_competition/submission_only/first_submission.ipynb',
- 'experiments/gemma4_competition/README.md',
+ 'experiments/gemma4_competition/submission_only/test_p10_submission.py',
+ 'experiments/gemma4_competition/submission_only/test_joint_qualification.py',
+ 'experiments/gemma4_competition/results/submissions.json',
  'experiments/gemma4_competition/results/dev-16v-comparison.json',
  'experiments/gemma4_competition/results/dev-16v-comparison.md',
  'experiments/gemma4_competition/results/paper-evidence.json',
- 'experiments/gemma4_competition/results/submissions.json'
+ 'experiments/gemma4_competition/README.md'
 )
-git diff -- @s1Files
-git add -- @s1Files
-if ($LASTEXITCODE -ne 0) { throw 'S1 staging failed; stop' }
-uv run --locked --offline --no-sync --with 'packaging==26.3' python -B .\validate_forgeai_gemma4_s1_submission_qualification_1.py --pre-commit --receipt $s1Receipt --reconcile $s1Results
-if ($LASTEXITCODE -ne 0) { throw 'S1 pre-commit check failed; stop' }
-```
+git add -- @pairFiles
+if ($LASTEXITCODE -ne 0) { throw 'Staging failed; stop' }
+git diff --cached --stat
+git diff --cached -- @pairFiles
+# Review the staged content before issuing the following commit.
+git commit -m 'Record P10 repo timing pass and prepare joint S1 P10 qualification'
+if ($LASTEXITCODE -ne 0) { throw 'Commit failed; stop' }
+$env:FORGEAI_GEMMA4_QUALIFICATION_BASELINE = (git rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Cannot capture common commit; stop' }
+Write-Host "Common baseline: $env:FORGEAI_GEMMA4_QUALIFICATION_BASELINE"
+~~~
 
-Expected S1_PRE_COMMIT_STAGED_CONSISTENCY_PASSED. Then use the external notebook
-on Kaggle CPU,None,Internet Off,no datasets. Set its exact generated authorization
-phrase and Save & Run All. Expected CREATED and the same6501-byte E4B ZIP.
-Manual submission and final-pick selection remain maintainer actions; compilation
-proves packaging/identity, not leaderboard quality or bonus eligibility adjudication.
-No tests, builds, validations, notebooks, models, submissions or commits executed
-by the agent. Verification NOT RUN — awaiting maintainer execution.
+Expected one commit containing this record and preparation. Do not recommit
+qualification outputs; the workflow below writes none into the repository.
+
+3. Create S1 bundle, then P10 bundle. Preserve the external path map.
+
+~~~powershell
+$pairRoot = 'C:\Work\Gemma4Localtest\s1-p10-qualification-' + [guid]::NewGuid().ToString('N')
+New-Item -ItemType Directory -Path $pairRoot -ErrorAction Stop | Out-Null
+$pair = [ordered]@{}
+foreach ($candidate in @('s1', 'p10')) {
+    $entry = [ordered]@{
+        Bundle = Join-Path $pairRoot "$candidate-bundle"
+        Receipt = Join-Path $pairRoot "$candidate-bundle\local-receipt.json"
+        Extract = Join-Path $pairRoot "$candidate-compiler-download"
+        Pins = Join-Path $pairRoot "$candidate-qualified-pins.json"
+        Notebook = Join-Path $pairRoot "$candidate-selfcontained.ipynb"
+    }
+    $validator = ".\validate_forgeai_gemma4_${candidate}_submission_qualification_1.py"
+    uv run --locked --offline --no-sync --with 'packaging==26.3' python -B $validator --local-only --output $entry.Bundle
+    if ($LASTEXITCODE -ne 0) { throw "$candidate local-only failed; stop" }
+    $entry['ReceiptSha256'] = (Get-FileHash -LiteralPath $entry.Receipt -Algorithm SHA256).Hash.ToLowerInvariant()
+    $pair[$candidate] = $entry
+}
+$sessionFile = Join-Path $pairRoot 'session.json'
+@{baseline=$env:FORGEAI_GEMMA4_QUALIFICATION_BASELINE; candidates=$pair} |
+    ConvertTo-Json -Depth 8 | Out-File -LiteralPath $sessionFile -Encoding utf8
+Write-Host "Preserve session: $sessionFile"
+$pair | ConvertTo-Json -Depth 8
+~~~
+
+Expected S1_LOCAL_SCOPE_AND_STATIC_PASS and P10_LOCAL_SCOPE_AND_STATIC_PASS;
+both PORTABLE COMPILATION REQUIRED. Validators run offline controls but no
+model/GPU workload. Both receipts have the same baseline/git_head and their
+own candidate-specific receipt hash. Any dirty tree, missing wheel, changed
+candidate bytes or failed operational guard stops before bundle creation.
+
+4. Compile each on Kaggle in a separate fresh CPU session. Accelerator None,
+Internet Off, official Python3.12 Linux image, pinned official wheelhouse at
+/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse.
+Use kaggle_compiler/s1_compiler_only.ipynb and p10_compiler_only.ipynb respectively.
+Attach the corresponding bundle; set BUNDLE to its mounted folder (the folder
+containing local-receipt.json). Do not attach the other candidate as the bundle.
+Set AUTHORIZATION to the candidate's exact phrase:
+- AUTHORIZE FORGEAI GEMMA4 S1 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY
+- AUTHORIZE FORGEAI GEMMA4 P10 KAGGLE CPU SCOPED INSTALL AND COMPILER ONLY
+
+Execute code cells in order: inputs-and-approval, five-wheel-install,
+offline-compile, 9647230f (export). Expected PORTABLE_COMPILE_AND_PACKAGE_PASS
+with the matching6501-byte ZIP and local receipt hash. No starter model,
+evaluation or submission cells. Download both gemma4-<candidate>-compiler-
+<receipt-first8>.zip archives to Downloads, including log and complete result
+directory (install-evidence.json, compiler-output.json, manifest.json,
+submission.zip). A failed installation/compiler is a stop, not qualification.
+
+5. Reconcile BOTH before qualifying either.
+
+~~~powershell
+foreach ($candidate in @('s1', 'p10')) {
+    $entry = $pair[$candidate]
+    $download = Join-Path 'C:\Users\gayat\Downloads' ("gemma4-$candidate-compiler-" + $entry.ReceiptSha256.Substring(0,8) + '.zip')
+    Expand-Archive -LiteralPath $download -DestinationPath $entry.Extract -ErrorAction Stop
+    $entry['Results'] = Join-Path $entry.Extract "gemma4-$candidate-compiler"
+    $validator = ".\validate_forgeai_gemma4_${candidate}_submission_qualification_1.py"
+    uv run --locked --offline --no-sync --with 'packaging==26.3' python -B $validator --receipt $entry.Receipt --reconcile $entry.Results
+    if ($LASTEXITCODE -ne 0) { throw "$candidate reconcile failed; stop" }
+}
+~~~
+
+Expected each candidate's OFFICIAL_COMPILER_VALIDATED, BYTE_IDENTITY_VERIFIED,
+PACKAGE_VALIDATED messages. Receipt substitution, missing evidence, different
+ZIP or changed source stops. Reconciliation writes no repository files.
+
+6. Qualify BOTH to external pins only; do not use legacy --notebook.
+
+~~~powershell
+foreach ($candidate in @('s1', 'p10')) {
+    $entry = $pair[$candidate]
+    $qualifier = "experiments/gemma4_competition/submission_only/qualify_$candidate.py"
+    uv run --locked --offline --no-sync --with 'packaging==26.3' python -B $qualifier --receipt $entry.Receipt --results $entry.Results --pins-output $entry.Pins
+    if ($LASTEXITCODE -ne 0) { throw "$candidate qualification failed; stop" }
+}
+~~~
+
+Expected S1_EXTERNAL_PINS_READY then P10_EXTERNAL_PINS_READY;
+NO_REPOSITORY_WRITES; NO_SUBMISSION_EXECUTED. The shared implementation validates
+the future notebook in memory but writes only each external pins JSON, no notebook
+or repository CANDIDATE_PINS. Legacy qualify_s1 --notebook would write
+first_submission.ipynb and is NOT part of this joint flow. P10 requires pins mode.
+
+7. Run BOTH pre-commit checks against the same already-committed clean baseline.
+
+~~~powershell
+foreach ($candidate in @('s1', 'p10')) {
+    $entry = $pair[$candidate]
+    $validator = ".\validate_forgeai_gemma4_${candidate}_submission_qualification_1.py"
+    uv run --locked --offline --no-sync --with 'packaging==26.3' python -B $validator --pre-commit --receipt $entry.Receipt --reconcile $entry.Results
+    if ($LASTEXITCODE -ne 0) { throw "$candidate pre-commit check failed; stop" }
+}
+~~~
+
+Expected S1_PRE_COMMIT_STAGED_CONSISTENCY_PASSED then
+P10_PRE_COMMIT_STAGED_CONSISTENCY_PASSED. The historical flag name is retained:
+there are no staged output changes to commit; index/worktree both equal baseline.
+
+8. Generate BOTH external self-contained notebooks from the qualified pins.
+
+~~~powershell
+foreach ($candidate in @('s1', 'p10')) {
+    $entry = $pair[$candidate]
+    uv run --locked --offline --no-sync python -B experiments/gemma4_competition/submission_only/generate_self_contained.py --candidate $candidate --pins-file $entry.Pins --manifest (Join-Path $entry.Results 'manifest.json') --package (Join-Path $entry.Results 'submission.zip') --output $entry.Notebook
+    if ($LASTEXITCODE -ne 0) { throw "$candidate notebook generation failed; stop" }
+    Write-Host "$candidate notebook: $($entry.Notebook)"
+}
+~~~
+
+Expected each JSON output identifies candidate, external notebook, receipt/ZIP
+pins and correct purpose/model. Generation checks the current evidence and
+common commit; wrong-candidate pins or changed evidence are rejected.
+On Kaggle use separate CPU/Internet Off sessions with no datasets, enter each
+notebook's exact generated AUTHORIZATION, then Save & Run All. Expected CREATED,
+with the same evaluated6501-byte ZIP. Actual submissions remain manual.
+P10 allowance is one measurement, adopted only at public>=0.17; S1 purpose is
+E4B_BONUS_ENTRY. Preserve both complete evidence sets externally.
+No repo edits/commits between bundles, compilation, qualification, generation
+or submissions. Record both submissions and deferred P10 attempt1 together
+in a later slice after both submissions; that new commit intentionally ends
+this baseline's qualification lifecycle.
