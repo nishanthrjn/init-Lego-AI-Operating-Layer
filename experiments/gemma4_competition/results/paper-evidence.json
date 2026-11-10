@@ -88,6 +88,19 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "s1_e4b_public_result_and_same_prompt_31b_comparison",
+      "file": "experiments/gemma4_competition/results/submissions.json",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56", "pointer": "/runs/9",
+      "basis": "MAINTAINER_REPORTED_PUBLIC_RESULT; full package identity from retained external qualified pins",
+      "values": {"s1_public_score": 0.05, "s1_public_solved_approx": 3, "public_tasks_reported": 58,
+        "s1_notebook": "s1_e4b_bonus", "s1_version": 2, "s1_scriptVersionId": 367846996,
+        "p5_public_scores": [0.13, 0.15], "p5_public_mean": 0.14,
+        "shared_prompt_sha256": "020704784e5e0b95fb73095fea14fd7d8670cbe18e164f6d4a52cf1adcbaa7d9",
+        "final_pick_plan": ["p5", "s1"]},
+      "interpretation": "E4B S1 public0.05 versus31B P5 public0.13/0.15 with the same prompt. S1 remains frozen E4B bonus entry; P5 remains frozen31B entry.",
+      "limitations": "One E4B public result and two31B results with rounded scores and stochastic variation; descriptive model-variant comparison, not a significance or causal-effect estimate. Approximate task count is not an exact solve count. Final-pick plan is not a completed platform selection or bonus eligibility ruling."
+    },
+    {
       "id": "p10_friend_timing_screen",
       "file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
       "sha256": "4d6ce06689dd5b5236d7f911641b9a8f4f55c88e2467fcf2c01673a711740912", "pointer": "/p10_attempt2",
@@ -101,7 +114,7 @@
     {
       "id": "p7a_exploratory_public_final",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "cd7795eb9a79b946c7b21fca767d2e3c752dabb525884691fbdfd286617c4572", "pointer": "/runs/8",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56", "pointer": "/runs/8",
       "basis": "MAINTAINER_REPORTED_FINAL_PUBLIC_RESULT; no live query or independent execution",
       "values": {"notebook": "p7a_exploratory", "version": 1, "scriptVersionId": 365424451,
         "public_score": 0.12, "p5_public_scores": [0.13, 0.15], "p5_public_mean": 0.14,
@@ -166,7 +179,7 @@
     {
       "id": "p5_identical_submission_public_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "cd7795eb9a79b946c7b21fca767d2e3c752dabb525884691fbdfd286617c4572", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56", "pointer": "/runs/7", "replicate_of_pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; identical ZIP and leaderboard results, no independent execution",
       "values": {
         "scriptVersionIds": [363609276, 364559449],
@@ -182,7 +195,7 @@
     {
       "id": "p5_public_result_frozen_31b",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "cd7795eb9a79b946c7b21fca767d2e3c752dabb525884691fbdfd286617c4572", "pointer": "/runs/6",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56", "pointer": "/runs/6",
       "basis": "MAINTAINER_REPORTED; no live Kaggle query or independent analysis",
       "values": {
         "notebook_name": "p5_selfcontained", "notebook_version": "2",
@@ -278,7 +291,7 @@
     {
       "id": "p3_identical_file_leaderboard_replicate2",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "cd7795eb9a79b946c7b21fca767d2e3c752dabb525884691fbdfd286617c4572",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56",
       "pointer": "/runs/5",
       "replicate_of_pointer": "/runs/4",
       "basis": "Maintainer-reported identical-file P3 leaderboard replicate, submitted 2026-10-28; no evaluation or live account verification executed.",
@@ -310,7 +323,7 @@
     {
       "id": "p1_scorer_exception_wave_hypothesis",
       "file": "experiments/gemma4_competition/results/submissions.json",
-      "sha256": "cd7795eb9a79b946c7b21fca767d2e3c752dabb525884691fbdfd286617c4572",
+      "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56",
       "pointer": "/runs/2/notes",
       "basis": "Maintainer-reported forum exception wave from approximately October 21; likely explanation only, no independently established cause.",
       "values": {"cause": "UNKNOWN", "status": "ERROR", "public_score": null}

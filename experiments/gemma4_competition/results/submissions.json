@@ -1,4 +1,11 @@
 {
+  "final_pick_plan": {
+    "status": "MAINTAINER_DECLARED_PLAN", "candidates": ["p5", "s1"],
+    "entries": [{"candidate": "p5", "model_variant": "gemma-4-31b-it-qat-w4a16-ct", "role": "FROZEN_31B_ENTRY"},
+                {"candidate": "s1", "model_variant": "gemma-4-e4b-it-qat-w4a16-ct", "role": "FROZEN_E4B_ENTRY", "purpose": "E4B_BONUS_ENTRY"}],
+    "final_selection_performed": null,
+    "basis": "Maintainer instruction; no Kaggle selection action or bonus eligibility adjudication inferred."
+  },
   "p10_local_selection": {
     "candidate": "p10", "status": "NOT_SUBMITTED", "purpose": "EXPLORATORY_LB_MEASUREMENT",
     "gate": "PASSED", "eligibility_attempt": 2, "bootstrap_upper95_hours": 9.462469815737775, "maximum_submissions_after_gate": 1, "submissions_used": 0,
@@ -51,13 +58,13 @@
     "notes": "Maintainer-reported local result, not a Kaggle submission. S1 remains E4B fallback. S3 is the final planned E4B iteration; if its gate fails, freeze S1 and stop iteration."
   },
   "s1_local_selection": {
-    "candidate": "s1", "status": "NOT_SUBMITTED", "purpose": "E4B_BONUS_ENTRY",
-    "qualification_status": "PREPARED_AWAITING_MAINTAINER_VALIDATION_AND_COMPILATION",
+    "candidate": "s1", "status": "SUCCEEDED", "execution_status": "SCORED", "public_score": 0.05, "purpose": "E4B_BONUS_ENTRY",
+    "qualification_status": "RECONCILED_EXTERNAL_PINS_RETAINED",
     "operational_gate": "PASSED_MAINTAINER_REPORTED",
-    "decision": "E4B_BONUS_FALLBACK", "dev16v_resolved": 3,
+    "decision": "FROZEN_E4B_ENTRY", "dev16v_resolved": 3,
     "evidence_file": "experiments/gemma4_competition/results/dev-16v-comparison.json",
     "evidence_pointer": "/s1_dev16v_attempt1",
-    "notes": "Maintainer declares valid operational fallback. Separate package qualification/submission not reported; P5 remains the 31B candidate."
+    "notes": "Maintainer reports Succeeded/public0.05 for s1_e4b_bonus v2. S1 is the frozen E4B entry; final-pick plan P5 (31B) plus S1 (E4B), not a claim that final picks have been selected on Kaggle."
   },
   "p6_local_selection": {
     "candidate": "p6", "status": "NOT_SUBMITTED",
@@ -312,6 +319,26 @@
         "Full receipt read from reconciled CANDIDATE_PINS.p7a; supplied abbreviated suffix6a6 differs from the recorded full hash suffix4a6. Prefix, ZIP and full manifest match; retain this discrepancy without inventing a receipt.",
         "P7a failed local adoption and remains NOT ADOPTED: final public0.12 <0.17. P5 remains frozen31B entry; final selection rules unchanged.",
         "Final Succeeded and public0.12 are maintainer-reported; prior notebook log state CREATED preserved. No live Kaggle query or execution for this update."
+      ]
+    },
+    {
+      "candidate": "s1", "purpose": "E4B_BONUS_ENTRY",
+      "model_variant": "gemma-4-e4b-it-qat-w4a16-ct",
+      "receipt": "0d088772a40713ed4d75bcd3af18ba2dd317b6692210e7520487174432110726",
+      "zip_sha256": "6f38e73cbd441b9c55a5c04e25d2350fdf1deb3fccbd8b1631fcbee7af4ca36a",
+      "manifest_sha256": "ff3341221e303b4a31072b734c317800c308ea7b7f2e8ac25169612d85aac117",
+      "zip_size": 6501,
+      "budget_values": {"timeout_seconds": 180, "max_tool_calls": 28, "max_time_minutes": 6, "max_turns": 80},
+      "notebook_name": "s1_e4b_bonus", "notebook_version": 2, "scriptVersionId": 367846996,
+      "submission_date_local": null, "submission_time_utc": null, "submission_id": null,
+      "status": "SUCCEEDED", "execution_status": "SCORED", "public_score": 0.05,
+      "public_solved_approx": 3, "public_tasks_reported": 58, "error_text": null,
+      "selection_status": "FROZEN_E4B_ENTRY",
+      "notes": [
+        "Public result maintainer-reported; no live Kaggle query or execution.",
+        "Full receipt, compiler manifest and ZIP hashes read from retained external s1-qualified-pins.json; matching supplied abbreviations. Compiler manifest is distinct from experimental manifest.",
+        "Final-pick plan P5 (31B) plus S1 (E4B); actual platform final selection not reported.",
+        "Approximately3/58 is derived from a rounded public score, not an exact task verdict count."
       ]
     }
   ]
