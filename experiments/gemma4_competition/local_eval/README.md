@@ -2069,3 +2069,55 @@ replace mounted dataset paths, preserve31B model path, supply the exact
 AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL p10 ON dev-16v phrase and explicitly enable
 the existing operator authorization flags only when launching the timing run.
 P9 final attempt2 results are already recorded; P9 remains rejected.
+
+## X22 private local sensitivity check (preregistered, not run)
+
+Attribution: a public leaderboard notebook, provenance unrecorded.
+Author, URL, version and license: NOT FOUND. Maintainer authorizes PRIVATE LOCAL
+EVALUATION ONLY; this is not a license grant. No submission or prompt quotation.
+Keep the candidate, datasets, traces and evaluation artifacts private.
+The reported0.22 score is maintainer-supplied, not independently verified.
+Source label c9829b6ac709 has an unknown convention and is not an identity pin.
+
+Exact source: Downloads/results (10).zip -> submission.zip,3031 B,
+SHA25680f4b123502f36dfd62745ca6aee9a9cd26f681338e52f75c8b3c302d6100767.
+Four files under candidates/x22 are unchanged source bytes; member hashes are
+in experimental-pins.json and results/x22-reference-provenance.json.
+The builder reuses the nested ZIP exactly, never repacks it. No package built here.
+
+Two fresh independent dev-16v runs, x22-dev16v-attempt1.json and
+x22-dev16v-attempt2.json,31B model. Both must complete16 tasks; incomplete/missing
+results do not trigger either interpretation. Pooled>=22/32:
+PROMPT_FAMILY_EFFECT_DETECTED. Otherwise:
+DEV16V_DID_NOT_REPRODUCE_PUBLIC_GAP. P5 reference18/32.
+This is a sensitivity check, not adoption/submission permission.
+Our seven ablations are described by the maintainer as one prompt family.
+Timeout and registered tools also differ, so this is not a pure prompt causal test.
+
+Manual tests (existing locked offline environment; no new environment variables):
+
+~~~powershell
+Set-Location 'C:/Work/ForgeAI-Gemma4'
+uv run --locked --offline --no-sync python -B -m unittest discover -s experiments/gemma4_competition/local_eval -p 'test_*.py'
+if ($LASTEXITCODE -ne 0) { throw 'Tests failed; paste output and stop' }
+~~~
+
+Expected OK, including unchanged members, original archive identity, independent
+configs and submission-generator refusal. Verification NOT RUN — Awaiting user
+execution. Paste results before proceeding.
+
+Subsequent manual build (not executed):
+
+~~~powershell
+$x22Output = 'C:/Work/Gemma4Localtest/gemma-x22-private-' + [guid]::NewGuid().ToString('N')
+uv run --locked --offline --no-sync python -B experiments/gemma4_competition/local_eval/experimental.py x22 --source-archive 'C:/Users/gayat/Downloads/results (10).zip' --output $x22Output
+if ($LASTEXITCODE -ne 0) { throw 'X22 build failed; stop' }
+~~~
+
+Expected EXPERIMENTAL_UNQUALIFIED, PRIVATE_LOCAL_EVALUATION_ONLY,
+submission_authorized false, original3031-byte ZIP SHA256 above, manifest SHA256,
+and both generated config files. Configure private dataset mount paths using
+the existing local_eval workflow and generated hashes. Authorization phrase:
+AUTHORIZE FORGEAI GEMMA4 LOCAL EVAL x22 ON dev-16v.
+All authorization flags remain false until the maintainer explicitly launches.
+No X22 submission qualifier or public submission notebook is provided.

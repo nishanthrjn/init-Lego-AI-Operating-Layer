@@ -88,6 +88,19 @@
   "status": "RECORDED_STATICALLY; DERIVED_ANALYSIS_PENDING_MAINTAINER",
   "claims": [
     {
+      "id": "x22_private_prompt_family_sensitivity_preregistration",
+      "file": "experiments/gemma4_competition/results/x22-reference-provenance.json",
+      "sha256": "428a2f1cf800a883697ee1c24b1be98f14f5a65290a7ebdde1ea26ab918a6c2f", "pointer": "/proposed_sensitivity_protocol",
+      "source_attribution": "a public leaderboard notebook, provenance unrecorded",
+      "license_status": "NOT_FOUND", "reuse_scope": "PRIVATE_LOCAL_EVALUATION_ONLY",
+      "reported_public_score": 0.22,
+      "basis": "Maintainer confirms intended ZIP and reports source score; no independent leaderboard verification",
+      "protocol": "Two dev-16v runs: pooled>=22/32 yields PROMPT_FAMILY_EFFECT_DETECTED; otherwise DEV16V_DID_NOT_REPRODUCE_PUBLIC_GAP. P5 reference18/32. Not a submission or adoption gate.",
+      "family_context": "Maintainer describes our seven ablations as variants of one prompt family; exact seven-variant membership not enumerated.",
+      "differences_in_our_words": "External config keeps31B sampling,28 calls,8 minutes and80 turns, but uses240-second command timeout and registers graph tools. Maintainer reports a contrasting editing and testing policy, less bookkeeping, a documentation-file localization hint and fewer intended turns.",
+      "limitations": "Source URL/author/version/license NOT FOUND. No prompt quotation or submission permitted. Joint prompt, agent/tool and timeout differences prevent attribution to prompt text alone. No X22 local results yet."
+    },
+    {
       "id": "s1_e4b_public_result_and_same_prompt_31b_comparison",
       "file": "experiments/gemma4_competition/results/submissions.json",
       "sha256": "c8e76c6a6600e40d3bf3fe256df41cea2c190eb4d886b9ce63b28888e5669a56", "pointer": "/runs/9",

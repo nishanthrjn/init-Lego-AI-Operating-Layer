@@ -17,12 +17,12 @@ def digest(blob):
 
 
 def static_files(candidate):
-    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "s1", "s2", "s3"}:
+    if candidate not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "x22", "s1", "s2", "s3"}:
         raise ValueError("unsupported experiment")
     area = HERE.parent / "candidates"
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     data = {}
-    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "s1", "s2", "s3"):
+    for name in ("p1", "p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "x22", "s1", "s2", "s3"):
         directory = area / name
         files = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
         if set(files) != set(MEMBERS) or any(digest(files[k]) != pins[name][k] for k in MEMBERS):
@@ -124,26 +124,33 @@ def verify(config):
         raise ValueError("experimental package identity mismatch")
     pins = json.loads((HERE / "experimental-pins.json").read_bytes())
     expected = pins.get(config["candidate"])
-    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "s1", "s2", "s3"}:
+    if config["candidate"] not in {"p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "x22", "s1", "s2", "s3"}:
         raise ValueError("unsupported experiment")
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         if sorted(archive.namelist()) != sorted(MEMBERS):
             raise ValueError("experimental archive members mismatch")
         if any(digest(archive.read(name)) != expected[name] for name in MEMBERS):
             raise ValueError("experimental archive bytes mismatch")
-    if config["candidate"] in {"p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "s1", "s2", "s3"}:
+    if config["candidate"] in {"p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "x22", "s1", "s2", "s3"}:
         from runtime import check_model_contract
         model = "gemma-4-e4b-it-qat-w4a16-ct" if config["candidate"] in {"s1", "s2", "s3"} else "gemma-4-31b-it-qat-w4a16-ct"
         if config.get("model_variant") != model or "vllm_extra_args" not in config:
             raise ValueError("explicit experimental model/serving contract required")
         check_model_contract(config, model)
+    if config["candidate"] == "x22":
+        from x22 import verify_source_zip, REUSE_SCOPE
+        verify_source_zip(blob, expected)
+        if (config.get("reuse_scope") != REUSE_SCOPE or manifest.get("reuse_scope") != REUSE_SCOPE
+                or manifest.get("submission_authorized") is not False):
+            raise ValueError("X22 private local evaluation only")
     return manifest
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "s1", "s2", "s3"))
+    parser.add_argument("candidate", choices=("p1b", "p1c", "p2", "p3", "p3g", "p4", "p5", "p6", "p7a", "p7b", "p8", "p9a", "p9b", "p10", "x22", "s1", "s2", "s3"))
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-archive", type=Path)
     args = parser.parse_args()
     output = args.output.resolve()
     if output.is_relative_to(HERE.parents[2]) or any((p / ".git").exists() for p in output.parents):
@@ -151,13 +158,25 @@ def main():
     data = static_files(args.candidate)
     sys.path.insert(0, str(HERE.parent))
     from portable_m2 import zip_bytes, inspect_zip
-    blob = zip_bytes(data)
-    inspect_zip(blob, data)
+    if args.candidate == "x22":
+        from x22 import read_source_archive
+        if args.source_archive is None:
+            raise ValueError("X22 requires --source-archive; original ZIP must not be repacked")
+        blob = read_source_archive(args.source_archive, {k: digest(v) for k, v in data.items()})
+    else:
+        if args.source_archive is not None:
+            raise ValueError("--source-archive is only for X22")
+        blob = zip_bytes(data)
+        inspect_zip(blob, data)
     output.mkdir(parents=True, exist_ok=False)
     (output / "submission.zip.bin").write_bytes(blob)
     manifest = {"state": STATE, "candidate": args.candidate, "zip_sha256": digest(blob),
                 "zip_size": len(blob), "files": {k: digest(v) for k, v in data.items()},
                 "submission_authorized": False}
+    if args.candidate == "x22":
+        from x22 import REUSE_SCOPE
+        manifest.update(reuse_scope=REUSE_SCOPE, license_status="NOT_FOUND",
+                        source_label="c9829b6ac709", source_label_is_identity_pin=False)
     raw = (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
     for template in sorted((HERE / "configs").glob(args.candidate + "-*.json")):

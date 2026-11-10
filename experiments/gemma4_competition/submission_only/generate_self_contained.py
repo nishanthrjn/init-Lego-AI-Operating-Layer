@@ -31,6 +31,8 @@ def load_pins(candidate):
 
 
 def build_notebook(candidate, pins, raw_manifest, payload):
+    if candidate == "x22":
+        raise ValueError("X22 is private local evaluation only; submission generation prohibited")
     if pins.get("reconciled") is not True or pins.get("m2_result_understood") is not True:
         raise ValueError("Reconciled candidate and understood M2 result required")
     if candidate == "p5":

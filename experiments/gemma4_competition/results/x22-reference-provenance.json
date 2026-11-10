@@ -1,6 +1,6 @@
 {
   "candidate": "x22",
-  "status": "BLOCKED_SOURCE_IDENTITY_AND_LICENSE_UNRESOLVED",
+  "status": "PREPARED_PRIVATE_LOCAL_EVALUATION_ONLY",
   "source": {
     "outer_archive": "C:/Users/gayat/Downloads/results (10).zip",
     "outer_sha256": "746d05eefde19c84ba25ffdf09fda38d646f61fe1de96958e55cde670e809fc1",
@@ -10,8 +10,8 @@
     "public_notebook_url": null,
     "maintainer_reported_notebook_log": "lb-0-22-4-config-files-no-training",
     "maintainer_reported_bundle_digest": "c9829b6ac709",
-    "reported_digest_algorithm_and_scope": null,
-    "identity_assessment": "Observed nested ZIP SHA256 does not begin with the reported digest. The reported digest may cover different bytes or use another convention; association with the reported public result is unverified."
+    "reported_digest_algorithm_and_scope": "UNKNOWN_SOURCE_NOTEBOOK_CONVENTION", "source_label_is_identity_pin": false, "source_details_status": "NOT_FOUND",
+    "identity_assessment": "Maintainer explicitly confirms this ZIP as intended. Pin ZIP SHA256 and four member hashes only. c9829b6ac709 is an unverifiable source label; common digest conventions reportedly did not match. Public score remains maintainer-reported."
   },
   "observed_members": {
     "agent.yaml": {"size": 314, "sha256": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4"},
@@ -20,18 +20,18 @@
     "prompts/system.md": {"size": 4683, "sha256": "475cc9b7fcc0dc295532f5cb5e1928f26a491f501837ad08b1c79bdbe1a3eaa4"}
   },
   "license": {
-    "status": "UNKNOWN",
+    "status": "NOT_FOUND",
     "archive_license_file": "NONE_IN_OUTER_OR_NESTED_ZIP",
     "license_identifier": null,
     "license_source_url": null,
-    "reuse_permission": null,
+    "reuse_permission": "MAINTAINER_AUTHORIZED_PRIVATE_LOCAL_EVALUATION_ONLY_NOT_A_LICENSE_GRANT",
     "submission_or_quotation_authorized": false,
-    "note": "Public availability and a reported leaderboard score do not establish a license. Obtain source notebook URL and applicable license or explicit reuse permission."
+    "note": "Source URL, author, version and exact license were not supplied. Private local evaluation only per maintainer; no submission or prompt quotation. Attribution: a public leaderboard notebook, provenance unrecorded."
   },
   "reported_public_score": 0.22,
   "score_provenance": "MAINTAINER_REPORTED; not independently verified or bound to observed ZIP",
   "proposed_sensitivity_protocol": {
-    "status": "PREREGISTERED_PENDING_SOURCE_IDENTIFICATION",
+    "status": "PREREGISTERED_NOT_RUN",
     "subset": "dev-16v",
     "attempts": [1, 2],
     "tasks_pooled": 32,
@@ -47,10 +47,10 @@
     "limitation": "The observed external config also changes timeout, agent identity and registered tools versus P10. Even a reproduced gap would characterize the bundle/prompt-family contrast, not isolate prompt text causally. No local run performed."
   },
   "actions": {
-    "candidate_created": false,
+    "candidate_created": true,
     "package_built": false,
     "tests_executed": false,
     "prompt_quoted": false,
-    "reason": "Await source URL/license and confirmation of source ZIP or reported digest convention before pinning an experimental candidate."
+    "reason": "Identity confirmed by maintainer; exact member copy and original ZIP reuse prepared. License NOT FOUND; publication, prompt quotation and submission remain prohibited."
   }
 }
