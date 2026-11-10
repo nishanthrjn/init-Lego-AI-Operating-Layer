@@ -1,0 +1,56 @@
+{
+  "candidate": "x22",
+  "status": "BLOCKED_SOURCE_IDENTITY_AND_LICENSE_UNRESOLVED",
+  "source": {
+    "outer_archive": "C:/Users/gayat/Downloads/results (10).zip",
+    "outer_sha256": "746d05eefde19c84ba25ffdf09fda38d646f61fe1de96958e55cde670e809fc1",
+    "member": "submission.zip",
+    "zip_sha256": "80f4b123502f36dfd62745ca6aee9a9cd26f681338e52f75c8b3c302d6100767",
+    "zip_size": 3031,
+    "public_notebook_url": null,
+    "maintainer_reported_notebook_log": "lb-0-22-4-config-files-no-training",
+    "maintainer_reported_bundle_digest": "c9829b6ac709",
+    "reported_digest_algorithm_and_scope": null,
+    "identity_assessment": "Observed nested ZIP SHA256 does not begin with the reported digest. The reported digest may cover different bytes or use another convention; association with the reported public result is unverified."
+  },
+  "observed_members": {
+    "agent.yaml": {"size": 314, "sha256": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4"},
+    "configs/sampling.yaml": {"size": 119, "sha256": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926"},
+    "eval_config.yaml": {"size": 94, "sha256": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531"},
+    "prompts/system.md": {"size": 4683, "sha256": "475cc9b7fcc0dc295532f5cb5e1928f26a491f501837ad08b1c79bdbe1a3eaa4"}
+  },
+  "license": {
+    "status": "UNKNOWN",
+    "archive_license_file": "NONE_IN_OUTER_OR_NESTED_ZIP",
+    "license_identifier": null,
+    "license_source_url": null,
+    "reuse_permission": null,
+    "submission_or_quotation_authorized": false,
+    "note": "Public availability and a reported leaderboard score do not establish a license. Obtain source notebook URL and applicable license or explicit reuse permission."
+  },
+  "reported_public_score": 0.22,
+  "score_provenance": "MAINTAINER_REPORTED; not independently verified or bound to observed ZIP",
+  "proposed_sensitivity_protocol": {
+    "status": "PREREGISTERED_PENDING_SOURCE_IDENTIFICATION",
+    "subset": "dev-16v",
+    "attempts": [1, 2],
+    "tasks_pooled": 32,
+    "threshold_solved": 22,
+    "p5_reference_solved": 18,
+    "at_or_above_threshold": "PROMPT_FAMILY_EFFECT_DETECTED",
+    "below_threshold": "DEV16V_DID_NOT_REPRODUCE_PUBLIC_GAP",
+    "submission_authorized": false
+  },
+  "paper_context": {
+    "claim": "Our seven ablations were variants of one prompt family.",
+    "basis": "MAINTAINER_INTERPRETATION; exact seven-variant membership not enumerated in this request",
+    "limitation": "The observed external config also changes timeout, agent identity and registered tools versus P10. Even a reproduced gap would characterize the bundle/prompt-family contrast, not isolate prompt text causally. No local run performed."
+  },
+  "actions": {
+    "candidate_created": false,
+    "package_built": false,
+    "tests_executed": false,
+    "prompt_quoted": false,
+    "reason": "Await source URL/license and confirmation of source ZIP or reported digest convention before pinning an experimental candidate."
+  }
+}
